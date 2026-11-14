@@ -17,8 +17,10 @@
 package com.helger.phoxtrot.xslt.compile;
 
 import java.util.ArrayDeque;
+import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Predicate;
 
 import org.jspecify.annotations.NonNull;
@@ -194,6 +196,9 @@ public final class StylesheetCompiler
   private final XsltExtensionRegistry m_aRegistry;
   private CompiledStylesheet m_aStylesheet;
   private final ICommonsOrderedSet <XdmQName> m_aGlobalNames = new CommonsLinkedHashSet <> ();
+  // An unmodifiable copy of m_aGlobalNames that the static contexts share;
+  // null after a change until it is needed again
+  private Set <XdmQName> m_aGlobalNameSnapshot;
   private final ICommonsMap <XdmQName, Integer> m_aGlobalPrecedences = new CommonsHashMap <> ();
   private FormatDecimalFormat m_aDefaultDecimalFormat;
   private final ICommonsMap <XdmQName, FormatDecimalFormat> m_aDecimalFormats = new CommonsHashMap <> ();
@@ -304,6 +309,27 @@ public final class StylesheetCompiler
   public ICommonsOrderedSet <XdmQName> getGlobalVariableNames ()
   {
     return m_aGlobalNames;
+  }
+
+  /**
+   * The names of the global variables and parameters known so far, for the
+   * static contexts of the expressions (see
+   * {@link com.helger.phoxtrot.xpath.context.StaticContext#declareSharedVariables(Set, XdmQName)}): one
+   * unmodifiable copy shared by all of them, made again only after a global
+   * was added, instead of one copy per expression.
+   *
+   * @return The unmodifiable set of names. Never <code>null</code>.
+   */
+  @NonNull
+  public Set <XdmQName> getGlobalVariableNameSnapshot ()
+  {
+    Set <XdmQName> ret = m_aGlobalNameSnapshot;
+    if (ret == null)
+    {
+      ret = Collections.unmodifiableSet (new CommonsHashSet <> (m_aGlobalNames));
+      m_aGlobalNameSnapshot = ret;
+    }
+    return ret;
   }
 
   @Nullable
@@ -1041,7 +1067,8 @@ public final class StylesheetCompiler
     m_aDuplicateGlobals.add (aName, aEl, bDuplicate ? "Duplicate global variable $" + aName.getEQName () : null);
     if (aPrev == null || aPrev.intValue () < aEl.getPrecedence ())
       m_aGlobalPrecedences.put (aName, Integer.valueOf (aEl.getPrecedence ()));
-    m_aGlobalNames.add (aName);
+    if (m_aGlobalNames.add (aName))
+      m_aGlobalNameSnapshot = null;
   }
 
   /**

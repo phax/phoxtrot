@@ -23,6 +23,7 @@ import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xpath.ops.Atomizer;
+import com.helger.phoxtrot.xpath.value.XdmAtomic;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
@@ -52,6 +53,10 @@ public final class SimpleContent
   @NonNull
   public static String join (@NonNull final XdmSequence aSeq, @NonNull final String sSeparator)
   {
+    // Fast path: a single atomic value (most attribute value templates and
+    // xsl:value-of selects) is its own string value
+    if (aSeq.size () == 1 && aSeq.get (0) instanceof final XdmAtomic aAtomic)
+      return Atomizer.getStringValue (aAtomic);
     final StringBuilder aSB = new StringBuilder ();
     boolean bFirst = true;
     boolean bLastText = false;
@@ -73,6 +78,15 @@ public final class SimpleContent
         continue;
       }
       bLastText = false;
+      // Fast path: an atomic value is its own atomized value
+      if (aItem instanceof final XdmAtomic aAtomic)
+      {
+        if (!bFirst)
+          aSB.append (sSeparator);
+        aSB.append (Atomizer.getStringValue (aAtomic));
+        bFirst = false;
+        continue;
+      }
       for (final IXdmItem aAtom : Atomizer.atomize (XdmSequence.of (aItem)))
       {
         if (!bFirst)

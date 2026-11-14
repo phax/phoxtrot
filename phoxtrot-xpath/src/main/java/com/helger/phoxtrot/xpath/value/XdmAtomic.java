@@ -52,6 +52,17 @@ public final class XdmAtomic implements IXdmItem
 {
   public static final XdmAtomic TRUE = new XdmAtomic (EAtomicType.BOOLEAN, Boolean.TRUE);
   public static final XdmAtomic FALSE = new XdmAtomic (EAtomicType.BOOLEAN, Boolean.FALSE);
+  // The xs:integer values from -128 to 127 are shared (go-xslt 6772c77): counts,
+  // positions and lengths are mostly small, and a value is immutable
+  private static final int SMALL_INTEGER_MIN = -128;
+  private static final int SMALL_INTEGER_MAX = 127;
+  private static final XdmAtomic [] SMALL_INTEGERS = new XdmAtomic [SMALL_INTEGER_MAX - SMALL_INTEGER_MIN + 1];
+
+  static
+  {
+    for (int i = 0; i < SMALL_INTEGERS.length; i++)
+      SMALL_INTEGERS[i] = new XdmAtomic (EAtomicType.INTEGER, BigInteger.valueOf (SMALL_INTEGER_MIN + i));
+  }
 
   private final EAtomicType m_eType;
   private final Object m_aValue;
@@ -90,6 +101,10 @@ public final class XdmAtomic implements IXdmItem
   {
     ValueEnforcer.notNull (eType, "Type");
     ValueEnforcer.notNull (aValue, "Value");
+    // Fast path: a small xs:integer is a shared value (a BigInteger of at most
+    // 7 bits is in -128..127)
+    if (eType == EAtomicType.INTEGER && aValue instanceof final BigInteger aInt && aInt.bitLength () < 8)
+      return SMALL_INTEGERS[aInt.intValue () - SMALL_INTEGER_MIN];
     return new XdmAtomic (eType, aValue);
   }
 
@@ -120,7 +135,10 @@ public final class XdmAtomic implements IXdmItem
   @NonNull
   public static XdmAtomic integer (final long nValue)
   {
-    return of (EAtomicType.INTEGER, BigInteger.valueOf (nValue));
+    // Fast path: a small value is shared, without creating a BigInteger
+    if (nValue >= SMALL_INTEGER_MIN && nValue <= SMALL_INTEGER_MAX)
+      return SMALL_INTEGERS[(int) nValue - SMALL_INTEGER_MIN];
+    return new XdmAtomic (EAtomicType.INTEGER, BigInteger.valueOf (nValue));
   }
 
   @NonNull

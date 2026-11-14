@@ -293,7 +293,8 @@ public final class XdmSequenceTest
   @Test
   public void testLiteralExpr ()
   {
-    final XdmAtomic a = _int (1);
+    // Outside of the shared small integers, so that _int creates another instance of an equal value below
+    final XdmAtomic a = _int (1000);
     final IExpr.LiteralExpr aLit = new IExpr.LiteralExpr (a);
     _assertItems (aLit.sequence (), a);
     // The sequence does not take part in equality
@@ -302,7 +303,7 @@ public final class XdmSequenceTest
     assertEquals ("LiteralExpr[value=" + a + "]", aLit.toString ());
     try
     {
-      new IExpr.LiteralExpr (a, XdmSequence.of (_int (1)));
+      new IExpr.LiteralExpr (a, XdmSequence.of (_int (1000)));
       fail ();
     }
     catch (final IllegalArgumentException ex)

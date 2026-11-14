@@ -232,6 +232,14 @@ basis of this project. See [NOTICE](NOTICE).
 # News and noteworthy
 
 v0.2.0 - work in progress
+* XSLT: the static context of every expression shares the set of the global variable names instead of copying it
+  (Schematron stylesheets with hundreds of globals compile 30 to 40 % faster); new
+  `StaticContext.declareSharedVariables`
+* XPath/XSLT: the `xs:integer` values from -128 to 127 are shared instances; attribute value templates and
+  `xsl:value-of` take the string of a single atomic value directly; the serializer appends runs of characters that
+  need no escaping in one go
+* XSD: identity constraints build the key of one field without a list and join, and do not cast `xs:string` values;
+  the XSD 1.0 check of late schema location hints adds a namespace to its set only when it changes
 * XSD 1.1: with assertions in the schema, the types recorded for the typed values that assertions read are dropped
   whenever no element with assertions is open, so the record no longer grows with the document (10,000 invoice lines:
   29 % faster, a quarter of the GC time); the per-name child counts of the dynamic EDC check are only kept for a content

@@ -1734,13 +1734,19 @@ final class XsdInstanceValidator
     final ICommonsSet <String> aSeen = new CommonsHashSet <> (); // namespaces of the elements and attributes so far
     final ICommonsSet <String> aHinted = new CommonsHashSet <> (); // {namespace, location} pairs hinted so far
     final ICommonsList <IXdmNode> aStack = new CommonsArrayList <> ();
+    // The namespace added to aSeen last: most elements and attributes are in
+    // the namespace of the previous one, which needs no second hash lookup
+    String sLastSeen = null;
     aStack.add (aRoot);
     while (aStack.isNotEmpty ())
     {
       final IXdmNode aEl = aStack.removeLast ();
-      final ICommonsList <String> aAddressedNS = new CommonsArrayList <> ();
-      final ICommonsList <String> aAddressedLoc = new CommonsArrayList <> ();
       final String sSchemaLocation = XsdNodes.attrNS (aEl, XsdConstants.NS_XSI, "schemaLocation");
+      final String sNoNS = XsdNodes.attrNS (aEl, XsdConstants.NS_XSI, "noNamespaceSchemaLocation");
+      // Fast path: the lists are only needed for an element with a hint
+      final ICommonsList <String> aAddressedNS = sSchemaLocation == null && sNoNS == null ? null
+                                                                                          : new CommonsArrayList <> ();
+      final ICommonsList <String> aAddressedLoc = aAddressedNS == null ? null : new CommonsArrayList <> ();
       if (sSchemaLocation != null)
       {
         final ICommonsList <String> aFields = XsdLexHelper.xmlFields (sSchemaLocation);
@@ -1750,13 +1756,13 @@ final class XsdInstanceValidator
           aAddressedLoc.add (aFields.get (i + 1));
         }
       }
-      final String sNoNS = XsdNodes.attrNS (aEl, XsdConstants.NS_XSI, "noNamespaceSchemaLocation");
       if (sNoNS != null)
       {
         aAddressedNS.add ("");
         aAddressedLoc.add (_trimSpace (sNoNS));
       }
-      for (int i = 0; i < aAddressedNS.size (); i++)
+      final int nAddressed = aAddressedNS == null ? 0 : aAddressedNS.size ();
+      for (int i = 0; i < nAddressed; i++)
       {
         final String sNS = aAddressedNS.get (i);
         final boolean bFirst = aHinted.add (sNS + "\u0000" + aAddressedLoc.get (i));
@@ -1772,10 +1778,22 @@ final class XsdInstanceValidator
                                "",
                                "");
       }
-      aSeen.add (aEl.getName ().namespaceUri ());
+      final String sElementNS = aEl.getName ().namespaceUri ();
+      if (!sElementNS.equals (sLastSeen))
+      {
+        aSeen.add (sElementNS);
+        sLastSeen = sElementNS;
+      }
       final int nAttrs = aEl.getAttributeCount ();
       for (int i = 0; i < nAttrs; i++)
-        aSeen.add (aEl.getAttributeAtIndex (i).getName ().namespaceUri ());
+      {
+        final String sAttrNS = aEl.getAttributeAtIndex (i).getName ().namespaceUri ();
+        if (!sAttrNS.equals (sLastSeen))
+        {
+          aSeen.add (sAttrNS);
+          sLastSeen = sAttrNS;
+        }
+      }
       for (int i = aEl.getChildCount () - 1; i >= 0; i--)
       {
         final IXdmNode aChild = aEl.getChildAtIndex (i);

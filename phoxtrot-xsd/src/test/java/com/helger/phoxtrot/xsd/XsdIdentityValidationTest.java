@@ -53,6 +53,12 @@ public final class XsdIdentityValidationTest
     new Ic ("field-complex-element", "<xs:unique name=\"u\"><xs:selector xpath=\"book\"/><xs:field xpath=\"meta\"/></xs:unique>", "<lib><book><meta><m/></meta></book></lib>", false),
     new Ic ("multi-field-distinct", "<xs:key name=\"k\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@a\"/><xs:field xpath=\"@b\"/></xs:key>", "<lib><book a=\"1\" b=\"1\"/><book a=\"1\" b=\"2\"/></lib>", true),
     new Ic ("multi-field-dup", "<xs:key name=\"k\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@a\"/><xs:field xpath=\"@b\"/></xs:key>", "<lib><book a=\"1\" b=\"2\"/><book a=\"1\" b=\"2\"/></lib>", false),
+    // Tuples of three fields: the keys are joined in field order, so a shifted value is distinct
+    new Ic ("three-field-distinct", "<xs:key name=\"k\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@a\"/><xs:field xpath=\"@b\"/><xs:field xpath=\"@n\"/></xs:key>", "<lib><book a=\"1\" b=\"2\" n=\"3\"/><book a=\"2\" b=\"1\" n=\"3\"/><book a=\"12\" b=\"\" n=\"3\"/></lib>", true),
+    new Ic ("three-field-dup", "<xs:key name=\"k\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@a\"/><xs:field xpath=\"@b\"/><xs:field xpath=\"@n\"/></xs:key>", "<lib><book a=\"1\" b=\"2\" n=\"3.0\"/><book a=\"1\" b=\"2\" n=\"03\"/></lib>", false),
+    // xs:string keys keep their whitespace and are compared as written
+    new Ic ("string-whitespace-distinct", "<xs:unique name=\"u\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@s\"/></xs:unique>", "<lib><book s=\" x \"/><book s=\"x\"/></lib>", true),
+    new Ic ("string-equal", "<xs:unique name=\"u\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@s\"/></xs:unique>", "<lib><book s=\" x \"/><book s=\" x \"/></lib>", false),
     new Ic ("decimal-value-equal", "<xs:unique name=\"u\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@n\"/></xs:unique>", "<lib><book n=\"1.0\"/><book n=\"01\"/></lib>", false),
     new Ic ("decimal-value-distinct", "<xs:unique name=\"u\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@n\"/></xs:unique>", "<lib><book n=\"1.0\"/><book n=\"1.5\"/></lib>", true),
     new Ic ("string-lexical-distinct", "<xs:unique name=\"u\"><xs:selector xpath=\"book\"/><xs:field xpath=\"@s\"/></xs:unique>", "<lib><book s=\"1.0\"/><book s=\"1\"/></lib>", true),

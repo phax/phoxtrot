@@ -154,6 +154,23 @@ public final class XdmSerializerTest
   }
 
   @Test
+  public void testEscapingRuns ()
+  {
+    // Characters written as they are are appended in runs between the escaped ones: runs at the start, in the middle
+    // and at the end, escapes next to each other, non-ASCII and a supplementary character
+    assertEquals ("<a x=\"1&amp;2&lt;3&gt;4&#34;5&#9;6&#10;7&#13;8\u00e99\">1&amp;2&lt;3&gt;4\t5\n6&#13;7\u00e98\uD800\uDC009</a>",
+                  evalString ("serialize(parse-xml('<a x=\"1&amp;2&lt;3&gt;4&quot;5&#9;6&#10;7&#13;8\u00e99\">1&amp;2&lt;3&gt;4&#9;5&#10;6&#13;7\u00e98\uD800\uDC009</a>'))"));
+    assertEquals ("<a x=\"&amp;&amp;\">&lt;&lt;</a><b>plain</b><c x=\"\"/>",
+                  evalString ("serialize((parse-xml('<a x=\"&amp;&amp;\">&lt;&lt;</a>'), parse-xml('<b>plain</b>'), parse-xml('<c x=\"\"/>')), map{'item-separator':''})"));
+    // HTML: '<' and an ampersand before '{' stay in attribute values, CR stays in text
+    assertEquals ("<p title=\"a<b&amp;c&{d}\">x&amp;y&#13;z</p>".replace ("&#13;", "\r"),
+                  evalString ("serialize(parse-xml('<p title=\"a&lt;b&amp;c&amp;{d}\">x&amp;y&#13;z</p>'), map{'method':'html'})"));
+    // Outside the encoding: references within a run
+    assertEquals ("<a x=\"a&#233;b\">a&#233;b</a>",
+                  evalString ("serialize(parse-xml('<a x=\"a\u00e9b\">a\u00e9b</a>'), map{'encoding':'us-ascii'})"));
+  }
+
+  @Test
   public void testCharactersOutsideTheEncoding ()
   {
     // Character references in text and attributes

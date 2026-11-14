@@ -197,15 +197,35 @@ public final class CompileContext
   @NonNull
   public StaticContext createStaticContext (@NonNull final XslElement aEl)
   {
-    final ICommonsOrderedSet <XdmQName> aVariables = getVariablesInScope ();
+    final StaticContext ret;
     if (m_aCompiler.getPackages () != null && m_aCompiler.getPackages ().isMultiPackage ())
+    {
+      // Each package sees its own subset of the globals
+      final ICommonsOrderedSet <XdmQName> aVariables = getVariablesInScope ();
       aVariables.removeIf (x -> m_aCompiler.isGlobalVariableHidden (aEl, x));
-    final StaticContext ret = StaticContexts.create (aEl,
-                                                     m_aCompiler.getFunctionLibraryFor (aEl),
-                                                     aVariables,
-                                                     m_aCompiler.getDefaultDecimalFormat (aEl),
-                                                     m_aCompiler.getDecimalFormats (aEl))
-                                            .setSchemaSet (m_aCompiler.getStylesheet ().getSchemaSet ());
+      ret = StaticContexts.create (aEl,
+                                   m_aCompiler.getFunctionLibraryFor (aEl),
+                                   aVariables,
+                                   m_aCompiler.getDefaultDecimalFormat (aEl),
+                                   m_aCompiler.getDecimalFormats (aEl));
+    }
+    else
+    {
+      // The locals are declared one by one, the globals as the set all static
+      // contexts share instead of a copy per expression (a stylesheet with
+      // hundreds of globals and thousands of expressions spent most of its
+      // compilation copying them)
+      final ICommonsList <XdmQName> aLocals = new CommonsArrayList <> ();
+      for (Scope aCur = m_aScope; aCur != null; aCur = aCur.next ())
+        aLocals.add (aCur.name ());
+      ret = StaticContexts.create (aEl,
+                                   m_aCompiler.getFunctionLibraryFor (aEl),
+                                   aLocals,
+                                   m_aCompiler.getDefaultDecimalFormat (aEl),
+                                   m_aCompiler.getDecimalFormats (aEl));
+      ret.declareSharedVariables (m_aCompiler.getGlobalVariableNameSnapshot (), m_aHiddenGlobal);
+    }
+    ret.setSchemaSet (m_aCompiler.getStylesheet ().getSchemaSet ());
     if (isXslt10Behaviour (aEl))
       ret.setXPath10Compatibility (true).setUnknownFunctionErrorCode ("XTDE1425");
     return ret;

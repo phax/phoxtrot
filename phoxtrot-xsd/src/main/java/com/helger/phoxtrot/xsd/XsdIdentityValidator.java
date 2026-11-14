@@ -48,6 +48,15 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 final class XsdIdentityValidator
 {
   private static final String TUPLE_SEP = "\u0000";
+  // The key prefix of each primitive type ("STRING:"), by ordinal, so that it is
+  // not concatenated again for every field value
+  private static final String [] PRIM_PREFIXES = new String [EAtomicType.values ().length];
+
+  static
+  {
+    for (final EAtomicType e : EAtomicType.values ())
+      PRIM_PREFIXES[e.ordinal ()] = e.name () + ":";
+  }
 
   @PresentForCodeCoverage
   private static final XsdIdentityValidator INSTANCE = new XsdIdentityValidator ();
@@ -261,7 +270,11 @@ final class XsdIdentityValidator
                                       @NonNull final String sRaw)
   {
     final EAtomicType ePrim = XsdComponentChecks.xsdPrimitiveOf (aType.resolvePrim ());
-    final String sPrefix = ePrim.name () + ":";
+    final String sPrefix = PRIM_PREFIXES[ePrim.ordinal ()];
+    // Fast path: a cast to xs:string gives the value unchanged (its whiteSpace
+    // processing was applied by the caller)
+    if (ePrim == EAtomicType.STRING)
+      return sPrefix + sRaw;
     if (ePrim == EAtomicType.QNAME || ePrim == EAtomicType.NOTATION)
     {
       // QName values are equal when their namespace and local part match; the
@@ -371,9 +384,13 @@ final class XsdIdentityValidator
                                    @NonNull final XsdIdentityConstraint aConstraint,
                                    @NonNull final IXdmNode aTarget)
   {
-    final ICommonsList <String> aVals = new CommonsArrayList <> ();
+    // The tuple of a single field is its key, more keys are joined with
+    // TUPLE_SEP; the builder is created for the second key only
+    String sFirst = "";
+    StringBuilder aSB = null;
     for (int nField = 0; nField < aConstraint.m_aFields.size (); nField++)
     {
+      final String sKey;
       final ICommonsList <IXdmNode> aNodes = _evalNodes (aConstraint.m_aFields.get (nField),
                                                          aConstraint.m_aFieldPaths.get (nField),
                                                          aTarget);
@@ -392,27 +409,40 @@ final class XsdIdentityValidator
             // The supplied value must take the same canonical key form as an
             // explicit one (fieldKeyValue), or "test" and the defaulted
             // "test" would never collide
-            String sKey = sValue;
+            String sDefaultKey = sValue;
             if (aType != null && aType.m_eVariety == EXsdVariety.ATOMIC)
             {
               final String sCanon = _canonAtomic (aType,
                                                   aTarget,
                                                   XsdWhiteSpace.apply (aType.effectiveWhiteSpace (), sValue));
               if (sCanon != null)
-                sKey = sCanon;
+                sDefaultKey = sCanon;
             }
-            aVals.add (sKey);
-            continue;
+            sKey = sDefaultKey;
           }
+          else
+            return null; // incomplete
         }
-        return null; // incomplete
+        else
+          return null; // incomplete
       }
-      if (aNodes.size () > 1)
-        throw XsdCompiler.invalid ("cvc-identity-constraint.3", "field selects more than one node");
-      _fieldTypeOK (aRun, aNodes.get (0));
-      aVals.add (_fieldKeyValue (aRun, aNodes.get (0)));
+      else
+      {
+        if (aNodes.size () > 1)
+          throw XsdCompiler.invalid ("cvc-identity-constraint.3", "field selects more than one node");
+        _fieldTypeOK (aRun, aNodes.get (0));
+        sKey = _fieldKeyValue (aRun, aNodes.get (0));
+      }
+      if (nField == 0)
+        sFirst = sKey;
+      else
+      {
+        if (aSB == null)
+          aSB = new StringBuilder (sFirst);
+        aSB.append (TUPLE_SEP).append (sKey);
+      }
     }
-    return String.join (TUPLE_SEP, aVals);
+    return aSB == null ? sFirst : aSB.toString ();
   }
 
   /**

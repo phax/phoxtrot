@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xpath.context;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -65,6 +66,11 @@ public final class StaticContext
   private FormatDecimalFormat m_aDefaultDecimalFormat = FormatDecimalFormat.DEFAULT;
   private final ICommonsMap <XdmQName, FormatDecimalFormat> m_aDecimalFormats = new CommonsHashMap <> ();
   private final ICommonsSet <XdmQName> m_aDeclaredVariables = new CommonsHashSet <> ();
+  // Further declared variables in a set shared with other static contexts
+  // (declareSharedVariables), never changed while in use; null for none
+  private Set <XdmQName> m_aSharedVariables;
+  // The name of m_aSharedVariables that is not declared; null for none
+  private XdmQName m_aSharedVariableExcluded;
   private EXmlVersion m_eXmlVersion = DEFAULT_XML_VERSION;
   private EXsdVersion m_eXsdVersion = DEFAULT_XSD_VERSION;
   private boolean m_bXsdVersionSet = false;
@@ -351,14 +357,45 @@ public final class StaticContext
   }
 
   /**
+   * Declare all variables of a set that many static contexts share, such as
+   * the global variables of a stylesheet, without copying it: every name in it
+   * except the excluded one counts as declared, in addition to the variables
+   * declared with {@link #declareVariable(XdmQName)}. The set is kept by
+   * reference, so it must not change while this static context is used. A
+   * second call replaces the shared set of the first.
+   *
+   * @param aNames
+   *        The variable names. Not copied.
+   * @param aExcluded
+   *        A name of the set that is not declared (unless it is declared with
+   *        {@link #declareVariable(XdmQName)}), or <code>null</code> for none.
+   * @return this for chaining
+   * @since 0.2.0
+   */
+  @NonNull
+  public StaticContext declareSharedVariables (@NonNull final Set <XdmQName> aNames, @Nullable final XdmQName aExcluded)
+  {
+    ValueEnforcer.notNull (aNames, "Names");
+    m_aSharedVariables = aNames;
+    m_aSharedVariableExcluded = aExcluded;
+    return this;
+  }
+
+  /**
    * @param aName
    *        Variable name.
    * @return <code>true</code> if the variable was declared via
-   *         {@link #declareVariable(XdmQName)}.
+   *         {@link #declareVariable(XdmQName)} or is in the set of
+   *         {@link #declareSharedVariables(Set, XdmQName)} and not excluded
+   *         there.
    */
   public boolean isVariableDeclared (@Nullable final XdmQName aName)
   {
-    return aName != null && m_aDeclaredVariables.contains (aName);
+    if (aName == null)
+      return false;
+    if (m_aDeclaredVariables.contains (aName))
+      return true;
+    return m_aSharedVariables != null && m_aSharedVariables.contains (aName) && !aName.equals (m_aSharedVariableExcluded);
   }
 
   /** @return The default collation URI; the codepoint collation unless set. */

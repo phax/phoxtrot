@@ -85,6 +85,16 @@ public final class XsltInstructionsTest
     // Circular globals
     assertEquals ("XTDE0640",
                   errorCode (SHEET + "<xsl:variable name='a' select='$b'/><xsl:variable name='b' select='$a'/>" + IT + "<xsl:value-of select='$a'/>" + TE + END, null));
+    // The static contexts share the global names: a global declared after its use is in scope, a global is not in
+    // scope in its own declaration, a local of the same name inside it is
+    assertEquals ("7", text (IT + "<xsl:value-of select='$g'/>" + TE + "<xsl:variable name='g' select='7'/>", null));
+    assertEquals ("XPST0008", errorCode (SHEET + "<xsl:variable name='a' select='$a'/>" + IT + "<xsl:value-of select='$a'/>" + TE + END, null));
+    assertEquals ("5 6",
+                  text ("<xsl:variable name='b' select='6'/><xsl:variable name='a'><xsl:variable name='a' select='5'/><xsl:value-of select='$a, $b'/></xsl:variable>" +
+                        IT +
+                        "<xsl:value-of select='$a'/>" +
+                        TE,
+                        null));
     // Type of a variable
     assertEquals ("XTTE0570", errorCode (SHEET + IT + "<xsl:variable name='v' as='xs:integer' select='\"x\"'/><xsl:value-of select='$v'/>" + TE + END, null));
   }

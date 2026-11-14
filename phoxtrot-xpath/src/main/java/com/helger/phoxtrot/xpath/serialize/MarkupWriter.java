@@ -150,6 +150,23 @@ final class MarkupWriter
                                                               "wbr");
   private static final Set <String> FORMATTED_ELEMENTS = Set.of ("pre", "script", "style", "title", "textarea");
   private static final Map <String, Set <String>> URI_ATTRS;
+  /*
+   * The ASCII characters that text content (TEXT_AS_IS) and attribute values
+   * (ATTR_AS_IS) write as they are with every method and encoding: the
+   * printable ones except the escaped ones, and for text also tab and LF.
+   */
+  private static final boolean [] TEXT_AS_IS = new boolean [0x80];
+  private static final boolean [] ATTR_AS_IS = new boolean [0x80];
+  static
+  {
+    for (char c = 0x20; c < 0x7F; c++)
+    {
+      TEXT_AS_IS[c] = c != '&' && c != '<' && c != '>';
+      ATTR_AS_IS[c] = c != '&' && c != '<' && c != '>' && c != '"';
+    }
+    TEXT_AS_IS['\t'] = true;
+    TEXT_AS_IS['\n'] = true;
+  }
   static
   {
     final ICommonsMap <String, Set <String>> aMap = new CommonsHashMap <> ();
@@ -352,10 +369,24 @@ final class MarkupWriter
    */
   private void _escapeText (@NonNull final StringBuilder aSB, @NonNull final String s)
   {
-    for (int i = 0; i < s.length ();)
+    final int nLen = s.length ();
+    // The start of the run of characters written as they are, not yet appended
+    int nRunStart = 0;
+    for (int i = 0; i < nLen;)
     {
+      final char c = s.charAt (i);
+      // Fast path: an ASCII character without escaping extends the run, which
+      // is appended in one go
+      if (c < 0x80 && TEXT_AS_IS[c])
+      {
+        i++;
+        continue;
+      }
+      if (nRunStart < i)
+        aSB.append (s, nRunStart, i);
       final int cp = s.codePointAt (i);
       i += Character.charCount (cp);
+      nRunStart = i;
       switch (cp)
       {
         case '&':
@@ -377,6 +408,8 @@ final class MarkupWriter
           _appendChar (aSB, cp);
       }
     }
+    if (nRunStart < nLen)
+      aSB.append (s, nRunStart, nLen);
   }
 
   /**
@@ -432,10 +465,24 @@ final class MarkupWriter
    */
   private void _escapeAttr (@NonNull final StringBuilder aSB, @NonNull final String s)
   {
-    for (int i = 0; i < s.length ();)
+    final int nLen = s.length ();
+    // The start of the run of characters written as they are, not yet appended
+    int nRunStart = 0;
+    for (int i = 0; i < nLen;)
     {
+      final char c = s.charAt (i);
+      // Fast path: an ASCII character without escaping extends the run, which
+      // is appended in one go
+      if (c < 0x80 && ATTR_AS_IS[c])
+      {
+        i++;
+        continue;
+      }
+      if (nRunStart < i)
+        aSB.append (s, nRunStart, i);
       final int cp = s.codePointAt (i);
       i += Character.charCount (cp);
+      nRunStart = i;
       switch (cp)
       {
         case '&':
@@ -476,6 +523,8 @@ final class MarkupWriter
           _appendChar (aSB, cp);
       }
     }
+    if (nRunStart < nLen)
+      aSB.append (s, nRunStart, nLen);
   }
 
   /**

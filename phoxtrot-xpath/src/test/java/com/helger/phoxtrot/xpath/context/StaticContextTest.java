@@ -17,11 +17,16 @@
 package com.helger.phoxtrot.xpath.context;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertSame;
+import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
+
+import java.util.Set;
 
 import org.junit.Test;
 
+import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.XPathCompiler;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.collation.CollationRegistry;
@@ -150,5 +155,30 @@ public final class StaticContextTest
 
     _assertError (new StaticContext ().setDefaultCollation ("http://example.org/unknown"), "max(('a', 'B'))", "FOCH0002");
     _assertError (new StaticContext ().setDefaultCollation (":invalid"), "max(('a', 'B'))", "FOCH0002");
+  }
+
+  @Test
+  public void testSharedVariables ()
+  {
+    final XdmQName aA = new XdmQName ("a");
+    final XdmQName aB = new XdmQName ("b");
+    final XdmQName aC = new XdmQName ("c");
+    final StaticContext aSC = new StaticContext ();
+    aSC.declareSharedVariables (Set.of (aA, aB), aB);
+    assertTrue (aSC.isVariableDeclared (aA));
+    // Excluded from the shared set
+    assertFalse (aSC.isVariableDeclared (aB));
+    assertFalse (aSC.isVariableDeclared (aC));
+    assertFalse (aSC.isVariableDeclared (null));
+    _assertError (aSC, "$b", "XPST0008");
+    _assertError (aSC, "$c", "XPST0008");
+    // A variable declared on its own counts, also if it is the excluded one
+    aSC.declareVariable (aB);
+    assertTrue (aSC.isVariableDeclared (aB));
+    // A second shared set replaces the first
+    aSC.declareSharedVariables (Set.of (aC), null);
+    assertFalse (aSC.isVariableDeclared (aA));
+    assertTrue (aSC.isVariableDeclared (aB));
+    assertTrue (aSC.isVariableDeclared (aC));
   }
 }

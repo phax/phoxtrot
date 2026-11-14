@@ -1472,3 +1472,51 @@ Found while measuring (no go-xslt item):
   escape in bulk would save part of the self time.
 - `SimpleContent.join` (AVTs, `xsl:value-of`) builds a sequence and atomizes it for every item, also for a single
   atomic value: 4 % of the CPU samples and 11 % of the allocated bytes of xslt `serialize-xml`.
+
+### S51 - Follow-ups of S50: static context globals, late hints, escaping, integers, identity keys
+
+The two "worth it for the allocation" items of S50 and the four findings made while measuring it, all implemented.
+
+1. `CompileContext.createStaticContext` declares the locals of the scope chain one by one and the globals with the new
+   `StaticContext.declareSharedVariables (set, excluded)`: a reference to `StylesheetCompiler.
+   getGlobalVariableNameSnapshot ()`, an unmodifiable copy of the global names that `_prepareGlobal` drops when it adds
+   a name, so each static context sees the globals known when it was created, as before; the excluded name is the
+   hidden own global of a global variable's definition. A multi-package compilation keeps the copy per expression (each
+   package sees another subset).
+2. `XsdInstanceValidator.checkLateHints` adds a namespace to its set only when it differs from the previous one and
+   creates the two lists only for an element with a hint.
+3. `MarkupWriter._escapeText`/`_escapeAttr` append the runs of ASCII characters that are written as they are with
+   every method and encoding (`TEXT_AS_IS`, `ATTR_AS_IS`: printable except `& < >`, for attributes also `"`, for text
+   also tab and LF) in one `append`; every other character takes the old switch.
+4. `SimpleContent.join` returns the string value of a single atomic item directly and appends atomic items without
+   atomizing a one-item sequence.
+5. `XdmAtomic` shares the `xs:integer` values -128 to 127 (`integer (long)`, and `of` for `INTEGER` with a
+   `BigInteger` of at most 7 bits, which covers `integer (BigInteger)` and casts to `xs:integer`).
+6. `XsdIdentityValidator`: the type prefixes of the keys are built once per type (`PRIM_PREFIXES`), a value of
+   primitive type `xs:string` is not cast (the cast returns it unchanged), and a tuple of one field is its key, without
+   a list and `String.join`.
+
+Measured on JDK 21 against `8a97b7c` (`compare.sh`, `-f 2 -prof gc`, the rows marked * again with `-f 3 -wi 5 -i 8`;
+ms per operation, MB allocated per operation, 10,000 lines):
+
+| Workload | before | now | allocated before / now |
+|---|---|---|---|
+| xsd 1.0 * | 31.0 | 30.0 | 105.6 / 97.6 |
+| xsd 1.1 | 56.3 | 54.5 | 192.8 / 190.9 |
+| xslt `identity` * | 29.7 | 28.4 | 155.3 / 157.7 |
+| xslt `serialize-xml` | 11.0 | 10.9 | 44.0 / 37.6 |
+| xslt `serialize-html` | 12.8 | 12.5 | 47.7 / 44.1 |
+| xslt `keys` | 6.55 | 5.90 | 24.1 / 22.6 |
+| xpath `strings` | 4.33 | 4.20 | 18.5 / 17.6 |
+| xpath `tokenize` * | 3.46 | 2.84 | 15.1 / 14.9 |
+| xpath `arithmetic`, `predicate`; compile `xslt` | | | unchanged within the spread |
+
+Compiling the three Schematron stylesheets of S50 (ZATCA 3.4.6 rules and CEN-EN16931-UBL, FinvoiceEnglanti 3.0) in a
+loop for 20 s, mean per round including the warm-up: 24.6 to 25.0 ms before, 14.1 to 17.8 ms now. The `identity`
+workload allocates 1.5 % more in every run although no changed code allocates on its path; not explained.
+
+Tests: `StaticContextTest.testSharedVariables`, `XsltInstructionsTest.testVariablesAndParams` (a global used before its
+declaration, a global in its own declaration is XPST0008, a local of the same name inside it), `XdmSerializerTest.
+testEscapingRuns`, `XdmAtomicTest`, `XsdIdentityValidationTest` (three-field tuples, whitespace in `xs:string` keys);
+`XdmSequenceTest.testLiteralExpr` uses 1000 instead of 1, as it needs two equal instances. Full conformance gate
+unchanged (QT3 22,419 of 22,478, XSLT30 8,640 of 8,647, XSD 1.0 39,396 of 39,401, XSD 1.1 41,596 of 41,600).
