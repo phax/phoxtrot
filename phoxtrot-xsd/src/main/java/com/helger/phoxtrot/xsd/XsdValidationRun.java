@@ -156,6 +156,11 @@ final class XsdValidationRun
    * 1.1 assertions. null unless the schema has assertions.
    */
   private ICommonsMap <IXdmNode, XsdSimpleType> m_aAssertTypes;
+  /*
+   * The number of open elements whose complex type has assertions. While it is
+   * zero, nothing recorded in m_aAssertTypes can be read again.
+   */
+  private int m_nOpenAssertedElements;
   private XsdBridge m_aAssertBridge;
   /*
    * The schema types of the assertion trees of this run by pair of types, so
@@ -446,20 +451,47 @@ final class XsdValidationRun
   }
 
   /**
-   * Size the record of the types of simple-typed nodes for XSD 1.1 assertions
-   * (see {@link #annotateAssertType}) for a validation of a whole document,
-   * so that it is not rehashed again and again while it grows to an entry for
-   * most nodes. Does nothing if the schema has no assertions or something was
-   * recorded already.
-   *
-   * @param nNodes
-   *        The number of nodes of the document (all kinds, as numbered),
-   *        only a hint.
+   * @return <code>true</code> if the types of simple-typed nodes are recorded
+   *         for XSD 1.1 assertions (see {@link #annotateAssertType}), which is
+   *         the case only for an XSD 1.1 schema with assertions.
    */
-  void expectAssertNodes (final int nNodes)
+  boolean isAssertTypesRecorded ()
   {
-    if (m_aAssertTypes != null && m_aAssertTypes.isEmpty () && nNodes > 16)
-      m_aAssertTypes = new CommonsHashMap <> (nNodes);
+    return m_aAssertTypes != null;
+  }
+
+  /**
+   * Note that the validation of an element whose complex type has assertions
+   * starts. Its assertions read the types recorded for its subtree, so they
+   * are kept until {@link #leaveComplexElement} was called for it.
+   */
+  void enterAssertedElement ()
+  {
+    m_nOpenAssertedElements++;
+  }
+
+  /**
+   * Note that the validation of an element against a complex type ended (go-xslt
+   * <code>validateComplex</code>, <code>assertOpen</code>). The recorded types
+   * of simple-typed nodes are read only by the assertions of an open element
+   * (for its subtree, after its content was validated), so while no element
+   * with assertions is open, nothing recorded so far can be read again and the
+   * record is emptied. It then stays at the size of the largest asserted
+   * subtree instead of growing by one entry per simple-typed node of the
+   * instance.
+   *
+   * @param bAsserted
+   *        <code>true</code> if {@link #enterAssertedElement} was called for
+   *        the element.
+   */
+  void leaveComplexElement (final boolean bAsserted)
+  {
+    if (bAsserted)
+      m_nOpenAssertedElements--;
+    // Fast path: nothing to empty while an asserted element is open, or when
+    // nothing was recorded since the last emptying
+    if (m_nOpenAssertedElements == 0 && m_aAssertTypes != null && m_aAssertTypes.isNotEmpty ())
+      m_aAssertTypes.clear ();
   }
 
   /**

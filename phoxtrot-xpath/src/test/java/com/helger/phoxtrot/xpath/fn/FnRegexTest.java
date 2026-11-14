@@ -214,6 +214,44 @@ public final class FnRegexTest
   }
 
   @Test
+  public void testPlainPatterns ()
+  {
+    // A plain pattern (no flags, no metacharacter, or the q flag) is searched as a string: the results must equal the
+    // regular expression's, which a non-capturing group forces
+    final String [] aInputs = { "", "-", "a", "a-b", "-a-", "a--b-", "--", "x" + "\uD800\uDC00" + "-y", "a-b-c-d-e" };
+    final String [] aPatterns = { "-", "--", "ab", "a-b" };
+    for (final String sInput : aInputs)
+      for (final String sPattern : aPatterns)
+      {
+        final String sArgs = "'" + sInput + "', '" + sPattern + "'";
+        final String sRegexArgs = "'" + sInput + "', '(?:" + sPattern + ")'";
+        assertEquals (sArgs, eval ("tokenize(" + sRegexArgs + ")"), eval ("tokenize(" + sArgs + ")"));
+        assertEquals (sArgs, eval ("count(tokenize(" + sRegexArgs + "))"), eval ("count(tokenize(" + sArgs + "))"));
+        assertEquals (sArgs, eval ("matches(" + sRegexArgs + ")"), eval ("matches(" + sArgs + ")"));
+        assertEquals (sArgs, eval ("replace(" + sRegexArgs + ", '+')"), eval ("replace(" + sArgs + ", '+')"));
+        assertEquals (sArgs, eval ("replace(" + sRegexArgs + ", '[$0]')"), eval ("replace(" + sArgs + ", '[$0]')"));
+        assertEquals (sArgs, eval ("tokenize(" + sRegexArgs + ")"), eval ("tokenize(" + sArgs + ", 'q')"));
+      }
+    // The q flag makes metacharacters plain
+    assertEquals ("a|b|c", eval ("tokenize('a.b.c', '.', 'q')"));
+    assertEquals ("a|b", eval ("tokenize('a||b', '||', 'q')"));
+    assertEquals ("true", eval ("matches('a(b', '(', 'q')"));
+    assertEquals ("a$1$1", eval ("replace('a(b', '(b', '$1$1', 'q')"));
+    // A replacement with '$' or '\' still goes through the regular expression: $1 has no group here
+    assertError ("FORX0004", "replace('abc', 'b', '$')");
+    assertEquals ("ac", eval ("replace('abc', 'b', '$1')"));
+    assertEquals ("a\\c", eval ("replace('abc', 'b', '\\\\')"));
+    // An empty pattern is not plain and keeps its error
+    assertError ("FORX0003", "tokenize('abc', '')");
+    assertError ("FORX0003", "tokenize('abc', '', 'q')");
+    // Flags other than q keep the regular expression
+    assertEquals ("a|c", eval ("tokenize('aBc', 'b', 'i')"));
+    assertError ("FORX0001", "tokenize('abc', 'b', 'z')");
+    // A pattern with a surrogate keeps the regular expression
+    assertEquals ("x|y", eval ("tokenize('x' || codepoints-to-string(65536) || 'y', codepoints-to-string(65536))"));
+  }
+
+  @Test
   public void testLongInput ()
   {
     // The Java matcher recurses per repetition of a group

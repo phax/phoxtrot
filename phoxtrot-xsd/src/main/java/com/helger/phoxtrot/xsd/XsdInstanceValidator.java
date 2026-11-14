@@ -938,7 +938,10 @@ final class XsdInstanceValidator
       soft (aRun, aGeneric, aElement);
       throw new XsdErrorCollector.ModelMismatch ();
     }
-    final boolean b11 = aRun.isXsd11 ();
+    // The children per name are counted only for the 1.1 dynamic EDC check
+    // below, which needs a lax or strict wildcard in the model (go-xslt
+    // 99bf54d): without one, nothing reads the counts
+    final boolean bCheckEDC = aRun.isXsd11 () && (aModel.m_aLaxWc.isNotEmpty () || aModel.m_aStrictWc.isNotEmpty ());
     ICommonsMap <XsdName, Integer> aElemUsed = null; // allocated on first use (1.1 EDC only)
     ICommonsList <IXdmNode> aPinned = aKids; // lazily copied; wildcard-attributed children get probed out
     boolean bPinnedCopied = false;
@@ -955,7 +958,7 @@ final class XsdInstanceValidator
         // else the global declaration's) must then be validly derived from the
         // like-named particle's type, and assessment runs against the global
         // declaration, not the local one
-        if (b11 && (_matchesAnyWildcard (aModel.m_aLaxWc, aName) || _matchesAnyWildcard (aModel.m_aStrictWc, aName)))
+        if (bCheckEDC && (_matchesAnyWildcard (aModel.m_aLaxWc, aName) || _matchesAnyWildcard (aModel.m_aStrictWc, aName)))
         {
           final long nCap = _elementCapacityFor (aParticle, aName);
           final Integer aUsed = aElemUsed == null ? null : aElemUsed.get (aName);
@@ -972,7 +975,7 @@ final class XsdInstanceValidator
             continue;
           }
         }
-        if (b11)
+        if (bCheckEDC)
         {
           if (aElemUsed == null)
             aElemUsed = new CommonsHashMap <> ();
@@ -1026,7 +1029,7 @@ final class XsdInstanceValidator
         // dropped it, but the context-determined type survives. A child that
         // can arrive as a substitution-group member is exempt: that
         // attribution is not a wildcard match.
-        if (b11 &&
+        if (bCheckEDC &&
             (_matchesAnyWildcard (aModel.m_aLaxWc, aName) || _matchesAnyWildcard (aModel.m_aStrictWc, aName)) &&
             !_substMatchesAnyDecl (aRun, aModel, aName))
         {
@@ -1147,8 +1150,8 @@ final class XsdInstanceValidator
   }
 
   /**
-   * go-xslt <code>validateComplex</code>: validate an element against a
-   * complex type. An abstract type is cvc-type.2. The attributes are
+   * go-xslt <code>validateComplexContent</code>: validate an element against
+   * a complex type. An abstract type is cvc-type.2. The attributes are
    * validated first (an error is recorded, the content is still checked).
    * Then, by content kind: empty content admits no children and no
    * non-whitespace text (under 1.1 no text at all), unless open content lets
@@ -1175,11 +1178,11 @@ final class XsdInstanceValidator
    * @throws XsdInvalidException
    *         if the element is not valid
    */
-  private static void _validateComplex (@NonNull final XsdValidationRun aRun,
-                                        @NonNull final XsdComplexType aType,
-                                        @NonNull final IXdmNode aElement,
-                                        @NonNull final ICommonsMap <XsdName, KeyTable> aScopes,
-                                        @Nullable final XsdElementDecl aDecl)
+  private static void _validateComplexContent (@NonNull final XsdValidationRun aRun,
+                                               @NonNull final XsdComplexType aType,
+                                               @NonNull final IXdmNode aElement,
+                                               @NonNull final ICommonsMap <XsdName, KeyTable> aScopes,
+                                               @Nullable final XsdElementDecl aDecl)
   {
     if (aType.m_bAbstract)
       throw XsdCompiler.invalid ("cvc-type.2", "type is abstract and cannot be used directly");
@@ -1244,6 +1247,53 @@ final class XsdInstanceValidator
         break;
     }
     _checkAsserts (aRun, aType, aElement);
+  }
+
+  /**
+   * go-xslt <code>validateComplex</code> with its assertion bookkeeping:
+   * validate an element against a complex type (see
+   * {@link #_validateComplexContent}). For an XSD 1.1 schema with assertions,
+   * the run is told when an element with assertions is open, so that it can
+   * drop the recorded types of simple-typed nodes that no assertion can read
+   * any more.
+   *
+   * @param aRun
+   *        The validation run.
+   * @param aType
+   *        The governing complex type.
+   * @param aElement
+   *        The element.
+   * @param aScopes
+   *        The key/unique tables in scope for the children.
+   * @param aDecl
+   *        The governing declaration, for its value constraint; may be
+   *        <code>null</code>.
+   * @throws XsdInvalidException
+   *         if the element is not valid
+   */
+  private static void _validateComplex (@NonNull final XsdValidationRun aRun,
+                                        @NonNull final XsdComplexType aType,
+                                        @NonNull final IXdmNode aElement,
+                                        @NonNull final ICommonsMap <XsdName, KeyTable> aScopes,
+                                        @Nullable final XsdElementDecl aDecl)
+  {
+    // Fast path: no types are recorded without assertions in the schema
+    if (!aRun.isAssertTypesRecorded ())
+    {
+      _validateComplexContent (aRun, aType, aElement, aScopes, aDecl);
+      return;
+    }
+    final boolean bAsserted = aRun.childModelOf (aType).m_aAsserts.isNotEmpty ();
+    if (bAsserted)
+      aRun.enterAssertedElement ();
+    try
+    {
+      _validateComplexContent (aRun, aType, aElement, aScopes, aDecl);
+    }
+    finally
+    {
+      aRun.leaveComplexElement (bAsserted);
+    }
   }
 
   /**
@@ -1985,8 +2035,6 @@ final class XsdInstanceValidator
     if (aLateHint != null)
       return XsdValidationResult.createInvalid (aLateHint);
     final XsdValidationRun aRun = new XsdValidationRun (aSchema, aDocument);
-    // The whole tree is validated: its document order numbers count its nodes
-    aRun.expectAssertNodes (aDocument.getEndOrder () + 1);
     final XsdErrorCollector aCollector = aOptions == null ? null : new XsdErrorCollector (aOptions.getMaxErrors ());
     final String sLanguage = aOptions == null ? "" : aOptions.getLanguage ();
     if (aCollector != null)

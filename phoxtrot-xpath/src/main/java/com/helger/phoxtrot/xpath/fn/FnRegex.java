@@ -44,6 +44,8 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 public final class FnRegex
 {
   private static final String FN_PREFIX = "fn";
+  /** The characters with a meaning of their own in a regular expression outside a character class. */
+  private static final String REGEX_METACHARACTERS = "\\^$.|?*+()[]{}";
   private static final XdmQName ANY_TYPE = new XdmQName (XdmConstants.NS_XS, "anyType", "xs");
   private static final XdmQName POSITIVE_INTEGER = new XdmQName (XdmConstants.NS_XS, "positiveInteger", "xs");
 
@@ -105,6 +107,40 @@ public final class FnRegex
   }
 
   /**
+   * Check whether a regular expression matches exactly its own characters and
+   * nothing else (go-xslt ddbdb15), so that a search for the pattern string
+   * gives the same matches as the regular expression: a non-empty pattern
+   * without flags and without a metacharacter (<code>\ ^ $ . | ? * + ( ) [ ]
+   * { }</code>), or any non-empty pattern with exactly the <code>q</code> flag.
+   * Such a pattern is always valid and never matches the empty string. A
+   * pattern with a surrogate is excluded, as a regular expression never matches
+   * half of a surrogate pair.
+   *
+   * @param sPattern
+   *        The regular expression.
+   * @param sFlags
+   *        The flags.
+   * @return <code>true</code> if the pattern can be searched as a plain string.
+   */
+  private static boolean _isPlainPattern (@NonNull final String sPattern, @NonNull final String sFlags)
+  {
+    if (sPattern.isEmpty ())
+      return false;
+    final boolean bQuoted = "q".equals (sFlags);
+    if (!bQuoted && !sFlags.isEmpty ())
+      return false;
+    for (int i = 0; i < sPattern.length (); i++)
+    {
+      final char c = sPattern.charAt (i);
+      if (Character.isSurrogate (c))
+        return false;
+      if (!bQuoted && REGEX_METACHARACTERS.indexOf (c) >= 0)
+        return false;
+    }
+    return true;
+  }
+
+  /**
    * <code>fn:matches($input as xs:string?, $pattern as xs:string[, $flags as
    * xs:string]) as xs:boolean</code> (F&amp;O 3.1 section 5.6.3):
    * <code>true</code> if some substring of the input (the empty string for an
@@ -122,7 +158,12 @@ public final class FnRegex
   private static XdmSequence _matches (@NonNull final DynamicContext aCtx, @NonNull final List <XdmSequence> aArgs)
   {
     final String sInput = _optString (aArgs.get (0));
-    final XPathRegex aRegex = _compile (aCtx, _optString (aArgs.get (1)), _flags (aArgs, 2));
+    final String sPattern = _optString (aArgs.get (1));
+    final String sFlags = _flags (aArgs, 2);
+    // Fast path: a plain pattern matches where its string occurs
+    if (_isPlainPattern (sPattern, sFlags))
+      return XdmSequence.of (XdmAtomic.bool (sInput.contains (sPattern)));
+    final XPathRegex aRegex = _compile (aCtx, sPattern, sFlags);
     return XdmSequence.of (XdmAtomic.bool (aRegex.matches (aCtx, sInput)));
   }
 
@@ -231,6 +272,11 @@ public final class FnRegex
     final String sPattern = _optString (aArgs.get (1));
     final String sReplacement = _optString (aArgs.get (2));
     final String sFlags = _flags (aArgs, 3);
+    // Fast path: a plain pattern with a replacement without '$' and '\' (or
+    // with the q flag) replaces every occurrence of its string literally
+    if (_isPlainPattern (sPattern, sFlags) &&
+        ("q".equals (sFlags) || (sReplacement.indexOf ('$') < 0 && sReplacement.indexOf ('\\') < 0)))
+      return XdmSequence.of (XdmAtomic.string (sInput.replace (sPattern, sReplacement)));
     final XPathRegex aRegex = _compile (aCtx, sPattern, sFlags);
     if (!aRegex.isLiteral ())
       _checkReplacement (sReplacement);
@@ -282,6 +328,22 @@ public final class FnRegex
                                         @NonNull final String sPattern,
                                         @NonNull final String sFlags)
   {
+    // Fast path: a plain pattern splits at the occurrences of its string
+    if (_isPlainPattern (sPattern, sFlags))
+    {
+      if (sInput.isEmpty ())
+        return XdmSequence.EMPTY;
+      final XdmSequence.Builder aBuilder = new XdmSequence.Builder ();
+      int nPos = 0;
+      int nHit;
+      while ((nHit = sInput.indexOf (sPattern, nPos)) >= 0)
+      {
+        aBuilder.add (XdmAtomic.string (sInput.substring (nPos, nHit)));
+        nPos = nHit + sPattern.length ();
+      }
+      aBuilder.add (XdmAtomic.string (sInput.substring (nPos)));
+      return aBuilder.build ();
+    }
     final XPathRegex aRegex = _compile (aCtx, sPattern, sFlags);
     if (aRegex.matchesEmptyString ())
       throw XPathException.of ("FORX0003", "The regular expression '" + sPattern + "' matches a zero-length string");

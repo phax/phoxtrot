@@ -167,7 +167,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   A run claims the version tokens of `XsdSuiteRules.getClaimedTokens` (the version, and for 1.1 the CTA XPath subset of
   the validator: the native one claims `full-xpath-in-CTA`); a queried schema test whose compilation crashes counts as
   queried, not as fail. Identity-constraint selectors and fields are walked on the tree by `XsdIdentityPath` (parsed at
-  compile time); the compiled XPath of the constraint is only evaluated for a form it does not parse.
+  compile time); the compiled XPath of the constraint is only evaluated for a form it does not parse. The types that
+  XSD 1.1 assertions read (`XsdValidationRun.annotateAssertType`/`getAssertType`) are emptied whenever no element with
+  assertions is open (`enterAssertedElement`/`leaveComplexElement` around `_validateComplexContent`): a new reader may
+  only read them for the subtree of an open asserted element.
 - Streaming (plan: `docs/PLAN.md`, "Streaming"): `-Dxslt30.streaming=true` claims it in the XSLT30 harness (out dir
   `phoxtrot-xslt-conformance/target/streaming`, accepted file `xslt30-streaming.md`); with `-Dxslt30.schemaAware=true` as well
   it writes to `target/schema-aware-streaming` and is no gate (`checkAccepted` off by default). The engine switches are
@@ -258,7 +261,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   built-in classes on a JDK with a newer Unicode). A corrected class is very slow in `java.util.regex` (every range one
   more nested predicate), so `XPathRegex` also keeps the translation with the uncorrected built-in classes and
   `getPattern (String)`/`matcher` use it for an input without a changed code point (`containsDifference`). Match
-  through those, not `getPattern ()`. On JDK 21 there is no difference and only one pattern.
+  through those, not `getPattern ()`. On JDK 21 there is no difference and only one pattern. `fn:matches`,
+  `fn:replace` and `fn:tokenize` answer a plain pattern (`FnRegex._isPlainPattern`: no flags and no metacharacter, or
+  only `q`; no surrogate) with a string search, without `XPathRegex`.
 - Node test names hold interned strings (`NodeTest` constructor, `XdmQName.getInterned`), like the names the JDK
   parsers report and the tree builders keep, so a matching name test is decided by identity.
 - `XPathOperators` (`phoxtrot-xpath`, package `eval`) is the one place for the semantics of comparisons, arithmetic,

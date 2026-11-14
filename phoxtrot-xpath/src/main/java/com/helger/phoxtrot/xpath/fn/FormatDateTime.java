@@ -356,6 +356,25 @@ public final class FormatDateTime
   /**
    * @param s
    *        A presentation modifier.
+   * @return <code>true</code> if it is not empty and consists of the ASCII
+   *         digits <code>0</code> to <code>9</code> only.
+   */
+  private static boolean _isAsciiDigits (@NonNull final String s)
+  {
+    if (s.isEmpty ())
+      return false;
+    for (int i = 0; i < s.length (); i++)
+    {
+      final char c = s.charAt (i);
+      if (c < '0' || c > '9')
+        return false;
+    }
+    return true;
+  }
+
+  /**
+   * @param s
+   *        A presentation modifier.
    * @return The number of Unicode decimal digits in it.
    */
   private static int _countDigits (@NonNull final String s)
@@ -537,18 +556,32 @@ public final class FormatDateTime
       aOpts.m_bUsedLang = true;
     if (sMod.isEmpty ())
       sMod = "1";
-    FormatInteger.DigitPattern aDP = FormatInteger.parseDigitPattern (sMod);
-    if (aDP == null)
+    FormatInteger.DigitPattern aDP = null;
+    final int nMandatory;
+    final int nDigitSigns;
+    if (_isAsciiDigits (sMod))
     {
-      if (FormatInteger.isDigitPatternPicture (sMod) || sMod.indexOf ('#') >= 0)
-        throw _err ("Invalid presentation modifier [" + cComp + sMod + "]");
-      aDP = FormatInteger.parseDigitPattern ("1");
-      sMod = "1";
+      // Fast path (go-xslt 3928a52): a picture of ASCII digits only ([D01],
+      // [Y0001], the default "1") has a mandatory digit per character, the
+      // ASCII digit family and no grouping separator, so the zero-padded number
+      // is its rendering
+      nMandatory = sMod.length ();
+      nDigitSigns = sMod.length ();
     }
-    final int [] aW = _effectiveWidths (aDP.getMandatory (),
-                                        _countDigits (sMod) + _countChar (sMod, '#'),
-                                        nWMin,
-                                        nWMax);
+    else
+    {
+      aDP = FormatInteger.parseDigitPattern (sMod);
+      if (aDP == null)
+      {
+        if (FormatInteger.isDigitPatternPicture (sMod) || sMod.indexOf ('#') >= 0)
+          throw _err ("Invalid presentation modifier [" + cComp + sMod + "]");
+        aDP = FormatInteger.parseDigitPattern ("1");
+        sMod = "1";
+      }
+      nMandatory = aDP.getMandatory ();
+      nDigitSigns = _countDigits (sMod) + _countChar (sMod, '#');
+    }
+    final int [] aW = _effectiveWidths (nMandatory, nDigitSigns, nWMin, nWMax);
     final boolean bNeg = nValue < 0;
     String s = Long.toString (Math.abs (nValue));
     // Only the year is cut to its low-order digits (section 9.8.4.4); for
@@ -558,7 +591,8 @@ public final class FormatDateTime
       s = s.substring (s.length () - aW[1]);
     if (s.length () < aW[0])
       s = "0".repeat (aW[0] - s.length ()) + s;
-    s = aDP.render (s);
+    if (aDP != null)
+      s = aDP.render (s);
     if (bOrdinal)
       s += FormatWords.getOrdinalSuffix (nValue);
     return bNeg ? "-" + s : s;

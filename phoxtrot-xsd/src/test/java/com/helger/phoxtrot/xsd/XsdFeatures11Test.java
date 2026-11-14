@@ -58,6 +58,29 @@ public final class XsdFeatures11Test
             new DocCheck ("<r n=\"2\"><i>1</i><i>2</i></r>", true),
             new DocCheck ("<r n=\"3\"><i>1</i><i>2</i></r>", false),
             new DocCheck ("<r n=\"2\"><i>60</i><i>50</i></r>", false)),
+        // The types an assertion reads must survive while its element is open, also after a nested asserted element
+        // closed, and in every record after the first one (the run drops the recorded types when no asserted element
+        // is open)
+        new Case ("assert-typed-descendants-across-records",
+            VER_11,
+            "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +
+                "\t\t  <xs:element name=\"root\"><xs:complexType><xs:sequence>\n" +
+                "\t\t    <xs:element name=\"pre\" type=\"xs:int\" minOccurs=\"0\"/>\n" +
+                "\t\t    <xs:element name=\"plain\" minOccurs=\"0\"><xs:complexType><xs:sequence><xs:element name=\"v\" type=\"xs:int\"/></xs:sequence></xs:complexType></xs:element>\n" +
+                "\t\t    <xs:element name=\"rec\" maxOccurs=\"unbounded\"><xs:complexType><xs:sequence>\n" +
+                "\t\t      <xs:element name=\"qty\" type=\"xs:int\"/>\n" +
+                "\t\t      <xs:element name=\"inner\" minOccurs=\"0\"><xs:complexType><xs:sequence><xs:element name=\"d\" type=\"xs:decimal\"/></xs:sequence>\n" +
+                "\t\t        <xs:assert test=\"data(d) instance of xs:decimal\"/></xs:complexType></xs:element>\n" +
+                "\t\t      <xs:element name=\"tail\" type=\"xs:int\" minOccurs=\"0\"/>\n" +
+                "\t\t    </xs:sequence><xs:attribute name=\"n\" type=\"xs:int\"/>\n" +
+                "\t\t    <xs:assert test=\"data(qty) instance of xs:int and data(@n) instance of xs:int and (empty(inner) or data(inner/d) instance of xs:decimal) and (empty(tail) or data(tail) instance of xs:int)\"/>\n" +
+                "\t\t    <xs:assert test=\"qty lt 10\"/></xs:complexType></xs:element>\n" +
+                "\t\t  </xs:sequence></xs:complexType></xs:element></xs:schema>",
+            true,
+            new DocCheck ("<root><pre>1</pre><plain><v>2</v></plain><rec n=\"1\"><qty>3</qty><inner><d>1.5</d></inner><tail>4</tail></rec>" +
+                          "<rec n=\"2\"><qty>5</qty><tail>6</tail></rec><rec n=\"3\"><qty>7</qty><inner><d>2</d></inner></rec></root>",
+                          true),
+            new DocCheck ("<root><rec n=\"1\"><qty>3</qty></rec><rec n=\"2\"><qty>20</qty></rec></root>", false)),
         new Case ("assert-inherited",
             VER_11,
             "<xs:schema xmlns:xs=\"http://www.w3.org/2001/XMLSchema\">\n" +

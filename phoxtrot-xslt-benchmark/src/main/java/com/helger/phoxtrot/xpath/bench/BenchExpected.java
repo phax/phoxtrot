@@ -17,8 +17,11 @@
 package com.helger.phoxtrot.xpath.bench;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
+import java.util.Locale;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.regex.Pattern;
@@ -42,6 +45,7 @@ final class BenchExpected
 {
   private static final Pattern SKU_PATTERN = Pattern.compile ("^[A-Z]{3}-[0-9]{4}$");
   private static final Pattern ITEM_PATTERN = Pattern.compile ("([a-z]+) ([0-9]+)");
+  private static final DateTimeFormatter DAY_MONTH_YEAR = DateTimeFormatter.ofPattern ("dd.MM.uuuu", Locale.ROOT);
   private static final BigDecimal HUNDRED = BigDecimal.valueOf (100);
   private static final BigDecimal FIFTY = BigDecimal.valueOf (50);
 
@@ -149,6 +153,36 @@ final class BenchExpected
       nLength += ITEM_PATTERN.matcher (aLine.item ()).replaceAll ("$2-$1-$2").length ();
     }
     return nValid + "/" + nLength;
+  }
+
+  @NonNull
+  static String xpathTokenize (@NonNull final BenchData aData)
+  {
+    long nTokens = 0;
+    final StringBuilder aJoined = new StringBuilder ();
+    for (final Line aLine : aData.getAllLines ())
+    {
+      // fn:tokenize keeps empty tokens between adjacent separators, and gives none for an empty input
+      if (!aLine.note ().isEmpty ())
+        nTokens += aLine.note ().split (" ", -1).length;
+      if (aJoined.length () > 0)
+        aJoined.append (',');
+      aJoined.append (aLine.sku ().split ("-", -1)[1]);
+    }
+    return nTokens + "/" + aJoined.length ();
+  }
+
+  @NonNull
+  static String xpathFormatDate (@NonNull final BenchData aData)
+  {
+    long nLength = 0;
+    LocalDate aLastEnd = null;
+    for (final Line aLine : aData.getAllLines ())
+    {
+      nLength += DAY_MONTH_YEAR.format (aLine.start ()).length () + 1 + aLine.end ().toString ().length ();
+      aLastEnd = aLine.end ();
+    }
+    return nLength + "/" + DAY_MONTH_YEAR.format (aLastEnd);
   }
 
   @NonNull

@@ -1392,3 +1392,83 @@ function inside `use-when` should also be allowed is up to you; ph-schematron on
 Tests: an extension function contributed through `registerFunctions` is available in `use-when`
 (`function-available('p:f', 1)` true, the element is kept) and in a static variable; an unknown function stays
 unavailable. ph-schematron: `PhoxtrotLocationFunctionsTest.testAvailableViaUseWhen` expects `3 3` once this is fixed.
+
+### S50 - Performance items of go-xslt 0.4.3
+
+Found 2026-11-14 by checking the release go-xslt 0.4.3 (`v0.4.2..v0.4.3`, six performance rounds, no conformance change)
+against phoxtrot `4c1acbd`. Most of its items are Go allocation details (interface boxing, values copied by value,
+`encoding/xml`, `json.Decoder`) or were already done here (key index over the name index, xsl:number decisions per
+evaluation, AVT with one part, serializer decisions in the `MarkupWriter` constructor, no second parse of modules).
+Four have the same problem in phoxtrot:
+
+1. `c533853`: under XSD 1.1 with assertions, `XsdValidationRun.m_aAssertTypes` got an entry for every simple-typed
+   element and attribute of the instance and was never emptied (and was presized to the node count of the document),
+   although only the assertions of an open element read it, for its subtree.
+2. `99bf54d`: under XSD 1.1, `_validateChildren` counted the children per name for every element with declared
+   children, although only the dynamic EDC check reads the counts, and it needs a lax or strict wildcard.
+3. `ddbdb15`: `fn:tokenize` (and `fn:replace`, `fn:matches`) built the cache key of `XPathRegex.compile`, looked it up
+   and ran a `Matcher` for a pattern of plain characters.
+4. `3928a52`: `format-date`/`-dateTime`/`-time` parsed the digit pattern of every component (`FormatInteger.
+   parseDigitPattern`: code point arrays, two `IntIntMap`s, a list) and rendered it again, also for `[D01]`, `[Y0001]`.
+
+Status: implemented, measured on JDK 21 with `compare.sh 4c1acbd <new>` (`-f 2`, the XSD rows `-f 3 -wi 5 -i 8`, with
+`-prof gc`; ms per operation, MB allocated per operation):
+
+| Workload | before | now | allocated before / now |
+|---|---|---|---|
+| xpath `tokenize` (new), 10,000 lines | 5.43 | 3.04 | 21.2 / 14.9 |
+| xpath `format-date` (new), 10,000 lines | 11.97 | 7.21 | 99.9 / 36.7 |
+| xsd 1.1, 10,000 lines | 71.9 | 51.2 | 200.0 / 192.7 (JMH `gc.time` 4.3 s / 1.2 s) |
+| xsd 1.1, 1,000 lines | 4.89 | 4.74 | 19.5 / 18.4 |
+| xsd 1.0, 1,000 / 10,000 lines | 2.84 / 30.3 | 2.91 / 29.6 | unchanged within the spread |
+| xpath `regex`, `strings`, `exists` | | | unchanged within the spread |
+
+1. `XsdInstanceValidator._validateComplex` wraps the former body (`_validateComplexContent`): for a schema with
+   assertions it calls `XsdValidationRun.enterAssertedElement` for an element whose child model has assertions and
+   `leaveComplexElement` in a `finally`, which empties the record (`clear`, which keeps the table) when no asserted
+   element is open. `expectAssertNodes` is gone.
+2. `bCheckEDC` (XSD 1.1 and a lax or strict wildcard in the child model) guards the counting and both EDC branches.
+3. `FnRegex._isPlainPattern`: a non-empty pattern without flags and without `\ ^ $ . | ? * + ( ) [ ] { }`, or any
+   non-empty pattern with exactly the flag `q`, and no surrogate (a regular expression never matches half a pair).
+   `tokenize` splits with `indexOf`, `matches` is `contains`, `replace` is `String.replace` when the replacement has no
+   `$` and no `\` (or the flag is `q`); everything else goes through `XPathRegex` as before.
+4. `FormatDateTime`: a picture of ASCII digits only has a mandatory digit per character, the ASCII family and no
+   separator, so it skips `parseDigitPattern` and `render`; 168 date and time picture/value pairs give the same output
+   as before.
+
+Tests: `FnRegexTest.testPlainPatterns` (plain patterns against the same pattern as a non-capturing group, `q`, `$` and
+`\` replacements, empty pattern, other flags, surrogates), `FnFormatTest.testFormatDatePlainDigitPictures`,
+`XsdFeatures11Test` case `assert-typed-descendants-across-records` (fails if the record is emptied while an asserted
+element is open); QT3 unchanged (22,419 of 22,478), `XsdNativeIT` passes. New benchmark cases `tokenize` and
+`format-date` (XPath group).
+
+Measured but not ported (JFR, `settings=profile`, share of the CPU samples / of the allocated bytes of the workload):
+
+| Item | Workload | CPU | allocated | Verdict |
+|---|---|---|---|---|
+| `6e4a2d6`: a new `DynamicContext` (`RunState`, `OffsetDateTime.now ()`) per assertion, assertion facet and type alternative (`XsdAssertions._createContext`) | xsd 1.1 | not visible | 5.7 % (3.4 % of it `OffsetDateTime.now`) | small; a context per element would need the run state to be reusable |
+| `c4ba9d2`: identity key tuple as a list plus `String.join`, every field through `castOrNull` (`XsdIdentityValidator._tupleFor`) | xsd 1.0 / 1.1 | 1.4 % / 1.8 % | 11.0 % / 7.5 % | worth it for the allocation |
+| `4a88a84`: xsi attributes in separate scans (`XdmElementNode.getAttribute`) | xsd 1.1 | 0.3 % | 0 | no |
+| `f0d0e79`: `string-join` without a presized `StringBuilder` | xpath `tokenize` | 2.1 % | 1.8 % | no |
+| `6772c77`: `XdmAtomic.integer` without a cache of small values | xpath `strings` / `tokenize` | 2.2 % / 0.8 % | 7.6 % / 6.2 % | worth it for the allocation |
+| `6772c77`: `XPathOperators.atomizeOptional` with a builder for one node | xpath `arithmetic` | 1.5 % | 3.8 % | small |
+| `2ef7d5a`: `XslText.isXmlSpacePreserve` walks the ancestors per whitespace text node | compiling three Schematron stylesheets (ZATCA 3.4.6 rules and CEN-EN16931-UBL, FinvoiceEnglanti 3.0, about 750 KB) | 0.8 % | 1.5 % | no |
+| `93491d8`: `XslElement.getAllAttributes`/`getChildren` copy their lists | same | 1.7 % / 0.4 % | 0.9 % / 0.8 % | no |
+| xml:space pass, prefixed name concatenation in `XdmStreamReader` | streaming `streamed` | `getAttribute` not visible | 1.7 % | no |
+
+Found while measuring (no go-xslt item):
+
+- `CompileContext.getVariablesInScope` copies every global variable name into a new `CommonsLinkedHashSet` for every
+  static context, and `StaticContexts.create` declares each of them again (`StaticContext.declareVariable`): one copy
+  of all globals per XPath expression. Compiling the three Schematron stylesheets above (23.5 ms per round): 44 % of
+  the CPU samples and 55 % of the allocated bytes. The largest item by far; a shared set of the global names in the
+  static context would remove it.
+- `XsdInstanceValidator.checkLateHints` (XSD 1.0 only) walks the whole instance once more and adds the namespace of
+  every element and attribute to a `HashSet`: 10.2 % of the CPU samples of xsd 1.0 (8.6 % in `HashSet.add`), plus two
+  lists per element. Adding only a namespace that differs from the previous one, and creating the lists only for an
+  element with a hint, would remove most of it.
+- `MarkupWriter._escapeText`/`_appendChar` handle every code point through a switch: 10 to 15 % of the CPU samples
+  (self 7 to 9 %) of xslt `identity`, `serialize-xml` and `serialize-html`. Appending runs without a character to
+  escape in bulk would save part of the self time.
+- `SimpleContent.join` (AVTs, `xsl:value-of`) builds a sequence and atomizes it for every item, also for a single
+  atomic value: 4 % of the CPU samples and 11 % of the allocated bytes of xslt `serialize-xml`.

@@ -429,6 +429,28 @@ public final class FnFormatTest
   }
 
   @Test
+  public void testFormatDatePlainDigitPictures ()
+  {
+    // Pictures of ASCII digits only take a fast path without parsing the digit pattern; the values are those of the
+    // parsing path
+    assertEquals ("21.11.0985", _date ("0985-11-21", "[D01].[M01].[Y0001]"));
+    assertEquals ("021", _date ("0985-11-21", "[D001]"));
+    assertEquals ("0011", _date ("0985-11-21", "[M0001]"));
+    assertEquals ("85", _date ("0985-11-21", "[Y01]"));
+    assertEquals ("00985", _date ("0985-11-21", "[Y00001]"));
+    assertEquals ("0985", _date ("0985-11-21", "[Y01,4-4]"));
+    assertEquals ("011", _date ("0985-11-21", "[M1,3]"));
+    assertEquals ("325", _date ("0985-11-21", "[d001]"));
+    assertEquals ("11", _date ("0985-11-21", "[M10]"));
+    assertEquals ("21st", _date ("0985-11-21", "[D1o]"));
+    assertEquals ("9th", _date ("12345-01-09", "[D1o]"));
+    assertEquals ("12345", _date ("12345-01-09", "[Y00001]"));
+    assertEquals ("07:08:09.500", _time ("07:08:09.5", "[H01]:[m01]:[s01].[f001]"));
+    assertEquals ("059", _time ("23:59:59", "[s001]"));
+    assertEquals ("50", _time ("07:08:09.5", "[f01]"));
+  }
+
+  @Test
   public void testFormatDateTimezones ()
   {
     assertEquals ("-14:00", _date ("1985-03-01-14:00", "[Z]"));

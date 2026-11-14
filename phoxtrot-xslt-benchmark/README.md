@@ -27,6 +27,8 @@ it do less. `MainProfile verify` runs these checks for every case.
 | | `exists` | | `exists`/`empty`/`not`/`boolean` on early hits, missing names (name index) and a full scan |
 | | `strings` | | `concat`, `upper-case`, `substring`, `normalize-space` per line |
 | | `regex` | | `matches` and `replace` per line |
+| | `tokenize` | | `tokenize` on a plain-character pattern per line, `string-join` |
+| | `format-date` | | `format-date` with plain digit pictures (`[D01]`, `[Y0001]`) per line |
 | | `arithmetic` | | decimal, integer and double arithmetic and comparisons per line |
 | | `flwor` | | `for`, `let`, `some`/`every`, `distinct-values`, `sort`, date subtraction |
 | | `maps` | | `map:merge` with combine, `array:join`, `fold-left` and `array:fold-left` with inline functions |

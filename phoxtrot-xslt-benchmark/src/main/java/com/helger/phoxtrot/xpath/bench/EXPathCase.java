@@ -65,6 +65,17 @@ public enum EXPathCase implements IHasID <String>
          "count(/invoice/lines/line[matches(sku, '^[A-Z]{3}-[0-9]{4}$')])" +
                   " || '/' || string-length(string-join(/invoice/lines/line/item ! replace(., '([a-z]+) ([0-9]+)', '$2-$1-$2')))",
          BenchExpected::xpathRegex),
+  /** <code>tokenize</code> on plain-character patterns and <code>string-join</code> per line. */
+  TOKENIZE ("tokenize",
+            "sum(/invoice/lines/line ! count(tokenize(note, ' ')))" +
+                        " || '/' || string-length(string-join(/invoice/lines/line/sku ! tokenize(., '-')[2], ','))",
+            BenchExpected::xpathTokenize),
+  /** <code>format-date</code> with plain digit pictures per line. */
+  FORMAT_DATE ("format-date",
+               "string-length(string-join(/invoice/lines/line/period ! (format-date(xs:date(start), '[D01].[M01].[Y0001]')" +
+                              " || ' ' || format-date(xs:date(end), '[Y0001]-[M01]-[D01]'))))" +
+                              " || '/' || format-date(xs:date((/invoice/lines/line/period/end)[last()]), '[D01].[M01].[Y0001]')",
+               BenchExpected::xpathFormatDate),
   /** Decimal, integer and double arithmetic and comparisons per line. */
   ARITHMETIC ("arithmetic",
               "sum(for $l in /invoice/lines/line return xs:decimal($l/qty) * xs:decimal($l/price))" +

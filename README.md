@@ -232,6 +232,14 @@ basis of this project. See [NOTICE](NOTICE).
 # News and noteworthy
 
 v0.2.0 - work in progress
+* XSD 1.1: with assertions in the schema, the types recorded for the typed values that assertions read are dropped
+  whenever no element with assertions is open, so the record no longer grows with the document (10,000 invoice lines:
+  29 % faster, a quarter of the GC time); the per-name child counts of the dynamic EDC check are only kept for a content
+  model with a lax or strict wildcard (from go-xslt 0.4.3)
+* XPath: `fn:tokenize`, `fn:replace` and `fn:matches` with a pattern of plain characters (no flags and no
+  metacharacter, or the `q` flag) search the string without a regular expression (44 % faster); `format-date`,
+  `format-dateTime` and `format-time` render pictures of ASCII digits only (`[D01]`, `[Y0001]`) without parsing a digit
+  pattern (40 % faster, 63 % less allocated) (from go-xslt 0.4.3)
 * XPath: `fn:path` counts the sibling positions of the children of a parent once per run, so the paths of many
   siblings are linear; a predicate comparing `name()`, `local-name()` or `namespace-uri()` with a value that is the same
   for every candidate (`[name() = name(current())]`, also joined with `and`) evaluates that value once and compares the
