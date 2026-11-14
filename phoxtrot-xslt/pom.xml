@@ -28,6 +28,7 @@
   <packaging>jar</packaging>
   <name>phoxtrot-xslt</name>
   <description>XSLT 3.0 engine: compiler, runtime and transformation API</description>
+  
   <dependencies>
     <dependency>
       <groupId>com.helger.phoxtrot</groupId>
@@ -41,6 +42,7 @@
       <groupId>com.helger.commons</groupId>
       <artifactId>ph-collection</artifactId>
     </dependency>
+    
     <!-- Schema-awareness tests; phoxtrot-xdm declares Xerces-J optional -->
     <dependency>
       <groupId>xerces</groupId>
@@ -58,6 +60,7 @@
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
   <build>
     <plugins>
       <plugin>

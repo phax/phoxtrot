@@ -28,12 +28,14 @@
   <packaging>jar</packaging>
   <name>phoxtrot-xpath-conformance</name>
   <description>W3C QT3 (FOTS) conformance harness for the XPath 3.1 engine; test only, never deployed</description>
+  
   <properties>
     <!-- Test harness only: never installed, deployed or published -->
     <maven.install.skip>true</maven.install.skip>
     <maven.deploy.skip>true</maven.deploy.skip>
     <skipPublishing>true</skipPublishing>
   </properties>
+  
   <dependencies>
     <dependency>
       <groupId>com.helger.phoxtrot</groupId>
@@ -47,6 +49,7 @@
       <groupId>com.helger.commons</groupId>
       <artifactId>ph-collection</artifactId>
     </dependency>
+    
     <!-- fn:transform: the XSLT engine is found through the service loader -->
     <dependency>
       <groupId>com.helger.phoxtrot</groupId>

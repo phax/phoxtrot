@@ -28,12 +28,14 @@
   <packaging>jar</packaging>
   <name>phoxtrot-xslt-conformance</name>
   <description>W3C XSLT 3.0 (xslt30-test) conformance harness for the XSLT 3.0 engine; test only, never deployed</description>
+  
   <properties>
     <!-- Test harness only: never installed, deployed or published -->
     <maven.install.skip>true</maven.install.skip>
     <maven.deploy.skip>true</maven.deploy.skip>
     <skipPublishing>true</skipPublishing>
   </properties>
+  
   <dependencies>
     <dependency>
       <groupId>com.helger.phoxtrot</groupId>
@@ -52,6 +54,7 @@
       <groupId>com.helger.commons</groupId>
       <artifactId>ph-collection</artifactId>
     </dependency>
+    
     <!-- Schema processors of the schema-aware run (-Dxslt30.schemaAware=true): the native validator is the default,
          Xerces-J the alternative (-Dxdm.schemaProvider=xerces) -->
     <dependency>

@@ -28,6 +28,7 @@
   <packaging>jar</packaging>
   <name>phoxtrot-xdm</name>
   <description>XPath Data Model (XDM) - node tree, names and values</description>
+  
   <dependencies>
     <dependency>
       <groupId>com.helger.commons</groupId>
@@ -37,6 +38,7 @@
       <groupId>com.helger.commons</groupId>
       <artifactId>ph-collection</artifactId>
     </dependency>
+    
     <!-- Optional: schema-awareness (schema component model and validation of
          XDM trees). Without it the engine is a basic processor. xml-apis is
          excluded because the JDK provides those APIs. -->
@@ -51,12 +53,14 @@
         </exclusion>
       </exclusions>
     </dependency>
+    
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
   </dependencies>
+  
   <build>
     <resources>
       <!-- Only the properties files are filtered (version and build timestamp) -->

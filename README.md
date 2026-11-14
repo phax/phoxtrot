@@ -231,7 +231,7 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
-v0.2.0 - work in progress
+v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it
   (Schematron stylesheets with hundreds of globals compile 30 to 40 % faster); new
   `StaticContext.declareSharedVariables`

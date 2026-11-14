@@ -28,6 +28,7 @@
   <packaging>jar</packaging>
   <name>phoxtrot-xsd</name>
   <description>Native W3C XML Schema (XSD 1.0, 1.1 to follow) validator on the XDM tree, without Xerces-J or JAXP validation</description>
+  
   <dependencies>
     <dependency>
       <groupId>com.helger.phoxtrot</groupId>
@@ -45,6 +46,7 @@
       <groupId>com.helger.commons</groupId>
       <artifactId>ph-collection</artifactId>
     </dependency>
+    
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
