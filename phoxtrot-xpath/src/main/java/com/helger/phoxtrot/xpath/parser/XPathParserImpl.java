@@ -60,19 +60,18 @@ import com.helger.phoxtrot.xpath.value.EAtomicType;
 import com.helger.phoxtrot.xpath.value.XdmAtomic;
 
 /**
- * The stateful recursive-descent parser behind {@link XPathParser}. One
- * instance parses one string. The binary operator levels are handled by an
- * operator-precedence loop and the unary/arrow/cast/treat/instance-of levels
- * by one method, so that a nesting level costs only a handful of Java stack
- * frames.
+ * The stateful recursive-descent parser behind {@link XPathParser}. One instance parses one string.
+ * The binary operator levels are handled by an operator-precedence loop and the
+ * unary/arrow/cast/treat/instance-of levels by one method, so that a nesting level costs only a
+ * handful of Java stack frames.
  *
  * @author Philip Helger
  */
 final class XPathParserImpl
 {
   /**
-   * The maximum nesting depth of expressions (nested ExprSingle plus operator
-   * chains that build nested AST nodes), as in go-xslt's maxParseDepth.
+   * The maximum nesting depth of expressions (nested ExprSingle plus operator chains that build
+   * nested AST nodes), as in go-xslt's maxParseDepth.
    */
   static final int MAX_DEPTH = 5000;
   /** The error code of a nesting violation, as go-xslt uses it. */
@@ -83,46 +82,46 @@ final class XPathParserImpl
 
   /** Names that may not be used as unprefixed function names (XPath 3.1 A.3). */
   private static final ICommonsSet <String> RESERVED_FUNCTION_NAMES = new CommonsHashSet <> ("array",
-                                                                                               "attribute",
-                                                                                               "comment",
-                                                                                               "document-node",
-                                                                                               "element",
-                                                                                               "empty-sequence",
-                                                                                               "function",
-                                                                                               "if",
-                                                                                               "item",
-                                                                                               "map",
-                                                                                               "namespace-node",
-                                                                                               "node",
-                                                                                               "processing-instruction",
-                                                                                               "schema-attribute",
-                                                                                               "schema-element",
-                                                                                               "switch",
-                                                                                               "text",
-                                                                                               "typeswitch");
+                                                                                             "attribute",
+                                                                                             "comment",
+                                                                                             "document-node",
+                                                                                             "element",
+                                                                                             "empty-sequence",
+                                                                                             "function",
+                                                                                             "if",
+                                                                                             "item",
+                                                                                             "map",
+                                                                                             "namespace-node",
+                                                                                             "node",
+                                                                                             "processing-instruction",
+                                                                                             "schema-attribute",
+                                                                                             "schema-element",
+                                                                                             "switch",
+                                                                                             "text",
+                                                                                             "typeswitch");
   private static final ICommonsSet <String> KIND_TEST_NAMES = new CommonsHashSet <> ("node",
-                                                                                       "text",
-                                                                                       "comment",
-                                                                                       "processing-instruction",
-                                                                                       "element",
-                                                                                       "attribute",
-                                                                                       "document-node",
-                                                                                       "namespace-node",
-                                                                                       "schema-element",
-                                                                                       "schema-attribute");
+                                                                                     "text",
+                                                                                     "comment",
+                                                                                     "processing-instruction",
+                                                                                     "element",
+                                                                                     "attribute",
+                                                                                     "document-node",
+                                                                                     "namespace-node",
+                                                                                     "schema-element",
+                                                                                     "schema-attribute");
   /** The functions a rooted pattern may start with (XSLT 3.0 OuterFunctionName). */
   private static final ICommonsSet <String> PATTERN_FUNCTION_NAMES = new CommonsHashSet <> ("doc",
-                                                                                             "id",
-                                                                                             "element-with-id",
-                                                                                             "key",
-                                                                                             "root");
+                                                                                            "id",
+                                                                                            "element-with-id",
+                                                                                            "key",
+                                                                                            "root");
   /** Built-in schema types in the xs namespace that are not atomic. */
   private static final ICommonsSet <String> NON_ATOMIC_XS_TYPES = new CommonsHashSet <> ("anyType",
-                                                                                           "untyped",
-                                                                                           "anySimpleType",
-                                                                                           "IDREFS",
-                                                                                           "NMTOKENS",
-                                                                                           "ENTITIES");
+                                                                                         "untyped",
+                                                                                         "anySimpleType",
+                                                                                         "IDREFS",
+                                                                                         "NMTOKENS",
+                                                                                         "ENTITIES");
 
   /** Binary operators with their precedence (higher binds tighter). */
   private enum EOp
@@ -171,9 +170,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Stack size of the helper thread that re-runs a parse that overflowed the
-   * caller's stack. Big enough for {@link #MAX_DEPTH} levels even in
-   * interpreted mode; only address space is reserved up front.
+   * Stack size of the helper thread that re-runs a parse that overflowed the caller's stack. Big
+   * enough for {@link #MAX_DEPTH} levels even in interpreted mode; only address space is reserved
+   * up front.
    */
   private static final long LARGE_STACK_SIZE = 256L * 1024 * 1024;
 
@@ -210,8 +209,8 @@ final class XPathParserImpl
   private Map <IExpr, String> m_aPatternSources;
 
   /**
-   * Create a parser for one source text. The whole text is tokenised here, so
-   * lexical errors are raised by the constructor.
+   * Create a parser for one source text. The whole text is tokenised here, so lexical errors are
+   * raised by the constructor.
    *
    * @param sSrc
    *        The text to parse.
@@ -234,8 +233,8 @@ final class XPathParserImpl
   }
 
   /**
-   * @return The token at the given offset from the current one; beyond the
-   *         end the final {@link ETokenKind#EOF} token.
+   * @return The token at the given offset from the current one; beyond the end the final
+   *         {@link ETokenKind#EOF} token.
    */
   @NonNull
   private XPathToken _peek (final int nOffset)
@@ -251,8 +250,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Consume the current token. At the {@link ETokenKind#EOF} token the
-   * position stays where it is, so the parser can never run past the end.
+   * Consume the current token. At the {@link ETokenKind#EOF} token the position stays where it is,
+   * so the parser can never run past the end.
    *
    * @return The token that was current before the call.
    */
@@ -271,9 +270,8 @@ final class XPathParserImpl
   }
 
   /**
-   * @return The source text for an error message: unchanged up to 200
-   *         characters, else the first 200 characters followed by
-   *         <code>...</code>.
+   * @return The source text for an error message: unchanged up to 200 characters, else the first
+   *         200 characters followed by <code>...</code>.
    */
   @NonNull
   static String abbreviate (@NonNull final String sSrc)
@@ -288,19 +286,19 @@ final class XPathParserImpl
   }
 
   /**
-   * @return A new exception with the given error code whose message is
-   *         extended by the token offset and the abbreviated source. It is
-   *         returned, not thrown.
+   * @return A new exception with the given error code whose message is extended by the token offset
+   *         and the abbreviated source. It is returned, not thrown.
    */
   @NonNull
-  private XPathException _error (@NonNull final String sCode, @NonNull final String sMsg, @NonNull final XPathToken aTok)
+  private XPathException _error (@NonNull final String sCode,
+                                 @NonNull final String sMsg,
+                                 @NonNull final XPathToken aTok)
   {
     return XPathException.of (sCode, sMsg + _where (aTok)).setExpressionPosition (m_sSrc, aTok.pos ());
   }
 
   /**
-   * @return A new XPST0003 exception like {@link #_error(String, String,
-   *         XPathToken)}.
+   * @return A new XPST0003 exception like {@link #_error(String, String, XPathToken)}.
    */
   @NonNull
   private XPathException _syntax (@NonNull final String sMsg, @NonNull final XPathToken aTok)
@@ -311,14 +309,15 @@ final class XPathParserImpl
   /**
    * @param sExpected
    *        What the grammar allows at this point, for the message.
-   * @return A new XPST0003 exception for the current token, quoting its
-   *         display text (not quoted for the end of the expression).
+   * @return A new XPST0003 exception for the current token, quoting its display text (not quoted
+   *         for the end of the expression).
    */
   @NonNull
   private XPathException _unexpected (@NonNull final String sExpected)
   {
     final XPathToken aTok = _cur ();
-    return _syntax ("Unexpected " + (aTok.kind () == ETokenKind.EOF ? "" : "'") +
+    return _syntax ("Unexpected " +
+                    (aTok.kind () == ETokenKind.EOF ? "" : "'") +
                     aTok.getDisplayText () +
                     (aTok.kind () == ETokenKind.EOF ? "" : "'") +
                     ", expected " +
@@ -344,8 +343,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Consume the current token if it is the given unprefixed name. Keywords
-   * are not reserved in XPath, so a keyword is an NCName in the right place.
+   * Consume the current token if it is the given unprefixed name. Keywords are not reserved in
+   * XPath, so a keyword is an NCName in the right place.
    *
    * @throws XPathException
    *         XPST0003 otherwise.
@@ -358,12 +357,11 @@ final class XPathParserImpl
   }
 
   /**
-   * Count one more nesting level. The caller restores the depth when the
-   * level is left (in a <code>finally</code> block).
+   * Count one more nesting level. The caller restores the depth when the level is left (in a
+   * <code>finally</code> block).
    *
    * @throws XPathException
-   *         {@link #ERR_DEPTH} once more than {@link #MAX_DEPTH} levels are
-   *         open.
+   *         {@link #ERR_DEPTH} once more than {@link #MAX_DEPTH} levels are open.
    */
   private void _enterDepth ()
   {
@@ -398,8 +396,7 @@ final class XPathParserImpl
 
   /**
    * @param aTok
-   *        A {@link ETokenKind#PREFIX_WILDCARD} token, whose text is the
-   *        prefix.
+   *        A {@link ETokenKind#PREFIX_WILDCARD} token, whose text is the prefix.
    * @return The namespace URI the prefix is bound to in the static context.
    * @throws XPathException
    *         XPST0081 if the prefix is unbound or bound to the empty string.
@@ -414,13 +411,12 @@ final class XPathParserImpl
   }
 
   /**
-   * Resolve the name of a function call, named function reference or arrow
-   * target; an unprefixed name is in the default function namespace.
+   * Resolve the name of a function call, named function reference or arrow target; an unprefixed
+   * name is in the default function namespace.
    *
    * @throws XPathException
-   *         XPST0003 for an unprefixed reserved function name (XPath 3.1
-   *         A.3, e.g. <code>if</code> or <code>node</code>), XPST0081 for an
-   *         unbound prefix.
+   *         XPST0003 for an unprefixed reserved function name (XPath 3.1 A.3, e.g. <code>if</code>
+   *         or <code>node</code>), XPST0081 for an unbound prefix.
    */
   @NonNull
   private XdmQName _resolveFunctionName (@NonNull final XPathToken aTok)
@@ -431,9 +427,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Check that the function library of the static context has a function
-   * with this name and arity. <code>fn:concat</code> is variadic and accepted
-   * with any arity of at least 2 when the library knows the name.
+   * Check that the function library of the static context has a function with this name and arity.
+   * <code>fn:concat</code> is variadic and accepted with any arity of at least 2 when the library
+   * knows the name.
    *
    * @throws XPathException
    *         XPST0017 for an unknown name/arity combination.
@@ -446,21 +442,18 @@ final class XPathParserImpl
     // fn:concat is variadic
     if (aName.equals (FN_CONCAT) && nArity >= 2 && aLib.containsName (aName))
       return;
-    throw _error ("XPST0017",
-                  "Unknown function " + aName.getEQName () + "#" + nArity,
-                  aTok);
+    throw _error ("XPST0017", "Unknown function " + aName.getEQName () + "#" + nArity, aTok);
   }
 
   /**
    * Check a static function call (not a named function reference) like
-   * {@link #_checkFunction(XdmQName, int, XPathToken)}, except that with a
-   * fallback error code in the static context (XSLT 3.0 section 3.9.1) an
-   * unknown function outside the standard function namespace is accepted: the
-   * call then raises that error when it is evaluated.
+   * {@link #_checkFunction(XdmQName, int, XPathToken)}, except that with a fallback error code in
+   * the static context (XSLT 3.0 section 3.9.1) an unknown function outside the standard function
+   * namespace is accepted: the call then raises that error when it is evaluated.
    *
    * @throws XPathException
-   *         XPST0017 for an unknown name/arity combination that is not bound
-   *         to the fallback error function.
+   *         XPST0017 for an unknown name/arity combination that is not bound to the fallback error
+   *         function.
    */
   private void _checkFunctionCall (@NonNull final XdmQName aName, final int nArity, @NonNull final XPathToken aTok)
   {
@@ -470,12 +463,11 @@ final class XPathParserImpl
   }
 
   /**
-   * Consume a variable name (the token after <code>$</code>). An unprefixed
-   * name is in no namespace.
+   * Consume a variable name (the token after <code>$</code>). An unprefixed name is in no
+   * namespace.
    *
    * @throws XPathException
-   *         XPST0003 if the current token is no EQName, XPST0081 for an
-   *         unbound prefix.
+   *         XPST0003 if the current token is no EQName, XPST0081 for an unbound prefix.
    */
   @NonNull
   private XdmQName _parseVarName ()
@@ -488,9 +480,8 @@ final class XPathParserImpl
   }
 
   /**
-   * @return <code>true</code> if the variable is bound by an enclosing range
-   *         variable or inline function parameter of the expression, or is
-   *         declared in the static context.
+   * @return <code>true</code> if the variable is bound by an enclosing range variable or inline
+   *         function parameter of the expression, or is declared in the static context.
    */
   private boolean _isVariableInScope (@NonNull final XdmQName aName)
   {
@@ -508,8 +499,8 @@ final class XPathParserImpl
   }
 
   /**
-   * @return The built-in atomic type of this name, or <code>null</code> if
-   *         the name is not in the xs namespace or names no atomic type.
+   * @return The built-in atomic type of this name, or <code>null</code> if the name is not in the
+   *         xs namespace or names no atomic type.
    */
   @Nullable
   private static EAtomicType _atomicTypeOf (@NonNull final XdmQName aName)
@@ -520,11 +511,10 @@ final class XPathParserImpl
   }
 
   /**
-   * @return <code>true</code> if the name is an in-scope schema type: a
-   *         built-in atomic type, one of the non-atomic built-ins
-   *         <code>xs:anyType</code>, <code>xs:untyped</code>,
-   *         <code>xs:anySimpleType</code> and the three list types, or a type
-   *         of the schema set of the static context.
+   * @return <code>true</code> if the name is an in-scope schema type: a built-in atomic type, one
+   *         of the non-atomic built-ins <code>xs:anyType</code>, <code>xs:untyped</code>,
+   *         <code>xs:anySimpleType</code> and the three list types, or a type of the schema set of
+   *         the static context.
    */
   private boolean _isKnownSchemaType (@NonNull final XdmQName aName)
   {
@@ -536,9 +526,8 @@ final class XPathParserImpl
   }
 
   /**
-   * @return A user-defined simple type of the in-scope schema definitions, or
-   *         <code>null</code>. Built-in types (in the xs namespace) are never
-   *         returned.
+   * @return A user-defined simple type of the in-scope schema definitions, or <code>null</code>.
+   *         Built-in types (in the xs namespace) are never returned.
    */
   @Nullable
   private IXdmTypeDefinition _getUserSimpleType (@NonNull final XdmQName aName)
@@ -551,8 +540,8 @@ final class XPathParserImpl
   }
 
   /**
-   * @return The item type of a user-defined simple type: its built-in atomic
-   *         base type for an atomic type, xs:anyAtomicType otherwise.
+   * @return The item type of a user-defined simple type: its built-in atomic base type for an
+   *         atomic type, xs:anyAtomicType otherwise.
    */
   @NonNull
   private static ItemType _schemaAtomicItemType (@NonNull final IXdmTypeDefinition aType)
@@ -565,11 +554,10 @@ final class XPathParserImpl
   }
 
   /**
-   * The constructor function of a user-defined simple type as a function item
-   * (XPath 3.1 section 3.14.4): an inline function with one
-   * <code>xs:anyAtomicType?</code> parameter that casts it to the type. Its
-   * declared return type is that cast target, except for a list type, which
-   * gets none.
+   * The constructor function of a user-defined simple type as a function item (XPath 3.1 section
+   * 3.14.4): an inline function with one <code>xs:anyAtomicType?</code> parameter that casts it to
+   * the type. Its declared return type is that cast target, except for a list type, which gets
+   * none.
    *
    * @param aUserType
    *        The user-defined simple type.
@@ -590,15 +578,14 @@ final class XPathParserImpl
   }
 
   /**
-   * The constructor function of a user-defined simple type of the in-scope
-   * schema definitions (XPath 3.1 section 3.14.4): a call with one argument is
-   * a cast to the type; a call whose argument is the placeholder
-   * <code>?</code> is a partial function application (section 3.1.5.1) and
-   * yields the constructor function itself, as
+   * The constructor function of a user-defined simple type of the in-scope schema definitions
+   * (XPath 3.1 section 3.14.4): a call with one argument is a cast to the type; a call whose
+   * argument is the placeholder <code>?</code> is a partial function application (section 3.1.5.1)
+   * and yields the constructor function itself, as
    * {@link #_getUserTypeConstructorFunction(IXdmTypeDefinition)} builds it.
    *
-   * @return The cast or the function, or <code>null</code> if the name is not
-   *         such a type or a function of that name and arity exists.
+   * @return The cast or the function, or <code>null</code> if the name is not such a type or a
+   *         function of that name and arity exists.
    */
   @Nullable
   private IExpr _getSchemaConstructor (@NonNull final XdmQName aName, @NonNull final List <IExpr> aArgs)
@@ -619,8 +606,7 @@ final class XPathParserImpl
 
   /**
    * @throws XPathException
-   *         XQST0070 if a name test uses the namespace URI reserved for
-   *         <code>xmlns</code>.
+   *         XQST0070 if a name test uses the namespace URI reserved for <code>xmlns</code>.
    */
   private void _checkNotXmlnsNamespace (@NonNull final String sNs, @NonNull final XPathToken aTok)
   {
@@ -629,19 +615,17 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse the SingleType of a cast or castable expression: a type name and an
-   * optional <code>?</code>. An unprefixed name is resolved against the
-   * default element namespace. <code>xs:IDREFS</code>,
-   * <code>xs:NMTOKENS</code> and <code>xs:ENTITIES</code> become their item
-   * type with the list flag set; a name outside the built-in atomic types must
-   * be a user-defined simple type of the in-scope schema.
+   * Parse the SingleType of a cast or castable expression: a type name and an optional
+   * <code>?</code>. An unprefixed name is resolved against the default element namespace.
+   * <code>xs:IDREFS</code>, <code>xs:NMTOKENS</code> and <code>xs:ENTITIES</code> become their item
+   * type with the list flag set; a name outside the built-in atomic types must be a user-defined
+   * simple type of the in-scope schema.
    *
    * @return The target type, with occurrence one or zero-or-one.
    * @throws XPathException
-   *         XPST0003 for a missing name or a name followed by
-   *         <code>(</code>, XPST0080 for <code>xs:NOTATION</code>,
-   *         <code>xs:anyAtomicType</code> and <code>xs:anySimpleType</code>,
-   *         XQST0052 for a name that is no known simple type.
+   *         XPST0003 for a missing name or a name followed by <code>(</code>, XPST0080 for
+   *         <code>xs:NOTATION</code>, <code>xs:anyAtomicType</code> and
+   *         <code>xs:anySimpleType</code>, XQST0052 for a name that is no known simple type.
    */
   @NonNull
   private SeqType _parseSingleType ()
@@ -659,25 +643,27 @@ final class XPathParserImpl
     {
       switch (aName.localName ())
       {
-        case "NOTATION":
-        case "anyAtomicType":
-        case "anySimpleType":
-          throw _error ("XPST0080", "xs:" + aName.localName () + " is not a valid cast target", aTok);
-        case "IDREFS":
+        case "NOTATION", "anyAtomicType", "anySimpleType" -> throw _error ("XPST0080",
+                                                                           "xs:" +
+                                                                                       aName.localName () +
+                                                                                       " is not a valid cast target",
+                                                                           aTok);
+        case "IDREFS" ->
+        {
           eType = EAtomicType.IDREF;
           bList = true;
-          break;
-        case "NMTOKENS":
+        }
+        case "NMTOKENS" ->
+        {
           eType = EAtomicType.NMTOKEN;
           bList = true;
-          break;
-        case "ENTITIES":
+        }
+        case "ENTITIES" ->
+        {
           eType = EAtomicType.ENTITY;
           bList = true;
-          break;
-        default:
-          eType = EAtomicType.getFromLocalName (aName.localName ());
-          break;
+        }
+        default -> eType = EAtomicType.getFromLocalName (aName.localName ());
       }
     }
     ItemType aItemType = null;
@@ -730,7 +716,9 @@ final class XPathParserImpl
         _next ();
         aTypeName = _resolve (aTypeTok, m_aCtx.getDefaultElementNamespace ());
         if (!_isKnownSchemaType (aTypeName))
-          throw _error ("XPST0008", "The type " + aTypeName.getEQName () + " is not in the in-scope schema types", aTypeTok);
+          throw _error ("XPST0008",
+                        "The type " + aTypeName.getEQName () + " is not in the in-scope schema types",
+                        aTypeTok);
         if (bElement && _is (ETokenKind.QUESTION))
         {
           _next ();
@@ -800,7 +788,14 @@ final class XPathParserImpl
           else
             if (aTok.kind () != ETokenKind.RPAREN)
               throw _unexpected ("a processing-instruction target");
-        ret = new NodeTest (ENodeTestKind.PROCESSING_INSTRUCTION, aTarget == null, false, false, aTarget, null, false, null);
+        ret = new NodeTest (ENodeTestKind.PROCESSING_INSTRUCTION,
+                            aTarget == null,
+                            false,
+                            false,
+                            aTarget,
+                            null,
+                            false,
+                            null);
         break;
       }
       case "element":
@@ -819,9 +814,11 @@ final class XPathParserImpl
         _next ();
         final XdmQName aName = _resolve (aTok, bElement ? m_aCtx.getDefaultElementNamespace () : "");
         final IXdmSchemaSet aSchemaSet = m_aCtx.getSchemaSet ();
-        final IXdmElementDeclaration aElementDecl = aSchemaSet != null && bElement ? aSchemaSet.getElementDeclaration (aName)
+        final IXdmElementDeclaration aElementDecl = aSchemaSet != null && bElement ? aSchemaSet.getElementDeclaration (
+                                                                                                                       aName)
                                                                                    : null;
-        final IXdmAttributeDeclaration aAttrDecl = aSchemaSet != null && !bElement ? aSchemaSet.getAttributeDeclaration (aName)
+        final IXdmAttributeDeclaration aAttrDecl = aSchemaSet != null && !bElement ? aSchemaSet
+                                                                                               .getAttributeDeclaration (aName)
                                                                                    : null;
         if (aElementDecl == null && aAttrDecl == null)
           throw _error ("XPST0008",
@@ -861,10 +858,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a FunctionTest; the current token is <code>function</code>, the
-   * next one <code>(</code>. <code>function(*)</code> is the any-function
-   * test, otherwise the parameter types, <code>as</code> and the return type
-   * follow (XPath 3.1 section 2.5.5.7).
+   * Parse a FunctionTest; the current token is <code>function</code>, the next one <code>(</code>.
+   * <code>function(*)</code> is the any-function test, otherwise the parameter types,
+   * <code>as</code> and the return type follow (XPath 3.1 section 2.5.5.7).
    */
   @NonNull
   private ItemType _parseFunctionTest ()
@@ -877,6 +873,7 @@ final class XPathParserImpl
       _expect (ETokenKind.RPAREN, "')'");
       return new ItemType (ItemType.Kind.FUNCTION, null, null, true, null, null, null, null);
     }
+
     final ICommonsList <SeqType> aParams = new CommonsArrayList <> ();
     if (!_is (ETokenKind.RPAREN))
       while (true)
@@ -893,8 +890,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Consume the name of a built-in atomic type; an unprefixed name is
-   * resolved against the default element namespace.
+   * Consume the name of a built-in atomic type; an unprefixed name is resolved against the default
+   * element namespace.
    *
    * @throws XPathException
    *         XPST0051 if the name is no built-in atomic type.
@@ -905,6 +902,7 @@ final class XPathParserImpl
     final XPathToken aTok = _cur ();
     if (!aTok.isEQName ())
       throw _unexpected ("an atomic type name");
+
     _next ();
     final XdmQName aName = _resolve (aTok, m_aCtx.getDefaultElementNamespace ());
     final EAtomicType eType = _atomicTypeOf (aName);
@@ -914,9 +912,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a MapTest; the current token is <code>map</code>, the next one
-   * <code>(</code>: <code>map(*)</code> or <code>map(K, V)</code> with a
-   * built-in atomic key type K and a sequence type V.
+   * Parse a MapTest; the current token is <code>map</code>, the next one <code>(</code>:
+   * <code>map(*)</code> or <code>map(K, V)</code> with a built-in atomic key type K and a sequence
+   * type V.
    */
   @NonNull
   private ItemType _parseMapTest ()
@@ -929,6 +927,7 @@ final class XPathParserImpl
       _expect (ETokenKind.RPAREN, "')'");
       return new ItemType (ItemType.Kind.MAP, null, null, true, null, null, null, null);
     }
+
     final EAtomicType eKey = _parseAtomicTypeName ();
     _expect (ETokenKind.COMMA, "','");
     final SeqType aValue = _parseSequenceType ();
@@ -937,9 +936,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse an ArrayTest; the current token is <code>array</code>, the next one
-   * <code>(</code>: <code>array(*)</code> or <code>array(T)</code> with a
-   * member sequence type T.
+   * Parse an ArrayTest; the current token is <code>array</code>, the next one <code>(</code>:
+   * <code>array(*)</code> or <code>array(T)</code> with a member sequence type T.
    */
   @NonNull
   private ItemType _parseArrayTest ()
@@ -958,17 +956,14 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse an ItemType (XPath 3.1 section 2.5.4): a parenthesised item type,
-   * <code>item()</code>, a kind test, a function, map or array test, or an
-   * atomic or union type name. A type name is first looked up as a
-   * user-defined non-list simple type of the in-scope schema (only if there
-   * is a schema set and the name is no built-in atomic type), else it must be
-   * a built-in atomic type.
+   * Parse an ItemType (XPath 3.1 section 2.5.4): a parenthesised item type, <code>item()</code>, a
+   * kind test, a function, map or array test, or an atomic or union type name. A type name is first
+   * looked up as a user-defined non-list simple type of the in-scope schema (only if there is a
+   * schema set and the name is no built-in atomic type), else it must be a built-in atomic type.
    *
    * @throws XPathException
-   *         XPST0003 for any other name followed by <code>(</code> and for a
-   *         token that cannot start an item type, XPST0051 for an unknown
-   *         type name.
+   *         XPST0003 for any other name followed by <code>(</code> and for a token that cannot
+   *         start an item type, XPST0051 for an unknown type name.
    */
   @NonNull
   private ItemType _parseItemTypeInner ()
@@ -981,6 +976,7 @@ final class XPathParserImpl
       _expect (ETokenKind.RPAREN, "')'");
       return ret;
     }
+
     if (aTok.isUnprefixedName () && _peekKind (1) == ETokenKind.LPAREN)
     {
       final String sName = aTok.text ();
@@ -1000,8 +996,10 @@ final class XPathParserImpl
       if (sName.equals ("array"))
         return _parseArrayTest ();
     }
+
     if (aTok.isEQName () && _peekKind (1) == ETokenKind.LPAREN)
       throw _syntax ("'" + aTok.getDisplayText () + "()' is not an item type", aTok);
+
     if (aTok.isEQName ())
     {
       if (m_aCtx.getSchemaSet () != null)
@@ -1019,12 +1017,13 @@ final class XPathParserImpl
       }
       return ItemType.atomic (_parseAtomicTypeName ());
     }
+
     throw _unexpected ("an item type");
   }
 
   /**
-   * {@link #_parseItemTypeInner()} as one nesting level, so that deeply nested
-   * types (<code>array(array(...))</code>) hit the depth limit.
+   * {@link #_parseItemTypeInner()} as one nesting level, so that deeply nested types
+   * (<code>array(array(...))</code>) hit the depth limit.
    */
   @NonNull
   private ItemType _parseItemType ()
@@ -1041,10 +1040,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a SequenceType: <code>empty-sequence()</code>, or an item type with
-   * an optional occurrence indicator <code>?</code>, <code>*</code> or
-   * <code>+</code>. The indicator is always taken when present (XPath 3.1
-   * A.1.2 constraint occurrence-indicators).
+   * Parse a SequenceType: <code>empty-sequence()</code>, or an item type with an optional
+   * occurrence indicator <code>?</code>, <code>*</code> or <code>+</code>. The indicator is always
+   * taken when present (XPath 3.1 A.1.2 constraint occurrence-indicators).
    */
   @NonNull
   private SeqType _parseSequenceType ()
@@ -1056,6 +1054,7 @@ final class XPathParserImpl
       _expect (ETokenKind.RPAREN, "')'");
       return SeqType.EMPTY_SEQUENCE;
     }
+
     final ItemType aItemType = _parseItemType ();
     EOccurrence eOcc = EOccurrence.ONE;
     switch (_cur ().kind ())
@@ -1079,17 +1078,16 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse the NodeTest of an axis step: a wildcard (<code>*</code>,
-   * <code>*:local</code>, <code>prefix:*</code>, <code>Q{uri}*</code>), a kind
-   * test, or a name test. An unprefixed name is in the default element
-   * namespace, except on the attribute and namespace axes where it is in no
-   * namespace.
+   * Parse the NodeTest of an axis step: a wildcard (<code>*</code>, <code>*:local</code>,
+   * <code>prefix:*</code>, <code>Q{uri}*</code>), a kind test, or a name test. An unprefixed name
+   * is in the default element namespace, except on the attribute and namespace axes where it is in
+   * no namespace.
    *
    * @param eAxis
    *        The axis of the step, for the namespace of unprefixed names.
    * @throws XPathException
-   *         XPST0081 for an unbound prefix, XQST0070 for the xmlns namespace,
-   *         XPST0003 if no node test starts here.
+   *         XPST0081 for an unbound prefix, XQST0070 for the xmlns namespace, XPST0003 if no node
+   *         test starts here.
    */
   @NonNull
   private NodeTest _parseNodeTest (@NonNull final EAxis eAxis)
@@ -1120,7 +1118,14 @@ final class XPathParserImpl
       case BRACED_WILDCARD:
         _next ();
         _checkNotXmlnsNamespace (aTok.uri (), aTok);
-        return new NodeTest (ENodeTestKind.NAME, false, false, true, new XdmQName (aTok.uri (), "*"), null, false, null);
+        return new NodeTest (ENodeTestKind.NAME,
+                             false,
+                             false,
+                             true,
+                             new XdmQName (aTok.uri (), "*"),
+                             null,
+                             false,
+                             null);
       case NAME:
         if (aTok.isUnprefixedName () && KIND_TEST_NAMES.contains (aTok.text ()) && _peekKind (1) == ETokenKind.LPAREN)
           return _parseKindTest ();
@@ -1140,8 +1145,7 @@ final class XPathParserImpl
   }
 
   /**
-   * @return The predicates <code>[expr]</code> that follow the current
-   *         position, possibly none.
+   * @return The predicates <code>[expr]</code> that follow the current position, possibly none.
    */
   @NonNull
   private ICommonsList <IExpr> _parsePredicates ()
@@ -1165,8 +1169,7 @@ final class XPathParserImpl
     if (!_is (ETokenKind.RPAREN))
       while (true)
       {
-        if (_is (ETokenKind.QUESTION) &&
-            (_peekKind (1) == ETokenKind.COMMA || _peekKind (1) == ETokenKind.RPAREN))
+        if (_is (ETokenKind.QUESTION) && (_peekKind (1) == ETokenKind.COMMA || _peekKind (1) == ETokenKind.RPAREN))
         {
           _next ();
           ret.add (new IExpr.PlaceholderExpr ());
@@ -1215,9 +1218,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a map constructor <code>map { k : v, ... }</code>; the current
-   * token is <code>map</code>. Keys and values are kept in two parallel lists
-   * in source order; duplicate keys are a dynamic error and not checked here.
+   * Parse a map constructor <code>map { k : v, ... }</code>; the current token is <code>map</code>.
+   * Keys and values are kept in two parallel lists in source order; duplicate keys are a dynamic
+   * error and not checked here.
    */
   @NonNull
   private IExpr _parseMapConstructor ()
@@ -1241,8 +1244,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a square array constructor <code>[a, b, ...]</code>; the current
-   * token is <code>[</code>. Every ExprSingle is one member.
+   * Parse a square array constructor <code>[a, b, ...]</code>; the current token is <code>[</code>.
+   * Every ExprSingle is one member.
    */
   @NonNull
   private IExpr _parseSquareArray ()
@@ -1262,10 +1265,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a curly array constructor <code>array { expr }</code>; the current
-   * token is <code>array</code>. The result holds the enclosed expression (or
-   * nothing for <code>array {}</code>); each item of its value becomes one
-   * member at evaluation.
+   * Parse a curly array constructor <code>array { expr }</code>; the current token is
+   * <code>array</code>. The result holds the enclosed expression (or nothing for
+   * <code>array {}</code>); each item of its value becomes one member at evaluation.
    */
   @NonNull
   private IExpr _parseCurlyArray ()
@@ -1281,9 +1283,9 @@ final class XPathParserImpl
 
   /**
    * Parse an inline function expression <code>function ($a as T, ...) as R {
-   * body }</code>; the current token is <code>function</code>. Parameter and
-   * return types are optional (<code>null</code> if absent), an empty body is
-   * the empty sequence. The parameters are in scope while the body is parsed.
+   * body }</code>; the current token is <code>function</code>. Parameter and return types are
+   * optional (<code>null</code> if absent), an empty body is the empty sequence. The parameters are
+   * in scope while the body is parsed.
    *
    * @throws XPathException
    *         XQST0039 for two parameters of the same name.
@@ -1341,16 +1343,13 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a named function reference <code>name#arity</code>; the current
-   * token is the name, the next one <code>#</code>. With a schema set, an
-   * arity of 1 and no library function of that name, a user-defined simple
-   * type of that name yields its constructor function (XPath 3.1 section
-   * 3.14.4), as {@link #_getUserTypeConstructorFunction(IXdmTypeDefinition)}
-   * builds it.
+   * Parse a named function reference <code>name#arity</code>; the current token is the name, the
+   * next one <code>#</code>. With a schema set, an arity of 1 and no library function of that name,
+   * a user-defined simple type of that name yields its constructor function (XPath 3.1 section
+   * 3.14.4), as {@link #_getUserTypeConstructorFunction(IXdmTypeDefinition)} builds it.
    *
    * @throws XPathException
-   *         FOAR0002 for an arity that does not fit into 31 bits, XPST0017
-   *         for an unknown function.
+   *         FOAR0002 for an arity that does not fit into 31 bits, XPST0017 for an unknown function.
    */
   @NonNull
   private IExpr _parseNamedFunctionRef ()
@@ -1362,7 +1361,9 @@ final class XPathParserImpl
     if (aArity.bitLength () > 31)
       throw _error ("FOAR0002", "Function arity " + aArityTok.text () + " is out of range", aArityTok);
     final XdmQName aName = _resolveFunctionName (aNameTok);
-    if (aArity.intValue () == 1 && m_aCtx.getSchemaSet () != null && m_aCtx.getFunctionLibrary ().getFunction (aName, 1) == null)
+    if (aArity.intValue () == 1 &&
+        m_aCtx.getSchemaSet () != null &&
+        m_aCtx.getFunctionLibrary ().getFunction (aName, 1) == null)
     {
       // The constructor function of a user-defined simple type
       final IXdmTypeDefinition aUserType = _getUserSimpleType (aName);
@@ -1377,8 +1378,8 @@ final class XPathParserImpl
    * Parse a variable reference; the current token is <code>$</code>.
    *
    * @throws XPathException
-   *         XPST0008 if the variable is neither bound in the expression nor
-   *         declared in the static context.
+   *         XPST0008 if the variable is neither bound in the expression nor declared in the static
+   *         context.
    */
   @NonNull
   private IExpr _parseVarRef ()
@@ -1392,18 +1393,15 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a PrimaryExpr (XPath 3.1 section 3.1): a literal, variable
-   * reference, parenthesised expression (<code>()</code> is the empty
-   * sequence), context item, square array, unary lookup, map or curly array
-   * constructor, inline function, named function reference or static function
-   * call. A call of a user-defined simple type with one argument becomes a
-   * cast, or the constructor function for a placeholder argument (see
-   * {@link #_getSchemaConstructor(XdmQName, List)}); every other call must
-   * name a known function.
+   * Parse a PrimaryExpr (XPath 3.1 section 3.1): a literal, variable reference, parenthesised
+   * expression (<code>()</code> is the empty sequence), context item, square array, unary lookup,
+   * map or curly array constructor, inline function, named function reference or static function
+   * call. A call of a user-defined simple type with one argument becomes a cast, or the constructor
+   * function for a placeholder argument (see {@link #_getSchemaConstructor(XdmQName, List)}); every
+   * other call must name a known function.
    *
    * @throws XPathException
-   *         XPST0003 if no primary expression starts here, XPST0017 for an
-   *         unknown function.
+   *         XPST0003 if no primary expression starts here, XPST0017 for an unknown function.
    */
   @NonNull
   private IExpr _parsePrimary ()
@@ -1525,10 +1523,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Decide whether a step starts with a primary expression rather than an
-   * axis step. A name followed by <code>(</code> is a function call unless it
-   * is a reserved function name (kind tests, <code>if</code>, ...); a name
-   * otherwise only starts a primary as <code>name#</code>,
+   * Decide whether a step starts with a primary expression rather than an axis step. A name
+   * followed by <code>(</code> is a function call unless it is a reserved function name (kind
+   * tests, <code>if</code>, ...); a name otherwise only starts a primary as <code>name#</code>,
    * <code>map {</code>, <code>array {</code> or <code>function (</code>.
    */
   private boolean _startsPrimary ()
@@ -1566,42 +1563,23 @@ final class XPathParserImpl
   }
 
   /**
-   * @return <code>true</code> if the current token can start a relative path
-   *         expression. Decides whether a leading <code>/</code> stands alone
-   *         (XPath 3.1 A.1.2 leading-lone-slash); <code>/</code> followed by
-   *         an operator name like <code>union</code> is therefore a path.
+   * @return <code>true</code> if the current token can start a relative path expression. Decides
+   *         whether a leading <code>/</code> stands alone (XPath 3.1 A.1.2 leading-lone-slash);
+   *         <code>/</code> followed by an operator name like <code>union</code> is therefore a
+   *         path.
    */
   private boolean _startsRelativePath ()
   {
-    switch (_cur ().kind ())
+    return switch (_cur ().kind ())
     {
-      case NAME:
-      case BRACED_NAME:
-      case STAR:
-      case PREFIX_WILDCARD:
-      case LOCAL_WILDCARD:
-      case BRACED_WILDCARD:
-      case AT:
-      case DOT:
-      case DOTDOT:
-      case DOLLAR:
-      case STRING:
-      case INTEGER:
-      case DECIMAL:
-      case DOUBLE:
-      case LPAREN:
-      case LBRACKET:
-      case QUESTION:
-        return true;
-      default:
-        return false;
-    }
+      case NAME, BRACED_NAME, STAR, PREFIX_WILDCARD, LOCAL_WILDCARD, BRACED_WILDCARD, AT, DOT, DOTDOT, DOLLAR, STRING, INTEGER, DECIMAL, DOUBLE, LPAREN, LBRACKET, QUESTION -> true;
+      default -> false;
+    };
   }
 
   /**
-   * @return A new <code>descendant-or-self::node()</code> step without
-   *         predicates, the expansion of <code>//</code> (XPath 3.1 section
-   *         3.3.5).
+   * @return A new <code>descendant-or-self::node()</code> step without predicates, the expansion of
+   *         <code>//</code> (XPath 3.1 section 3.3.5).
    */
   @NonNull
   private static StepExpr _descendantOrSelfStep ()
@@ -1610,15 +1588,14 @@ final class XPathParserImpl
   }
 
   /**
-   * <code>A//B[p]</code> is <code>A/descendant-or-self::node()/child::B[p]</code>,
-   * where the context position and size of <code>p</code> count B among the
-   * children of each intermediate node, but in <code>descendant::B[p]</code>
-   * among all descendants of A. The two are equivalent when every predicate is
-   * focus-free and non-numeric (a number is read as a position), which is what
-   * this checks.
+   * <code>A//B[p]</code> is <code>A/descendant-or-self::node()/child::B[p]</code>, where the
+   * context position and size of <code>p</code> count B among the children of each intermediate
+   * node, but in <code>descendant::B[p]</code> among all descendants of A. The two are equivalent
+   * when every predicate is focus-free and non-numeric (a number is read as a position), which is
+   * what this checks.
    *
-   * @return The <code>descendant-or-self::node()</code> step, carrying the
-   *         fused step when the equivalence holds.
+   * @return The <code>descendant-or-self::node()</code> step, carrying the fused step when the
+   *         equivalence holds.
    */
   @NonNull
   private static StepExpr _fuseSlashSlash (@NonNull final StepExpr aNext)
@@ -1680,11 +1657,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse the continuation <code>("/" | "//") StepExpr</code> as long as it
-   * repeats and append the steps. <code>//</code> adds the
-   * <code>descendant-or-self::node()</code> step (possibly carrying a fused
-   * step, see {@link #_fuseSlashSlash(StepExpr)}) followed by the next step
-   * itself.
+   * Parse the continuation <code>("/" | "//") StepExpr</code> as long as it repeats and append the
+   * steps. <code>//</code> adds the <code>descendant-or-self::node()</code> step (possibly carrying
+   * a fused step, see {@link #_fuseSlashSlash(StepExpr)}) followed by the next step itself.
    */
   private void _parseRelativeSteps (@NonNull final ICommonsList <StepExpr> aSteps)
   {
@@ -1710,12 +1685,10 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a PathExpr (XPath 3.1 section 3.3). A leading <code>/</code> or
-   * <code>//</code> makes an absolute path without a start expression. A
-   * relative path whose first step is a primary expression has it as start
-   * expression and the following steps as steps; if no <code>/</code>
-   * follows, the primary expression is returned on its own, not wrapped in a
-   * path.
+   * Parse a PathExpr (XPath 3.1 section 3.3). A leading <code>/</code> or <code>//</code> makes an
+   * absolute path without a start expression. A relative path whose first step is a primary
+   * expression has it as start expression and the following steps as steps; if no <code>/</code>
+   * follows, the primary expression is returned on its own, not wrapped in a path.
    */
   @NonNull
   private IExpr _parsePath ()
@@ -1759,8 +1732,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a SimpleMapExpr <code>a ! b ! c</code> (XPath 3.1 section 3.15);
-   * a single path is returned unwrapped.
+   * Parse a SimpleMapExpr <code>a ! b ! c</code> (XPath 3.1 section 3.15); a single path is
+   * returned unwrapped.
    */
   @NonNull
   private IExpr _parseSimpleMap ()
@@ -1788,18 +1761,17 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse the part after one <code>=&gt;</code> (XPath 3.1 section 3.16): a
-   * function name, a variable reference or a parenthesised expression,
-   * followed by an argument list. The base expression becomes the first
-   * argument. With a name it is a static call (or a cast for the constructor
-   * of a user-defined simple type), checked like any other; otherwise it is a
-   * dynamic call.
+   * Parse the part after one <code>=&gt;</code> (XPath 3.1 section 3.16): a function name, a
+   * variable reference or a parenthesised expression, followed by an argument list. The base
+   * expression becomes the first argument. With a name it is a static call (or a cast for the
+   * constructor of a user-defined simple type), checked like any other; otherwise it is a dynamic
+   * call.
    *
    * @param aBase
    *        The expression on the left of the arrow.
    * @throws XPathException
-   *         XPST0003 if no function specifier follows, XPST0017 for an
-   *         unknown function, XPST0008 for an undeclared variable.
+   *         XPST0003 if no function specifier follows, XPST0017 for an unknown function, XPST0008
+   *         for an undeclared variable.
    */
   @NonNull
   private IExpr _parseArrowStep (@NonNull final IExpr aBase)
@@ -1835,11 +1807,11 @@ final class XPathParserImpl
   }
 
   /**
-   * Consume a two-word keyword such as <code>cast as</code> or
-   * <code>instance of</code> if the current token is its first word.
+   * Consume a two-word keyword such as <code>cast as</code> or <code>instance of</code> if the
+   * current token is its first word.
    *
-   * @return <code>false</code> (nothing consumed) if the current token is not
-   *         the first word, <code>true</code> after consuming both words.
+   * @return <code>false</code> (nothing consumed) if the current token is not the first word,
+   *         <code>true</code> after consuming both words.
    * @throws XPathException
    *         XPST0003 if the first word is not followed by the second one.
    */
@@ -1855,8 +1827,7 @@ final class XPathParserImpl
   }
 
   /**
-   * UnaryExpr, ArrowExpr, CastExpr, CastableExpr, TreatExpr and InstanceofExpr
-   * in one method.
+   * UnaryExpr, ArrowExpr, CastExpr, CastableExpr, TreatExpr and InstanceofExpr in one method.
    */
   @NonNull
   private IExpr _parseOperand ()
@@ -1899,96 +1870,63 @@ final class XPathParserImpl
   }
 
   /**
-   * @return The binary operator the current token stands for, without
-   *         consuming it, or <code>null</code> if it is none. Called only
-   *         where an operator is expected, so <code>*</code> is multiplication
-   *         and names like <code>div</code> or <code>and</code> are operators
-   *         here.
+   * @return The binary operator the current token stands for, without consuming it, or
+   *         <code>null</code> if it is none. Called only where an operator is expected, so
+   *         <code>*</code> is multiplication and names like <code>div</code> or <code>and</code>
+   *         are operators here.
    */
   @Nullable
   private EOp _peekBinaryOp ()
   {
     final XPathToken aTok = _cur ();
-    switch (aTok.kind ())
+    return switch (aTok.kind ())
     {
-      case EQ:
-        return EOp.GENERAL_EQ;
-      case NE:
-        return EOp.GENERAL_NE;
-      case LT:
-        return EOp.GENERAL_LT;
-      case LE:
-        return EOp.GENERAL_LE;
-      case GT:
-        return EOp.GENERAL_GT;
-      case GE:
-        return EOp.GENERAL_GE;
-      case PRECEDES:
-        return EOp.NODE_PRECEDES;
-      case FOLLOWS:
-        return EOp.NODE_FOLLOWS;
-      case CONCAT:
-        return EOp.CONCAT;
-      case PLUS:
-        return EOp.ADD;
-      case MINUS:
-        return EOp.SUBTRACT;
-      case STAR:
-        return EOp.MULTIPLY;
-      case PIPE:
-        return EOp.UNION;
-      case NAME:
-        switch (aTok.text ())
-        {
-          case "or":
-            return EOp.OR;
-          case "and":
-            return EOp.AND;
-          case "eq":
-            return EOp.VALUE_EQ;
-          case "ne":
-            return EOp.VALUE_NE;
-          case "lt":
-            return EOp.VALUE_LT;
-          case "le":
-            return EOp.VALUE_LE;
-          case "gt":
-            return EOp.VALUE_GT;
-          case "ge":
-            return EOp.VALUE_GE;
-          case "is":
-            return EOp.NODE_IS;
-          case "to":
-            return EOp.TO;
-          case "div":
-            return EOp.DIVIDE;
-          case "idiv":
-            return EOp.INTEGER_DIVIDE;
-          case "mod":
-            return EOp.MODULO;
-          case "union":
-            return EOp.UNION;
-          case "intersect":
-            return EOp.INTERSECT;
-          case "except":
-            return EOp.EXCEPT;
-          default:
-            return null;
-        }
-      default:
-        return null;
-    }
+      case EQ -> EOp.GENERAL_EQ;
+      case NE -> EOp.GENERAL_NE;
+      case LT -> EOp.GENERAL_LT;
+      case LE -> EOp.GENERAL_LE;
+      case GT -> EOp.GENERAL_GT;
+      case GE -> EOp.GENERAL_GE;
+      case PRECEDES -> EOp.NODE_PRECEDES;
+      case FOLLOWS -> EOp.NODE_FOLLOWS;
+      case CONCAT -> EOp.CONCAT;
+      case PLUS -> EOp.ADD;
+      case MINUS -> EOp.SUBTRACT;
+      case STAR -> EOp.MULTIPLY;
+      case PIPE -> EOp.UNION;
+      case NAME -> switch (aTok.text ())
+      {
+        case "or" -> EOp.OR;
+        case "and" -> EOp.AND;
+        case "eq" -> EOp.VALUE_EQ;
+        case "ne" -> EOp.VALUE_NE;
+        case "lt" -> EOp.VALUE_LT;
+        case "le" -> EOp.VALUE_LE;
+        case "gt" -> EOp.VALUE_GT;
+        case "ge" -> EOp.VALUE_GE;
+        case "is" -> EOp.NODE_IS;
+        case "to" -> EOp.TO;
+        case "div" -> EOp.DIVIDE;
+        case "idiv" -> EOp.INTEGER_DIVIDE;
+        case "mod" -> EOp.MODULO;
+        case "union" -> EOp.UNION;
+        case "intersect" -> EOp.INTERSECT;
+        case "except" -> EOp.EXCEPT;
+        default -> null;
+      };
+      default -> null;
+    };
   }
 
   /**
    * Build the AST node of one binary operation. A chain <code>a || b ||
-   * c</code> becomes one {@link IExpr.StringConcatExpr} with all parts: a left
-   * operand is flattened only if it was built by this same chain (it is in
-   * the own-concats set), never a parenthesised one.
+   * c</code> becomes one {@link IExpr.StringConcatExpr} with all parts: a left operand is flattened
+   * only if it was built by this same chain (it is in the own-concats set), never a parenthesised
+   * one.
    *
    * @param aOwnConcats
-   *        The string concatenations built by the current operator chain,
-   *        by identity; a new one is added.
+   *        The string concatenations built by the current operator chain, by identity; a new one is
+   *        added.
    */
   @NonNull
   private static IExpr _build (@NonNull final EOp eOp,
@@ -2027,8 +1965,7 @@ final class XPathParserImpl
   }
 
   /**
-   * Replace the two topmost operands by the node built with the topmost
-   * operator, which is removed.
+   * Replace the two topmost operands by the node built with the topmost operator, which is removed.
    */
   private static void _reduce (@NonNull final ICommonsList <IExpr> aOperands,
                                @NonNull final ICommonsList <EOp> aOps,
@@ -2080,11 +2017,10 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse the comma-separated bindings <code>$x in E</code> (or
-   * <code>$x := E</code> for let) and add them to the list. Each variable is
-   * pushed onto the scope right after its own expression, so it is visible in
-   * the following bindings and the body but not in its own expression. The
-   * caller pops as many variables as bindings were added, also on an error.
+   * Parse the comma-separated bindings <code>$x in E</code> (or <code>$x := E</code> for let) and
+   * add them to the list. Each variable is pushed onto the scope right after its own expression, so
+   * it is visible in the following bindings and the body but not in its own expression. The caller
+   * pops as many variables as bindings were added, also on an error.
    */
   private void _parseBindings (@NonNull final ICommonsList <IExpr.Binding> aBindings, final boolean bLet)
   {
@@ -2107,10 +2043,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse a for, let, some or every expression (XPath 3.1 sections 3.9, 3.10
-   * and 3.13); the current token is the keyword, the next one
-   * <code>$</code>. The body follows <code>return</code>, for the
-   * quantifiers <code>satisfies</code>.
+   * Parse a for, let, some or every expression (XPath 3.1 sections 3.9, 3.10 and 3.13); the current
+   * token is the keyword, the next one <code>$</code>. The body follows <code>return</code>, for
+   * the quantifiers <code>satisfies</code>.
    */
   @NonNull
   private IExpr _parseForLetQuantified (@NonNull final String sKeyword)
@@ -2136,8 +2071,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse <code>if (E) then A else B</code> (XPath 3.1 section 3.12); the
-   * current token is <code>if</code>. The else branch is mandatory.
+   * Parse <code>if (E) then A else B</code> (XPath 3.1 section 3.12); the current token is
+   * <code>if</code>. The else branch is mandatory.
    */
   @NonNull
   private IExpr _parseIf ()
@@ -2154,10 +2089,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse an ExprSingle as one nesting level: a for, let, some or every
-   * expression if the keyword is followed by <code>$</code>, an if
-   * expression if <code>if</code> is followed by <code>(</code>, otherwise an
-   * OrExpr.
+   * Parse an ExprSingle as one nesting level: a for, let, some or every expression if the keyword
+   * is followed by <code>$</code>, an if expression if <code>if</code> is followed by
+   * <code>(</code>, otherwise an OrExpr.
    */
   @NonNull
   private IExpr _parseExprSingle ()
@@ -2195,8 +2129,8 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse an Expr: comma-separated ExprSingles as a
-   * {@link IExpr.SequenceExpr}, a single one unwrapped.
+   * Parse an Expr: comma-separated ExprSingles as a {@link IExpr.SequenceExpr}, a single one
+   * unwrapped.
    */
   @NonNull
   private IExpr _parseExpr ()
@@ -2224,8 +2158,8 @@ final class XPathParserImpl
   }
 
   /**
-   * A step of a pattern (StepExprP): a parenthesised pattern with predicates,
-   * or an axis step on one of the forward axes XSLT 3.0 allows in patterns.
+   * A step of a pattern (StepExprP): a parenthesised pattern with predicates, or an axis step on
+   * one of the forward axes XSLT 3.0 allows in patterns.
    */
   @NonNull
   private StepExpr _parsePatternStep ()
@@ -2316,32 +2250,21 @@ final class XPathParserImpl
   }
 
   /**
-   * @return <code>true</code> if the current token can start a StepExprP of a
-   *         pattern; decides whether a leading <code>/</code> of a pattern
-   *         stands alone.
+   * @return <code>true</code> if the current token can start a StepExprP of a pattern; decides
+   *         whether a leading <code>/</code> of a pattern stands alone.
    */
   private boolean _startsPatternStep ()
   {
-    switch (_cur ().kind ())
+    return switch (_cur ().kind ())
     {
-      case NAME:
-      case BRACED_NAME:
-      case STAR:
-      case PREFIX_WILDCARD:
-      case LOCAL_WILDCARD:
-      case BRACED_WILDCARD:
-      case AT:
-      case LPAREN:
-        return true;
-      default:
-        return false;
-    }
+      case NAME, BRACED_NAME, STAR, PREFIX_WILDCARD, LOCAL_WILDCARD, BRACED_WILDCARD, AT, LPAREN -> true;
+      default -> false;
+    };
   }
 
   /**
-   * The argument of a FunctionCallP: a variable reference or a literal. The
-   * context item is accepted for <code>root(.)</code>, which the XSLT 3.0
-   * Recommendation uses in its own examples.
+   * The argument of a FunctionCallP: a variable reference or a literal. The context item is
+   * accepted for <code>root(.)</code>, which the XSLT 3.0 Recommendation uses in its own examples.
    */
   @NonNull
   private IExpr _parsePatternArgument (final boolean bAllowContextItem)
@@ -2449,7 +2372,7 @@ final class XPathParserImpl
       while (_cur ().isNCName ("intersect") || _cur ().isNCName ("except"))
       {
         final IExpr.SetExpr.ESetOp eOp = _next ().text ().equals ("intersect") ? IExpr.SetExpr.ESetOp.INTERSECT
-                                                                                : IExpr.SetExpr.ESetOp.EXCEPT;
+                                                                               : IExpr.SetExpr.ESetOp.EXCEPT;
         _enterDepth ();
         ret = new IExpr.SetExpr (eOp, ret, _parsePatternPath ());
       }
@@ -2535,11 +2458,10 @@ final class XPathParserImpl
   }
 
   /**
-   * Parse an XSLT 3.0 pattern (production Pattern30). A predicate pattern is
-   * returned as {@link IExpr.ContextItemExpr} or a {@link IExpr.FilterExpr} on
-   * it; every other pattern consists of {@link IExpr.SetExpr} nodes over
-   * {@link IExpr.PathExpr} nodes. A parenthesised pattern is a step with a
-   * postfix, the "//" abbreviation a descendant-or-self::node() step.
+   * Parse an XSLT 3.0 pattern (production Pattern30). A predicate pattern is returned as
+   * {@link IExpr.ContextItemExpr} or a {@link IExpr.FilterExpr} on it; every other pattern consists
+   * of {@link IExpr.SetExpr} nodes over {@link IExpr.PathExpr} nodes. A parenthesised pattern is a
+   * step with a postfix, the "//" abbreviation a descendant-or-self::node() step.
    *
    * @param aSources
    *        Receives the source text of every union operand (identity map).
@@ -2554,7 +2476,8 @@ final class XPathParserImpl
     {
       final XPathToken aStartTok = _next ();
       final ICommonsList <IExpr> aPreds = _parsePredicates ();
-      ret = aPreds.isEmpty () ? new IExpr.ContextItemExpr () : new IExpr.FilterExpr (new IExpr.ContextItemExpr (), aPreds);
+      ret = aPreds.isEmpty () ? new IExpr.ContextItemExpr ()
+                              : new IExpr.FilterExpr (new IExpr.ContextItemExpr (), aPreds);
       _expectEOF ();
       _rememberPatternSource (ret, aStartTok);
     }
@@ -2567,10 +2490,9 @@ final class XPathParserImpl
   }
 
   /**
-   * Run a parse. If it overflows the caller's stack (possible for deeply
-   * nested input on a thread with a small stack), it is repeated once on a
-   * helper thread with a large stack, so the outcome - an AST or XPDY0130
-   * from the depth limit - does not depend on the caller's stack size.
+   * Run a parse. If it overflows the caller's stack (possible for deeply nested input on a thread
+   * with a small stack), it is repeated once on a helper thread with a large stack, so the outcome
+   * - an AST or XPDY0130 from the depth limit - does not depend on the caller's stack size.
    *
    * @param aParse
    *        The parse to run. It must not have side effects outside the parser.
@@ -2627,13 +2549,12 @@ final class XPathParserImpl
   }
 
   /**
-   * @return A new {@link #ERR_DEPTH} exception for a source that is nested
-   *         too deeply to be parsed even on the large stack.
+   * @return A new {@link #ERR_DEPTH} exception for a source that is nested too deeply to be parsed
+   *         even on the large stack.
    */
   @NonNull
   static XPathException createDepthError (@NonNull final String sSrc)
   {
-    return XPathException.of (ERR_DEPTH,
-                              "Expression nested too deeply to be parsed: '" + abbreviate (sSrc) + "'");
+    return XPathException.of (ERR_DEPTH, "Expression nested too deeply to be parsed: '" + abbreviate (sSrc) + "'");
   }
 }

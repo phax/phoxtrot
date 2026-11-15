@@ -49,6 +49,7 @@ public final class XPathRegexTest
     }
     return aSB.toString ();
   }
+
   @Test
   public void testCache ()
   {
@@ -159,9 +160,10 @@ public final class XPathRegexTest
       {
         final Pattern aChosen = aRegex.getPattern (sInput);
         // The built-in classes only for an input without a changed category
-        assertEquals (sPattern,
-                      bDifferences && !UnicodeCategories.containsDifference (sInput),
-                      aChosen != aRegex.getPattern ());
+        if (bDifferences && !UnicodeCategories.containsDifference (sInput))
+          assertTrue (sPattern, aChosen != aRegex.getPattern ());
+        else
+          assertTrue (sPattern, aChosen == aRegex.getPattern ());
         assertEquals (sPattern, _getAllMatches (aRegex.getPattern (), sInput), _getAllMatches (aChosen, sInput));
       }
     }

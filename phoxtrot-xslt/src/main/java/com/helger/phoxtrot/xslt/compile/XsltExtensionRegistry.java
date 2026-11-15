@@ -38,12 +38,11 @@ import com.helger.phoxtrot.xslt.fn.XsltFunctions;
 import com.helger.phoxtrot.xslt.instr.CoreInstructions;
 
 /**
- * The registry of XSLT instructions, declarations, functions and hooks. The
- * core registers itself first; then every instruction family listed in
- * {@link #EXTENSION_CLASS_NAMES} whose class is on the class path is
- * instantiated and registers its own parts. Adding a family therefore needs
- * no change of the core: create the class with the agreed name (or add a name
- * to the list) and register from it.
+ * The registry of XSLT instructions, declarations, functions and hooks. The core registers itself
+ * first; then every instruction family listed in {@link #EXTENSION_CLASS_NAMES} whose class is on
+ * the class path is instantiated and registers its own parts. Adding a family therefore needs no
+ * change of the core: create the class with the agreed name (or add a name to the list) and
+ * register from it.
  *
  * @author Philip Helger
  */
@@ -51,8 +50,8 @@ import com.helger.phoxtrot.xslt.instr.CoreInstructions;
 public final class XsltExtensionRegistry
 {
   /**
-   * The classes of the instruction families, each implementing
-   * {@link IXsltExtension}. Missing classes are skipped.
+   * The classes of the instruction families, each implementing {@link IXsltExtension}. Missing
+   * classes are skipped.
    */
   public static final String [] EXTENSION_CLASS_NAMES = { "com.helger.phoxtrot.xslt.ext.number.NumberExtension",
                                                           "com.helger.phoxtrot.xslt.ext.grouping.GroupingExtension",
@@ -104,13 +103,12 @@ public final class XsltExtensionRegistry
   {}
 
   /**
-   * Build a registry: the core instructions and run-time functions first,
-   * then each class of {@link #EXTENSION_CLASS_NAMES} in list order,
-   * instantiated through its public no-argument constructor. A class that is
-   * not on the class path is skipped silently; one that cannot be
-   * instantiated or does not implement {@link IXsltExtension} is logged as
-   * an error and skipped. Exceptions thrown by a <code>register</code>
-   * method itself (e.g. a duplicate registration) propagate.
+   * Build a registry: the core instructions and run-time functions first, then each class of
+   * {@link #EXTENSION_CLASS_NAMES} in list order, instantiated through its public no-argument
+   * constructor. A class that is not on the class path is skipped silently; one that cannot be
+   * instantiated or does not implement {@link IXsltExtension} is logged as an error and skipped.
+   * Exceptions thrown by a <code>register</code> method itself (e.g. a duplicate registration)
+   * propagate.
    *
    * @return The filled registry.
    */
@@ -129,6 +127,7 @@ public final class XsltExtensionRegistry
       }
       catch (final ClassNotFoundException ex)
       {
+        LOGGER.error ("Failed to load default XSLT extension '" + sClassName + "'");
         continue;
       }
       try
@@ -151,10 +150,11 @@ public final class XsltExtensionRegistry
     final XsltExtensionRegistry ret = s_aInstance;
     if (ret != null)
       return ret;
+
     // Created without holding the lock, because it loads and initialises the
     // extension classes; if two threads race, the first published one wins
     final XsltExtensionRegistry aNew = _create ();
-    return INSTANCE_LOCK.writeLockedGet ( () -> {
+    return INSTANCE_LOCK.writeLockedGet (() -> {
       XsltExtensionRegistry aCurrent = s_aInstance;
       if (aCurrent == null)
         s_aInstance = aCurrent = aNew;
@@ -179,7 +179,7 @@ public final class XsltExtensionRegistry
   {
     ValueEnforcer.notEmpty (sLocalName, "LocalName");
     ValueEnforcer.notNull (aCompiler, "Compiler");
-    m_aRWLock.writeLocked ( () -> {
+    m_aRWLock.writeLocked (() -> {
       if (m_aInstructions.containsKey (sLocalName))
         throw new IllegalStateException ("The instruction xsl:" + sLocalName + " is already registered");
       m_aInstructions.put (sLocalName, aCompiler);
@@ -188,9 +188,9 @@ public final class XsltExtensionRegistry
   }
 
   /**
-   * Replace the compiler of an instruction the core provides only in a basic
-   * form. Unlike {@link #registerInstruction(String, IInstructionCompiler)}
-   * this never fails: an absent instruction is simply added.
+   * Replace the compiler of an instruction the core provides only in a basic form. Unlike
+   * {@link #registerInstruction(String, IInstructionCompiler)} this never fails: an absent
+   * instruction is simply added.
    *
    * @param sLocalName
    *        Local name.
@@ -204,7 +204,7 @@ public final class XsltExtensionRegistry
   {
     ValueEnforcer.notEmpty (sLocalName, "LocalName");
     ValueEnforcer.notNull (aCompiler, "Compiler");
-    m_aRWLock.writeLocked ( () -> m_aInstructions.put (sLocalName, aCompiler));
+    m_aRWLock.writeLocked (() -> m_aInstructions.put (sLocalName, aCompiler));
     return this;
   }
 
@@ -225,7 +225,7 @@ public final class XsltExtensionRegistry
   {
     ValueEnforcer.notEmpty (sLocalName, "LocalName");
     ValueEnforcer.notNull (aCompiler, "Compiler");
-    m_aRWLock.writeLocked ( () -> {
+    m_aRWLock.writeLocked (() -> {
       if (m_aDeclarations.containsKey (sLocalName))
         throw new IllegalStateException ("The declaration xsl:" + sLocalName + " is already registered");
       m_aDeclarations.put (sLocalName, aCompiler);
@@ -234,8 +234,8 @@ public final class XsltExtensionRegistry
   }
 
   /**
-   * Register functions: the contributor is called for the function library of
-   * every stylesheet before any expression of it is compiled.
+   * Register functions: the contributor is called for the function library of every stylesheet
+   * before any expression of it is compiled.
    *
    * @param aContributor
    *        Registers functions into the library.
@@ -245,14 +245,13 @@ public final class XsltExtensionRegistry
   public XsltExtensionRegistry registerFunctions (@NonNull final Consumer <FunctionLibrary> aContributor)
   {
     ValueEnforcer.notNull (aContributor, "Contributor");
-    m_aRWLock.writeLocked ( () -> m_aFunctionContributors.add (aContributor));
+    m_aRWLock.writeLocked (() -> m_aFunctionContributors.add (aContributor));
     return this;
   }
 
   /**
-   * Register a customiser that is applied, in registration order, to the
-   * serialisation parameters built from every output definition (principal
-   * result, xsl:result-document, fn:transform).
+   * Register a customiser that is applied, in registration order, to the serialisation parameters
+   * built from every output definition (principal result, xsl:result-document, fn:transform).
    *
    * @param aCustomizer
    *        The customiser.
@@ -262,13 +261,13 @@ public final class XsltExtensionRegistry
   public XsltExtensionRegistry registerOutputCustomizer (@NonNull final IOutputCustomizer aCustomizer)
   {
     ValueEnforcer.notNull (aCustomizer, "Customizer");
-    m_aRWLock.writeLocked ( () -> m_aOutputCustomizers.add (aCustomizer));
+    m_aRWLock.writeLocked (() -> m_aOutputCustomizers.add (aCustomizer));
     return this;
   }
 
   /**
-   * Register a check that runs once per stylesheet after all declarations
-   * were compiled; finishers run in registration order.
+   * Register a check that runs once per stylesheet after all declarations were compiled; finishers
+   * run in registration order.
    *
    * @param aFinisher
    *        The finisher.
@@ -278,13 +277,13 @@ public final class XsltExtensionRegistry
   public XsltExtensionRegistry registerCompileFinisher (@NonNull final ICompileFinisher aFinisher)
   {
     ValueEnforcer.notNull (aFinisher, "Finisher");
-    m_aRWLock.writeLocked ( () -> m_aFinishers.add (aFinisher));
+    m_aRWLock.writeLocked (() -> m_aFinishers.add (aFinisher));
     return this;
   }
 
   /**
-   * Make system-property() return "yes" for a property in the XSLT namespace
-   * (e.g. <code>supports-dynamic-evaluation</code>).
+   * Make system-property() return "yes" for a property in the XSLT namespace (e.g.
+   * <code>supports-dynamic-evaluation</code>).
    *
    * @param sLocalName
    *        Local name of the property.
@@ -293,45 +292,42 @@ public final class XsltExtensionRegistry
   @NonNull
   public XsltExtensionRegistry registerSystemPropertyYes (@NonNull final String sLocalName)
   {
-    m_aRWLock.writeLocked ( () -> m_aSystemPropertiesYes.add (sLocalName));
+    m_aRWLock.writeLocked (() -> m_aSystemPropertiesYes.add (sLocalName));
     return this;
   }
 
   /**
    * @param sLocalName
    *        Local name of an XSLT instruction.
-   * @return Its registered compiler, or <code>null</code> if none is
-   *         registered.
+   * @return Its registered compiler, or <code>null</code> if none is registered.
    */
   @Nullable
   public IInstructionCompiler getInstructionCompiler (@NonNull final String sLocalName)
   {
-    return m_aRWLock.readLockedGet ( () -> m_aInstructions.get (sLocalName));
+    return m_aRWLock.readLockedGet (() -> m_aInstructions.get (sLocalName));
   }
 
   /**
    * @param sLocalName
    *        Local name of an XSLT declaration.
-   * @return Its registered compiler, or <code>null</code> if none is
-   *         registered (also for the {@link #CORE_DECLARATIONS}, which the
-   *         stylesheet compiler handles itself).
+   * @return Its registered compiler, or <code>null</code> if none is registered (also for the
+   *         {@link #CORE_DECLARATIONS}, which the stylesheet compiler handles itself).
    */
   @Nullable
   public IDeclarationCompiler getDeclarationCompiler (@NonNull final String sLocalName)
   {
-    return m_aRWLock.readLockedGet ( () -> m_aDeclarations.get (sLocalName));
+    return m_aRWLock.readLockedGet (() -> m_aDeclarations.get (sLocalName));
   }
 
   /**
    * @param sLocalName
    *        Local name of an XSLT element.
-   * @return <code>true</code> if the processor implements it (a registered
-   *         instruction or declaration, or one of the
-   *         {@link #CORE_DECLARATIONS}), for element-available().
+   * @return <code>true</code> if the processor implements it (a registered instruction or
+   *         declaration, or one of the {@link #CORE_DECLARATIONS}), for element-available().
    */
   public boolean isImplemented (@NonNull final String sLocalName)
   {
-    if (m_aRWLock.readLockedBoolean ( () -> m_aInstructions.containsKey (sLocalName) ||
+    if (m_aRWLock.readLockedBoolean (() -> m_aInstructions.containsKey (sLocalName) ||
                                            m_aDeclarations.containsKey (sLocalName)))
       return true;
     for (final String s : CORE_DECLARATIONS)
@@ -348,13 +344,12 @@ public final class XsltExtensionRegistry
    */
   public boolean isSystemPropertyYes (@NonNull final String sLocalName)
   {
-    return m_aRWLock.readLockedBoolean ( () -> m_aSystemPropertiesYes.contains (sLocalName));
+    return m_aRWLock.readLockedBoolean (() -> m_aSystemPropertiesYes.contains (sLocalName));
   }
 
   /**
-   * Let every registered contributor add its functions to the library, in
-   * registration order. The contributors run on a snapshot of the list,
-   * without the lock held.
+   * Let every registered contributor add its functions to the library, in registration order. The
+   * contributors run on a snapshot of the list, without the lock held.
    *
    * @param aLibrary
    *        The library of a new stylesheet.

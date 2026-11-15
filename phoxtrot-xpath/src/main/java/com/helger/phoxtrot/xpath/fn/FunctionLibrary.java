@@ -313,7 +313,7 @@ public final class FunctionLibrary
     // Count top-level commas inside the outer parameter parentheses
     final int nOpen = sSignature.indexOf ('(');
     int nDepth = 0;
-    int nCount = 0;
+    int nCommaCount = 0;
     boolean bAny = false;
     for (int i = nOpen + 1; i < sSignature.length (); ++i)
     {
@@ -329,12 +329,12 @@ public final class FunctionLibrary
         }
         else
           if (c == ',' && nDepth == 0)
-            nCount++;
+            nCommaCount++;
           else
             if (!Character.isWhitespace (c))
               bAny = true;
     }
-    return bAny ? nCount + 1 : 0;
+    return bAny ? nCommaCount + 1 : 0;
   }
 
   /**
