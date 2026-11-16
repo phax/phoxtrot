@@ -29,13 +29,12 @@ XSLT30 status (2026-11-04, after the open cases `function-lookup-005`/`006` and 
 applicable cases pass (99.9%) as a basic processor, identical on JDK 21 and 25; all 7 fails are documented in
 `phoxtrot-xslt-conformance/docs/accepted-failures/xslt30.md` (`XSLT30IT` fails on any undocumented failure). Extension API for the families: `phoxtrot-xslt/INSTRAPI.md`.
 
-QT3 status (2026-11-16): 22,383 of 22,407 applicable cases pass (99.9%), 24 fail, all documented in
+QT3 status (2026-11-16): 22,403 of 22,407 applicable cases pass (99.98%), 4 fail, all documented in
 `phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md` (`QT3IT` fails on any undocumented failure):
 
 | Group | Fails | Status |
 |-------|-------|--------|
 | `fn:transform` wanted unavailable | 3 | Accepted: `fn-transform-901/902/err-14` (same in go-xslt) |
-| Static typing (type inference) | 20 | Accepted: same 20 cases as go-xslt |
 | Network access | 1 | Accepted (same in go-xslt) |
 
 The feature `fn-load-xquery-module` is not claimed, so its 84 cases are skipped (until 2026-11-16 they ran: 34 fails
@@ -622,7 +621,7 @@ the QT3 cases expect); inferred types keep a short list of alternative item type
 
 | Phase | Content | Status |
 |-------|---------|--------|
-| ST1 | `StaticType` (alternative item types plus occurrence), inference over every `IExpr` (literals, context item, variables, `if` as union, sequences, static calls by signature, `f#n`, inline functions with inferred return type, `!` and paths with the context item type of the right side, `for`/`let`/quantified bindings, coarse types elsewhere, `item()*` when unknown); iterative or depth-limited | open |
-| ST2 | Required-type checks of static function call arguments after the function conversion rules (atomisation, `xs:untypedAtomic`, promotion, function subtyping, implicit context arguments); XPST0005 for an exactly empty static type next to `XPathStaticAxes` | open |
+| ST1 | `StaticType` (alternative item types plus occurrence), inference over every `IExpr` (literals, context item, variables, `if` as union, sequences, static calls by signature, `f#n`, inline functions with inferred return type, `!` and paths with the context item type of the right side, `for`/`let`/quantified bindings, coarse types elsewhere, `item()*` when unknown); iterative or depth-limited | done: `XPathStaticTyping` (package `parser`, run by `XPathParser.parse` after `XPathStaticAxes`); a numeric literal predicate keeps at most one item |
+| ST2 | Required-type checks of static function call arguments after the function conversion rules (atomisation, `xs:untypedAtomic`, promotion, function subtyping, implicit context arguments); XPST0005 for an exactly empty static type next to `XPathStaticAxes` | done: the 20 cases pass, QT3 22,403 of 22,407; XPST0005 for every other expression than `()` and `data(())` inferred as `empty-sequence()`, next to the provably empty steps of `XPathStaticAxes` |
 | ST3 | Further checks: path and axis step operands (XPTY0019/XPTY0020), arithmetic and comparison operands, cast operands, inline function body against its declared return type | open |
 | ST4 | `StaticContext.setContextItemStaticType`, typed variable declarations; QT3 harness declares `document-node()` for a `.` source and the `as` types of its parameters; unit tests, `qt3.md`, README, release notes | open |

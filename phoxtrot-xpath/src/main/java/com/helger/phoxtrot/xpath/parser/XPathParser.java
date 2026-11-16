@@ -77,7 +77,9 @@ public final class XPathParser
    * @param aStaticCtx
    *        The static context for name resolution. With
    *        {@link StaticContext#isStaticTyping()} set, provably empty axis
-   *        steps are additionally rejected with XPST0005.
+   *        steps are additionally rejected with XPST0005, and function
+   *        arguments whose inferred static type the parameter type does not
+   *        subsume with XPTY0004.
    * @return The AST.
    * @throws com.helger.phoxtrot.xpath.XPathException
    *         for static errors.
@@ -87,11 +89,15 @@ public final class XPathParser
   {
     ValueEnforcer.notNull (sExpr, "Expr");
     ValueEnforcer.notNull (aStaticCtx, "StaticCtx");
-    final IExpr ret = XPathParserImpl.runWithStackGuard ( () -> new XPathParserImpl (sExpr, aStaticCtx).parseExpression (),
-                                                          sExpr);
-    if (aStaticCtx.isStaticTyping ())
-      XPathStaticAxes.checkStaticEmptyPaths (ret);
-    return ret;
+    return XPathParserImpl.runWithStackGuard ( () -> {
+      final IExpr ret = new XPathParserImpl (sExpr, aStaticCtx).parseExpression ();
+      if (aStaticCtx.isStaticTyping ())
+      {
+        XPathStaticAxes.checkStaticEmptyPaths (ret);
+        XPathStaticTyping.checkTypes (ret, aStaticCtx);
+      }
+      return ret;
+    }, sExpr);
   }
 
   /**

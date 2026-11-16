@@ -1,6 +1,6 @@
 # QT3 (`qt3tests`, XPath 3.1 / F&O 3.1): failing cases
 
-22,383 of 22,407 applicable cases pass, 24 fail. Measured offline, on JDK 21 and 25, with the native validator of
+22,403 of 22,407 applicable cases pass, 4 fail. Measured offline, on JDK 21 and 25, with the native validator of
 `phoxtrot-xsd` as the schema processor (the default of the harness, see below).
 
 The cases that need the feature `fn-load-xquery-module` (the whole test set `fn-load-xquery-module` and
@@ -20,19 +20,6 @@ Remove an entry when its case passes. Status **Open** means winnable later; **Ac
 They depend on the feature `fn-transform-XSLT` (901, 902) or `fn-transform-XSLT30` (err-14) being *not* satisfied and
 expect `fn:transform` to report that no (XSLT 3.0) processor is available. With phoxtrot-xslt on the class path
 `fn:transform` is a real XSLT 3.0 processor, which necessarily contradicts them. go-xslt accepts the same cases.
-
-### XPath static typing
-`fn-filter-007`, `fn-filter-016`, `fn-filter-019`, `fn-filter-022`, `fn-for-each-pair-032`,
-`fn-function-arity-010`, `fn-function-arity-012`, `fn-function-lookup-713`, `fn-function-name-010`,
-`fn-has-children-012`, `fn-has-children-013`, `fn-innermost-008`, `fn-innermost-010`, `fn-outermost-008`,
-`fn-outermost-010`, `fn-unparsed-text-009`, `fn-unparsed-text-available-007`, `fn-unparsed-text-available-009`,
-`fn-unparsed-text-available-011`, `fn-unparsed-text-lines-009`
-
-**Status:** Accepted (decision).
-They depend on the optional Static Typing Feature and expect XPTY0004 from static type inference over `if/then/else`
-branch unions or inline function bodies. A processor that checks types at run time correctly raises nothing. Only the
-narrow static axis-step analysis (`ST-Axes*`, XPST0005) is implemented, behind `StaticContext.setStaticTyping`.
-go-xslt accepts the same 20 cases.
 
 ### Schema-validated sources with the JDK validator
 `K2-DataFunc-6`, `fn-normalize-space-24`, `fn-string-length-23`, `json-to-xml-016`, `json-to-xml-017`,

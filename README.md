@@ -14,7 +14,7 @@ A pure Java implementation of XPath 3.1 and XSLT 3.0, intended as an Apache 2.0 
 XML parsing is left to the JDK; everything on top of it, including an XML Schema 1.0 validator, is implemented here.
 
 Status: initially released.
-* The XPath 3.1 engine runs and passes 99.9% of the applicable W3C QT3 test cases (22,383 of 22,407).
+* The XPath 3.1 engine runs and passes 99.98% of the applicable W3C QT3 test cases (22,403 of 22,407).
 * The XSLT 3.0 engine passes 99.9% of the applicable W3C xslt30-test cases as a basic processor (8,640 of 8,647).
 * The native XML Schema validator passes 99.99% of the applicable W3C xsdtests cases for XSD 1.0 (39,396 of 39,401) and XSD 1.1 (41,596 of 41,600).
 
@@ -245,6 +245,10 @@ v0.2.1 - work in progress
   resolver (new `DynamicContext.setParseXmlEntityResolver`, `XsltTransformRequest.setParseXmlEntityResolver`; JAXP:
   the transformer's entity resolver when the factory loads external entities); without one nothing is read, as
   before. Relative references are resolved against the static base URI (new `XdmParser.parse (String, String)`)
+* XPath: the optional Static Typing Feature (`StaticContext.setStaticTyping`) now infers the static type of every
+  expression and raises XPTY0004 for a function argument whose inferred type the parameter type does not subsume (after
+  the function conversion rules, function types included), and XPST0005 for every expression other than `()` and
+  `data(())` inferred as `empty-sequence()`. Before, it only rejected provably empty axis steps
 
 v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it
