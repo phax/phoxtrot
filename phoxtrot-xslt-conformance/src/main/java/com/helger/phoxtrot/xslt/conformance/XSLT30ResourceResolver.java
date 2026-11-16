@@ -233,6 +233,15 @@ public final class XSLT30ResourceResolver implements IResourceResolver
   }
 
   /**
+   * @return <code>true</code> if the environment declares at least one
+   *         collection.
+   */
+  public boolean hasCollections ()
+  {
+    return m_aCollections.isNotEmpty ();
+  }
+
+  /**
    * Use a prepared document (a validated secondary source) for a file.
    *
    * @param aPath

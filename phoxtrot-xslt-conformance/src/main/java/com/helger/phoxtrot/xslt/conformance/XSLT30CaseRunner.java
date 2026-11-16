@@ -967,9 +967,10 @@ public final class XSLT30CaseRunner
       aRequest.setStreamedSourceUri (XSLT30ResourceResolver.getFileUri (aStreamablePath));
     }
 
-    // The shape JAXP can express, see JAXP
+    // The shape JAXP can express, see JAXP; the adapter has no collections
     final boolean bJaxp = JAXP &&
                           !bEmbedded &&
+                          !aResolver.hasCollections () &&
                           aPackages.isEmpty () &&
                           aStaticParams.isEmpty () &&
                           !m_bSchemaAware &&
