@@ -1,7 +1,13 @@
 # QT3 (`qt3tests`, XPath 3.1 / F&O 3.1): failing cases
 
-22,419 of 22,478 applicable cases pass, 59 fail. Measured offline, on JDK 21 and 25, with the native validator of
+22,382 of 22,407 applicable cases pass, 25 fail. Measured offline, on JDK 21 and 25, with the native validator of
 `phoxtrot-xsd` as the schema processor (the default of the harness, see below).
+
+The cases that need the feature `fn-load-xquery-module` (the whole test set `fn-load-xquery-module` and
+`fn-function-lookup-760`, 84 cases, 71 of them not already excluded by their spec) are skipped
+(`feature-not-claimed:fn-load-xquery-module`): loading XQuery library modules needs an XQuery processor, and
+`fn:load-xquery-module` raises FOQM0006 as F&O 3.1 specifies for that case. The cases that test the absence of the
+feature (`satisfied="false"`) run. go-xslt counts the 34 of them that fail as accepted failures instead.
 
 Every failing case is named here in backticks under a heading with its status and reason. `QT3IT` fails on any
 failing case that is not named here, so a regression is loud and a newly accepted failure needs a written reason.
@@ -14,21 +20,6 @@ Remove an entry when its case passes. Status **Open** means winnable later; **Ac
 They depend on the feature `fn-transform-XSLT` (901, 902) or `fn-transform-XSLT30` (err-14) being *not* satisfied and
 expect `fn:transform` to report that no (XSLT 3.0) processor is available. With phoxtrot-xslt on the class path
 `fn:transform` is a real XSLT 3.0 processor, which necessarily contradicts them. go-xslt accepts the same cases.
-
-### XQuery modules
-`fn-function-lookup-760`, `fn-load-xquery-module-014`, `fn-load-xquery-module-015`, `fn-load-xquery-module-018`,
-`fn-load-xquery-module-019`, `fn-load-xquery-module-020`, `fn-load-xquery-module-021`, `fn-load-xquery-module-022`,
-`fn-load-xquery-module-025`, `fn-load-xquery-module-026`, `fn-load-xquery-module-027`, `fn-load-xquery-module-028`,
-`fn-load-xquery-module-029`, `fn-load-xquery-module-030`, `fn-load-xquery-module-033`, `fn-load-xquery-module-034`,
-`fn-load-xquery-module-035`, `fn-load-xquery-module-036`, `fn-load-xquery-module-037`, `fn-load-xquery-module-040`,
-`fn-load-xquery-module-041`, `fn-load-xquery-module-042`, `fn-load-xquery-module-045`, `fn-load-xquery-module-046`,
-`fn-load-xquery-module-050`, `fn-load-xquery-module-051`, `fn-load-xquery-module-061`, `fn-load-xquery-module-064`,
-`fn-load-xquery-module-065`, `fn-load-xquery-module-068`, `fn-load-xquery-module-069`, `fn-load-xquery-module-070`,
-`fn-load-xquery-module-073`, `fn-load-xquery-module-074`
-
-**Status:** Accepted (decision).
-They load XQuery library modules. This is an XPath processor without an XQuery grammar; `fn:load-xquery-module`
-raises FOQM0006 as F&O 3.1 specifies for that case. go-xslt accepts the same cases.
 
 ### XPath static typing
 `fn-filter-007`, `fn-filter-016`, `fn-filter-019`, `fn-filter-022`, `fn-for-each-pair-032`,

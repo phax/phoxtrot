@@ -88,6 +88,10 @@ public final class QT3DependenciesTest
     assertNull (QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("unicode-normalization-form",
                                                                            "NFD",
                                                                            "false"))));
+    // XQuery library modules are not claimed; their absence is tested
+    assertEquals ("feature-not-claimed:fn-load-xquery-module",
+                  QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-load-xquery-module", "true"))));
+    assertNull (QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-load-xquery-module", "false"))));
     // Test set dependency first in the union
     assertEquals (QT3Dependencies.SKIP_SPEC_INAPPLICABLE,
                   QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("spec", "XQ30+", ""),

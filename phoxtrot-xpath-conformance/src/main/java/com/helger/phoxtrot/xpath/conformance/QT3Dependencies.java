@@ -30,8 +30,10 @@ import com.helger.annotation.style.PresentForCodeCoverage;
  * <code>skipReason</code>. The engine is a real XPath 3.1 processor; the
  * category-level exclusions are a <code>spec</code> dependency its identity
  * does not satisfy (XQuery only, or an exact older version whose behaviour
- * 3.0/3.1 changed) and a <code>unicode-normalization-form</code> dependency
- * on <code>FULLY-NORMALIZED</code> with <code>satisfied="false"</code>.
+ * 3.0/3.1 changed), a <code>unicode-normalization-form</code> dependency
+ * on <code>FULLY-NORMALIZED</code> with <code>satisfied="false"</code>, and
+ * the feature <code>fn-load-xquery-module</code> (loading XQuery library
+ * modules needs an XQuery processor, so the feature is not claimed).
  * Every other dependency (feature, xml-version, xsd-version,
  * default-language, limits, unicode-version, ...) is left to run, so a gap is
  * scored as a fail, not hidden behind a skip. Some of them configure the run
@@ -53,6 +55,12 @@ public final class QT3Dependencies
 
   /** Skip reason for an inapplicable spec dependency. */
   public static final String SKIP_SPEC_INAPPLICABLE = "spec-inapplicable";
+
+  /**
+   * The XQuery feature the engine does not claim: <code>fn:load-xquery-module</code>
+   * raises FOQM0006, as F&amp;O 3.1 specifies for a processor without XQuery.
+   */
+  public static final String FEATURE_LOAD_XQUERY_MODULE = "fn-load-xquery-module";
 
   /**
    * A parsed spec token like <code>XP31+</code>.
@@ -141,7 +149,10 @@ public final class QT3Dependencies
    * ({@link #SKIP_SPEC_INAPPLICABLE}), or
    * <code>unicode-normalization-form FULLY-NORMALIZED</code> with
    * <code>satisfied="false"</code>
-   * (<code>norm-form-not:FULLY-NORMALIZED</code>). A <code>spec</code>
+   * (<code>norm-form-not:FULLY-NORMALIZED</code>), or a satisfied
+   * {@link #FEATURE_LOAD_XQUERY_MODULE} dependency
+   * (<code>feature-not-claimed:fn-load-xquery-module</code>; with
+   * <code>satisfied="false"</code> the case runs). A <code>spec</code>
    * dependency with <code>satisfied="false"</code> never excludes. Each
    * dependency of the list is checked on its own, so a case excluded by the
    * test set's spec cannot be re-admitted by its own.
@@ -163,6 +174,8 @@ public final class QT3Dependencies
           !aDep.isSatisfied () &&
           "FULLY-NORMALIZED".equals (aDep.value ()))
         return "norm-form-not:" + aDep.value ();
+      if ("feature".equals (aDep.type ()) && aDep.isSatisfied () && FEATURE_LOAD_XQUERY_MODULE.equals (aDep.value ()))
+        return "feature-not-claimed:" + aDep.value ();
     }
     return null;
   }

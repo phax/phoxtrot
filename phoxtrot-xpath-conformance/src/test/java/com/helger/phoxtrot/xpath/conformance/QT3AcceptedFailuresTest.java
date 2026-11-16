@@ -92,7 +92,9 @@ public final class QT3AcceptedFailuresTest
   {
     final ICommonsSet <String> aQT3 = QT3AcceptedFailures.getDocumentedNames (Files.readString (Path.of ("docs/accepted-failures/qt3.md")));
     assertTrue (aQT3.contains ("fn-transform-901"));
-    assertTrue (aQT3.contains ("fn-load-xquery-module-074"));
+    assertTrue (aQT3.contains ("parse-xml-010"));
+    // A name in the prose (the skipped test set) is not accepted
+    assertFalse (aQT3.contains ("fn-function-lookup-760"));
     assertFalse (aQT3.contains ("QT3IT"));
     assertFalse (aQT3.contains ("fn:transform"));
 
