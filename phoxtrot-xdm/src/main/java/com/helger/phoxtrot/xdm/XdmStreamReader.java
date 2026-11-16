@@ -70,10 +70,9 @@ import com.helger.collection.commons.ICommonsMap;
  * parsed entity, and an external DTD subset when external entities are to be loaded. Locations are
  * recorded only on request, like {@link XdmParser#setRecordLocations(boolean)} does (off by
  * default, {@link XdmParser#DEFAULT_RECORD_LOCATIONS}; no streamed path reads the location of a
- * source node): elements, comments and processing instructions then get the one the parser
- * reports, attributes and text nodes report the one of their parent (as in
- * {@link XdmTreeBuilder}). Not reproduced: the declaration order of entities is the one the parser
- * lists.
+ * source node): elements, comments and processing instructions then get the one the parser reports,
+ * attributes and text nodes report the one of their parent (as in {@link XdmTreeBuilder}). Not
+ * reproduced: the declaration order of entities is the one the parser lists.
  *
  * @author Philip Helger
  */
@@ -404,7 +403,9 @@ public final class XdmStreamReader implements AutoCloseable
     _flushText ();
     if (m_nMaxElementDepth > 0 && m_aSpine.size () >= m_nMaxElementDepth)
       throw new XdmParseException ("Failed to parse XML: the element nesting is deeper than " + m_nMaxElementDepth);
-    final XdmQName aElementName = _getName (m_aReader.getNamespaceURI (), m_aReader.getLocalName (), m_aReader.getPrefix ());
+    final XdmQName aElementName = _getName (m_aReader.getNamespaceURI (),
+                                            m_aReader.getLocalName (),
+                                            m_aReader.getPrefix ());
     final XdmElementNode aElement = m_bRecordLocations ? new XdmElementNode.Located (aElementName,
                                                                                      m_aReader.getLocation ()
                                                                                               .getLineNumber (),
@@ -521,6 +522,7 @@ public final class XdmStreamReader implements AutoCloseable
           _end ();
           return;
         }
+
         final int nEvent = m_aReader.next ();
         switch (nEvent)
         {
@@ -687,6 +689,7 @@ public final class XdmStreamReader implements AutoCloseable
         m_aSpine.peekLast () != m_aCurrent.node () ||
         !m_aQueue.isEmpty ())
       throw new IllegalStateException ("skipSubtree() must directly follow the ENTER of an element");
+
     try
     {
       int nNested = 0;
@@ -694,6 +697,7 @@ public final class XdmStreamReader implements AutoCloseable
       {
         if (!m_aReader.hasNext ())
           throw new XdmParseException ("Failed to parse XML: unexpected end of document inside an element");
+
         final int nEvent = m_aReader.next ();
         if (nEvent == XMLStreamConstants.START_ELEMENT)
         {
@@ -711,9 +715,11 @@ public final class XdmStreamReader implements AutoCloseable
           }
           else
             if (nEvent == XMLStreamConstants.ENTITY_REFERENCE)
+            {
               throw new XdmParseException ("Failed to parse XML: the entity '" +
                                            m_aReader.getLocalName () +
                                            "' cannot be expanded");
+            }
       }
     }
     catch (final XMLStreamException ex)
@@ -949,8 +955,8 @@ public final class XdmStreamReader implements AutoCloseable
    * @param nMaxElementDepth
    *        The maximum element nesting depth, 0 for unlimited.
    * @param aStripWhitespace
-   *        The names of the elements whose whitespace-only text children are removed while
-   *        reading. May be <code>null</code> to strip nothing.
+   *        The names of the elements whose whitespace-only text children are removed while reading.
+   *        May be <code>null</code> to strip nothing.
    * @return The reader. Close it after use.
    * @throws XdmStreamUnsupportedException
    *         if the document must be read in full by {@link XdmParser}

@@ -16,6 +16,8 @@
  */
 package com.helger.phoxtrot.xdm;
 
+import javax.xml.XMLConstants;
+
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.style.PresentForCodeCoverage;
 
@@ -28,15 +30,20 @@ import com.helger.annotation.style.PresentForCodeCoverage;
 public final class XdmConstants
 {
   /** The namespace URI of the <code>xml</code> prefix. */
-  public static final String NS_XML = "http://www.w3.org/XML/1998/namespace";
+  public static final String NS_XML = XMLConstants.XML_NS_URI;
+
   /** The namespace URI of namespace declaration attributes. */
-  public static final String NS_XMLNS = "http://www.w3.org/2000/xmlns/";
+  public static final String NS_XMLNS = XMLConstants.XMLNS_ATTRIBUTE_NS_URI;
+
   /** The XML Schema namespace (<code>xs</code>). */
-  public static final String NS_XS = "http://www.w3.org/2001/XMLSchema";
+  public static final String NS_XS = XMLConstants.W3C_XML_SCHEMA_NS_URI;
+
   /** The XML Schema instance namespace (<code>xsi</code>). */
-  public static final String NS_XSI = "http://www.w3.org/2001/XMLSchema-instance";
+  public static final String NS_XSI = XMLConstants.W3C_XML_SCHEMA_INSTANCE_NS_URI;
+
   /** The XPath functions namespace (<code>fn</code>). */
   public static final String NS_FN = "http://www.w3.org/2005/xpath-functions";
+
   /** The XSLT namespace (<code>xsl</code>). */
   public static final String NS_XSL = "http://www.w3.org/1999/XSL/Transform";
 
