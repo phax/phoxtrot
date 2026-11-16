@@ -56,15 +56,19 @@ import com.helger.phoxtrot.xpath.value.EAtomicType;
  * pessimistic, as the feature requires. The checks are the required types of
  * the arguments of static function calls after the function conversion rules
  * (section 3.1.5.2): atomisation where an atomic type is required, the
- * conversion of <code>xs:untypedAtomic</code>, numeric and URI promotion, and
- * the subtype judgement of section 2.5.6 otherwise, function types included
- * (an inline function contributes the return type inferred from its body).
+ * conversion of <code>xs:untypedAtomic</code>, numeric and URI promotion,
+ * function coercion checked on the parameter and return types (an inline
+ * function contributes the return type inferred from its body), and the
+ * subtype judgement of section 2.5.6 otherwise.
  * The zero-argument forms that take the context item as their argument
  * (<code>fn:has-children()</code> and others) check it against the parameter
  * of the one-argument form.
  * <p>
- * The context item has the static type <code>item()</code>, an undeclared
- * variable <code>item()*</code>. A node atomises to
+ * The context item has the static type the static context declares
+ * ({@link StaticContext#setContextItemStaticType(ItemType)}), else
+ * <code>item()</code>; a variable the type it was declared with
+ * ({@link StaticContext#declareVariable(XdmQName, SeqType)}), else
+ * <code>item()*</code>. A node atomises to
  * <code>xs:untypedAtomic</code> unless the static context has in-scope schema
  * definitions or the node test names a type; then to
  * <code>xs:anyAtomicType</code>. The traversal follows the nesting of the AST,
@@ -224,6 +228,7 @@ final class XPathStaticTyping
   private static final ItemType BOOLEAN = ItemType.atomic (EAtomicType.BOOLEAN);
   private static final ItemType STRING = ItemType.atomic (EAtomicType.STRING);
   private static final ItemType INTEGER = ItemType.atomic (EAtomicType.INTEGER);
+  private static final SeqType INTEGER_OPTIONAL = SeqType.of (INTEGER, EOccurrence.ZERO_OR_ONE);
   private static final ItemType ANY_ATOMIC = ItemType.atomic (EAtomicType.ANY_ATOMIC_TYPE);
   private static final ItemType UNTYPED_ATOMIC = ItemType.atomic (EAtomicType.UNTYPED_ATOMIC);
   private static final ItemType ANY_NODE = ItemType.node (NodeTest.ANY_NODE);
@@ -518,9 +523,46 @@ final class XPathStaticTyping
     if (aConverted.max () == MANY && !eReqOcc.allowsMany ())
       return false;
     for (final ItemType aItem : aConverted.items ())
-      if (bAtomic ? !_isAtomicAccepted (aItem, aReqItem) : !SequenceTypeMatcher.isItemSubtype (aItem, aReqItem))
+    {
+      final boolean bAccepted;
+      if (bAtomic)
+        bAccepted = _isAtomicAccepted (aItem, aReqItem);
+      else
+        if (aItem.kind () == ItemType.Kind.FUNCTION && aReqItem.kind () == ItemType.Kind.FUNCTION)
+          bAccepted = _isFunctionAccepted (aItem, aReqItem);
+        else
+          bAccepted = SequenceTypeMatcher.isItemSubtype (aItem, aReqItem);
+      if (!bAccepted)
         return false;
+    }
     return true;
+  }
+
+  /**
+   * Function coercion (XPath 3.1 section 3.1.5.3) for a function item against
+   * a required function type: the coerced function converts the arguments it
+   * receives (values of the required parameter types) to the parameter types
+   * of the supplied function, and its result to the required return type,
+   * with the function conversion rules. It is accepted statically if both
+   * conversions are.
+   *
+   * @return <code>true</code> if the supplied function type is accepted.
+   */
+  private boolean _isFunctionAccepted (@NonNull final ItemType aSupplied, @NonNull final ItemType aRequired)
+  {
+    if (aRequired.wildcard () || aRequired.returnType () == null)
+      return true;
+    // Pessimistic: a function of unknown signature
+    if (aSupplied.wildcard () || aSupplied.returnType () == null)
+      return false;
+    final List <SeqType> aParamsS = aSupplied.paramTypes () == null ? List.of () : aSupplied.paramTypes ();
+    final List <SeqType> aParamsR = aRequired.paramTypes () == null ? List.of () : aRequired.paramTypes ();
+    if (aParamsS.size () != aParamsR.size ())
+      return false;
+    for (int i = 0; i < aParamsS.size (); ++i)
+      if (!_isAccepted (StaticType.of (aParamsR.get (i)), aParamsS.get (i)))
+        return false;
+    return _isAccepted (StaticType.of (aSupplied.returnType ()), aRequired.returnType ());
   }
 
   /**
@@ -543,6 +585,107 @@ final class XPathStaticTyping
                                                 aFunction.getEQName () +
                                                 " is not subsumed by the required type " +
                                                 SequenceTypeMatcher.getAsString (aRequired));
+  }
+
+  /**
+   * @return A type error with the code XPTY0004 or another one, naming the
+   *         inferred type.
+   */
+  @NonNull
+  private static XPathException _typeError (@NonNull final String sCode,
+                                            @NonNull final StaticType aActual,
+                                            @NonNull final String sWhat)
+  {
+    return XPathException.of (sCode, "The inferred static type " + aActual + " of " + sWhat);
+  }
+
+  /**
+   * @return <code>true</code> if every alternative is a node type (also for
+   *         the empty type).
+   */
+  private static boolean _isNodes (@NonNull final StaticType aType)
+  {
+    for (final ItemType aItem : aType.items ())
+      if (aItem.kind () != ItemType.Kind.NODE)
+        return false;
+    return true;
+  }
+
+  /**
+   * @return <code>true</code> if an atomic value of the type can be an operand
+   *         of an arithmetic operator (numeric, date, time and duration types,
+   *         and the types that may hold one).
+   */
+  private static boolean _isArithmeticAtomic (@NonNull final ItemType aAtomic, final boolean bUnary)
+  {
+    if (aAtomic.schemaType () != null)
+      return true;
+    final EAtomicType e = aAtomic.atomicType ();
+    if (e == EAtomicType.ANY_ATOMIC_TYPE || e == EAtomicType.UNTYPED_ATOMIC || e == EAtomicType.NUMERIC || e.isNumeric ())
+      return true;
+    if (bUnary)
+      return false;
+    return e.isDurationFamily () ||
+           e.isDerivedFrom (EAtomicType.DATE_TIME) ||
+           e == EAtomicType.DATE ||
+           e == EAtomicType.TIME;
+  }
+
+  /**
+   * The operand of an arithmetic operator is atomised and must be at most one
+   * value of a type the operator mapping has an entry for (XPath 3.1 section
+   * 3.5).
+   *
+   * @throws XPathException
+   *         XPTY0004 otherwise
+   */
+  private void _checkArithmeticOperand (@NonNull final StaticType aOperand, final boolean bUnary)
+  {
+    final StaticType aAtomized = _atomize (aOperand);
+    if (aAtomized == null || aAtomized.max () == MANY)
+      throw _typeError ("XPTY0004", aOperand, "an arithmetic operand allows more than one atomic value");
+    for (final ItemType aItem : aAtomized.items ())
+      if (!_isArithmeticAtomic (aItem, bUnary))
+        throw _typeError ("XPTY0004", aOperand, "an arithmetic operand is not numeric, date, time or duration");
+  }
+
+  /**
+   * The operands of a value comparison are atomised and must be at most one
+   * value, the operands of a node comparison at most one node (XPath 3.1
+   * sections 3.7.1 and 3.7.3).
+   *
+   * @throws XPathException
+   *         XPTY0004 otherwise
+   */
+  private void _checkComparisonOperand (final IExpr.@NonNull ComparisonExpr aComparison,
+                                        @NonNull final StaticType aOperand)
+  {
+    if (aComparison.op ().isValue ())
+    {
+      final StaticType aAtomized = _atomize (aOperand);
+      if (aAtomized == null || aAtomized.max () == MANY)
+        throw _typeError ("XPTY0004", aOperand, "a value comparison operand allows more than one atomic value");
+    }
+    else
+      if (aComparison.op ().isNode () && (!_isNodes (aOperand) || aOperand.max () == MANY))
+        throw _typeError ("XPTY0004", aOperand, "a node comparison operand is not node()?");
+  }
+
+  /**
+   * The operand of <code>cast as</code> is atomised and must be one value, or
+   * none if the target type has the occurrence <code>?</code> (XPath 3.1
+   * section 3.14.2).
+   *
+   * @throws XPathException
+   *         XPTY0004 otherwise
+   */
+  private void _checkCastOperand (final IExpr.@NonNull CastExpr aCast, @NonNull final StaticType aOperand)
+  {
+    final StaticType aAtomized = _atomize (aOperand);
+    if (aAtomized == null || aAtomized.max () == MANY)
+      throw _typeError ("XPTY0004", aOperand, "the cast operand allows more than one atomic value");
+    if (aAtomized.min () == 0 && !aCast.type ().occurrence ().allowsEmpty ())
+      throw _typeError ("XPTY0004", aOperand, "the cast operand allows the empty sequence");
   }
 
   @NonNull
@@ -639,23 +782,31 @@ final class XPathStaticTyping
 
   /**
    * @return The static type of a variable reference: bound in the expression,
-   *         else <code>item()*</code>.
+   *         else declared with its type in the static context, else
+   *         <code>item()*</code>.
    */
   @NonNull
-  private static StaticType _inferVariable (@NonNull final XdmQName aName, @NonNull final Scope aScope)
+  private StaticType _inferVariable (@NonNull final XdmQName aName, @NonNull final Scope aScope)
   {
     final StaticType ret = aScope.variables ().get (aName);
-    return ret != null ? ret : StaticType.ANY;
+    if (ret != null)
+      return ret;
+    final SeqType aDeclared = m_aStaticCtx.getVariableType (aName);
+    return aDeclared != null ? StaticType.of (aDeclared) : StaticType.ANY;
   }
 
   /**
    * @return The static type of the context item: the focus of the scope, else
+   *         the context item static type of the static context, else
    *         <code>item()</code>.
    */
   @NonNull
-  private static StaticType _getFocus (@NonNull final Scope aScope)
+  private StaticType _getFocus (@NonNull final Scope aScope)
   {
-    return aScope.focus () != null ? aScope.focus () : StaticType.one (ItemType.ITEM);
+    if (aScope.focus () != null)
+      return aScope.focus ();
+    final ItemType aDeclared = m_aStaticCtx.getContextItemStaticType ();
+    return StaticType.one (aDeclared != null ? aDeclared : ItemType.ITEM);
   }
 
   /**
@@ -728,6 +879,11 @@ final class XPathStaticTyping
       aBodyScope = aBodyScope.withVariable (aParam.name (), StaticType.of (aType));
     }
     final StaticType aBody = _infer (aFunc.body (), aBodyScope);
+    if (aFunc.returnType () != null && !_isAccepted (aBody, aFunc.returnType ()))
+      throw _typeError ("XPTY0004",
+                        aBody,
+                        "the function body is not subsumed by the declared return type " +
+                               SequenceTypeMatcher.getAsString (aFunc.returnType ()));
     final SeqType aReturn = aFunc.returnType () != null ? aFunc.returnType () : toSeqType (aBody);
     return StaticType.one (_getFunctionType (aParams, aReturn));
   }
@@ -741,17 +897,51 @@ final class XPathStaticTyping
   private StaticType _inferDynamicCall (final IExpr.@NonNull DynamicCallExpr aCall, @NonNull final Scope aScope)
   {
     final StaticType aBase = _infer (aCall.base (), aScope);
+    // The base must be exactly one function, map or array
+    if (aBase.min () == 0 || aBase.max () == MANY)
+      throw _typeError ("XPTY0004", aBase, "the function of a dynamic call is not exactly one item");
+    for (final ItemType aBaseItem : aBase.items ())
+      if (aBaseItem.kind () != ItemType.Kind.FUNCTION &&
+          aBaseItem.kind () != ItemType.Kind.MAP &&
+          aBaseItem.kind () != ItemType.Kind.ARRAY)
+        throw _typeError ("XPTY0004", aBase, "the function of a dynamic call is not function(*)");
+    final ItemType aItem = aBase.items ().size () == 1 ? aBase.items ().get (0) : null;
+    // Every alternative of a known signature must take this many arguments
+    for (final ItemType aBaseItem : aBase.items ())
+      if (aBaseItem.kind () == ItemType.Kind.FUNCTION &&
+          !aBaseItem.wildcard () &&
+          aBaseItem.paramTypes () != null &&
+          aBaseItem.paramTypes ().size () != aCall.args ().size ())
+        throw _typeError ("XPTY0004",
+                          aBase,
+                          "the function of a dynamic call does not take " + aCall.args ().size () + " arguments");
+    final List <SeqType> aParams = aItem != null &&
+                                   aItem.kind () == ItemType.Kind.FUNCTION &&
+                                   !aItem.wildcard () &&
+                                   aItem.paramTypes () != null &&
+                                   aItem.paramTypes ().size () == aCall.args ().size () ? aItem.paramTypes () : null;
     boolean bPartial = false;
-    for (final IExpr aArg : aCall.args ())
+    for (int i = 0; i < aCall.args ().size (); ++i)
+    {
+      final IExpr aArg = aCall.args ().get (i);
       if (aArg instanceof IExpr.PlaceholderExpr)
         bPartial = true;
       else
-        _infer (aArg, aScope);
+      {
+        final StaticType aArgType = _infer (aArg, aScope);
+        if (aParams != null && !_isAccepted (aArgType, aParams.get (i)))
+          throw _typeError ("XPTY0004",
+                            aArgType,
+                            "argument " +
+                                      (i + 1) +
+                                      " of a dynamic call is not subsumed by the required type " +
+                                      SequenceTypeMatcher.getAsString (aParams.get (i)));
+      }
+    }
     if (bPartial)
       return StaticType.one (ANY_FUNCTION);
-    if (aBase.items ().size () != 1)
+    if (aItem == null)
       return StaticType.ANY;
-    final ItemType aItem = aBase.items ().get (0);
     switch (aItem.kind ())
     {
       case FUNCTION:
@@ -801,15 +991,38 @@ final class XPathStaticTyping
   private StaticType _inferPath (final IExpr.@NonNull PathExpr aPath, @NonNull final Scope aScope)
   {
     StaticType aCurrent;
+    // Whether the input of the next step is the context item (XPTY0020) or the
+    // result of an expression (XPTY0019)
+    boolean bFromContext = false;
     if (aPath.start () != null)
       aCurrent = _infer (aPath.start (), aScope);
     else
+    {
+      final StaticType aFocus = _getFocus (aScope);
       if (aPath.absolute ())
+      {
+        if (!_isNodes (aFocus))
+          throw _typeError ("XPTY0020", aFocus, "the context item of a path from the root is not a node");
         aCurrent = StaticType.one (ItemType.node (NodeTest.ofKind (ENodeTestKind.DOCUMENT)));
+      }
       else
-        aCurrent = _getFocus (aScope);
+      {
+        aCurrent = aFocus;
+        bFromContext = true;
+      }
+    }
     for (final IExpr.StepExpr aStep : aPath.steps ())
     {
+      if (bFromContext)
+      {
+        // Only an axis step needs a node as context item
+        if (aStep.postfix () == null && !_isNodes (aCurrent))
+          throw _typeError ("XPTY0020", aCurrent, "the context item of an axis step is not a node");
+        bFromContext = false;
+      }
+      else
+        if (!_isNodes (aCurrent))
+          throw _typeError ("XPTY0019", aCurrent, "the left-hand side of / is not a sequence of nodes");
       final Scope aStepScope = aScope.withFocus (_eachItem (aCurrent));
       StaticType aStepType;
       if (aStep.postfix () != null)
@@ -898,11 +1111,14 @@ final class XPathStaticTyping
         final StaticType aRight = _infer (aBinary.right (), aScope);
         if (aBinary.op () == EBinaryOp.AND || aBinary.op () == EBinaryOp.OR)
           return StaticType.one (BOOLEAN);
+        _checkArithmeticOperand (aLeft, false);
+        _checkArithmeticOperand (aRight, false);
         return _inferArithmetic (aBinary, aLeft, aRight);
       }
       case final IExpr.UnaryExpr aUnary:
       {
         final StaticType aOperand = _infer (aUnary.operand (), aScope);
+        _checkArithmeticOperand (aOperand, true);
         final EAtomicType eType = _getNumericOperandType (aOperand);
         return new StaticType (List.of (eType != null ? ItemType.atomic (eType) : ANY_ATOMIC), 0, 1);
       }
@@ -910,6 +1126,8 @@ final class XPathStaticTyping
       {
         final StaticType aLeft = _infer (aComparison.left (), aScope);
         final StaticType aRight = _infer (aComparison.right (), aScope);
+        _checkComparisonOperand (aComparison, aLeft);
+        _checkComparisonOperand (aComparison, aRight);
         // A general comparison is always true or false, the others are empty
         // for an empty operand
         if (aComparison.op ().isGeneral () || (aLeft.min () == 1 && aRight.min () == 1))
@@ -924,9 +1142,15 @@ final class XPathStaticTyping
         return aNodes.withOccurrence (0, MANY);
       }
       case final IExpr.RangeExpr aRange:
-        _infer (aRange.from (), aScope);
-        _infer (aRange.to (), aScope);
+      {
+        for (final IExpr aOperand : new IExpr [] { aRange.from (), aRange.to () })
+        {
+          final StaticType aType = _infer (aOperand, aScope);
+          if (!_isAccepted (aType, INTEGER_OPTIONAL))
+            throw _typeError ("XPTY0004", aType, "a range operand is not subsumed by xs:integer?");
+        }
         return new StaticType (List.of (INTEGER), 0, MANY);
+      }
       case final IExpr.StringConcatExpr aConcat:
         for (final IExpr aPart : aConcat.parts ())
           _infer (aPart, aScope);
@@ -959,8 +1183,13 @@ final class XPathStaticTyping
         _infer (aTreat.operand (), aScope);
         return StaticType.of (aTreat.type ());
       case final IExpr.CastExpr aCast:
-        _infer (aCast.operand (), aScope);
-        return aCast.castable () ? StaticType.one (BOOLEAN) : StaticType.of (aCast.type ());
+      {
+        final StaticType aOperand = _infer (aCast.operand (), aScope);
+        if (aCast.castable ())
+          return StaticType.one (BOOLEAN);
+        _checkCastOperand (aCast, aOperand);
+        return StaticType.of (aCast.type ());
+      }
       case final IExpr.MapConstructorExpr aMapCtor:
         for (final IExpr aKey : aMapCtor.keys ())
           _infer (aKey, aScope);
@@ -972,11 +1201,15 @@ final class XPathStaticTyping
           _infer (aItem, aScope);
         return StaticType.one (ANY_ARRAY);
       case final IExpr.LookupExpr aLookup:
-        if (aLookup.base () != null)
-          _infer (aLookup.base (), aScope);
+      {
+        final StaticType aBase = aLookup.base () != null ? _infer (aLookup.base (), aScope) : _getFocus (aScope);
+        for (final ItemType aItem : aBase.items ())
+          if (aItem.kind () != ItemType.Kind.MAP && aItem.kind () != ItemType.Kind.ARRAY)
+            throw _typeError ("XPTY0004", aBase, "the left-hand side of a lookup is not a map or an array");
         if (aLookup.key () != null)
           _infer (aLookup.key (), aScope);
         return StaticType.ANY;
+      }
     }
   }
 

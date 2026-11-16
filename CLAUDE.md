@@ -94,8 +94,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   and the wrapping constructor copies the frame).
 - Static Typing Feature (opt-in, `StaticContext.setStaticTyping`, XPath only, plan in `docs/PLAN.md`): after parsing,
   `XPathStaticAxes` (provably empty steps) and `XPathStaticTyping` (package `parser`) run inside the parser's stack
-  guard. The inference keeps alternative item types (`StaticType`), is pessimistic (unknown is `item()*`) and checks
-  static call arguments after the function conversion rules; nothing of it runs without the flag.
+  guard. The inference keeps alternative item types (`StaticType`), is pessimistic (unknown is `item()*`, the context
+  item `item()` unless `setContextItemStaticType`, a variable `item()*` unless `declareVariable (name, SeqType)`) and
+  checks call arguments (function coercion for function types) and operands; nothing of it runs without the flag. A
+  test that switches the flag on declares the context item type it relies on.
 - Hosts that evaluate their own XPath against a stylesheet's declarations (Schematron) use
   `XsltExecutable.createStaticContext`/`createEvaluation`, never `Engine` directly; the start-up of a run lives in
   `XsltTransformer.initGlobalContextItem` and is shared by both. `CompiledXPath.evaluate` uses its own static context.

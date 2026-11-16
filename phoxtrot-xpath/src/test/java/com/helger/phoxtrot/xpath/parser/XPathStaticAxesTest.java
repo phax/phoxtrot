@@ -25,6 +25,8 @@ import org.jspecify.annotations.NonNull;
 import org.junit.Test;
 
 import com.helger.phoxtrot.xpath.XPathException;
+import com.helger.phoxtrot.xpath.ast.ItemType;
+import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 
 /**
@@ -37,7 +39,10 @@ public final class XPathStaticAxesTest
   @NonNull
   private static StaticContext _ctx (final boolean bStaticTyping)
   {
-    return new StaticContext ().declareNamespace ("p", "urn:p").setStaticTyping (bStaticTyping);
+    // The context item is a node, so that relative paths pass the type checks
+    return new StaticContext ().declareNamespace ("p", "urn:p")
+                               .setContextItemStaticType (ItemType.node (NodeTest.ANY_NODE))
+                               .setStaticTyping (bStaticTyping);
   }
 
   private static void _expectEmpty (@NonNull final String... aExprs)

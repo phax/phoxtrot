@@ -33,6 +33,8 @@ import com.helger.phoxtrot.xdm.XdmConstants;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xpath.XPathException;
+import com.helger.phoxtrot.xpath.ast.ItemType;
+import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.collation.CollationRegistry;
 import com.helger.phoxtrot.xpath.collation.ICollation;
 import com.helger.phoxtrot.xpath.fn.FormatDecimalFormat;
@@ -62,6 +64,9 @@ public final class StaticContext
   private boolean m_bXPath10Compatibility = false;
   private String m_sUnknownFunctionErrorCode;
   private boolean m_bStaticTyping = false;
+  private ItemType m_aContextItemStaticType;
+  // The declared types of variables declared with a type; null for none
+  private ICommonsMap <XdmQName, SeqType> m_aVariableTypes;
   private String m_sDefaultCollation = CollationRegistry.CODEPOINT_URI;
   private FormatDecimalFormat m_aDefaultDecimalFormat = FormatDecimalFormat.DEFAULT;
   private final ICommonsMap <XdmQName, FormatDecimalFormat> m_aDecimalFormats = new CommonsHashMap <> ();
@@ -313,6 +318,38 @@ public final class StaticContext
   }
 
   /**
+   * @return The context item static type (XPath 3.1 section 2.1.1) the Static
+   *         Typing Feature assumes, or <code>null</code> for
+   *         <code>item()</code> (the default).
+   * @since 0.2.1
+   */
+  @Nullable
+  public ItemType getContextItemStaticType ()
+  {
+    return m_aContextItemStaticType;
+  }
+
+  /**
+   * Declare the static type of the context item the expressions will be
+   * evaluated with. Only the Static Typing Feature
+   * ({@link #setStaticTyping(boolean)}) uses it; without a declaration the
+   * context item has the static type <code>item()</code>, so that a relative
+   * path is a type error under the feature. The context item is not checked
+   * against it at run time.
+   *
+   * @param aType
+   *        The item type; <code>null</code> for <code>item()</code>.
+   * @return this for chaining
+   * @since 0.2.1
+   */
+  @NonNull
+  public StaticContext setContextItemStaticType (@Nullable final ItemType aType)
+  {
+    m_aContextItemStaticType = aType;
+    return this;
+  }
+
+  /**
    * @return The in-scope schema definitions beyond the built-in types (the
    *         components of a schema-aware host), or <code>null</code> if there
    *         are none.
@@ -354,6 +391,51 @@ public final class StaticContext
     ValueEnforcer.notNull (aName, "Name");
     m_aDeclaredVariables.add (aName);
     return this;
+  }
+
+  /**
+   * Declare an in-scope variable with its static type, so that a reference to
+   * it compiles and, with the Static Typing Feature
+   * ({@link #setStaticTyping(boolean)}), has that type instead of
+   * <code>item()*</code>. The value is bound in the dynamic context and is not
+   * checked against the type.
+   *
+   * @param aName
+   *        Variable name.
+   * @param aType
+   *        The static type of the variable; <code>null</code> for
+   *        <code>item()*</code>.
+   * @return this for chaining
+   * @since 0.2.1
+   */
+  @NonNull
+  public StaticContext declareVariable (@NonNull final XdmQName aName, @Nullable final SeqType aType)
+  {
+    declareVariable (aName);
+    if (aType != null)
+    {
+      if (m_aVariableTypes == null)
+        m_aVariableTypes = new CommonsHashMap <> ();
+      m_aVariableTypes.put (aName, aType);
+    }
+    else
+      if (m_aVariableTypes != null)
+        m_aVariableTypes.remove (aName);
+    return this;
+  }
+
+  /**
+   * @param aName
+   *        Variable name.
+   * @return The static type declared with
+   *         {@link #declareVariable(XdmQName, SeqType)}, or <code>null</code>
+   *         if none was declared (<code>item()*</code>).
+   * @since 0.2.1
+   */
+  @Nullable
+  public SeqType getVariableType (@Nullable final XdmQName aName)
+  {
+    return m_aVariableTypes == null || aName == null ? null : m_aVariableTypes.get (aName);
   }
 
   /**

@@ -131,6 +131,11 @@ Boolean aValid = LargeStackRunner.run (() -> Boolean.valueOf (aXPath.evaluateEff
   (undeclared ones are not streamable). `FunctionLibrary.createDefaultWithXsltSignatures ()` adds the signatures of
   the XSLT functions (`fn:key`, `fn:current`, `fn:document`, ...) for compiling expressions of an XSLT-based language
   without `phoxtrot-xslt`.
+* Static typing (XPath 3.1 section 4.1, optional): `StaticContext.setStaticTyping (true)` infers the static type of the
+  expression at compile time and raises type errors (XPTY0004, XPTY0019, XPTY0020) and XPST0005 where the inferred
+  type is not accepted, before anything is evaluated. It is pessimistic by definition: declare the context item type
+  (`setContextItemStaticType`) and the variable types (`declareVariable (name, SeqType)`), and use `treat as` where
+  only you know more. Off by default; XSLT does not use it.
 * Stylesheet functions without Java code: compile a module with the `xsl:function`s (and the keys and global variables
   they use) and compile the expressions against `XsltExecutable.createStaticContext ()`, evaluated with the dynamic
   context of `XsltExecutable.createEvaluation (request).createDynamicContext ()`.
@@ -246,9 +251,13 @@ v0.2.1 - work in progress
   the transformer's entity resolver when the factory loads external entities); without one nothing is read, as
   before. Relative references are resolved against the static base URI (new `XdmParser.parse (String, String)`)
 * XPath: the optional Static Typing Feature (`StaticContext.setStaticTyping`) now infers the static type of every
-  expression and raises XPTY0004 for a function argument whose inferred type the parameter type does not subsume (after
-  the function conversion rules, function types included), and XPST0005 for every expression other than `()` and
-  `data(())` inferred as `empty-sequence()`. Before, it only rejected provably empty axis steps
+  expression and raises a type error where the inferred type is not accepted: function arguments (after the function
+  conversion rules, function coercion included), arithmetic, comparison, cast and range operands, path operands
+  (XPTY0019/XPTY0020), dynamic calls and lookups, and inline function bodies against their declared return type; and
+  XPST0005 for every expression other than `()` and `data(())` inferred as `empty-sequence()`. Before, it only
+  rejected provably empty axis steps. It is pessimistic: hosts declare the types of what they supply with the new
+  `StaticContext.setContextItemStaticType` and `StaticContext.declareVariable (name, SeqType)` (otherwise the context
+  item is `item()` and a variable `item()*`)
 
 v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it

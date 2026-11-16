@@ -28,16 +28,23 @@ import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsLinkedHashMap;
 import com.helger.collection.commons.ICommonsOrderedMap;
 import com.helger.phoxtrot.xdm.IXdmItem;
+import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xpath.CompiledXPath;
 import com.helger.phoxtrot.xpath.XPathCompiler;
+import com.helger.phoxtrot.xpath.ast.ENodeTestKind;
+import com.helger.phoxtrot.xpath.ast.EOccurrence;
+import com.helger.phoxtrot.xpath.ast.ItemType;
+import com.helger.phoxtrot.xpath.ast.NodeTest;
+import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.EXmlVersion;
 import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.context.IResourceResolver;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.fn.FormatDecimalFormat;
+import com.helger.phoxtrot.xpath.value.XdmAtomic;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
@@ -237,6 +244,55 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
+   * @return The item type a static type declaration gives the item: its node
+   *         kind, its atomic type, else <code>item()</code>.
+   */
+  @NonNull
+  private static ItemType _getStaticItemType (@NonNull final IXdmItem aItem)
+  {
+    if (aItem instanceof final IXdmNode aNode)
+    {
+      final ENodeTestKind eKind = switch (aNode.getKind ())
+      {
+        case DOCUMENT -> ENodeTestKind.DOCUMENT;
+        case ELEMENT -> ENodeTestKind.ELEMENT;
+        case ATTRIBUTE -> ENodeTestKind.ATTRIBUTE;
+        case TEXT -> ENodeTestKind.TEXT;
+        case COMMENT -> ENodeTestKind.COMMENT;
+        case PROCESSING_INSTRUCTION -> ENodeTestKind.PROCESSING_INSTRUCTION;
+        case NAMESPACE -> ENodeTestKind.NAMESPACE_NODE;
+      };
+      return ItemType.node (NodeTest.ofKind (eKind));
+    }
+    if (aItem instanceof final XdmAtomic aAtomic)
+      return ItemType.atomic (aAtomic.getType ());
+    return ItemType.ITEM;
+  }
+
+  /**
+   * @return The static type a declaration gives a value: the common item type
+   *         of its items (<code>item()</code> if they differ) with the occurrence
+   *         of its size.
+   */
+  @NonNull
+  private static SeqType _getStaticType (@NonNull final XdmSequence aValue)
+  {
+    if (aValue.isEmpty ())
+      return SeqType.EMPTY_SEQUENCE;
+    ItemType aCommon = null;
+    for (final IXdmItem aItem : aValue)
+    {
+      final ItemType aType = _getStaticItemType (aItem);
+      if (aCommon == null)
+        aCommon = aType;
+      else
+        if (!aCommon.equals (aType))
+          aCommon = ItemType.ITEM;
+    }
+    return SeqType.of (aCommon, aValue.isSingleton () ? EOccurrence.ONE : EOccurrence.ONE_OR_MORE);
+  }
+
+  /**
    * Compile and evaluate an expression under the configured environment. A
    * new {@link StaticContext} gets the namespaces, the default element
    * namespace, the static base URI, the default collation, XPath 1.0
@@ -279,10 +335,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
       aStatic.setDefaultDecimalFormat (m_aDefaultDecimalFormat);
     for (final Map.Entry <XdmQName, FormatDecimalFormat> aEntry : m_aDecimalFormats.entrySet ())
       aStatic.addDecimalFormat (aEntry.getKey (), aEntry.getValue ());
-    for (final XdmQName aName : m_aVars.keySet ())
-      aStatic.declareVariable (aName);
-    for (final XdmQName aName : aExtraVars.keySet ())
-      aStatic.declareVariable (aName);
+    // With static typing the host declares the types of what it supplies
+    if (m_bStaticTyping && m_aContextItem != null)
+      aStatic.setContextItemStaticType (_getStaticItemType (m_aContextItem));
+    for (final Map.Entry <XdmQName, XdmSequence> aEntry : m_aVars.entrySet ())
+      aStatic.declareVariable (aEntry.getKey (), m_bStaticTyping ? _getStaticType (aEntry.getValue ()) : null);
+    for (final Map.Entry <XdmQName, XdmSequence> aEntry : aExtraVars.entrySet ())
+      aStatic.declareVariable (aEntry.getKey (), m_bStaticTyping ? _getStaticType (aEntry.getValue ()) : null);
 
     final CompiledXPath aCompiled = XPathCompiler.compile (sExpr, aStatic);
     DynamicContext aCtx = aCompiled.createDynamicContext ();

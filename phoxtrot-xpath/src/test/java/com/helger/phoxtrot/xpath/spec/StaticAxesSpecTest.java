@@ -28,6 +28,10 @@ import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.XPathCompiler;
 import com.helger.phoxtrot.xpath.XPathException;
+import com.helger.phoxtrot.xpath.ast.EOccurrence;
+import com.helger.phoxtrot.xpath.ast.ItemType;
+import com.helger.phoxtrot.xpath.ast.NodeTest;
+import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 
 /**
@@ -51,8 +55,12 @@ public final class StaticAxesSpecTest
     try
     {
       // go-xslt resolves no names at parse time; p, $x and $f are declared here
-      final StaticContext aSC = new StaticContext ().declareNamespace ("p", "urn:p").setStaticTyping (true);
-      aSC.declareVariable (new XdmQName ("x"));
+      // The context item and $x are nodes, so that the paths pass the type
+      // checks of the feature
+      final StaticContext aSC = new StaticContext ().declareNamespace ("p", "urn:p")
+                                                    .setContextItemStaticType (ItemType.node (NodeTest.ANY_NODE))
+                                                    .setStaticTyping (true);
+      aSC.declareVariable (new XdmQName ("x"), SeqType.of (ItemType.node (NodeTest.ANY_NODE), EOccurrence.ZERO_OR_MORE));
       aSC.declareVariable (new XdmQName ("f"));
       XPathCompiler.compile (sExpr, aSC);
       return false;
