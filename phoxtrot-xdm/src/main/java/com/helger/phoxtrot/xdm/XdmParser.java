@@ -17,7 +17,6 @@
 package com.helger.phoxtrot.xdm;
 
 import java.io.IOException;
-import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -92,7 +91,7 @@ public class XdmParser
   // Optimisation: the reusable SAX parser of each thread, without (index 0) and with
   // (index 1) external entities, instead of a new parser per parse; a slot is empty while its
   // parser is in use
-  private static final ThreadLocal <SAXParser []> PARSERS = ThreadLocal.withInitial ( () -> new SAXParser [2]);
+  private static final ThreadLocal <SAXParser []> PARSERS = ThreadLocal.withInitial (() -> new SAXParser [2]);
   /**
    * Whether the JDK parser accepts a code point in an XML 1.0 name, per code point that XML 1.0
    * (5th edition) allows; filled on demand
@@ -261,12 +260,12 @@ public class XdmParser
 
   /**
    * Set the schemes the parser may open itself for the external DTD subset and external entities,
-   * as the JAXP property {@link XMLConstants#ACCESS_EXTERNAL_DTD} defines it: <code>all</code>, or a
-   * comma-separated list of schemes such as <code>file,jar</code>; the empty string allows none. It
-   * applies only when they are loaded ({@link #setLoadExternalEntities(boolean)}). A resource the
-   * {@link #setEntityResolver(EntityResolver) entity resolver} returns is not checked, so with the
-   * empty string only the entity resolver gives access. A resource that is not allowed fails the
-   * parse with an {@link XdmParseException}.
+   * as the JAXP property {@link XMLConstants#ACCESS_EXTERNAL_DTD} defines it: <code>all</code>, or
+   * a comma-separated list of schemes such as <code>file,jar</code>; the empty string allows none.
+   * It applies only when they are loaded ({@link #setLoadExternalEntities(boolean)}). A resource
+   * the {@link #setEntityResolver(EntityResolver) entity resolver} returns is not checked, so with
+   * the empty string only the entity resolver gives access. A resource that is not allowed fails
+   * the parse with an {@link XdmParseException}.
    *
    * @param sAccessExternalDtd
    *        The allowed schemes. May not be <code>null</code>; the default is
@@ -354,9 +353,9 @@ public class XdmParser
    * {@link IXdmNode#getLine()}). Only elements, comments and processing instructions have location
    * fields (attributes and text nodes report the location of their parent); without, each of them
    * is 8 bytes smaller and all locations are 0. Off by default ({@link #DEFAULT_RECORD_LOCATIONS},
-   * or on while {@link #getWithRecordLocations(Supplier)} runs on the creating thread); switch it on
-   * for documents whose node locations are read: the error messages of stylesheets and schemas and
-   * <code>xsl:try</code> use them, and so does the line of an instance validation error of the
+   * or on while {@link #getWithRecordLocations(Supplier)} runs on the creating thread); switch it
+   * on for documents whose node locations are read: the error messages of stylesheets and schemas
+   * and <code>xsl:try</code> use them, and so does the line of an instance validation error of the
    * native XSD validator (without, such an error has line 0 and only its path). The one rule of
    * phoxtrot: every reader leaves them out, only the parses of stylesheet modules, packages, schema
    * documents and XSD instance validation switch them on (for a stylesheet module read through a
@@ -570,8 +569,7 @@ public class XdmParser
    *         if the JDK parser does not support a feature
    */
   @NonNull
-  private static SAXParser _createSAXParser (final boolean bLoadExternalEntities) throws ParserConfigurationException,
-                                                                                         SAXException
+  private static SAXParser _createSAXParser (final boolean bLoadExternalEntities) throws ParserConfigurationException, SAXException
   {
     // Always the JDK parser: the JAXP lookup would pick up another
     // implementation on the class path (e.g. Apache Xerces), which rejects
@@ -735,10 +733,30 @@ public class XdmParser
   @NonNull
   public IXdmNode parse (@NonNull final String sXml) throws XdmParseException
   {
+    return parse (sXml, null);
+  }
+
+  /**
+   * @param sXml
+   *        The XML text to read. May not be <code>null</code>.
+   * @param sSystemId
+   *        The system ID of the text, against which the parser resolves relative references (the
+   *        external DTD subset and external entities); <code>null</code> for none.
+   * @return The document node.
+   * @throws XdmValidationException
+   *         if a schema is set and the document is not valid against it
+   * @throws XdmParseException
+   *         if the document cannot be read
+   */
+  @NonNull
+  public IXdmNode parse (@NonNull final String sXml, @Nullable final String sSystemId) throws XdmParseException
+  {
     ValueEnforcer.notNull (sXml, "Xml");
     // StringReader reads from the string itself, where NonBlockingStringReader
     // would copy it into a char array first
-    return _parse (new InputSource (new StringReader (sXml)), sXml);
+    final InputSource aSource = new InputSource (new NonBlockingStringReader (sXml));
+    aSource.setSystemId (sSystemId);
+    return _parse (aSource, sXml);
   }
 
   /**

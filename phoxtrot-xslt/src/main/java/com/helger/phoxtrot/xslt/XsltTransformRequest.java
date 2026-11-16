@@ -21,6 +21,7 @@ import java.util.function.BooleanSupplier;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.EntityResolver;
 
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
@@ -75,6 +76,7 @@ public final class XsltTransformRequest
   private final ICommonsOrderedMap <String, String> m_aOutputOverrides = new CommonsLinkedHashMap <> ();
   private String m_sBaseOutputUri;
   private IResourceResolver m_aResolver;
+  private EntityResolver m_aParseXmlEntityResolver;
   private OffsetDateTime m_aCurrentDateTime;
   private BooleanSupplier m_aInterrupt;
   private IXsltMessageListener m_aMessageListener;
@@ -251,6 +253,34 @@ public final class XsltTransformRequest
   public XsltTransformRequest setResolver (@Nullable final IResourceResolver aResolver)
   {
     m_aResolver = aResolver;
+    return this;
+  }
+
+  /**
+   * @return The entity resolver of <code>fn:parse-xml</code>, <code>null</code>
+   *         if it reads no external DTD subset and no external entities (the
+   *         default).
+   */
+  @Nullable
+  public EntityResolver getParseXmlEntityResolver ()
+  {
+    return m_aParseXmlEntityResolver;
+  }
+
+  /**
+   * Set the entity resolver of <code>fn:parse-xml</code> (see
+   * {@link com.helger.phoxtrot.xpath.context.DynamicContext#setParseXmlEntityResolver(EntityResolver)}):
+   * the external DTD subset and external entities of a parsed string are read
+   * only through it. A nested <code>fn:transform</code> inherits it.
+   *
+   * @param aEntityResolver
+   *        The resolver; <code>null</code> (the default) to read none.
+   * @return this for chaining
+   */
+  @NonNull
+  public XsltTransformRequest setParseXmlEntityResolver (@Nullable final EntityResolver aEntityResolver)
+  {
+    m_aParseXmlEntityResolver = aEntityResolver;
     return this;
   }
 

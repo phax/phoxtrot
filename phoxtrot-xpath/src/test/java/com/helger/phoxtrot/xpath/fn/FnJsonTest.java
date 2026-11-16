@@ -20,11 +20,20 @@ import static com.helger.phoxtrot.xpath.serialize.XPathTestEval.adaptive;
 import static com.helger.phoxtrot.xpath.serialize.XPathTestEval.assertError;
 import static com.helger.phoxtrot.xpath.serialize.XPathTestEval.evalString;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.fail;
 
 import org.junit.Test;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 
+import com.helger.base.io.nonblocking.NonBlockingStringReader;
+import com.helger.collection.commons.CommonsArrayList;
+import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xpath.CompiledXPath;
 import com.helger.phoxtrot.xpath.XPathCompiler;
+import com.helger.phoxtrot.xpath.XPathException;
+import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.value.XdmAtomic;
 
@@ -123,6 +132,57 @@ public final class FnJsonTest
     {
       final CompiledXPath aXP = XPathCompiler.compile ("string(base-uri(" + sCall + "))", aStatic);
       assertEquals (sCall, "http://example.org/base/", ((XdmAtomic) aXP.evaluate (aXP.createDynamicContext ()).get (0)).getString ());
+    }
+  }
+
+  @Test
+  public void testParseXmlEntityResolver ()
+  {
+    final StaticContext aStatic = new StaticContext ().setBaseUri ("http://example.org/base/doc.xml");
+    final CompiledXPath aXP = XPathCompiler.compile ("string(parse-xml(\"<!DOCTYPE a [<!ENTITY e SYSTEM 'ent.txt'>]><a>&e;</a>\"))",
+                                                     aStatic);
+
+    // Default: no resolver, the external entity is not read
+    DynamicContext aCtx = aXP.createDynamicContext ();
+    assertNull (aCtx.getParseXmlEntityResolver ());
+    assertEquals ("", ((XdmAtomic) aXP.evaluate (aCtx).get (0)).getString ());
+
+    // With a resolver: the system ID is resolved against the static base URI
+    final ICommonsList <String> aCalls = new CommonsArrayList <> ();
+    final EntityResolver aResolver = (sPublicId, sSystemId) -> {
+      aCalls.add (sSystemId);
+      return sSystemId.endsWith ("/ent.txt") ? new InputSource (new NonBlockingStringReader ("from-resolver")) : null;
+    };
+    aCtx = aXP.createDynamicContext ();
+    aCtx.setParseXmlEntityResolver (aResolver);
+    assertEquals ("from-resolver", ((XdmAtomic) aXP.evaluate (aCtx).get (0)).getString ());
+    assertEquals ("[http://example.org/base/ent.txt]", aCalls.toString ());
+
+    // What the resolver does not resolve is not read by the parser itself
+    aCtx = aXP.createDynamicContext ();
+    aCtx.setParseXmlEntityResolver ( (sPublicId, sSystemId) -> null);
+    try
+    {
+      aXP.evaluate (aCtx);
+      fail ();
+    }
+    catch (final XPathException ex)
+    {
+      assertEquals ("FODC0006", ex.getCode ());
+    }
+
+    // parse-xml-fragment never uses it
+    final CompiledXPath aFragment = XPathCompiler.compile ("parse-xml-fragment('&e;')", aStatic);
+    aCtx = aFragment.createDynamicContext ();
+    aCtx.setParseXmlEntityResolver (aResolver);
+    try
+    {
+      aFragment.evaluate (aCtx);
+      fail ();
+    }
+    catch (final XPathException ex)
+    {
+      assertEquals ("FODC0006", ex.getCode ());
     }
   }
 }

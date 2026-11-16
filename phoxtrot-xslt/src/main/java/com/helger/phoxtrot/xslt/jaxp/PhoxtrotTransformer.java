@@ -366,7 +366,10 @@ public class PhoxtrotTransformer extends Transformer
    * factory loads them
    * ({@link PhoxtrotTransformerFactory#ATTR_LOAD_EXTERNAL_ENTITIES}); what it
    * returns is not checked against
-   * {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD}.
+   * {@link javax.xml.XMLConstants#ACCESS_EXTERNAL_DTD}. It is also the only
+   * source of the external DTDs and entities of <code>fn:parse-xml</code>
+   * (see
+   * {@link com.helger.phoxtrot.xslt.XsltTransformRequest#setParseXmlEntityResolver(EntityResolver)}).
    *
    * @param aEntityResolver
    *        The resolver; <code>null</code> for none. The initial one is the
@@ -408,6 +411,10 @@ public class PhoxtrotTransformer extends Transformer
       ret.params ().put (JaxpValueConverter.parseName (aEntry.getKey ()), aEntry.getValue ().converted ());
     // Documents read while transforming need no node locations
     ret.setResolver (new JaxpResourceResolver (m_aURIResolver, aSettings.accessExternalStylesheet (), _getParserSettings ()));
+    // fn:parse-xml reads external entities only through the entity resolver,
+    // and only where the factory loads them
+    if (aSettings.parserSettings ().loadExternalEntities ())
+      ret.setParseXmlEntityResolver (m_aEntityResolver);
     ret.setMessageListener (m_aMessageListener != null ? m_aMessageListener : new ErrorListenerMessages (m_aErrorListener));
     ret.setTraceListener (m_aTraceListener);
     ret.setInterrupt (aInterrupt);

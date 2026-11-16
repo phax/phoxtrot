@@ -194,6 +194,28 @@ public final class JaxpResolverTest
   }
 
   @Test
+  public void testEntityResolverForParseXml () throws Exception
+  {
+    // The markup is escaped for the select attribute
+    final String sSheet = _textSheet ("string(parse-xml('&lt;!DOCTYPE a [&lt;!ENTITY e SYSTEM &quot;file:///nonexistent/e.txt&quot;&gt;]&gt;" +
+                                      "&lt;a&gt;&amp;e;&lt;/a&gt;'))");
+    final RecordingEntityResolver aResolver = new RecordingEntityResolver (Map.of ("e.txt", "from-resolver"));
+
+    // Without external entities the resolver is not used for fn:parse-xml
+    PhoxtrotTransformerFactory aTF = _createOpenFactory ();
+    aTF.setAttribute (PhoxtrotTransformerFactory.ATTR_ENTITY_RESOLVER, aResolver);
+    assertEquals ("", _transform (aTF.newTemplates (_source (sSheet)).newTransformer (), _source (SOURCE)));
+    assertTrue (aResolver.m_aCalls.isEmpty ());
+
+    // With them, only the resolver gives access, also under secure processing
+    aTF = _createLoadingFactory ();
+    aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, true);
+    aTF.setAttribute (PhoxtrotTransformerFactory.ATTR_ENTITY_RESOLVER, aResolver);
+    assertEquals ("from-resolver", _transform (aTF.newTemplates (_source (sSheet)).newTransformer (), _source (SOURCE)));
+    assertEquals ("[e.txt]", aResolver.m_aCalls.toString ());
+  }
+
+  @Test
   public void testEntityResolverForSourceAndInclude () throws Exception
   {
     final Path aDir = m_aTempDir.getRoot ().toPath ();

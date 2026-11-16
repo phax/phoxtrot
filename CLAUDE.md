@@ -48,6 +48,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   created on the thread meanwhile (`isRecordLocationsByDefault`; an explicit `setRecordLocations` wins), so a user
   resolver that implements only `resolveDocument` still yields located modules unless it caches or switches them
   off. A wrapping resolver forwards `resolveStylesheetModule`. A new parse site states its setting explicitly.
+- `fn:parse-xml` reads the external DTD subset and external entities only through the run's entity resolver
+  (`DynamicContext.setParseXmlEntityResolver`, from `XsltTransformRequest`, inherited by nested `fn:transform`; the JAXP
+  transformer passes its own only when the factory loads external entities), never by itself (access `""`), and
+  nothing without one; `fn:parse-xml-fragment` never uses it.
 - Document order: `getOrder ()`/`getEndOrder ()` (end = last node of the subtree, attributes included); a document node
   has lazily built name indexes (elements, attributes, and the kept child elements by name of nodes with many children,
   which come from one pass over the children and never build the element index themselves) used by `AxisNavigator.collectNamedDescendants`/`collectNamedSubtreeAttributes`/`collectNamedChildren`. Every

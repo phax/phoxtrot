@@ -14,7 +14,7 @@ A pure Java implementation of XPath 3.1 and XSLT 3.0, intended as an Apache 2.0 
 XML parsing is left to the JDK; everything on top of it, including an XML Schema 1.0 validator, is implemented here.
 
 Status: initially released.
-* The XPath 3.1 engine runs and passes 99.9% of the applicable W3C QT3 test cases (22,382 of 22,407).
+* The XPath 3.1 engine runs and passes 99.9% of the applicable W3C QT3 test cases (22,383 of 22,407).
 * The XSLT 3.0 engine passes 99.9% of the applicable W3C xslt30-test cases as a basic processor (8,640 of 8,647).
 * The native XML Schema validator passes 99.99% of the applicable W3C xsdtests cases for XSD 1.0 (39,396 of 39,401) and XSD 1.1 (41,596 of 41,600).
 
@@ -241,6 +241,10 @@ v0.2.1 - work in progress
 * Schema-awareness: Apache Xerces-J is no longer supported as schema processor; the native validator (`phoxtrot-xsd`) is
   the only one. Removed the package `com.helger.phoxtrot.xdm.xerces`, the optional dependency on `xerces:xercesImpl`
   and the system property `xdm.schemaProvider` (`XdmSchemaSupport.SYSTEM_PROPERTY_PROVIDER`)
+* XPath: `fn:parse-xml` can read the external DTD subset and external entities of the parsed string through an entity
+  resolver (new `DynamicContext.setParseXmlEntityResolver`, `XsltTransformRequest.setParseXmlEntityResolver`; JAXP:
+  the transformer's entity resolver when the factory loads external entities); without one nothing is read, as
+  before. Relative references are resolved against the static base URI (new `XdmParser.parse (String, String)`)
 
 v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it

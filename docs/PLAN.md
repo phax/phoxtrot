@@ -29,14 +29,14 @@ XSLT30 status (2026-11-04, after the open cases `function-lookup-005`/`006` and 
 applicable cases pass (99.9%) as a basic processor, identical on JDK 21 and 25; all 7 fails are documented in
 `phoxtrot-xslt-conformance/docs/accepted-failures/xslt30.md` (`XSLT30IT` fails on any undocumented failure). Extension API for the families: `phoxtrot-xslt/INSTRAPI.md`.
 
-QT3 status (2026-11-16): 22,382 of 22,407 applicable cases pass (99.9%), 25 fail, all documented in
+QT3 status (2026-11-16): 22,383 of 22,407 applicable cases pass (99.9%), 24 fail, all documented in
 `phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md` (`QT3IT` fails on any undocumented failure):
 
 | Group | Fails | Status |
 |-------|-------|--------|
 | `fn:transform` wanted unavailable | 3 | Accepted: `fn-transform-901/902/err-14` (same in go-xslt) |
 | Static typing (type inference) | 20 | Accepted: same 20 cases as go-xslt |
-| External entity in `fn:parse-xml`, network access | 2 | Accepted (same in go-xslt) |
+| Network access | 1 | Accepted (same in go-xslt) |
 
 The feature `fn-load-xquery-module` is not claimed, so its 84 cases are skipped (until 2026-11-16 they ran: 34 fails
 accepted as in go-xslt, 37 passes).

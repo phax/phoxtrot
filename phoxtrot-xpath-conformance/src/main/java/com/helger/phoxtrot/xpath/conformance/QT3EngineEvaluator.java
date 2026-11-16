@@ -21,6 +21,7 @@ import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.EntityResolver;
 
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
@@ -62,6 +63,7 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   private boolean m_bStaticTyping;
   private IXdmItem m_aContextItem;
   private IResourceResolver m_aResolver;
+  private EntityResolver m_aParseXmlEntityResolver;
   private EXmlVersion m_eXmlVersion;
   private EXsdVersion m_eXsdVersion;
   private String m_sDefaultLanguage;
@@ -195,6 +197,18 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
+   * @param aEntityResolver
+   *        The entity resolver of <code>fn:parse-xml</code>, may be <code>null</code>.
+   * @return this for chaining
+   */
+  @NonNull
+  public QT3EngineEvaluator setParseXmlEntityResolver (@Nullable final EntityResolver aEntityResolver)
+  {
+    m_aParseXmlEntityResolver = aEntityResolver;
+    return this;
+  }
+
+  /**
    * @param aSchemaSet
    *        The in-scope schema definitions, may be <code>null</code>.
    * @return this for chaining
@@ -277,6 +291,7 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
       aCtx.setDefaultLanguage (m_sDefaultLanguage);
     if (m_aResolver != null)
       aCtx.setResourceResolver (m_aResolver);
+    aCtx.setParseXmlEntityResolver (m_aParseXmlEntityResolver);
     if (m_aContextItem != null)
       aCtx = aCtx.withFocus (m_aContextItem, 1, 1);
     for (final Map.Entry <XdmQName, XdmSequence> aEntry : m_aVars.entrySet ())

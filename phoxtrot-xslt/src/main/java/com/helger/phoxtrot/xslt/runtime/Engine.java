@@ -191,6 +191,7 @@ public final class Engine
       aDyn.setCurrentDateTime (aRequest.getCurrentDateTime ());
     aDyn.setInterrupt (aRequest.getInterrupt ());
     aDyn.setResourceResolver (new StrippingResolver (aRequest.getResolver ()));
+    aDyn.setParseXmlEntityResolver (aRequest.getParseXmlEntityResolver ());
     aDyn.setContextGlobalVariableResolver (this::_resolveGlobal);
     final String sOutputUri = aRequest.getBaseOutputUri ();
     XsltState aState = XsltState.EMPTY;

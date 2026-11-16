@@ -26,6 +26,7 @@ import java.util.function.Supplier;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.EntityResolver;
 
 import com.helger.annotation.Nonnegative;
 import com.helger.annotation.concurrent.NotThreadSafe;
@@ -62,6 +63,7 @@ public final class DynamicContext
     private OffsetDateTime m_aCurrentDateTime = OffsetDateTime.now ();
     private int m_nImplicitTimezoneMinutes = m_aCurrentDateTime.getOffset ().getTotalSeconds () / 60;
     private IResourceResolver m_aResolver = null;
+    private EntityResolver m_aParseXmlEntityResolver = null;
     private BooleanSupplier m_aInterrupt = null;
     private final ICommonsMap <String, Object> m_aCache = new CommonsHashMap <> ();
     private int m_nCallDepth = 0;
@@ -486,6 +488,34 @@ public final class DynamicContext
   public void setResourceResolver (@Nullable final IResourceResolver aResolver)
   {
     m_aRun.m_aResolver = aResolver;
+  }
+
+  /**
+   * @return The entity resolver of <code>fn:parse-xml</code>, <code>null</code> if it reads no
+   *         external DTD subset and no external entities (the default).
+   * @see #setParseXmlEntityResolver(EntityResolver)
+   */
+  @Nullable
+  public EntityResolver getParseXmlEntityResolver ()
+  {
+    return m_aRun.m_aParseXmlEntityResolver;
+  }
+
+  /**
+   * Set the run-wide entity resolver of <code>fn:parse-xml</code>. Whether a parsed string's
+   * external DTD subset and external entities are read is implementation-defined (F&amp;O 3.1
+   * section 14.7.1). Without a resolver (the default) none is read. With one, they are read only
+   * through it: it gets their system IDs resolved against the static base URI, and what it does not
+   * resolve (returns <code>null</code> for) is not read, so the call fails with FODC0006.
+   * <code>fn:parse-xml-fragment</code> allows no entity references besides the predefined ones and
+   * never uses it.
+   *
+   * @param aEntityResolver
+   *        The resolver; <code>null</code> to read no external DTD subset and no external entities.
+   */
+  public void setParseXmlEntityResolver (@Nullable final EntityResolver aEntityResolver)
+  {
+    m_aRun.m_aParseXmlEntityResolver = aEntityResolver;
   }
 
   /**

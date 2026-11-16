@@ -655,6 +655,7 @@ public final class XsltTransformHandler implements ITransformHandler
   {
     final XsltTransformRequest ret = new XsltTransformRequest ();
     ret.setResolver (aHost.runResolver ());
+    ret.setParseXmlEntityResolver (aCtx.getParseXmlEntityResolver ());
     ret.setCurrentDateTime (aCtx.getCurrentDateTime ());
     if (aHost.engine () != null)
     {

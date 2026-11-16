@@ -24,6 +24,7 @@ import java.util.function.UnaryOperator;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.EntityResolver;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.style.PresentForCodeCoverage;
@@ -1069,6 +1070,12 @@ public final class FnJson
   /**
    * @param sXml
    *        An XML document as a string.
+   * @param sBaseUri
+   *        The base URI the parser resolves relative entity references
+   *        against; <code>null</code> for none.
+   * @param aEntityResolver
+   *        The only source of the external DTD subset and external entities;
+   *        <code>null</code> to read none.
    * @return The document node built by a new {@link XdmParser}, without
    *         node locations.
    * @throws XPathException
@@ -1076,12 +1083,21 @@ public final class FnJson
    *         exception as cause.
    */
   @NonNull
-  private static IXdmNode _parse (@NonNull final String sXml)
+  private static IXdmNode _parse (@NonNull final String sXml,
+                                  @Nullable final String sBaseUri,
+                                  @Nullable final EntityResolver aEntityResolver)
   {
     try
     {
       // Nothing reads the locations of a parsed string
-      return new XdmParser ().setRecordLocations (false).parse (sXml);
+      final XdmParser aParser = new XdmParser ().setRecordLocations (false);
+      if (aEntityResolver != null)
+      {
+        // External resources only through the resolver: no scheme may be
+        // opened by the parser itself
+        aParser.setLoadExternalEntities (true).setAccessExternalDtd ("").setEntityResolver (aEntityResolver);
+      }
+      return aParser.parse (sXml, sBaseUri);
     }
     catch (final XdmParseException ex)
     {
@@ -1092,7 +1108,11 @@ public final class FnJson
   /**
    * <code>fn:parse-xml($arg as xs:string?) as
    * document-node(element(*))?</code> (F&amp;O 3.1 section 14.7.1). The
-   * document has no document URI and the static base URI as base URI.
+   * document has no document URI and the static base URI as base URI. The
+   * external DTD subset and external entities are read only through the
+   * entity resolver of the dynamic context
+   * ({@link DynamicContext#setParseXmlEntityResolver(EntityResolver)}), none
+   * without one.
    *
    * @param aCtx
    *        The dynamic context of the call.
@@ -1107,9 +1127,12 @@ public final class FnJson
   {
     if (aArgs.get (0).isEmpty ())
       return XdmSequence.EMPTY;
-    final IXdmNode aDoc = _parse (((XdmAtomic) aArgs.get (0).get (0)).getString ());
+    final String sBaseUri = aCtx.getStaticContext ().getBaseUri ();
+    final IXdmNode aDoc = _parse (((XdmAtomic) aArgs.get (0).get (0)).getString (),
+                                  sBaseUri,
+                                  aCtx.getParseXmlEntityResolver ());
     aDoc.setDocumentUri (null);
-    aDoc.setBaseUri (aCtx.getStaticContext ().getBaseUri ());
+    aDoc.setBaseUri (sBaseUri);
     return XdmSequence.of (aDoc);
   }
 
@@ -1194,7 +1217,8 @@ public final class FnJson
         throw XPathException.of ("FODC0006", "Invalid text declaration in an XML fragment");
       s = s.substring (nEnd + 2);
     }
-    final IXdmNode aWrapperDoc = _parse ("<fragment-wrapper>" + s + "</fragment-wrapper>");
+    // No entity references besides the predefined ones are allowed
+    final IXdmNode aWrapperDoc = _parse ("<fragment-wrapper>" + s + "</fragment-wrapper>", null, null);
     final IXdmNode aWrapper = aWrapperDoc.getChildAtIndex (0);
     final IXdmNode aDoc = IXdmNode.createDocument ();
     _copyChildren (aWrapper, aDoc);

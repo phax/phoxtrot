@@ -1,6 +1,6 @@
 # QT3 (`qt3tests`, XPath 3.1 / F&O 3.1): failing cases
 
-22,382 of 22,407 applicable cases pass, 25 fail. Measured offline, on JDK 21 and 25, with the native validator of
+22,383 of 22,407 applicable cases pass, 24 fail. Measured offline, on JDK 21 and 25, with the native validator of
 `phoxtrot-xsd` as the schema processor (the default of the harness, see below).
 
 The cases that need the feature `fn-load-xquery-module` (the whole test set `fn-load-xquery-module` and
@@ -47,13 +47,6 @@ IDs and typed values, but neither content types (element-only content atomizes t
 FOTY0012: `K2-DataFunc-6`, `fn-normalize-space-24`, `fn-string-length-23`) nor element declarations (no
 `schema-element(j:...)` and no `json-to-xml` with `validate=true`: `json-to-xml-016`, `json-to-xml-017`,
 `json-to-xml-037`, `json-to-xml-038`). Both runs are otherwise identical by name.
-
-### External entity in fn:parse-xml
-`parse-xml-010`
-
-**Status:** Accepted (decision).
-`fn:parse-xml` does not load external entities (`XdmParser` keeps them off by default). Loading them is
-implementation-defined and a security boundary. go-xslt accepts the same case.
 
 ### Network access
 `fn-unparsed-text-054a`

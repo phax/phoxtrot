@@ -424,6 +424,7 @@ public final class QT3CaseRunner
 
     final QT3ResourceResolver aResolver = new QT3ResourceResolver (aEnv, aDocs);
     aEval.setResourceResolver (aResolver);
+    aEval.setParseXmlEntityResolver (QT3ResourceResolver.PARSE_XML_ENTITY_RESOLVER);
     // With the native validator, the schemas of the environment are the in-scope schema
     // definitions of the test and its assertions
     final IXdmSchemaSet aSchemaSet = aResolver.getSchemaSet ();

@@ -32,6 +32,8 @@ import java.util.Locale;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.EntityResolver;
+import org.xml.sax.InputSource;
 
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
@@ -322,6 +324,16 @@ public final class QT3ResourceResolver implements IResourceResolver
   {
     return aBaseDir.resolve (sRelative).toAbsolutePath ().normalize ();
   }
+
+  /**
+   * The entity resolver of <code>fn:parse-xml</code> for the suite: the external DTD subset and
+   * external entities are read from local files (the suite's), never from the network.
+   */
+  public static final EntityResolver PARSE_XML_ENTITY_RESOLVER = (sPublicId, sSystemId) -> {
+    if (sSystemId == null || !sSystemId.startsWith ("file:"))
+      return null;
+    return new InputSource (sSystemId);
+  };
 
   /**
    * @param aPath

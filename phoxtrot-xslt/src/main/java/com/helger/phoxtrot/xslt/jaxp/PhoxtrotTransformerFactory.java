@@ -138,7 +138,9 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
    * imported modules, and as initial resolver of the transformers for their
    * sources and the documents of the run (default <code>null</code>, see
    * {@link XdmParser#setEntityResolver(EntityResolver)}). What it returns is
-   * not checked against {@link XMLConstants#ACCESS_EXTERNAL_DTD}.
+   * not checked against {@link XMLConstants#ACCESS_EXTERNAL_DTD}. For
+   * <code>fn:parse-xml</code> it is the only source of external DTDs and
+   * entities.
    */
   public static final String ATTR_ENTITY_RESOLVER = ATTR_PREFIX + "entity-resolver";
   /**
