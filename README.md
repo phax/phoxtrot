@@ -177,6 +177,8 @@ aTransformer.transform (new DOMSource (aDoc), new DOMResult ());
 * Tracing: an `IXsltTraceListener` (`PhoxtrotTransformer.setTraceListener`, factory attribute
   `PhoxtrotTransformerFactory.ATTR_TRACE_LISTENER`) follows the template rules, named templates, stylesheet functions
   and optionally instructions of each transformation; the same listener as `XsltTransformRequest.setTraceListener`.
+* Current date-time: `PhoxtrotTransformer.setCurrentDateTime` fixes the value of `fn:current-dateTime()` (its offset
+  also being the implicit timezone) for the transformations of a transformer, e.g. for reproducible output.
 * Threads: compilations and transformations run on the thread the factory attribute
   `PhoxtrotTransformerFactory.ATTR_THREADING` chooses (an `EThreading` or its name; default `NEW_THREAD`, a new
   thread with a large stack per call; also `THREAD_POOL` and `CALLING_THREAD`), a transformer can override it with
@@ -244,6 +246,7 @@ v0.2.1 - work in progress
   (`DEFAULT_ACCESS_EXTERNAL`; `ACCESS_EXTERNAL_ALL` is `all`) and `xsl:result-document` with `href` does not compile:
   includes, imports and documents need a `URIResolver` or an allowed scheme. Setting the feature to `false` now sets
   both access attributes to `all`
+* JAXP: new `PhoxtrotTransformer.setCurrentDateTime` to fix the value of `fn:current-dateTime()`
 
 v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it

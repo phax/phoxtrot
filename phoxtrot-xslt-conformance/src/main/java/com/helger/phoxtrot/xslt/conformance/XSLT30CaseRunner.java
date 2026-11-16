@@ -31,7 +31,6 @@ import java.util.regex.Pattern;
 import javax.xml.XMLConstants;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Source;
-import javax.xml.transform.Transformer;
 import javax.xml.transform.TransformerException;
 import javax.xml.transform.URIResolver;
 import javax.xml.transform.stream.StreamResult;
@@ -70,6 +69,7 @@ import com.helger.phoxtrot.xslt.XsltCompileOptions;
 import com.helger.phoxtrot.xslt.XsltExecutable;
 import com.helger.phoxtrot.xslt.XsltTransformRequest;
 import com.helger.phoxtrot.xslt.XsltTransformResult;
+import com.helger.phoxtrot.xslt.jaxp.PhoxtrotTransformer;
 import com.helger.phoxtrot.xslt.jaxp.PhoxtrotTransformerFactory;
 import com.helger.phoxtrot.xslt.jaxp.XdmSource;
 
@@ -500,8 +500,9 @@ public final class XSLT30CaseRunner
     {
       // As the native run: direct access and secondary results allowed
       aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, false);
-      final Transformer aTransformer = aTF.newTemplates (new StreamSource (sStylesheetUri)).newTransformer ();
+      final PhoxtrotTransformer aTransformer = aTF.newTemplates (new StreamSource (sStylesheetUri)).newTransformer ();
       aTransformer.setErrorListener (QUIET_ERROR_LISTENER);
+      aTransformer.setCurrentDateTime (aRequest.getCurrentDateTime ());
       for (final Map.Entry <XdmQName, XdmSequence> aEntry : aRequest.params ().entrySet ())
         aTransformer.setParameter (aEntry.getKey ().getEQName (), aEntry.getValue ());
       final Source aJaxpSource = aSourcePath != null ? new StreamSource (XSLT30ResourceResolver.getFileUri (aSourcePath))

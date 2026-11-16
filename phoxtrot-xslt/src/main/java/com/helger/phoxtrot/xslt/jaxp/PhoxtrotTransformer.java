@@ -23,6 +23,7 @@ import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
 import java.util.Properties;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BooleanSupplier;
@@ -189,6 +190,7 @@ public class PhoxtrotTransformer extends Transformer
   private IXsltTraceListener m_aTraceListener;
   private EThreading m_eThreading;
   private int m_nMaxDepth;
+  private OffsetDateTime m_aCurrentDateTime;
   private XsltTransformResult m_aLastResult;
 
   /**
@@ -321,6 +323,33 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * @return The value of <code>fn:current-dateTime()</code> for the
+   *         transformations, <code>null</code> for the time at which each
+   *         transformation starts.
+   */
+  @Nullable
+  public final OffsetDateTime getCurrentDateTime ()
+  {
+    return m_aCurrentDateTime;
+  }
+
+  /**
+   * Set the value of <code>fn:current-dateTime()</code> (and so of
+   * <code>fn:current-date()</code> and <code>fn:current-time()</code>) for the
+   * transformations of this transformer, for example for reproducible output
+   * (see {@link XsltTransformRequest#setCurrentDateTime(OffsetDateTime)}). Its
+   * offset is also the implicit timezone.
+   *
+   * @param aCurrentDateTime
+   *        The value; <code>null</code> (the initial value) for the time at
+   *        which each transformation starts.
+   */
+  public final void setCurrentDateTime (@Nullable final OffsetDateTime aCurrentDateTime)
+  {
+    m_aCurrentDateTime = aCurrentDateTime;
+  }
+
+  /**
    * @return The SAX entity resolver for external DTDs and entities of the
    *         source and the documents of the run, <code>null</code> for none.
    */
@@ -364,8 +393,8 @@ public class PhoxtrotTransformer extends Transformer
   /**
    * Build the request for one transformation: the source as global context
    * item, the parameters, the resolver, the message and trace listeners, the
-   * interrupt hook, the step and depth limits, the threading mode and the base output
-   * URI.
+   * interrupt hook, the step and depth limits, the threading mode, the current
+   * date-time and the base output URI.
    */
   @NonNull
   private XsltTransformRequest _createRequest (@NonNull final IXdmNode aSource,
@@ -387,6 +416,7 @@ public class PhoxtrotTransformer extends Transformer
       ret.setMaxSteps (aSettings.maxSteps ());
     if (m_nMaxDepth != 0)
       ret.setMaxDepth (m_nMaxDepth);
+    ret.setCurrentDateTime (m_aCurrentDateTime);
     if (sBaseOutputUri != null)
       ret.setBaseOutputUri (sBaseOutputUri);
     return ret;
@@ -778,7 +808,7 @@ public class PhoxtrotTransformer extends Transformer
    * parameters and output properties, the URI resolver, entity resolver,
    * message listener, trace listener, threading mode and depth limit of the
    * factory, the default error listener (which logs warnings and throws fatal
-   * errors), no last result.
+   * errors), no fixed current date-time, no last result.
    */
   @Override
   public void reset ()
@@ -792,6 +822,7 @@ public class PhoxtrotTransformer extends Transformer
     m_aTraceListener = m_aTemplates.getSettings ().traceListener ();
     m_eThreading = m_aTemplates.getSettings ().threading ();
     m_nMaxDepth = m_aTemplates.getSettings ().maxDepth ();
+    m_aCurrentDateTime = null;
     m_aLastResult = null;
   }
 }

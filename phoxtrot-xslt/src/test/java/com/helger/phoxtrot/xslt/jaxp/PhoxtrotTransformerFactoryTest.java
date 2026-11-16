@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xslt.jaxp;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
@@ -31,6 +32,8 @@ import java.io.StringWriter;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
 import java.util.List;
 import java.util.Properties;
 import java.util.concurrent.ExecutorService;
@@ -1275,5 +1278,25 @@ public final class PhoxtrotTransformerFactoryTest
     assertNull (aT.getLastResult ());
     assertNull (aT.getParameter ("x"));
     assertEquals ("no", aT.getOutputProperty (OutputKeys.INDENT));
+  }
+
+  @Test
+  public void testCurrentDateTime () throws Exception
+  {
+    final PhoxtrotTransformer aT = new PhoxtrotTransformerFactory ().newTemplates (_source (XSL_START +
+                                                                                            "<xsl:output method='text'/>" +
+                                                                                            "<xsl:template match='/'><xsl:value-of select='current-dateTime(), implicit-timezone()'/></xsl:template>" +
+                                                                                            XSL_END)).newTransformer ();
+    assertNull (aT.getCurrentDateTime ());
+    final OffsetDateTime aNow = OffsetDateTime.of (2020, 2, 29, 13, 14, 15, 0, ZoneOffset.ofHours (5));
+    aT.setCurrentDateTime (aNow);
+    assertEquals (aNow, aT.getCurrentDateTime ());
+    // The same value in every transformation, its offset as implicit timezone
+    assertEquals ("2020-02-29T13:14:15+05:00 PT5H", _transform (aT, _source (SOURCE)));
+    assertEquals ("2020-02-29T13:14:15+05:00 PT5H", _transform (aT, _source (SOURCE)));
+
+    aT.reset ();
+    assertNull (aT.getCurrentDateTime ());
+    assertNotEquals ("2020-02-29T13:14:15+05:00 PT5H", _transform (aT, _source (SOURCE)));
   }
 }
