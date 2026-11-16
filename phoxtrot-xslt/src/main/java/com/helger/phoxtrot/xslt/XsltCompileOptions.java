@@ -273,8 +273,8 @@ public final class XsltCompileOptions
   /**
    * Claim schema-awareness (XSLT 3.0 section 27.2) for the stylesheet:
    * xsl:import-schema, the validation and type attributes, typed input and the
-   * schema type tests of a schema-aware processor. It needs Apache Xerces-J on
-   * the class path (see
+   * schema type tests of a schema-aware processor. It needs the native
+   * validator (<code>phoxtrot-xsd</code>) on the class path (see
    * {@link com.helger.phoxtrot.xdm.schema.XdmSchemaSupport#isAvailable()});
    * compiling with the claim fails otherwise. Without it, the processor is a
    * basic processor.

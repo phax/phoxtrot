@@ -2,8 +2,7 @@
 
 Schema-aware processor (`-Dxslt30.schemaAware=true`; no streaming or backwards compatibility claimed), with the
 native validator of `phoxtrot-xsd` as schema processor (the default of the harness; it compiles imported schemas as XSD
-1.1): 9,298 of 9,310 applicable cases pass, 12 fail. Apache Xerces-J 2.12.2 (`-Dxdm.schemaProvider=xerces`, XSD 1.0
-only) additionally fails the XSD 1.1 cases listed below. Measured offline, on JDK 21 and 25. The default run (basic processor) and its failures are in `xslt30.md`; this run claims schema-awareness in both
+1.1): 9,298 of 9,310 applicable cases pass, 12 fail. Measured offline, on JDK 21 and 25. The default run (basic processor) and its failures are in `xslt30.md`; this run claims schema-awareness in both
 directions: the 686 cases that need it run, and the 31 cases written for a processor without it
 (`XSLT30SchemaUnawareCasesIT`; 22 of them apply to the default run) are skipped, 663 applicable cases more than
 in the default run.
@@ -31,13 +30,6 @@ variable, where every accumulator applies. go-xslt treats a mode without `use-ac
 The case expects whitespace text nodes to be kept below an element whose type has an XSD 1.1 assertion. XSLT 3.0
 section 4.4 exempts only elements whose type annotation is a simple type or a complex type with simple content from
 `xsl:strip-space`; no rule about assertions was found in the Recommendation.
-
-### Xerces-J only: `catalog-009`, `validation-1301`, `accumulator-073`, `strip-space-009`, `merge-051`
-**Status:** Accepted (schema processor).
-The schemas use XSD 1.1, which Xerces-J 2.12.2 does not read: the imported schema is rejected (XTSE0220), or for
-`strip-space-009` the source schema, so the source is not valid. The native validator passes `catalog-009`,
-`validation-1301` and `merge-051`. `merge-049`, `merge-050` and `merge-052` (schema `books.xsd` as well) pass with
-Xerces-J only because the harness accepts any error where the catalog expects XTSE1650.
 
 ### `catalog-005`, `catalog-005b`
 **Status:** Accepted (same as go-xslt).

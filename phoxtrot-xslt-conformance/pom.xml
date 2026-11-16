@@ -55,16 +55,10 @@
       <artifactId>ph-collection</artifactId>
     </dependency>
     
-    <!-- Schema processors of the schema-aware run (-Dxslt30.schemaAware=true): the native validator is the default,
-         Xerces-J the alternative (-Dxdm.schemaProvider=xerces) -->
+    <!-- Schema processor of the schema-aware run (-Dxslt30.schemaAware=true): the native validator -->
     <dependency>
       <groupId>com.helger.phoxtrot</groupId>
       <artifactId>phoxtrot-xsd</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

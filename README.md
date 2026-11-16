@@ -57,19 +57,11 @@ Add `phoxtrot-xsd` as well for schema-awareness (see below).
 ## Schema-awareness (optional dependency)
 
 Schema-awareness (`XsltCompileOptions.setSchemaAware (true)`: `xsl:import-schema`, `[xsl:]validation`/`[xsl:]type`,
-typed sources, `schema-element()` and user-defined types in XPath) needs a schema processor on the class path. Without
-one the engine is a basic XSLT 3.0 processor. Two providers are supported:
+typed sources, `schema-element()` and user-defined types in XPath) needs the native validator (module `phoxtrot-xsd`)
+on the class path. Without it the engine is a basic XSLT 3.0 processor. It needs no further dependencies; imported
+schemas are compiled as XSD 1.1, so assertions, conditional type assignment, open content and `xs:override` work.
 
-* **The native validator** (module `phoxtrot-xsd`, recommended): no further dependencies; imported schemas are compiled as
-  XSD 1.1, so assertions, conditional type assignment, open content and `xs:override` work. It is used whenever it is
-  on the class path.
-* **Apache Xerces-J** (`xerces:xercesImpl` 2.12.2, an optional dependency of `phoxtrot-xdm`): the fallback when
-  `phoxtrot-xsd` is absent, or when the system property `xdm.schemaProvider=xerces` is set. XSD 1.0 only. Add it yourself, excluding
-  `xml-apis` (the JDK provides those APIs). Note that the presence of the jar alone changes what
-  `SAXParserFactory.newInstance ()` and `SchemaFactory.newInstance (...)` return for other code in the same
-  application (its `META-INF/services` entries).
-
-In both cases XML parsing stays on the JDK parser. A schema processor reads the documents an imported schema references
+XML parsing stays on the JDK parser. The validator reads the documents an imported schema references
 (`xs:include`, `xs:import`, `xs:redefine`, `xs:override`) only from local files, never from the network, and only while
 `XsltCompileOptions.setReadLocalSchemaFiles` allows it (default `true`; the JAXP adapter derives it from
 `ACCESS_EXTERNAL_STYLESHEET`). A `schema-location` itself is read through the resolver of the compile options if one
@@ -86,8 +78,7 @@ read.
 </dependency>
 ```
 
-[docs/SCHEMA.md](docs/SCHEMA.md) explains how the provider is selected, what the JDK validator cannot provide, and why
-Xerces-J is only the fallback next to the native validator.
+[docs/SCHEMA.md](docs/SCHEMA.md) explains how the validator is loaded and what the JDK validator cannot provide.
 
 ## XPath API
 
@@ -247,6 +238,9 @@ v0.2.1 - work in progress
   includes, imports and documents need a `URIResolver` or an allowed scheme. Setting the feature to `false` now sets
   both access attributes to `all`
 * JAXP: new `PhoxtrotTransformer.setCurrentDateTime` to fix the value of `fn:current-dateTime()`
+* Schema-awareness: Apache Xerces-J is no longer supported as schema processor; the native validator (`phoxtrot-xsd`) is
+  the only one. Removed the package `com.helger.phoxtrot.xdm.xerces`, the optional dependency on `xerces:xercesImpl`
+  and the system property `xdm.schemaProvider` (`XdmSchemaSupport.SYSTEM_PROPERTY_PROVIDER`)
 
 v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it

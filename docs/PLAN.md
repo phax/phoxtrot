@@ -7,8 +7,8 @@ Decisions:
 
 * Apache 2.0, Java 21 (CI also on 25), groupId `com.helger.phoxtrot`, no `ph-` artifact prefix.
 * XML parsing: JDK SAX. XSD: the native validator (`phoxtrot-xsd`, XSD 1.0 and 1.1; schema-aware XPath and XSLT compile
-  as 1.1) is the default schema provider; Apache Xerces-J 2.12.2 (optional dependency of `phoxtrot-xdm`, without
-  xml-apis, XSD 1.0) is the fallback; without either the JDK validator (`JdkSchemaProvider`, validation only).
+  as 1.1) is the schema provider; the JDK validator (`JdkSchemaProvider`, validation only) is available explicitly.
+  Apache Xerces-J was the fallback provider up to 0.2.0 and was removed on 2026-11-16 ([SCHEMA.md](SCHEMA.md)).
 * Own XDM tree (`IXdmNode`). `IMicroDocument` from ph-xml becomes an optional adapter module, not the model.
 * Hungarian notation and camel case everywhere except records.
 
@@ -39,8 +39,8 @@ QT3 status (2026-10-26): 22,419 of 22,478 applicable cases pass (99.7%), 59 fail
 | Static typing (type inference) | 20 | Accepted: same 20 cases as go-xslt |
 | External entity in `fn:parse-xml`, network access | 2 | Accepted (same in go-xslt) |
 
-Schema-awareness (2026-11-05): the native validator (`phoxtrot-xsd`) is the schema processor, Apache Xerces-J (optional,
-loaded only when present, `XdmSchemaSupport`) the fallback. `-Dxslt30.schemaAware=true` runs XSLT30 schema-aware:
+Schema-awareness (2026-11-05): the native validator (`phoxtrot-xsd`, loaded only when present, `XdmSchemaSupport`) is
+the schema processor. `-Dxslt30.schemaAware=true` runs XSLT30 schema-aware:
 9,298 of 9,310 pass, all 12 fails accepted (`phoxtrot-xslt-conformance/docs/accepted-failures/xslt30-schema-aware.md`); the
 default run is unchanged (8,640/8,647).
 With `-Dqt3.schemaProcessor=jdk` the QT3 harness uses the JDK validator instead, and the 7 schema-validated source
@@ -49,14 +49,14 @@ cases fail again.
 ## Native XSD validator
 
 Port of go-xslt's `internal/xsd` (about 16,700 lines of Go, 99.99% of `xsdtests` for XSD 1.0 and 1.1), decided
-2026-10-26. Why Xerces-J is needed today and why it is only the fallback: [SCHEMA.md](SCHEMA.md).
+2026-10-26. What the JDK validator cannot give and why Xerces-J was removed: [SCHEMA.md](SCHEMA.md).
 
 * New module `phoxtrot-xsd` (package `com.helger.phoxtrot.xsd`, depends on `phoxtrot-xpath`) plus `phoxtrot-xsd-conformance` for the harness.
 * XSD 1.0 first, then XSD 1.1 (assertions and conditional type assignment on our XPath engine, `xs:override`, open
   content) on the version switch that stayed in the code. Since V8 `XsdSchemaProvider` compiles as 1.1, like go-xslt's
   XSLT host (decided 2026-11-04).
-* The native validator is the default schema provider (V6). Xerces-J stays as an optional second provider and as the
-  differential reference (`-Dxdm.schemaProvider=xerces`).
+* The native validator is the default schema provider (V6), and since 2026-11-16 the only one. Xerces-J stays only as
+  the differential reference of the xsdtests harness (`-Dxsd.validator=xerces`).
 * XSLT and XPath only need the first error; the public validation API (`XsdSchema.validate`) collects all errors (V7).
 
 | Phase | Content | Go reference | Status |
@@ -446,8 +446,8 @@ Done (2026-11-05). Reported by ph-sch2java on `Large_Invoice_sample2.xml` (Peppo
   is decided by identity. The JVM string table is the pool: thread-safe and garbage-collected. Measured 3 to 5 % on
   child steps; the remaining string comparisons are of names that differ.
 * S6: `XdmTreeBuilder` numbers nodes as it creates them (`internalAppendNumbered`, as `XdmStreamReader`), so a parsed
-  document needs no second `assignDocumentOrder` pass; a structural change while building (`JaxpTypeAnnotator` with
-  Xerces-J) drops the numbering and the pass runs at the end as before. `XdmTreeBuilderNumberingTest` checks that the
+  document needs no second `assignDocumentOrder` pass; a structural change while building (a wrapping
+  handler) drops the numbering and the pass runs at the end as before. `XdmTreeBuilderNumberingTest` checks that the
   numbering equals the second pass. Measured: parse 8 to 10 % faster.
 
 Seen in the profile, left for the performance phase: `FunctionLibrary.getFunction` builds the key

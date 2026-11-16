@@ -1,20 +1,18 @@
 # Schema processing
 
-phoxtrot has a schema provider interface (`com.helger.phoxtrot.xdm.schema`, entry point `XdmSchemaSupport`) with three
+phoxtrot has a schema provider interface (`com.helger.phoxtrot.xdm.schema`, entry point `XdmSchemaSupport`) with two
 implementations:
 
 | Provider | Package | Needs | Gives |
 |----------|---------|-------|-------|
 | JDK validator | `com.helger.phoxtrot.xdm.jaxp` (`JdkSchemaProvider`) | nothing beyond the JDK | validation and type annotations only |
-| Apache Xerces-J 2.12.2 | `com.helger.phoxtrot.xdm.xerces` (`XercesSchemaProvider`) | `xerces:xercesImpl` on the class path (optional dependency of `phoxtrot-xdm`) | validation plus the full schema component model |
 | Native validator | `com.helger.phoxtrot.xsd` (`XsdSchemaProvider`, module `phoxtrot-xsd`) | nothing beyond phoxtrot | validation plus the full component model; XSD 1.0 and 1.1, schemas are compiled as 1.1, see [PLAN.md](PLAN.md) "Native XSD validator" |
 
-`XdmSchemaSupport` loads the native provider if `phoxtrot-xsd` is on the class path and Xerces-J otherwise. The system
-property `xdm.schemaProvider` (`native` or `xerces`) selects one explicitly; a provider that is named but absent leaves
-schema processing unavailable. The conformance harnesses have both on their test class path and use the native
-validator by default.
+`XdmSchemaSupport` loads the native provider by name if `phoxtrot-xsd` is on the class path; otherwise schema
+processing is unavailable. The JDK validator is never chosen automatically, only used explicitly. Apache Xerces-J
+2.12.2 was a third provider up to 0.2.0 (see "Why Xerces-J was removed" below).
 
-## Why Xerces-J is needed for some features and tests
+## What only the native validator gives
 
 ### What the JDK validator cannot tell
 
@@ -38,7 +36,7 @@ needs the schema *components* is missing (verified in `JdkSchemaSet` and `JdkTyp
 `IXdmTypeDefinition.hasComponentModel ()` is `false` for JDK types and `XdmSchemaType.getDefinition ()` returns `null`
 for them; callers such as the atomizer then fall back to what the type annotation alone allows.
 
-### Features that need a schema processor (the native validator or Xerces-J)
+### Features that need the native validator
 
 * **Schema-aware XSLT** (`XsltCompileOptions.setSchemaAware (true)`): `xsl:import-schema`, `[xsl:]validation`,
   `[xsl:]type`, typed modes, `schema-element()`. Claiming it without a schema processor throws an `IllegalStateException` when
@@ -48,49 +46,37 @@ for them; callers such as the atomizer then fall back to what the type annotatio
 
 ### Tests that need a schema processor
 
-Xerces-J is in test scope of `phoxtrot-xslt`, `phoxtrot-xpath-conformance` and `phoxtrot-xslt-conformance`, and a compile dependency of the
-(not deployed) `phoxtrot-xsd-conformance`; `phoxtrot-xsd` is in test scope of `phoxtrot-xpath-conformance` and `phoxtrot-xslt-conformance`. Since V6
-those two harnesses use the native validator unless `-Dxdm.schemaProvider=xerces` is given; `phoxtrot-xslt` has no
-`phoxtrot-xsd` on its class path and uses Xerces-J:
+`phoxtrot-xsd` is in test scope of `phoxtrot-xslt`, `phoxtrot-xpath-conformance` and `phoxtrot-xslt-conformance`, and a
+compile dependency of the (not deployed) `phoxtrot-xsd-conformance`:
 
 * **QT3**: 7 cases pass only with a full schema processor (`K2-DataFunc-6`, `fn-normalize-space-24`, `fn-string-length-23` need the
   content type for FOTY0012; `json-to-xml-016/017/037/038` need element declarations for `schema-element(j:...)` and
   `validate=true`). `-Dqt3.schemaProcessor=jdk` runs QT3 on the JDK validator: 66 fails instead of 59, otherwise
   identical by name. See `phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md`.
-  Native and Xerces-J: the same 59 fails by name.
-* **XSLT30 schema-aware run** (`-Dxslt30.schemaAware=true`): all 9,310 applicable cases run; 12 fail with the native
-  validator; Xerces-J additionally fails the cases with XSD 1.1 schemas
-  (`phoxtrot-xslt-conformance/docs/accepted-failures/xslt30-schema-aware.md`). The default run (8,647 cases) does not need it.
-  `XSLT30SchemaUnawareCasesIT` checks the 31 cases that require a processor *without* schema-awareness in both claim
-  states.
-* **xsdtests** (`phoxtrot-xsd-conformance`): `-Dxsd.validator=xerces` (the default of `XsdIT`) is the Xerces-J baseline;
-  `XsdNativeIT` always runs the native validator for XSD 1.0 and 1.1 and gates on
+* **XSLT30 schema-aware run** (`-Dxslt30.schemaAware=true`): all 9,310 applicable cases run; 12 fail
+  (`phoxtrot-xslt-conformance/docs/accepted-failures/xslt30-schema-aware.md`). The default run (8,647 cases) does not
+  need it. `XSLT30SchemaUnawareCasesIT` checks the 31 cases that require a processor *without* schema-awareness in both
+  claim states.
+* **xsdtests** (`phoxtrot-xsd-conformance`): `XsdNativeIT` runs the native validator for XSD 1.0 and 1.1 and gates on
   `docs/accepted-failures/xsd-native.md` (go-xslt's five 1.0 and four 1.1 fails); `XsdBridgeDifferentialIT` checks
   that validating a tree in place gives the verdict of validating its text, for every XSD 1.0 and 1.1 instance.
-* **`NoXercesTest`**: a second surefire execution of `phoxtrot-xslt` without Xerces-J on the class path checks that the
-  basic processor and the JDK validator work without it and that no Xerces-J class is loaded.
+  `-Dxsd.validator=xerces` (the default of `XsdIT`) is the Xerces-J 2.12.2 baseline, a differential reference only
+  (`docs/accepted-failures/xsd.md`); Xerces-J is a dependency of this not deployed module only.
+* **`NoSchemaProcessorTest`**: a second surefire execution of `phoxtrot-xslt` without `phoxtrot-xsd` on the class path
+  checks that the basic processor and the JDK validator work without it.
 
-### How Xerces-J is kept contained
+Xerces-J is otherwise only in test scope of `phoxtrot-xdm`, for the DOM bridge tests: the JDK DOM leaves entity
+reference nodes empty.
 
-* `XdmSchemaSupport` checks for the class `org.apache.xerces.xs.XSModel` and only then loads
-  `com.helger.phoxtrot.xdm.xerces.XercesSchemaProvider` by name; without the jar no Xerces-J class is touched.
-* The provider instantiates `org.apache.xerces.jaxp.validation.XMLSchemaFactory` directly and builds the `XSModel`
-  from the same grammar pool, so the types the validator reports are the model's own components. It never goes
-  through a JAXP `newInstance` lookup.
-* XML parsing stays on the JDK parser (`SAXParserFactory.newDefaultInstance ()`). The parsed tree is replayed as SAX
-  events through a Xerces-J `ValidatorHandler` into a copy, and the annotations are transferred back
-  (`AbstractJaxpSchemaSet`).
-* `xml-apis` is excluded: the `java.xml` module already provides `javax.xml`, `org.w3c.dom` and `org.xml.sax`, and the
-  jar would put a second, older copy of these APIs on the class path. No resolver or catalogue library is used.
+## Why Xerces-J was removed
 
-## Why Xerces-J is only the fallback
-
-The decision (2026-10-26) is that the native validator, ported from go-xslt, becomes the default provider and
-Xerces-J stays as an optional alternative and as the differential reference. Xerces-J was the quickest way to get
-schema-awareness, but it is not a good permanent base:
+Xerces-J was the quickest way to get schema-awareness. The decision of 2026-10-26 made the native validator, ported
+from go-xslt, the default provider and kept Xerces-J as an optional fallback; on 2026-11-16 the fallback was removed
+(the package `com.helger.phoxtrot.xdm.xerces`, the optional dependency and the system property
+`xdm.schemaProvider`). It is not a good base:
 
 * **Maintenance.** 2.12.2 is the latest release on Maven Central (metadata last updated 2022-01-27; the jar was built
-  on 2022-01-21); phoxtrot depends on it as is.
+  on 2022-01-21).
 * **XSD 1.0 only.** The published artifact does not read XSD 1.1 schemas: the schema-aware XSLT30 cases with XSD 1.1
   schemas (`accumulator-073`, `catalog-009`, `merge-051`, `strip-space-009`, `validation-1301`) fail at the schema, and
   the whole XSD 1.1 part of xsdtests (41,553 cases) is unsupported. The native validator, like go-xslt's, passes 99.99%
@@ -103,20 +89,18 @@ schema-awareness, but it is not a good permanent base:
 * **It changes JAXP for the whole application.** The jar registers itself in `META-INF/services` for
   `SAXParserFactory`, `DocumentBuilderFactory`, `SchemaFactory`, `DatatypeFactory`, `XMLEventFactory`,
   `DOMImplementationSourceList` and `org.xml.sax.driver`. Its mere presence changes what every `newInstance ()` call
-  in the application returns, not only in phoxtrot. phoxtrot itself had to switch its catalogue readers and several
-  tests to `newDefaultInstance ()` so that the default run stays independent of it.
+  in the application returns, not only in phoxtrot. phoxtrot itself switched its catalogue readers and several tests
+  to `newDefaultInstance ()` so that they stay independent of it.
 * **The JAXP API hides part of the model.** Through JAXP a compiled schema is "fully composed": instance
   `xsi:schemaLocation` hints are ignored (6 xsdtests cases), and a second import of an already known namespace is not
   followed (2 cases, or 2 others with `honour-all-schemaLocations`).
 * **Resource limits.** Without secure processing, Xerces-J expands large occurrence ranges in content models until
   the heap is exhausted (`particlesZ036_*`); with it, content models are capped at 3,000 nodes, which makes 6 valid
-  test cases fail. go-xslt uses a position-set matcher and a linear counting matcher that need neither. The
-  `XercesSchemaProvider` compiles with secure processing (entity limits for schema documents), so the cap applies to
-  schema-aware stylesheets on Xerces-J; the xsdtests run of Xerces-J uses its own factory without it.
+  test cases fail. go-xslt uses a position-set matcher and a linear counting matcher that need neither.
 * **API defects.** The DOM `TypeInfo.isDerivedFrom (null, ...)` of a Xerces-J complex type in no namespace returns
   `true` for an unrelated type and even for a type name that does not exist, while the XS API
-  (`XSTypeDefinition.derivedFrom`) answers `false` for both (reproduced with 2.12.2 on 2026-10-26).
-  `XercesTypeDefinition` therefore checks derivation through the XS API only.
-* **Integration cost.** Validating an `IXdmNode` tree means replaying it as SAX events into a copy and transferring the
-  annotations back, so every validated document is built twice. A validator working on `IXdmNode` directly (as go-xslt's
+  (`XSTypeDefinition.derivedFrom`) answers `false` for both (reproduced with 2.12.2 on 2026-10-26); the provider had
+  to check derivation through the XS API only.
+* **Integration cost.** Validating an `IXdmNode` tree meant replaying it as SAX events into a copy and transferring the
+  annotations back, so every validated document was built twice. A validator working on `IXdmNode` directly (as go-xslt's
   `ValidateNode`) validates in place.

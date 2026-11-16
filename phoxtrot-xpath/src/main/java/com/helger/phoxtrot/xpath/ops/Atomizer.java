@@ -126,7 +126,7 @@ public final class Atomizer
   }
 
   /**
-   * Typed value of a node validated with the schema component model available (Apache Xerces-J):
+   * Typed value of a node validated with the schema component model available (native validator):
    * content types are known, and values of user-defined types, lists and unions are typed item by
    * item.
    *

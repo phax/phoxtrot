@@ -43,9 +43,8 @@ import com.helger.phoxtrot.xdm.schema.XdmSchemaSupport;
  * the JVM.
  * <p>
  * The schema processor is the provider of {@link XdmSchemaSupport} (the
- * native validator of <code>phoxtrot-xsd</code> if it is on the class path, else
- * Apache Xerces-J; <code>-Dxdm.schemaProvider=native|xerces</code> picks
- * one), unless that is not available or <code>-Dqt3.schemaProcessor=jdk</code>
+ * native validator of <code>phoxtrot-xsd</code>), unless that is not on the
+ * class path or <code>-Dqt3.schemaProcessor=jdk</code>
  * selects the JDK validator, which only validates and gives no in-scope
  * schema definitions.
  *
@@ -56,13 +55,12 @@ public final class QT3SchemaCache
 {
   /**
    * The schema processor: the provider of {@link XdmSchemaSupport} (the
-   * native validator or Apache Xerces-J, both with a schema component model:
-   * element declarations, content types, user-defined types) if one is
-   * available, unless <code>-Dqt3.schemaProcessor=jdk</code> selects the JDK
-   * validator. Despite the name, <code>true</code> does not mean Xerces-J.
+   * native validator, with a schema component model: element declarations,
+   * content types, user-defined types) if it is available, unless
+   * <code>-Dqt3.schemaProcessor=jdk</code> selects the JDK validator.
    */
-  private static final boolean USE_XERCES = XdmSchemaSupport.isAvailable () &&
-                                            !"jdk".equals (System.getProperty ("qt3.schemaProcessor"));
+  private static final boolean USE_COMPONENT_MODEL = XdmSchemaSupport.isAvailable () &&
+                                                     !"jdk".equals (System.getProperty ("qt3.schemaProcessor"));
 
   private static final JdkSchemaProvider JDK_PROVIDER = new JdkSchemaProvider ();
 
@@ -77,12 +75,12 @@ public final class QT3SchemaCache
 
   /**
    * @return <code>true</code> if the provider of {@link XdmSchemaSupport}
-   *         (the native validator or Apache Xerces-J) is the schema processor
+   *         (the native validator) is the schema processor
    *         of the run, <code>false</code> for the JDK validator.
    */
-  public static boolean isXerces ()
+  public static boolean isComponentModel ()
   {
-    return USE_XERCES;
+    return USE_COMPONENT_MODEL;
   }
 
   /**
@@ -160,13 +158,13 @@ public final class QT3SchemaCache
    *        Absolute, normalised paths of the schema documents. Not empty.
    * @return The schema set to validate source documents against (the
    *         provider of {@link XdmSchemaSupport} or the JDK validator, see
-   *         {@link #isXerces()}), or <code>null</code> if it does not
+   *         {@link #isComponentModel()}), or <code>null</code> if it does not
    *         compile. Cached per list of files.
    */
   @Nullable
   public static IXdmSchemaSet getValidationSchemaSet (@NonNull final List <Path> aFiles)
   {
-    if (USE_XERCES)
+    if (USE_COMPONENT_MODEL)
       return _getSchemaSetOptional (aFiles).orElse (null);
     return JDK_CACHE.computeIfAbsent (List.copyOf (aFiles), QT3SchemaCache::_compileJdk).orElse (null);
   }
@@ -181,7 +179,7 @@ public final class QT3SchemaCache
   @Nullable
   public static IXdmSchemaSet getSchemaSet (@NonNull final List <Path> aFiles)
   {
-    if (!USE_XERCES)
+    if (!USE_COMPONENT_MODEL)
       return null;
     return _getSchemaSetOptional (aFiles).orElse (null);
   }

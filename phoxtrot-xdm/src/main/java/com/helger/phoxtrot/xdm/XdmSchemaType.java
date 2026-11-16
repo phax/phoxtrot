@@ -191,9 +191,9 @@ public final class XdmSchemaType
   }
 
   /**
-   * @return The type definition of the node if the provider has a schema component model (Apache
-   *         Xerces-J, see {@link com.helger.phoxtrot.xdm.schema.XdmSchemaSupport}), otherwise
-   *         <code>null</code> (the JDK validator).
+   * @return The type definition of the node if the provider has a schema component model (the
+   *         native validator, see {@link com.helger.phoxtrot.xdm.schema.XdmSchemaSupport}),
+   *         otherwise <code>null</code> (the JDK validator).
    */
   @Nullable
   public IXdmTypeDefinition getDefinition ()

@@ -31,8 +31,8 @@ import com.helger.phoxtrot.xslt.XsltTransformRequest;
 
 /**
  * Test class for schema-awareness (xsl:import-schema, validation of
- * constructed nodes, schema type tests). Needs Apache Xerces-J on the test
- * class path.
+ * constructed nodes, schema type tests). Needs the native validator
+ * (phoxtrot-xsd) on the test class path.
  *
  * @author Philip Helger
  */

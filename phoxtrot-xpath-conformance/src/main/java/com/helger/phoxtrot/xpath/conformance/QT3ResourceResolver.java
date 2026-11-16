@@ -137,7 +137,7 @@ public final class QT3ResourceResolver implements IResourceResolver
       if (!aSchema.file ().isEmpty ())
         m_aSchemaFiles.add (getAbsolutePath (m_aBaseDir, aSchema.file ()));
       else
-        if (XdmConstants.NS_FN.equals (aSchema.uri ()) && QT3SchemaCache.isXerces ())
+        if (XdmConstants.NS_FN.equals (aSchema.uri ()) && QT3SchemaCache.isComponentModel ())
         {
           // The schema of the XML representation of JSON, which the test
           // driver is expected to know by its namespace; the suite has a copy

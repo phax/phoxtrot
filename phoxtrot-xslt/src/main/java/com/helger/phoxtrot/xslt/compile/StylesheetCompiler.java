@@ -2406,14 +2406,14 @@ public final class StylesheetCompiler
    * @throws XsltException
    *         for static errors
    * @throws IllegalStateException
-   *         if a schema-aware compilation is requested but Apache Xerces-J is
-   *         not on the class path
+   *         if a schema-aware compilation is requested but the native
+   *         validator (phoxtrot-xsd) is not on the class path
    */
   @NonNull
   public static CompiledStylesheet compile (@NonNull final IXdmNode aSource, @NonNull final XsltCompileOptions aOptions)
   {
     if (aOptions.isSchemaAware () && !XdmSchemaSupport.isAvailable ())
-      throw new IllegalStateException ("A schema-aware stylesheet needs Apache Xerces-J (xerces:xercesImpl) on the class path");
+      throw new IllegalStateException ("A schema-aware stylesheet needs the native validator (phoxtrot-xsd) on the class path");
     return new StylesheetCompiler (aOptions)._compile (aSource);
   }
 }

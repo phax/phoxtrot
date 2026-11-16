@@ -70,8 +70,8 @@
     <module>phoxtrot-bom</module>
     <module>phoxtrot-xdm</module>
     <module>phoxtrot-xpath</module>
-    <module>phoxtrot-xslt</module>
     <module>phoxtrot-xsd</module>
+    <module>phoxtrot-xslt</module>
     <module>phoxtrot-xpath-conformance</module>
     <module>phoxtrot-xslt-conformance</module>
     <module>phoxtrot-xsd-conformance</module>

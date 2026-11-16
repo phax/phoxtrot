@@ -47,7 +47,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  * of one node constructing instruction (XSLT 3.0 section 25.4), the run-time
  * half of schema-awareness: it gives constructed nodes their type annotations.
  * A port of go-xslt's <code>schema_validation.go</code>; the validation itself
- * is done by the schema set (Apache Xerces-J).
+ * is done by the schema set (the native validator).
  * <p>
  * {@link #compile(CompileContext, XslElement, EKind)} returns
  * <code>null</code> for a basic processor, so a stylesheet that does not claim

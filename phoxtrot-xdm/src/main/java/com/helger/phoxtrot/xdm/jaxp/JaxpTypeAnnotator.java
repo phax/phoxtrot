@@ -40,7 +40,6 @@ import com.helger.phoxtrot.xdm.XdmConstants;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.XdmSchemaType;
 import com.helger.phoxtrot.xdm.XdmTreeBuilder;
-import com.helger.phoxtrot.xdm.schema.EXdmContentType;
 import com.helger.phoxtrot.xdm.schema.IXdmTypeDefinition;
 
 /**
@@ -165,29 +164,6 @@ final class JaxpTypeAnnotator implements ContentHandler
     return "true".equals (s) || "1".equals (s);
   }
 
-  /**
-   * The JDK validator reports whitespace in element-only content as ignorable whitespace, Apache
-   * Xerces-J does not. With Xerces-J the content type is known from the schema component model, so
-   * such whitespace text nodes are dropped here (XDM 3.1 section 6.7.3).
-   */
-  private static void _dropElementOnlyWhitespace (@NonNull final IXdmNode aElement, @NonNull final XdmSchemaType aType)
-  {
-    if (aElement.getChildCount () == 0)
-      return;
-    final IXdmTypeDefinition aDef = aType.getDefinition ();
-    if (aDef == null)
-      return;
-    final EXdmContentType eContent = aDef.getContentType ();
-    if (eContent != EXdmContentType.ELEMENT_ONLY && eContent != EXdmContentType.EMPTY)
-      return;
-    for (int i = aElement.getChildCount () - 1; i >= 0; --i)
-    {
-      final IXdmNode aChild = aElement.getChildAtIndex (i);
-      if (aChild.isText () && aChild.getValue ().isBlank ())
-        aElement.removeChild (aChild);
-    }
-  }
-
   public void setDocumentLocator (final Locator aLocator)
   {
     m_aBuilder.setDocumentLocator (aLocator);
@@ -285,7 +261,6 @@ final class JaxpTypeAnnotator implements ContentHandler
       final XdmSchemaType aType = _getSchemaType (aStartType != null ? aStartType : aEndType,
                                                   aEndType != null ? aEndType : aStartType);
       aElement.setSchemaType (aType);
-      _dropElementOnlyWhitespace (aElement, aType);
       if (aType.getAtomicBase () != null && !aElement.isNilled ())
         aElement.setIDKind (_getSchemaIDKind (aType, aElement.getStringValue ()));
     }

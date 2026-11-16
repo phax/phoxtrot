@@ -164,11 +164,14 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - Keep `README.md` in sync like a wiki page: status figures, the module table and the setup sections are updated in the
   same change that makes them wrong.
 - Schema documents are never read from the network. `IXdmSchemaProvider.compile (sources, bReadReferencedFiles)`
-  controls the referenced documents (native: `XsdFileAccess.LOCAL_FILES`/`NONE`; Xerces-J and JDK:
-  `LocalSchemaResourceResolver`, Xerces-J with secure processing); `XsltCompileOptions.setReadLocalSchemaFiles` feeds it,
-  and `SchemaImportCompiler._readLocation` reads a `schema-location` through the options' resolver when there is one.
+  controls the referenced documents (native: `XsdFileAccess.LOCAL_FILES`/`NONE`; JDK: `LocalSchemaResourceResolver`);
+  `XsltCompileOptions.setReadLocalSchemaFiles` feeds it, and `SchemaImportCompiler._readLocation` reads a
+  `schema-location` through the options' resolver when there is one.
   `XsdValidationOptions.setFollowSchemaLocationHints` is off by default (an untrusted instance must not choose files);
   the W3C harnesses (`NativeXsdTestValidator`, `XsdBridgeDifferentialIT`) switch it on.
+- Schema-awareness has one schema processor, the native validator (`XdmSchemaSupport` loads `XsdSchemaProvider` by
+  name if `phoxtrot-xsd` is on the class path; `JdkSchemaProvider` is only used explicitly). Xerces-J is no runtime
+  dependency: only the DOM tests of `phoxtrot-xdm` and the xsdtests baseline of `phoxtrot-xsd-conformance` use it.
 - XSD: the native validator (`phoxtrot-xsd`) does XSD 1.0 and 1.1; `XsdSchemaProvider` (schema-aware XPath/XSLT) compiles as
   1.1. `XsdNativeIT` gates both versions (`phoxtrot-xsd-conformance/target/xsd-native-fails.txt`, `xsd-native11-fails.txt`).
   A run claims the version tokens of `XsdSuiteRules.getClaimedTokens` (the version, and for 1.1 the CTA XPath subset of

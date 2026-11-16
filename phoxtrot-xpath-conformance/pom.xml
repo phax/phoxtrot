@@ -56,16 +56,10 @@
       <artifactId>phoxtrot-xslt</artifactId>
       <scope>test</scope>
     </dependency>
-    <!-- Schema processors of the QT3 run (schema component model): the native validator is the default, Xerces-J the
-         alternative (-Dxdm.schemaProvider=xerces) -->
+    <!-- Schema processor of the QT3 run (schema component model): the native validator -->
     <dependency>
       <groupId>com.helger.phoxtrot</groupId>
       <artifactId>phoxtrot-xsd</artifactId>
-      <scope>test</scope>
-    </dependency>
-    <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>

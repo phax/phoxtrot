@@ -38,20 +38,20 @@ import com.helger.phoxtrot.xslt.XsltCompiler;
 import com.helger.phoxtrot.xslt.XsltTestHelper;
 
 /**
- * The basic processor without Apache Xerces-J on the class path. Runs in a
- * separate surefire execution that removes Xerces-J from the test class path
- * (see the POM); in the normal test run, where Xerces-J is present, it is
+ * The basic processor without the native validator (phoxtrot-xsd) on the class
+ * path. Runs in a separate surefire execution that removes it from the test
+ * class path (see the POM); in the normal test run, where it is present, it is
  * skipped.
  *
  * @author Philip Helger
  */
-public final class NoXercesTest
+public final class NoSchemaProcessorTest
 {
-  private static boolean _isXercesPresent ()
+  private static boolean _isNativeValidatorPresent ()
   {
     try
     {
-      Class.forName ("org.apache.xerces.xs.XSModel");
+      Class.forName ("com.helger.phoxtrot.xsd.XsdSchemaProvider");
       return true;
     }
     catch (final ClassNotFoundException ex)
@@ -63,7 +63,7 @@ public final class NoXercesTest
   @Test
   public void testBasicProcessor ()
   {
-    Assume.assumeFalse ("Xerces-J is on the class path", _isXercesPresent ());
+    Assume.assumeFalse ("phoxtrot-xsd is on the class path", _isNativeValidatorPresent ());
     assertFalse (XdmSchemaSupport.isAvailable ());
 
     // A transformation as usual
@@ -103,8 +103,8 @@ public final class NoXercesTest
   @Test
   public void testJdkValidator () throws Exception
   {
-    Assume.assumeFalse ("Xerces-J is on the class path", _isXercesPresent ());
-    // Schema-validated input documents need no Xerces-J
+    Assume.assumeFalse ("phoxtrot-xsd is on the class path", _isNativeValidatorPresent ());
+    // Schema-validated input documents need no schema processor of phoxtrot
     final String sXsd = "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'><xs:element name='a' type='xs:int'/></xs:schema>";
     final IXdmSchemaSet aSchemaSet = new JdkSchemaProvider ().compile (new CommonsArrayList <> (new XdmSchemaSource (null, sXsd)));
     final XdmParser aParser = new XdmParser ().setSchemaSet (aSchemaSet);

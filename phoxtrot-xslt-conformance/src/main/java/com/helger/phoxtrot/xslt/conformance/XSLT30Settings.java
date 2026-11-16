@@ -154,7 +154,7 @@ public record XSLT30Settings (@NonNull Path suiteDir,
   @NonNull
   public static XSLT30Settings fromSystemProperties ()
   {
-    // -Dxslt30.schemaAware=true claims schema-awareness (needs Xerces-J)
+    // -Dxslt30.schemaAware=true claims schema-awareness (needs phoxtrot-xsd)
     final boolean bSchemaAware = Boolean.getBoolean ("xslt30.schemaAware");
     // -Dxslt30.streaming=true claims streaming
     final boolean bStreaming = Boolean.getBoolean ("xslt30.streaming");

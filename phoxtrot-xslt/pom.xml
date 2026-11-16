@@ -43,10 +43,10 @@
       <artifactId>ph-collection</artifactId>
     </dependency>
     
-    <!-- Schema-awareness tests; phoxtrot-xdm declares Xerces-J optional -->
+    <!-- Schema-awareness tests: the native validator, an optional module -->
     <dependency>
-      <groupId>xerces</groupId>
-      <artifactId>xercesImpl</artifactId>
+      <groupId>com.helger.phoxtrot</groupId>
+      <artifactId>phoxtrot-xsd</artifactId>
       <scope>test</scope>
     </dependency>
     <dependency>
@@ -67,20 +67,21 @@
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
         <executions>
-          <!-- The basic processor with Xerces-J removed from the class path -->
+          <!-- The basic processor with the native validator removed from the
+               class path -->
           <execution>
-            <id>no-xerces</id>
+            <id>no-schema-processor</id>
             <goals>
               <goal>test</goal>
             </goals>
             <configuration>
               <classpathDependencyExcludes>
-                <classpathDependencyExclude>xerces:xercesImpl</classpathDependencyExclude>
+                <classpathDependencyExclude>com.helger.phoxtrot:phoxtrot-xsd</classpathDependencyExclude>
               </classpathDependencyExcludes>
               <includes>
-                <include>**/NoXercesTest.java</include>
+                <include>**/NoSchemaProcessorTest.java</include>
               </includes>
-              <reportsDirectory>${project.build.directory}/surefire-reports-no-xerces</reportsDirectory>
+              <reportsDirectory>${project.build.directory}/surefire-reports-no-schema-processor</reportsDirectory>
             </configuration>
           </execution>
         </executions>

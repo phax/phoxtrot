@@ -39,19 +39,12 @@
       <artifactId>ph-collection</artifactId>
     </dependency>
     
-    <!-- Optional: schema-awareness (schema component model and validation of
-         XDM trees). Without it the engine is a basic processor. xml-apis is
-         excluded because the JDK provides those APIs. -->
+    <!-- The DOM bridge tests need a DOM that fills entity reference nodes,
+         which the JDK DOM does not -->
     <dependency>
       <groupId>xerces</groupId>
       <artifactId>xercesImpl</artifactId>
-      <optional>true</optional>
-      <exclusions>
-        <exclusion>
-          <groupId>xml-apis</groupId>
-          <artifactId>xml-apis</artifactId>
-        </exclusion>
-      </exclusions>
+      <scope>test</scope>
     </dependency>
     
     <dependency>

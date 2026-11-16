@@ -424,7 +424,7 @@ public final class QT3CaseRunner
 
     final QT3ResourceResolver aResolver = new QT3ResourceResolver (aEnv, aDocs);
     aEval.setResourceResolver (aResolver);
-    // With Xerces-J, the schemas of the environment are the in-scope schema
+    // With the native validator, the schemas of the environment are the in-scope schema
     // definitions of the test and its assertions
     final IXdmSchemaSet aSchemaSet = aResolver.getSchemaSet ();
     aEval.setSchemaSet (aSchemaSet);

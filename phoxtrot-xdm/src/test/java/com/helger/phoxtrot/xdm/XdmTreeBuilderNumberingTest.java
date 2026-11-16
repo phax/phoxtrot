@@ -205,9 +205,9 @@ public final class XdmTreeBuilderNumberingTest
   @Test
   public void testChangeWhileBuilding ()
   {
-    // A wrapping handler (as JaxpTypeAnnotator with Apache Xerces-J) removes
-    // a whitespace text node while the tree is built: the numbering made so
-    // far is removed and the finished tree is numbered at the end
+    // A wrapping handler removes a whitespace text node while the tree is
+    // built: the numbering made so far is removed and the finished tree is
+    // numbered at the end
     final XdmTreeBuilder aBuilder = new XdmTreeBuilder ();
     aBuilder.startDocument ();
     aBuilder.startElement ("", "r", "r", new AttributesImpl ());

@@ -41,7 +41,7 @@ import com.helger.phoxtrot.xdm.schema.XdmSchemaSource;
  * schema sets it compiles have no schema component model, so they are enough for schema-validated
  * input documents (typed values of built-in types, <code>fn:nilled</code>, schema IDs,
  * <code>element(N, T)</code> tests by type name), not for schema-awareness of XSLT or for
- * <code>schema-element()</code>. Unlike the Xerces-J provider of
+ * <code>schema-element()</code>. Unlike the native provider of
  * {@link com.helger.phoxtrot.xdm.schema.XdmSchemaSupport} it is never chosen automatically.
  *
  * @author Philip Helger

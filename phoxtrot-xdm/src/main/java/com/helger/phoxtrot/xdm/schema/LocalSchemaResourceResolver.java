@@ -30,7 +30,7 @@ import org.w3c.dom.ls.LSResourceResolver;
 import com.helger.annotation.concurrent.Immutable;
 
 /**
- * The resource rule of the JAXP-based schema providers (Xerces-J, JDK), the
+ * The resource rule of the JAXP-based schema provider (the JDK's), the
  * same as the native validator's: every resource a schema processor reads on
  * its own (referenced schema documents, external DTDs and entities of schema
  * documents) is read only if it is a local <code>file:</code> URI and local
