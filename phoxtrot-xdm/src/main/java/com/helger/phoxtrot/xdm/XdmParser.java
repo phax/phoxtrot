@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xdm;
 
 import java.io.IOException;
+import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
@@ -754,7 +755,7 @@ public class XdmParser
     ValueEnforcer.notNull (sXml, "Xml");
     // StringReader reads from the string itself, where NonBlockingStringReader
     // would copy it into a char array first
-    final InputSource aSource = new InputSource (new NonBlockingStringReader (sXml));
+    final InputSource aSource = new InputSource (new StringReader (sXml));
     aSource.setSystemId (sSystemId);
     return _parse (aSource, sXml);
   }
