@@ -601,3 +601,28 @@ threading modes, `UNLIMITED_STEPS`, `XdmParser.setEntityResolver`, the trace lis
 when not set, measured), backwards compatibility with EXSLT - Common, and the tree size work of batch 4. Open from the
 suggestions: only text-value sharing of S18 (too slow).
 
+
+## Static Typing Feature (2026-11-16)
+
+XPath 3.1 section 4.1 makes the Static Typing Feature optional; with it, a processor "must raise a type error during
+static analysis if the inferred static type of an expression is not subsumed by the required type" (section 2.2.3.1),
+and an expression other than `()` and `data(())` with the static type `empty-sequence()` is XPST0005. The inference
+rules are "entirely implementation-dependent" in XPath 3.1. Opt-in per static context
+(`StaticContext.setStaticTyping`), XPath API only; XSLT claims nothing. The default run must not change.
+
+Goal: the 20 accepted QT3 static typing failures pass, the 28 passing static typing cases (15 of
+`AxisStep.static-typing`) keep passing. Base: `SeqType`/`ItemType`, the subtype judgements of section 2.5.6
+(`SequenceTypeMatcher.isSubtype`/`isItemSubtype`), the parameter and return types of every `FunctionDef`, the sealed
+`IExpr` AST and `XPathStaticAxes` (provably empty axis steps).
+
+Decisions: pessimistic as the feature defines (an undeclared variable is `item()*`, so `string-length($x)` is XPTY0004
+until the host declares a type); the context item static type is `item()` unless the host declares one; a function
+argument against a function type is checked by subtyping, with the inferred return type of an inline function (what
+the QT3 cases expect); inferred types keep a short list of alternative item types instead of a common supertype.
+
+| Phase | Content | Status |
+|-------|---------|--------|
+| ST1 | `StaticType` (alternative item types plus occurrence), inference over every `IExpr` (literals, context item, variables, `if` as union, sequences, static calls by signature, `f#n`, inline functions with inferred return type, `!` and paths with the context item type of the right side, `for`/`let`/quantified bindings, coarse types elsewhere, `item()*` when unknown); iterative or depth-limited | open |
+| ST2 | Required-type checks of static function call arguments after the function conversion rules (atomisation, `xs:untypedAtomic`, promotion, function subtyping, implicit context arguments); XPST0005 for an exactly empty static type next to `XPathStaticAxes` | open |
+| ST3 | Further checks: path and axis step operands (XPTY0019/XPTY0020), arithmetic and comparison operands, cast operands, inline function body against its declared return type | open |
+| ST4 | `StaticContext.setContextItemStaticType`, typed variable declarations; QT3 harness declares `document-node()` for a `.` source and the `as` types of its parameters; unit tests, `qt3.md`, README, release notes | open |
