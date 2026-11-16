@@ -137,10 +137,21 @@ public final class JaxpResolverTest
     return aDir.resolve ("data.xml").toUri ().toString ();
   }
 
+  /**
+   * @return A factory without secure processing: direct access to all schemes.
+   */
   @NonNull
-  private static PhoxtrotTransformerFactory _createLoadingFactory ()
+  private static PhoxtrotTransformerFactory _createOpenFactory () throws TransformerConfigurationException
   {
     final PhoxtrotTransformerFactory ret = new PhoxtrotTransformerFactory ();
+    ret.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, false);
+    return ret;
+  }
+
+  @NonNull
+  private static PhoxtrotTransformerFactory _createLoadingFactory () throws TransformerConfigurationException
+  {
+    final PhoxtrotTransformerFactory ret = _createOpenFactory ();
     ret.setAttribute (PhoxtrotTransformerFactory.ATTR_LOAD_EXTERNAL_ENTITIES, Boolean.TRUE);
     return ret;
   }
@@ -156,7 +167,7 @@ public final class JaxpResolverTest
                                                                                    "<!ATTLIST data x CDATA 'from-resolver'><!ENTITY e 'entity-from-resolver'>"));
 
     // Without external entities: nothing is read, the resolver is not called
-    PhoxtrotTransformerFactory aTF = new PhoxtrotTransformerFactory ();
+    PhoxtrotTransformerFactory aTF = _createOpenFactory ();
     aTF.setAttribute (PhoxtrotTransformerFactory.ATTR_ENTITY_RESOLVER, aResolver);
     assertSame (aResolver, aTF.getAttribute (PhoxtrotTransformerFactory.ATTR_ENTITY_RESOLVER));
     assertEquals ("|", _transform (aTF.newTemplates (_source (sSheet)).newTransformer (), _source (SOURCE)).trim ());
@@ -284,8 +295,9 @@ public final class JaxpResolverTest
     final String sMainXsd = Files.readString (aDir.resolve ("main.xsd"));
     final String sSheet = _schemaSheet (sMainUri);
 
-    // Default: the schema and its include are read from the files
-    PhoxtrotTransformerFactory aTF = new PhoxtrotTransformerFactory ();
+    // Without secure processing: the schema and its include are read from the
+    // files
+    PhoxtrotTransformerFactory aTF = _createOpenFactory ();
     aTF.setAttribute (PhoxtrotTransformerFactory.ATTR_SCHEMA_AWARE, Boolean.TRUE);
     assertEquals ("true", _transform (aTF.newTemplates (_source (sSheet)).newTransformer (), _source (SOURCE)));
 
@@ -565,10 +577,8 @@ public final class JaxpResolverTest
     final Path aDir = m_aTempDir.getRoot ().toPath ();
     Files.writeString (aDir.resolve ("broken.xml"), "<a><b></a>");
     final String sUri = aDir.resolve ("broken.xml").toUri ().toString ();
-    final Transformer aT = new PhoxtrotTransformerFactory ().newTemplates (_source (_textSheet ("doc-available('" +
-                                                                                                sUri +
-                                                                                                "')")))
-                                                            .newTransformer ();
+    final Transformer aT = _createOpenFactory ().newTemplates (_source (_textSheet ("doc-available('" + sUri + "')")))
+                                                .newTransformer ();
     // Unavailable (and logged as unreadable, not silently)
     assertEquals ("false", _transform (aT, _source (SOURCE)));
   }

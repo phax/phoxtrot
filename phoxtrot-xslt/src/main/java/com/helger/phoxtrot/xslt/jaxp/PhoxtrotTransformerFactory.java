@@ -81,8 +81,8 @@ import com.helger.phoxtrot.xslt.XsltExecutable;
  * factory's for compilation, the transformer's at run time, which starts as
  * the factory's), with the absolute URI as href and base. What it does not
  * resolve is read directly if the scheme is allowed by
- * {@link XMLConstants#ACCESS_EXTERNAL_STYLESHEET} (default
- * <code>all</code>). The same applies to the <code>schema-location</code> of
+ * {@link XMLConstants#ACCESS_EXTERNAL_STYLESHEET} (default: none, see
+ * secure processing). The same applies to the <code>schema-location</code> of
  * <code>xsl:import-schema</code>; the documents a schema document references
  * are read from local files only if the scheme <code>file</code> is allowed,
  * and never from the network.</li>
@@ -94,11 +94,12 @@ import com.helger.phoxtrot.xslt.XsltExecutable;
  * <li>{@link #newTransformer()} gives the identity transformer (method xml
  * unless an output property says otherwise).</li>
  * <li>Features: {@link XMLConstants#FEATURE_SECURE_PROCESSING} (default
- * <code>false</code>; setting it to <code>true</code> sets
- * {@link XMLConstants#ACCESS_EXTERNAL_STYLESHEET} and
+ * <code>true</code>, unlike the JDK transformer; setting it to
+ * <code>true</code> sets {@link XMLConstants#ACCESS_EXTERNAL_STYLESHEET} and
  * {@link XMLConstants#ACCESS_EXTERNAL_DTD} to the empty string, as JAXP
  * specifies, so that only the URI resolver, and for external DTDs and
- * entities the entity resolver, gives access to other resources; while it is
+ * entities the entity resolver, gives access to other resources; setting it
+ * to <code>false</code> sets both to <code>all</code>; while it is
  * set, a stylesheet with an <code>xsl:result-document</code> that has an
  * <code>href</code> attribute fails to compile with XTSE0010, as in Saxon, see
  * {@link XsltCompileOptions#setSecondaryResultsAllowed(boolean)}),
@@ -198,8 +199,20 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
    * {@link PhoxtrotTransformer#setThreading(EThreading)}.
    */
   public static final String ATTR_THREADING = ATTR_PREFIX + "threading";
-  /** The default of the external access attributes: all schemes. */
-  public static final String DEFAULT_ACCESS_EXTERNAL = "all";
+  /**
+   * The default of {@link XMLConstants#FEATURE_SECURE_PROCESSING}: on.
+   */
+  public static final boolean DEFAULT_SECURE_PROCESSING = true;
+  /**
+   * The value of the external access attributes without secure processing:
+   * all schemes.
+   */
+  public static final String ACCESS_EXTERNAL_ALL = "all";
+  /**
+   * The default of the external access attributes: no scheme, as secure
+   * processing ({@link #DEFAULT_SECURE_PROCESSING}) requires.
+   */
+  public static final String DEFAULT_ACCESS_EXTERNAL = "";
 
   private static final Pattern PSEUDO_ATTR = Pattern.compile ("([A-Za-z_][\\w.-]*)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')");
 
@@ -215,7 +228,7 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
 
   private URIResolver m_aURIResolver;
   private ErrorListener m_aErrorListener = new JaxpErrors.LoggingErrorListener ();
-  private boolean m_bSecureProcessing = false;
+  private boolean m_bSecureProcessing = DEFAULT_SECURE_PROCESSING;
   private String m_sAccessExternalStylesheet = DEFAULT_ACCESS_EXTERNAL;
   private String m_sAccessExternalDtd = DEFAULT_ACCESS_EXTERNAL;
   private boolean m_bLoadExternalEntities = XdmParser.DEFAULT_LOAD_EXTERNAL_ENTITIES;
@@ -493,11 +506,9 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
     if (XMLConstants.FEATURE_SECURE_PROCESSING.equals (sName))
     {
       m_bSecureProcessing = bValue;
-      if (bValue)
-      {
-        m_sAccessExternalStylesheet = "";
-        m_sAccessExternalDtd = "";
-      }
+      final String sAccess = bValue ? "" : ACCESS_EXTERNAL_ALL;
+      m_sAccessExternalStylesheet = sAccess;
+      m_sAccessExternalDtd = sAccess;
       return;
     }
     if (_isFixedFeature (sName) && bValue)

@@ -504,6 +504,7 @@ public final class PhoxtrotTransformerFactoryTest
                                 "<xsl:template match='/'><xsl:result-document><main/></xsl:result-document></xsl:template>" +
                                 XSL_END;
     final PhoxtrotTransformerFactory aTF = new PhoxtrotTransformerFactory ();
+    aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, false);
     assertNotNull (aTF.newTemplates (_source (sWithHref)));
 
     aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, true);
@@ -541,14 +542,19 @@ public final class PhoxtrotTransformerFactoryTest
     final String sMain = XSL_START + "<xsl:include href='inc.xsl'/>" + XSL_END;
     final String sMainUri = aDir.resolve ("main.xsl").toUri ().toString ();
 
-    // Default: direct access to files
+    // Without secure processing: direct access to files
     final PhoxtrotTransformerFactory aTF = new PhoxtrotTransformerFactory ();
-    assertFalse (aTF.getFeature (XMLConstants.FEATURE_SECURE_PROCESSING));
+    assertTrue (aTF.getFeature (XMLConstants.FEATURE_SECURE_PROCESSING));
+    assertEquals ("", aTF.getAttribute (XMLConstants.ACCESS_EXTERNAL_STYLESHEET));
+    assertEquals ("", aTF.getAttribute (XMLConstants.ACCESS_EXTERNAL_DTD));
+    aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, false);
+    assertEquals ("all", aTF.getAttribute (XMLConstants.ACCESS_EXTERNAL_STYLESHEET));
+    assertEquals ("all", aTF.getAttribute (XMLConstants.ACCESS_EXTERNAL_DTD));
     final StreamSource aSrc1 = _source (sMain);
     aSrc1.setSystemId (sMainUri);
     assertNotNull (aTF.newTemplates (aSrc1));
 
-    // Secure processing: nothing without a resolver
+    // Secure processing (the default): nothing without a resolver
     aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, true);
     assertEquals ("", aTF.getAttribute (XMLConstants.ACCESS_EXTERNAL_STYLESHEET));
     final RecordingErrorListener aEL = new RecordingErrorListener ();
@@ -1246,9 +1252,11 @@ public final class PhoxtrotTransformerFactoryTest
   @Test
   public void testSecondaryResultsAndReset () throws Exception
   {
-    final PhoxtrotTransformer aT = new PhoxtrotTransformerFactory ().newTemplates (_source (XSL_START +
-                                                                                            "<xsl:template match='/'><main/><xsl:result-document href='second.xml'><second/></xsl:result-document></xsl:template>" +
-                                                                                            XSL_END)).newTransformer ();
+    final PhoxtrotTransformerFactory aTF = new PhoxtrotTransformerFactory ();
+    aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, false);
+    final PhoxtrotTransformer aT = aTF.newTemplates (_source (XSL_START +
+                                                              "<xsl:template match='/'><main/><xsl:result-document href='second.xml'><second/></xsl:result-document></xsl:template>" +
+                                                              XSL_END)).newTransformer ();
     final DOMResult aResult = new DOMResult ();
     aResult.setSystemId ("http://example.org/out/main.xml");
     aT.transform (_source (SOURCE), aResult);

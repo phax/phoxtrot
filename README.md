@@ -183,15 +183,19 @@ aTransformer.transform (new DOMSource (aDoc), new DOMResult ());
   `PhoxtrotTransformer.setThreading`.
 * The `URIResolver` is called as JAXP specifies: with the `href` as written and the base URI it is resolved against
   (the empty string if there is none, e.g. a stylesheet without system ID).
+* `XMLConstants.FEATURE_SECURE_PROCESSING` is on by default (unlike the JDK transformer): only the `URIResolver` and
+  the `EntityResolver` give access to other resources, and `xsl:result-document` with `href` does not compile.
+  Setting it to `false` sets both access attributes below to `all`, setting it to `true` sets them to the empty
+  string.
 * What the `URIResolver` does not resolve is read directly if `XMLConstants.ACCESS_EXTERNAL_STYLESHEET` allows the
-  scheme (default `all`; `FEATURE_SECURE_PROCESSING` set to `true` allows nothing; a `jar:` URI needs its nested URI
+  scheme (default empty, so nothing; `all` without secure processing; a `jar:` URI needs its nested URI
   allowed too). A `URIResolver` that throws refuses the URI: `xsl:include`/`xsl:import` fail with XTSE0165,
   `document()`/`doc()` with FODC0002, `unparsed-text()`/`json-doc()` with FOUT1170, each with its message, and the
   `*-available` functions return `false`.
 * External DTDs and entities are only read with the attribute `ATTR_LOAD_EXTERNAL_ENTITIES`, for stylesheets, modules,
   sources and documents alike: an `EntityResolver` (factory attribute `ATTR_ENTITY_RESOLVER`,
   `PhoxtrotTransformer.setEntityResolver`) is asked first, and the parser opens them itself only for the schemes of
-  `XMLConstants.ACCESS_EXTERNAL_DTD` (default `all`, empty with `FEATURE_SECURE_PROCESSING`). Further attributes:
+  `XMLConstants.ACCESS_EXTERNAL_DTD` (default empty, `all` without `FEATURE_SECURE_PROCESSING`). Further attributes:
   `ATTR_SCHEMA_AWARE` (the `schema-location` of `xsl:import-schema` goes through the `URIResolver` and
   `ACCESS_EXTERNAL_STYLESHEET` like a module; the documents it references are read only if `file` is allowed),
   `ATTR_MAX_STEPS` and `ATTR_MAX_DEPTH` (the nesting depth of templates and functions, default 10,000,
@@ -235,6 +239,11 @@ v0.2.1 - work in progress
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with
   `urn:fdc:helger.com:phoxtrot:jaxp:` instead of `http://helger.com/phoxtrot/jaxp/`, and `XdmSource.FEATURE` is
   `urn:fdc:helger.com:phoxtrot:jaxp:feature:xdm-source`; the old names are no longer accepted
+* JAXP: `PhoxtrotTransformerFactory` now has `FEATURE_SECURE_PROCESSING` on by default (new
+  `DEFAULT_SECURE_PROCESSING`), so `ACCESS_EXTERNAL_STYLESHEET` and `ACCESS_EXTERNAL_DTD` default to the empty string
+  (`DEFAULT_ACCESS_EXTERNAL`; `ACCESS_EXTERNAL_ALL` is `all`) and `xsl:result-document` with `href` does not compile:
+  includes, imports and documents need a `URIResolver` or an allowed scheme. Setting the feature to `false` now sets
+  both access attributes to `all`
 
 v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it

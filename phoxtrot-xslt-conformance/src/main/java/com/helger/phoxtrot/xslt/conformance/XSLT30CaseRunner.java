@@ -28,6 +28,7 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import javax.xml.XMLConstants;
 import javax.xml.transform.ErrorListener;
 import javax.xml.transform.Source;
 import javax.xml.transform.Transformer;
@@ -497,6 +498,8 @@ public final class XSLT30CaseRunner
     String sCode = null;
     try
     {
+      // As the native run: direct access and secondary results allowed
+      aTF.setFeature (XMLConstants.FEATURE_SECURE_PROCESSING, false);
       final Transformer aTransformer = aTF.newTemplates (new StreamSource (sStylesheetUri)).newTransformer ();
       aTransformer.setErrorListener (QUIET_ERROR_LISTENER);
       for (final Map.Entry <XdmQName, XdmSequence> aEntry : aRequest.params ().entrySet ())
