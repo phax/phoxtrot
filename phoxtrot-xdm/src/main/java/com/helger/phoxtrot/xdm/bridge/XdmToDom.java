@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xdm.bridge;
 import java.util.ArrayDeque;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
@@ -131,7 +132,8 @@ public final class XdmToDom
     if (bOutermost)
     {
       for (final Map.Entry <String, String> aEntry : aNode.getInScopeNamespaces ().entrySet ())
-        if (!"xml".equals (aEntry.getKey ()) && !aScope.isBoundTo (aEntry.getKey (), aEntry.getValue ()))
+        if (!XMLConstants.XML_NS_PREFIX.equals (aEntry.getKey ()) &&
+            !aScope.isBoundTo (aEntry.getKey (), aEntry.getValue ()))
           aDecls.put (aEntry.getKey (), aEntry.getValue ());
     }
     else
@@ -142,18 +144,20 @@ public final class XdmToDom
           if (!aScope.isBoundTo (aEntry.getKey (), aEntry.getValue ()))
             aDecls.put (aEntry.getKey (), aEntry.getValue ());
       }
-    aDecls.remove ("xml");
+    aDecls.remove (XMLConstants.XML_NS_PREFIX);
     for (final Map.Entry <String, String> aEntry : aDecls.entrySet ())
       _declare (ret, aEntry.getKey (), aEntry.getValue (), aScope);
-    if (!"xml".equals (aName.prefix ()) && !aScope.isBoundTo (aName.prefix (), aName.namespaceUri ()))
+    if (!XMLConstants.XML_NS_PREFIX.equals (aName.prefix ()) &&
+        !aScope.isBoundTo (aName.prefix (), aName.namespaceUri ()))
       _declare (ret, aName.prefix (), aName.namespaceUri (), aScope);
     for (int i = 0; i < aNode.getAttributeCount (); ++i)
     {
       final IXdmNode aAttr = aNode.getAttributeAtIndex (i);
       final XdmQName aAttrName = aAttr.getName ();
       String sQName = aAttrName.getLexicalName ();
-      if (aAttrName.hasNamespace () && !"xml".equals (aAttrName.prefix ()))
+      if (aAttrName.hasNamespace () && !XMLConstants.XML_NS_PREFIX.equals (aAttrName.prefix ()))
       {
+        // Only element with a namespace URI, different from "xml"
         if (!aAttrName.hasPrefix () || !aScope.isBoundTo (aAttrName.prefix (), aAttrName.namespaceUri ()))
         {
           String sPrefix = aAttrName.prefix ();

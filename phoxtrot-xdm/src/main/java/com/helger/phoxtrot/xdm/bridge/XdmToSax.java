@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xdm.bridge;
 import java.util.ArrayDeque;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.ContentHandler;
@@ -108,15 +110,18 @@ public final class XdmToSax
           if (!aScope.isBoundTo (aEntry.getKey (), aEntry.getValue ()))
             aDecls.put (aEntry.getKey (), aEntry.getValue ());
       }
-    aDecls.remove ("xml");
+    aDecls.remove (XMLConstants.XML_NS_PREFIX);
     for (final Map.Entry <String, String> aEntry : aDecls.entrySet ())
       aScope.bind (aEntry.getKey (), aEntry.getValue ());
+
     final XdmQName aName = aElement.getName ();
-    if (!"xml".equals (aName.prefix ()) && !aScope.isBoundTo (aName.prefix (), aName.namespaceUri ()))
+    if (!XMLConstants.XML_NS_PREFIX.equals (aName.prefix ()) &&
+        !aScope.isBoundTo (aName.prefix (), aName.namespaceUri ()))
     {
       aDecls.put (aName.prefix (), aName.namespaceUri ());
       aScope.bind (aName.prefix (), aName.namespaceUri ());
     }
+
     final AttributesImpl aAttrs = new AttributesImpl ();
     for (int i = 0; i < aElement.getAttributeCount (); ++i)
     {
@@ -124,7 +129,7 @@ public final class XdmToSax
       final XdmQName aAttrName = aAttr.getName ();
       String sQName = aAttrName.getLexicalName ();
       if (aAttrName.hasNamespace () &&
-          !"xml".equals (aAttrName.prefix ()) &&
+          !XMLConstants.XML_NS_PREFIX.equals (aAttrName.prefix ()) &&
           (!aAttrName.hasPrefix () || !aScope.isBoundTo (aAttrName.prefix (), aAttrName.namespaceUri ())))
       {
         String sPrefix = aAttrName.prefix ();
@@ -140,6 +145,7 @@ public final class XdmToSax
                            _getSaxType (aAttr),
                            aAttr.getValue ());
     }
+
     for (final Map.Entry <String, String> aEntry : aDecls.entrySet ())
       aHandler.startPrefixMapping (aEntry.getKey (), aEntry.getValue ());
     aHandler.startElement (aName.namespaceUri (), aName.localName (), aName.getLexicalName (), aAttrs);
@@ -183,6 +189,7 @@ public final class XdmToSax
     }
     else
       aStack.push (new Step (aNode, false, null));
+
     int nOpen = 0;
     while (!aStack.isEmpty ())
     {

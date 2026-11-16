@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xdm.schema;
 import java.util.ArrayDeque;
 import java.util.Map;
 
+import javax.xml.XMLConstants;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.ContentHandler;
@@ -76,14 +78,16 @@ public final class XdmSaxEmitter
                                      @NonNull final ContentHandler aHandler) throws SAXException
   {
     for (final Map.Entry <String, String> aEntry : aNamespaces.entrySet ())
-      if (!"xml".equals (aEntry.getKey ()))
+      if (!XMLConstants.XML_NS_PREFIX.equals (aEntry.getKey ()))
         aHandler.startPrefixMapping (aEntry.getKey (), aEntry.getValue ());
+
     final AttributesImpl aAttrs = new AttributesImpl ();
     for (final IXdmNode aAttr : aElement.getAllAttributes ())
     {
       final XdmQName aName = aAttr.getName ();
       aAttrs.addAttribute (aName.namespaceUri (), aName.localName (), _qname (aName), "CDATA", aAttr.getValue ());
     }
+
     final XdmQName aName = aElement.getName ();
     aHandler.startElement (aName.namespaceUri (), aName.localName (), _qname (aName), aAttrs);
   }
@@ -108,7 +112,7 @@ public final class XdmSaxEmitter
     final XdmQName aName = aElement.getName ();
     aHandler.endElement (aName.namespaceUri (), aName.localName (), _qname (aName));
     for (final String sPrefix : aNamespaces.keySet ())
-      if (!"xml".equals (sPrefix))
+      if (!XMLConstants.XML_NS_PREFIX.equals (sPrefix))
         aHandler.endPrefixMapping (sPrefix);
   }
 

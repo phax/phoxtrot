@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xdm.bridge;
 
 import java.util.Map;
 
+import javax.xml.XMLConstants;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.w3c.dom.Attr;
@@ -97,17 +99,17 @@ public final class DomToXdm
 
   /**
    * Records the DOM node of each XDM node the builder creates
-   * ({@link DomToXdm#convertWithMapping(Node, String)}). The builder appends
-   * buffered character data only at the next element, comment, processing
-   * instruction or end event, merged into one text node, so the first DOM text
-   * node of such a run is kept until then.
+   * ({@link DomToXdm#convertWithMapping(Node, String)}). The builder appends buffered character
+   * data only at the next element, comment, processing instruction or end event, merged into one
+   * text node, so the first DOM text node of such a run is kept until then.
    */
   private static final class NodeRecorder
   {
     private final ICommonsMap <IXdmNode, Node> m_aMap = new CommonsHashMap <> ();
     // The first DOM text node of the character data not appended yet
     private Node m_aPendingText;
-    // Where the pending text will be appended: the current node and its child count before the event
+    // Where the pending text will be appended: the current node and its child count before the
+    // event
     private IXdmNode m_aFlushParent;
     private int m_nFlushIndex;
 
@@ -132,7 +134,9 @@ public final class DomToXdm
       }
     }
 
-    /** After that event: the text node it appended, if any, is the child at the remembered index. */
+    /**
+     * After that event: the text node it appended, if any, is the child at the remembered index.
+     */
     void afterFlush ()
     {
       if (m_aPendingText != null)
@@ -273,7 +277,8 @@ public final class DomToXdm
       }
     }
     final Name aName = _getName (aElement, false, aOwnDecls != null ? aOwnDecls : Map.of (), aScope);
-    if (!"xml".equals (aName.prefix ()) && !_isBound (aName, aOwnDecls != null ? aOwnDecls : Map.of (), aScope))
+    if (!XMLConstants.XML_NS_PREFIX.equals (aName.prefix ()) &&
+        !_isBound (aName, aOwnDecls != null ? aOwnDecls : Map.of (), aScope))
     {
       if (aOwnDecls == null)
         aOwnDecls = new CommonsLinkedHashMap <> ();
@@ -287,7 +292,7 @@ public final class DomToXdm
       if (_isNamespaceDecl (aAttr))
         continue;
       Name aAttrName = _getName (aAttr, true, aOwnDecls != null ? aOwnDecls : Map.of (), aScope);
-      if (!aAttrName.uri ().isEmpty () && !"xml".equals (aAttrName.prefix ()))
+      if (!aAttrName.uri ().isEmpty () && !XMLConstants.XML_NS_PREFIX.equals (aAttrName.prefix ()))
       {
         if (aAttrName.prefix ().isEmpty () || !_isBound (aAttrName, aOwnDecls != null ? aOwnDecls : Map.of (), aScope))
         {
@@ -368,9 +373,9 @@ public final class DomToXdm
   }
 
   /**
-   * Record an element just started and its attributes: the builder adds the
-   * attributes in the order of the DOM attributes that are no namespace
-   * declarations (see {@link #_startElement(Element, NamespaceScope, XdmTreeBuilder, AttributesImpl)}).
+   * Record an element just started and its attributes: the builder adds the attributes in the order
+   * of the DOM attributes that are no namespace declarations (see
+   * {@link #_startElement(Element, NamespaceScope, XdmTreeBuilder, AttributesImpl)}).
    */
   private static void _recordElement (@NonNull final Element aElement,
                                       @NonNull final IXdmNode aXdmElement,
@@ -679,7 +684,8 @@ public final class DomToXdm
       final String sLocal = aAttr.getLocalName () != null ? aAttr.getLocalName () : aAttr.getNodeName ();
       final IXdmNode ret = IXdmNode.createAttribute (new XdmQName (_nonNull (aAttr.getNamespaceURI ()),
                                                                    sLocal,
-                                                                   _nonNull (aAttr.getPrefix ())), _nonNull (aAttr.getValue ()));
+                                                                   _nonNull (aAttr.getPrefix ())),
+                                                     _nonNull (aAttr.getValue ()));
       if (aRecorder != null)
         aRecorder.put (ret, aAttr);
       return ret;

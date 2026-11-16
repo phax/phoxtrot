@@ -50,6 +50,8 @@ public final class XdmQNameTest
     assertEquals ("a", new XdmQName ("a").getLexicalName ());
     assertEquals ("Q{urn:x}a", new XdmQName ("urn:x", "a", "p").getEQName ());
     assertEquals ("a", new XdmQName ("a").getEQName ());
+    assertEquals ("{urn:x}a", new XdmQName ("urn:x", "a", "p").getClarkName ());
+    assertEquals ("a", new XdmQName ("a").getClarkName ());
     assertTrue (new XdmQName ("urn:x", "a").hasNamespace ());
     assertFalse (new XdmQName ("a").hasNamespace ());
   }
@@ -67,7 +69,7 @@ public final class XdmQNameTest
   public void testGetInterned ()
   {
     final String sNs = "urn:x:interned";
-    final XdmQName a = new XdmQName (new String (sNs), new String ("a"), new String ("p"));
+    final XdmQName a = new XdmQName (new String (sNs), "a", "p");
     assertNotSame (sNs, a.namespaceUri ());
     final XdmQName b = a.getInterned ();
     assertEquals (a, b);
@@ -95,7 +97,7 @@ public final class XdmQNameTest
     assertSame ("urn:x:parsed", aChild.getAttributeAtIndex (0).getName ().namespaceUri ());
   }
 
-  @Test(expected = IllegalArgumentException.class)
+  @Test (expected = IllegalArgumentException.class)
   public void testEmptyLocalName ()
   {
     new XdmQName ("");

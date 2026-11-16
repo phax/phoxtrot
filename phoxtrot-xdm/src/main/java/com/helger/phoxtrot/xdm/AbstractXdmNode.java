@@ -21,6 +21,8 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 
+import javax.xml.XMLConstants;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -625,8 +627,9 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
   public final String lookupNamespaceUri (@NonNull final String sPrefix)
   {
     ValueEnforcer.notNull (sPrefix, "Prefix");
-    if ("xml".equals (sPrefix))
+    if (XMLConstants.XML_NS_PREFIX.equals (sPrefix))
       return XdmConstants.NS_XML;
+
     for (AbstractXdmNode aCur = this; aCur != null; aCur = aCur.m_aParent)
     {
       final ICommonsOrderedMap <String, String> aNamespaces = aCur._getNamespaces ();
@@ -655,7 +658,7 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
       aPath.push (aCur);
 
     final ICommonsOrderedMap <String, String> ret = new CommonsLinkedHashMap <> ();
-    ret.put ("xml", XdmConstants.NS_XML);
+    ret.put (XMLConstants.XML_NS_PREFIX, XdmConstants.NS_XML);
     for (final AbstractXdmNode aNode : aPath)
     {
       final ICommonsOrderedMap <String, String> aNamespaces = aNode._getNamespaces ();

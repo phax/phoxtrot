@@ -20,6 +20,8 @@ import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.function.UnaryOperator;
 
+import javax.xml.XMLConstants;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -100,8 +102,9 @@ final class NamespaceScope
   @Nullable
   String lookup (@NonNull final String sPrefix)
   {
-    if ("xml".equals (sPrefix))
+    if (XMLConstants.XML_NS_PREFIX.equals (sPrefix))
       return XdmConstants.NS_XML;
+
     final ArrayDeque <String> aStack = m_aBindings.get (sPrefix);
     if (aStack != null && !aStack.isEmpty ())
       return aStack.peek ();

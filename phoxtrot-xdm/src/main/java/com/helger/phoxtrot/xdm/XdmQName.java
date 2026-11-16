@@ -98,6 +98,17 @@ public record XdmQName (@NonNull String namespaceUri, @NonNull String localName,
   }
 
   /**
+   * @return The name in Clark notation <code>{uri}local</code>, without the braces part for names
+   *         in no namespace.
+   * @since 0.2.1
+   */
+  @NonNull
+  public String getClarkName ()
+  {
+    return namespaceUri.isEmpty () ? localName : "{" + namespaceUri + "}" + localName;
+  }
+
+  /**
    * Get this name with the canonical instances of its strings ({@link String#intern()}). The JDK
    * XML parsers report element and attribute names as such instances, so that comparing an interned
    * name with the name of a parsed node is decided by the identity checks of
