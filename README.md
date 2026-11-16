@@ -231,6 +231,11 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
+v0.2.1 - work in progress
+* JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with
+  `urn:fdc:helger.com:phoxtrot:jaxp:` instead of `http://helger.com/phoxtrot/jaxp/`, and `XdmSource.FEATURE` is
+  `urn:fdc:helger.com:phoxtrot:jaxp:feature:xdm-source`; the old names are no longer accepted
+
 v0.2.0 - 2026-11-14
 * XSLT: the static context of every expression shares the set of the global variable names instead of copying it
   (Schematron stylesheets with hundreds of globals compile 30 to 40 % faster); new

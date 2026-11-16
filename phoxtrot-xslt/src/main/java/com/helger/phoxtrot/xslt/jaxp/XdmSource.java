@@ -43,7 +43,7 @@ public class XdmSource implements Source
    * {@link javax.xml.transform.TransformerFactory#getFeature(String)}: the
    * factory accepts this source.
    */
-  public static final String FEATURE = "http://helger.com/phoxtrot/jaxp/XdmSource/feature";
+  public static final String FEATURE = "urn:fdc:helger.com:phoxtrot:jaxp:feature:xdm-source";
 
   private final IXdmNode m_aNode;
   private String m_sSystemId;

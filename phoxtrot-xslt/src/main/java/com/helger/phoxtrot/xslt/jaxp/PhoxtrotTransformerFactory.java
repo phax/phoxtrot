@@ -123,7 +123,7 @@ import com.helger.phoxtrot.xslt.XsltExecutable;
 public class PhoxtrotTransformerFactory extends TransformerFactory
 {
   /** The common prefix of the phoxtrot attribute names. */
-  public static final String ATTR_PREFIX = "http://helger.com/phoxtrot/jaxp/";
+  public static final String ATTR_PREFIX = "urn:fdc:helger.com:phoxtrot:jaxp:";
   /**
    * Attribute ({@link Boolean} or "true"/"false"): load external DTDs and
    * entities when parsing stylesheets, sources and documents (default
