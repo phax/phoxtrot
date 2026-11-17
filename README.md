@@ -14,10 +14,12 @@ A pure Java implementation of XPath 3.1 and XSLT 3.0, intended as an Apache 2.0 
 XML parsing is left to the JDK; everything on top of it, including an XML Schema 1.0 validator, is implemented here.
 
 Status: initially released.
-* The native XML Schema validator passes 99.99% of the applicable W3C xsdtests cases for XSD 1.0 (39,396 of 39,401) and XSD 1.1 (41,596 of 41,600).
-* The XPath 3.1 engine runs and passes **all** 22,401 applicable W3C QT3 test cases (skipped cases and the reasons:
-  [qt3.md](phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md)).
-* The XSLT 3.0 engine passes 99.9% of the applicable W3C xslt30-test cases as a basic processor (8,640 of 8,647).
+* The native XML Schema validator passes 99.99% of the applicable W3C xsdtests cases for XSD 1.0 (39,396 of 39,401) and XSD 1.1 (41,596 of 41,600);
+  failing cases and the reasons: [xsd-native.md](phoxtrot-xsd-conformance/docs/accepted-failures/xsd-native.md).
+* The XPath 3.1 engine runs and passes **all** 22,401 applicable W3C QT3 test cases;
+  skipped cases and the reasons: [qt3.md](phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md).
+* The XSLT 3.0 engine passes 99.9% of the applicable W3C xslt30-test cases as a basic processor (8,640 of 8,647);
+  failing cases and the reasons: [xslt30.md](phoxtrot-xslt-conformance/docs/accepted-failures/xslt30.md).
 
 Schema-awareness and streaming are available as opt-ins (streaming: the streamability analysis, streamed execution of guaranteed-streamable constructs and output written while it is built).
 XSLT 1.0 stylesheets run with backwards compatible behaviour (claimed by default; 8,752 of 8,762 cases with the claim), with the EXSLT - Common functions `exsl:node-set` and `exsl:object-type`.
