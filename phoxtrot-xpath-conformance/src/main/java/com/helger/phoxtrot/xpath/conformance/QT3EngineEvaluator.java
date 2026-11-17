@@ -44,6 +44,7 @@ import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.context.IResourceResolver;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.fn.FormatDecimalFormat;
+import com.helger.phoxtrot.xpath.parser.XPathParser;
 import com.helger.phoxtrot.xpath.value.XdmAtomic;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
@@ -63,6 +64,7 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   private final OffsetDateTime m_aNow;
   private final ICommonsOrderedMap <String, String> m_aNamespaces = new CommonsLinkedHashMap <> ();
   private final ICommonsOrderedMap <XdmQName, XdmSequence> m_aVars = new CommonsLinkedHashMap <> ();
+  private final ICommonsOrderedMap <XdmQName, SeqType> m_aVarTypes = new CommonsLinkedHashMap <> ();
   private String m_sDefaultElementNamespace;
   private String m_sBaseUri;
   private String m_sDefaultCollation;
@@ -230,7 +232,32 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   @NonNull
   public QT3EngineEvaluator setVariable (@NonNull final XdmQName aName, @NonNull final XdmSequence aValue)
   {
+    return setVariable (aName, aValue, null);
+  }
+
+  /**
+   * Bind a variable with the type it is declared with.
+   *
+   * @param aName
+   *        The variable name.
+   * @param aValue
+   *        The value, which must match the declared type.
+   * @param aDeclaredType
+   *        The declared type (the <code>as</code> of a parameter), the static
+   *        type of the variable under static typing. <code>null</code> to
+   *        derive the static type from the value.
+   * @return this for chaining
+   */
+  @NonNull
+  public QT3EngineEvaluator setVariable (@NonNull final XdmQName aName,
+                                        @NonNull final XdmSequence aValue,
+                                        @Nullable final SeqType aDeclaredType)
+  {
     m_aVars.put (aName, aValue);
+    if (aDeclaredType != null)
+      m_aVarTypes.put (aName, aDeclaredType);
+    else
+      m_aVarTypes.remove (aName);
     return this;
   }
 
@@ -293,28 +320,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
-   * Compile and evaluate an expression under the configured environment. A
-   * new {@link StaticContext} gets the namespaces, the default element
-   * namespace, the static base URI, the default collation, XPath 1.0
-   * compatibility mode, static typing, the schema set, the XML and XSD
-   * versions, the decimal formats and a declaration of every configured and
-   * extra variable. The dynamic context gets the run's current date/time,
-   * the default language, the resource resolver, the context item as a
-   * singleton focus (position and size 1) if one is set, and the variable
-   * values; an extra variable with the same name as a configured one wins.
-   * Unset optional settings leave the engine's defaults.
-   *
-   * @param sExpr
-   *        The XPath expression.
-   * @param aExtraVars
-   *        Variables bound for this evaluation only (e.g.
-   *        <code>$result</code>).
-   * @return The result.
-   * @throws com.helger.phoxtrot.xpath.XPathException
-   *         if compiling or evaluating raises an error.
+   * @return A new static context with the namespaces, the default element
+   *         namespace, the static base URI, the default collation, XPath 1.0
+   *         compatibility mode, static typing, the schema set, the XML and XSD
+   *         versions and the decimal formats; no variables.
    */
   @NonNull
-  public XdmSequence evaluate (@NonNull final String sExpr, @NonNull final Map <XdmQName, XdmSequence> aExtraVars)
+  private StaticContext _createStaticContext ()
   {
     final StaticContext aStatic = new StaticContext ();
     for (final Map.Entry <String, String> aEntry : m_aNamespaces.entrySet ())
@@ -335,11 +347,66 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
       aStatic.setDefaultDecimalFormat (m_aDefaultDecimalFormat);
     for (final Map.Entry <XdmQName, FormatDecimalFormat> aEntry : m_aDecimalFormats.entrySet ())
       aStatic.addDecimalFormat (aEntry.getKey (), aEntry.getValue ());
+    return aStatic;
+  }
+
+  /**
+   * Parse a SequenceType under the configured namespaces, default element
+   * namespace and schema set.
+   *
+   * @param sType
+   *        The SequenceType, e.g. <code>xs:string?</code>.
+   * @return The parsed type.
+   * @throws com.helger.phoxtrot.xpath.XPathException
+   *         if the type does not parse.
+   */
+  @NonNull
+  public SeqType parseSequenceType (@NonNull final String sType)
+  {
+    return XPathParser.parseSequenceType (sType, _createStaticContext ());
+  }
+
+  @NonNull
+  private SeqType _getVariableStaticType (@NonNull final XdmQName aName, @NonNull final XdmSequence aValue)
+  {
+    // A declared type wins over the narrower type of the value: an empty
+    // value would otherwise make $x an XPST0005
+    final SeqType aDeclared = m_aVarTypes.get (aName);
+    return aDeclared != null ? aDeclared : _getStaticType (aValue);
+  }
+
+  /**
+   * Compile and evaluate an expression under the configured environment. A
+   * new {@link StaticContext} gets the namespaces, the default element
+   * namespace, the static base URI, the default collation, XPath 1.0
+   * compatibility mode, static typing, the schema set, the XML and XSD
+   * versions, the decimal formats and a declaration of every configured and
+   * extra variable (under static typing with its declared type if it has one,
+   * else the type of its value). The dynamic context gets the run's current
+   * date/time, the default language, the resource resolver, the context item
+   * as a singleton focus (position and size 1) if one is set, and the
+   * variable values; an extra variable with the same name as a configured one
+   * wins. Unset optional settings leave the engine's defaults.
+   *
+   * @param sExpr
+   *        The XPath expression.
+   * @param aExtraVars
+   *        Variables bound for this evaluation only (e.g.
+   *        <code>$result</code>).
+   * @return The result.
+   * @throws com.helger.phoxtrot.xpath.XPathException
+   *         if compiling or evaluating raises an error.
+   */
+  @NonNull
+  public XdmSequence evaluate (@NonNull final String sExpr, @NonNull final Map <XdmQName, XdmSequence> aExtraVars)
+  {
+    final StaticContext aStatic = _createStaticContext ();
     // With static typing the host declares the types of what it supplies
     if (m_bStaticTyping && m_aContextItem != null)
       aStatic.setContextItemStaticType (_getStaticItemType (m_aContextItem));
     for (final Map.Entry <XdmQName, XdmSequence> aEntry : m_aVars.entrySet ())
-      aStatic.declareVariable (aEntry.getKey (), m_bStaticTyping ? _getStaticType (aEntry.getValue ()) : null);
+      aStatic.declareVariable (aEntry.getKey (),
+                               m_bStaticTyping ? _getVariableStaticType (aEntry.getKey (), aEntry.getValue ()) : null);
     for (final Map.Entry <XdmQName, XdmSequence> aEntry : aExtraVars.entrySet ())
       aStatic.declareVariable (aEntry.getKey (), m_bStaticTyping ? _getStaticType (aEntry.getValue ()) : null);
 

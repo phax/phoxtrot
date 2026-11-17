@@ -33,6 +33,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xpath.XPathException;
+import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.EXmlVersion;
 import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.fn.FormatDecimalFormat;
@@ -282,7 +283,9 @@ public final class QT3CaseRunner
    * FOTS says that the variable is declared (in XQuery terms) with the
    * <code>as</code> type; the value must then match that sequence type
    * (XQuery 3.1 section 4.16: SequenceType matching, no conversion), which
-   * is checked with <code>instance of</code>. <code>declared</code> only
+   * is checked with <code>instance of</code>. Under static typing the
+   * <code>as</code> type is the static type of the variable, not the type of
+   * its value. <code>declared</code> only
    * says whether an XQuery prolog declares the variable itself and has no
    * meaning for XPath; the variable is always bound.
    *
@@ -305,6 +308,7 @@ public final class QT3CaseRunner
       return "param $" + aParam.name () + " select failed: " + ex.getMessage ();
     }
     final String sAs = aParam.as ().strip ();
+    SeqType aDeclaredType = null;
     if (!sAs.isEmpty ())
     {
       final Boolean aMatches;
@@ -312,6 +316,8 @@ public final class QT3CaseRunner
       {
         aMatches = QT3AssertionChecker.getEffectiveBooleanValue (aEval.evaluate ("$qt3-param instance of " + sAs,
                                                                                  Map.of (PARAM_VAR, aValue)));
+        // The declared type is the static type of the variable
+        aDeclaredType = aEval.parseSequenceType (sAs);
       }
       catch (final XPathException ex)
       {
@@ -320,7 +326,7 @@ public final class QT3CaseRunner
       if (aMatches == null || !aMatches.booleanValue ())
         return "param $" + aParam.name () + " does not match as '" + sAs + "'";
     }
-    aEval.setVariable (_varName (aParam.name (), aParam.namespaceUri (), aEval), aValue);
+    aEval.setVariable (_varName (aParam.name (), aParam.namespaceUri (), aEval), aValue, aDeclaredType);
     return null;
   }
 

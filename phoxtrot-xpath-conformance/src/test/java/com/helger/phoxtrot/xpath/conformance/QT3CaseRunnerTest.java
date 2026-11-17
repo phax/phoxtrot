@@ -22,6 +22,7 @@ import static org.junit.Assert.assertTrue;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.time.OffsetDateTime;
+import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.Test;
@@ -38,10 +39,17 @@ public final class QT3CaseRunnerTest
   private static final Path DIR = Path.of ("target/does-not-exist").toAbsolutePath ();
 
   private static QT3CaseRunner.@NonNull CaseResult _run (@NonNull final QT3CaseRunner aRunner,
-                                                         @NonNull final QT3TestCase aCase)
+                                                         @NonNull final QT3TestCase aCase,
+                                                         @NonNull final List <QT3Dependency> aAllDeps)
   {
     final QT3Environment aEnv = aCase.environment () != null ? aCase.environment () : new QT3Environment ("", "", DIR);
-    return aRunner.run (aCase, new CommonsArrayList <> (), aEnv, DIR, new QT3DocumentCache ());
+    return aRunner.run (aCase, aAllDeps, aEnv, DIR, new QT3DocumentCache ());
+  }
+
+  private static QT3CaseRunner.@NonNull CaseResult _run (@NonNull final QT3CaseRunner aRunner,
+                                                         @NonNull final QT3TestCase aCase)
+  {
+    return _run (aRunner, aCase, new CommonsArrayList <> ());
   }
 
   @Test
@@ -88,6 +96,37 @@ public final class QT3CaseRunnerTest
     assertEquals (QT3Outcome.failInconclusive ("harness:param"), aMismatch.outcome ());
     assertTrue (aMismatch.got ().contains ("does not match"));
     assertEquals (QT3Outcome.failInconclusive ("harness:param"), _run (aRunner, aSet.testCases ().get (2)).outcome ());
+  }
+
+  @Test
+  public void testParamDeclaredTypeUnderStaticTyping () throws IOException
+  {
+    final QT3TestSet aSet = QT3CatalogReader.readTestSet ("""
+        <test-set xmlns="http://www.w3.org/2010/09/qt-fots-catalog" name="s">
+          <dependency type="feature" value="staticTyping"/>
+          <test-case name="empty-declared">
+            <environment><param name="p" as="xs:integer*" select="()"/></environment>
+            <test>$p</test><result><assert-empty/></result>
+          </test-case>
+          <test-case name="empty-undeclared">
+            <environment><param name="p" select="()"/></environment>
+            <test>$p</test><result><error code="XPST0005"/></result>
+          </test-case>
+          <test-case name="wider-declared">
+            <environment><param name="p" as="item()*" select="1"/></environment>
+            <test>$p + 1</test><result><error code="XPTY0004"/></result>
+          </test-case>
+          <test-case name="wider-undeclared">
+            <environment><param name="p" select="1"/></environment>
+            <test>$p + 1</test><result><assert-eq>2</assert-eq></result>
+          </test-case>
+        </test-set>
+        """, DIR);
+    final QT3CaseRunner aRunner = new QT3CaseRunner (OffsetDateTime.now (), true);
+    // The declared type is the static type: an empty value is no XPST0005
+    // and a wider type than the value's raises the static type error
+    for (final QT3TestCase aCase : aSet.testCases ())
+      assertEquals (aCase.name (), QT3Outcome.pass (), _run (aRunner, aCase, aSet.dependencies ()).outcome ());
   }
 
   @Test
