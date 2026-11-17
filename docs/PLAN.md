@@ -29,16 +29,14 @@ XSLT30 status (2026-11-04, after the open cases `function-lookup-005`/`006` and 
 applicable cases pass (99.9%) as a basic processor, identical on JDK 21 and 25; all 7 fails are documented in
 `phoxtrot-xslt-conformance/docs/accepted-failures/xslt30.md` (`XSLT30IT` fails on any undocumented failure). Extension API for the families: `phoxtrot-xslt/INSTRAPI.md`.
 
-QT3 status (2026-11-17): 22,402 of 22,403 applicable cases pass (99.99%), 1 fails, documented in
-`phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md` (`QT3IT` fails on any undocumented failure):
-
-| Group | Fails | Status |
-|-------|-------|--------|
-| Network access | 1 | Accepted (same in go-xslt) |
+QT3 status (2026-11-17): all 22,401 applicable cases pass; `QT3IT` fails on any failure not documented in
+`phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md`.
 
 The feature `fn-load-xquery-module` is not claimed, so its 84 cases are skipped (until 2026-11-16 they ran: 34 fails
 accepted as in go-xslt, 37 passes). The 4 cases that need `fn-transform-XSLT` or `fn-transform-XSLT30` to be absent
-are skipped, as `fn:transform` is an XSLT 3.0 processor (until 2026-11-17 they ran: 3 fails accepted as in go-xslt).
+are skipped, as `fn:transform` is an XSLT 3.0 processor (until 2026-11-17 they ran: 3 fails accepted as in go-xslt),
+and so are the 2 cases that need `remote_http`, as the harness runs offline (until 2026-11-17: 1 fail accepted as in
+go-xslt).
 
 Schema-awareness (2026-11-05): the native validator (`phoxtrot-xsd`, loaded only when present, `XdmSchemaSupport`) is
 the schema processor. `-Dxslt30.schemaAware=true` runs XSLT30 schema-aware:

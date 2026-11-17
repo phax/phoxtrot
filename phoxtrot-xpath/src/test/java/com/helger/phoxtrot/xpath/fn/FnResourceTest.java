@@ -50,6 +50,7 @@ public final class FnResourceTest
     private final ICommonsMap <String, IXdmNode> m_aDocs = new CommonsHashMap <> ();
     private final ICommonsMap <String, String> m_aTexts = new CommonsHashMap <> ();
     private int m_nDocCalls = 0;
+    private int m_nTextCalls = 0;
 
     @Nullable
     public IXdmNode resolveDocument (@NonNull final ResourceUri aUri)
@@ -63,6 +64,10 @@ public final class FnResourceTest
     @Nullable
     public String resolveText (@NonNull final ResourceUri aUri, @Nullable final String sEncoding)
     {
+      m_nTextCalls++;
+      // Another text per call: stability must come from the run cache
+      if (aUri.absoluteUri ().equals (BASE + "changing.txt"))
+        return "call " + m_nTextCalls;
       return m_aTexts.get (aUri.absoluteUri ());
     }
 
@@ -148,6 +153,20 @@ public final class FnResourceTest
     assertEquals ("true true false false false",
                   _str ("unparsed-text-available('t.txt'), unparsed-text-available('t.txt', 'utf-8'), " +
                         "unparsed-text-available('t.txt', '123'), unparsed-text-available('bad.txt'), unparsed-text-available(())"));
+  }
+
+  @Test
+  public void testUnparsedTextStable ()
+  {
+    // F&O 3.1 section 14.6.1: the same URI gives the same text within one run
+    final TestResolver aResolver = _createResolver ();
+    final XdmSequence aSeq = _eval ("let $t := unparsed-text('changing.txt') return " +
+                                    "every $i in 1 to 5 satisfies unparsed-text('" + BASE + "changing.txt') eq $t",
+                                    BASE,
+                                    aResolver,
+                                    null);
+    assertEquals ("true", FnNodeTestHelper.str (aSeq));
+    assertEquals (1, aResolver.m_nTextCalls);
   }
 
   @Test

@@ -1,6 +1,6 @@
 # QT3 (`qt3tests`, XPath 3.1 / F&O 3.1): failing cases
 
-22,402 of 22,403 applicable cases pass, 1 fails. Measured offline, on JDK 21 and 25, with the native validator of
+All 22,401 applicable cases pass. Measured offline, on JDK 21 and 25, with the native validator of
 `phoxtrot-xsd` as the schema processor (the default of the harness, see below).
 
 The cases that need the feature `fn-load-xquery-module` (the whole test set `fn-load-xquery-module` and
@@ -14,6 +14,12 @@ feature (`satisfied="false"`) run. go-xslt counts the 34 of them that fail as ac
 `fn-transform-901`, `fn-transform-902`, `fn-transform-err-14`, `fn-function-lookup-766b`) are skipped
 (`feature-claimed:<feature>`). Until 2026-11-17 they ran; the three `fn-transform` cases were accepted failures, as in
 go-xslt.
+
+The harness runs offline, so the feature `remote_http` is not claimed: its 2 cases (`fn-unparsed-text-054`,
+`fn-unparsed-text-054a`) are skipped (`feature-not-claimed:remote_http`). Until 2026-11-17 they ran: `054` passed
+through its alternative result FOUT1170, `054a` (reading `https://timeanddate.com`, which by then answered every client
+with 403) was an accepted failure, as in go-xslt. The stability of `fn:unparsed-text` they test is covered by
+`FnResourceTest.testUnparsedTextStable`.
 
 Every failing case is named here in backticks under a heading with its status and reason. `QT3IT` fails on any
 failing case that is not named here, so a regression is loud and a newly accepted failure needs a written reason.
@@ -33,9 +39,3 @@ FOTY0012: `K2-DataFunc-6`, `fn-normalize-space-24`, `fn-string-length-23`) nor e
 `schema-element(j:...)` and no `json-to-xml` with `validate=true`: `json-to-xml-016`, `json-to-xml-017`,
 `json-to-xml-037`, `json-to-xml-038`). Both runs are otherwise identical by name.
 
-### Network access
-`fn-unparsed-text-054a`
-
-**Status:** Accepted.
-It reads `https://timeanddate.com`. The harness runs offline, and that server now answers every client with 403, so
-the case fails even with network access. go-xslt accepts the same case.

@@ -14,7 +14,7 @@ A pure Java implementation of XPath 3.1 and XSLT 3.0, intended as an Apache 2.0 
 XML parsing is left to the JDK; everything on top of it, including an XML Schema 1.0 validator, is implemented here.
 
 Status: initially released.
-* The XPath 3.1 engine runs and passes 99.99% of the applicable W3C QT3 test cases (22,402 of 22,403).
+* The XPath 3.1 engine runs and passes all 22,401 applicable W3C QT3 test cases.
 * The XSLT 3.0 engine passes 99.9% of the applicable W3C xslt30-test cases as a basic processor (8,640 of 8,647).
 * The native XML Schema validator passes 99.99% of the applicable W3C xsdtests cases for XSD 1.0 (39,396 of 39,401) and XSD 1.1 (41,596 of 41,600).
 

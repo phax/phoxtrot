@@ -164,7 +164,7 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - QT3: `mvn verify -Pconformance -pl phoxtrot-xpath-conformance -am` (`-Dqt3.only=<set>` for one test set). Every failing
   case must be named in `phoxtrot-xpath-conformance/docs/accepted-failures/qt3.md` with a reason, or `QT3IT` fails. Compare
   fail lists (`phoxtrot-xpath-conformance/target/qt3-fails.txt`) by name, never by count. Only dependency skips (spec, normalisation
-  form, the unclaimed feature `fn-load-xquery-module`, the absence of the claimed features `fn-transform-XSLT`/
+  form, the unclaimed features `fn-load-xquery-module` and `remote_http`, the absence of the claimed features `fn-transform-XSLT`/
   `fn-transform-XSLT30`) are skips; a case the harness cannot set up (missing environment, unreadable test file, no assertion, unknown
   assertion kind, a `param` that does not evaluate or match its `as`) fails as `harness:<reason>`. `error` passes on
   any error as FOTS says; `-Dqt3.strictCode=true` makes a wrong code fail, and the mismatches are listed in

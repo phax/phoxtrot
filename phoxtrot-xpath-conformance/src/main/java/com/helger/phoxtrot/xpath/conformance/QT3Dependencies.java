@@ -34,7 +34,8 @@ import com.helger.annotation.style.PresentForCodeCoverage;
  * 3.0/3.1 changed), a <code>unicode-normalization-form</code> dependency
  * on <code>FULLY-NORMALIZED</code> with <code>satisfied="false"</code>, and
  * the feature <code>fn-load-xquery-module</code> (loading XQuery library
- * modules needs an XQuery processor, so the feature is not claimed), and
+ * modules needs an XQuery processor, so the feature is not claimed), the
+ * feature <code>remote_http</code> (the harness runs offline), and
  * the absence (<code>satisfied="false"</code>) of a claimed
  * <code>fn:transform</code> feature (such a case only applies to a processor
  * without XSLT 3.0).
@@ -65,6 +66,12 @@ public final class QT3Dependencies
    * raises FOQM0006, as F&amp;O 3.1 specifies for a processor without XQuery.
    */
   public static final String FEATURE_LOAD_XQUERY_MODULE = "fn-load-xquery-module";
+
+  /**
+   * The feature the harness does not claim: it runs offline, so resources
+   * cannot be read over HTTP.
+   */
+  public static final String FEATURE_REMOTE_HTTP = "remote_http";
 
   /**
    * The <code>fn:transform</code> features the engine claims: the harness has
@@ -160,8 +167,9 @@ public final class QT3Dependencies
    * <code>unicode-normalization-form FULLY-NORMALIZED</code> with
    * <code>satisfied="false"</code>
    * (<code>norm-form-not:FULLY-NORMALIZED</code>), or a satisfied
-   * {@link #FEATURE_LOAD_XQUERY_MODULE} dependency
-   * (<code>feature-not-claimed:fn-load-xquery-module</code>; with
+   * {@link #FEATURE_LOAD_XQUERY_MODULE} or {@link #FEATURE_REMOTE_HTTP}
+   * dependency
+   * (<code>feature-not-claimed:</code> plus the feature; with
    * <code>satisfied="false"</code> the case runs), or
    * <code>fn-transform-XSLT</code> or <code>fn-transform-XSLT30</code> with
    * <code>satisfied="false"</code>
@@ -187,7 +195,9 @@ public final class QT3Dependencies
           !aDep.isSatisfied () &&
           "FULLY-NORMALIZED".equals (aDep.value ()))
         return "norm-form-not:" + aDep.value ();
-      if ("feature".equals (aDep.type ()) && aDep.isSatisfied () && FEATURE_LOAD_XQUERY_MODULE.equals (aDep.value ()))
+      if ("feature".equals (aDep.type ()) &&
+          aDep.isSatisfied () &&
+          (FEATURE_LOAD_XQUERY_MODULE.equals (aDep.value ()) || FEATURE_REMOTE_HTTP.equals (aDep.value ())))
         return "feature-not-claimed:" + aDep.value ();
       // The case wants a processor without (this level of) fn:transform
       if ("feature".equals (aDep.type ()) && !aDep.isSatisfied () && CLAIMED_TRANSFORM_FEATURES.contains (aDep.value ()))

@@ -92,6 +92,9 @@ public final class QT3DependenciesTest
     assertEquals ("feature-not-claimed:fn-load-xquery-module",
                   QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-load-xquery-module", "true"))));
     assertNull (QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-load-xquery-module", "false"))));
+    // The harness runs offline
+    assertEquals ("feature-not-claimed:remote_http",
+                  QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "remote_http", ""))));
     // fn:transform is an XSLT 3.0 processor; its absence is not tested
     assertEquals ("feature-claimed:fn-transform-XSLT",
                   QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-transform-XSLT", "false"))));
