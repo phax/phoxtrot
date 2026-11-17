@@ -233,7 +233,7 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
-v0.2.1 - work in progress
+v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with
   `urn:fdc:helger.com:phoxtrot:jaxp:` instead of `http://helger.com/phoxtrot/jaxp/`, and `XdmSource.FEATURE` is
   `urn:fdc:helger.com:phoxtrot:jaxp:feature:xdm-source`; the old names are no longer accepted

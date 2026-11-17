@@ -100,7 +100,7 @@ public record XdmQName (@NonNull String namespaceUri, @NonNull String localName,
   /**
    * @return The name in Clark notation <code>{uri}local</code>, without the braces part for names
    *         in no namespace.
-   * @since 0.2.1
+   * @since 0.3.0
    */
   @NonNull
   public String getClarkName ()

@@ -321,7 +321,7 @@ public final class StaticContext
    * @return The context item static type (XPath 3.1 section 2.1.1) the Static
    *         Typing Feature assumes, or <code>null</code> for
    *         <code>item()</code> (the default).
-   * @since 0.2.1
+   * @since 0.3.0
    */
   @Nullable
   public ItemType getContextItemStaticType ()
@@ -340,7 +340,7 @@ public final class StaticContext
    * @param aType
    *        The item type; <code>null</code> for <code>item()</code>.
    * @return this for chaining
-   * @since 0.2.1
+   * @since 0.3.0
    */
   @NonNull
   public StaticContext setContextItemStaticType (@Nullable final ItemType aType)
@@ -406,7 +406,7 @@ public final class StaticContext
    *        The static type of the variable; <code>null</code> for
    *        <code>item()*</code>.
    * @return this for chaining
-   * @since 0.2.1
+   * @since 0.3.0
    */
   @NonNull
   public StaticContext declareVariable (@NonNull final XdmQName aName, @Nullable final SeqType aType)
@@ -430,7 +430,7 @@ public final class StaticContext
    * @return The static type declared with
    *         {@link #declareVariable(XdmQName, SeqType)}, or <code>null</code>
    *         if none was declared (<code>item()*</code>).
-   * @since 0.2.1
+   * @since 0.3.0
    */
   @Nullable
   public SeqType getVariableType (@Nullable final XdmQName aName)
