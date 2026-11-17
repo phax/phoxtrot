@@ -51,7 +51,7 @@ The deployed modules are `phoxtrot-xdm`, `phoxtrot-xpath`, `phoxtrot-xslt` and `
 <dependency>
   <groupId>com.helger.phoxtrot</groupId>
   <artifactId>phoxtrot-xslt</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
@@ -77,7 +77,7 @@ read.
 <dependency>
   <groupId>com.helger.phoxtrot</groupId>
   <artifactId>phoxtrot-xsd</artifactId>
-  <version>0.2.0</version>
+  <version>0.3.0</version>
 </dependency>
 ```
 
