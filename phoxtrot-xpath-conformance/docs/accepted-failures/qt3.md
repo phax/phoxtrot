@@ -1,6 +1,6 @@
 # QT3 (`qt3tests`, XPath 3.1 / F&O 3.1): failing cases
 
-22,403 of 22,407 applicable cases pass, 4 fail. Measured offline, on JDK 21 and 25, with the native validator of
+22,402 of 22,403 applicable cases pass, 1 fails. Measured offline, on JDK 21 and 25, with the native validator of
 `phoxtrot-xsd` as the schema processor (the default of the harness, see below).
 
 The cases that need the feature `fn-load-xquery-module` (the whole test set `fn-load-xquery-module` and
@@ -9,17 +9,15 @@ The cases that need the feature `fn-load-xquery-module` (the whole test set `fn-
 `fn:load-xquery-module` raises FOQM0006 as F&O 3.1 specifies for that case. The cases that test the absence of the
 feature (`satisfied="false"`) run. go-xslt counts the 34 of them that fail as accepted failures instead.
 
+`fn:transform` is a real XSLT 3.0 processor (phoxtrot-xslt is on the class path of the harness), so the features
+`fn-transform-XSLT` and `fn-transform-XSLT30` are claimed: the 4 cases that need their absence (`satisfied="false"`:
+`fn-transform-901`, `fn-transform-902`, `fn-transform-err-14`, `fn-function-lookup-766b`) are skipped
+(`feature-claimed:<feature>`). Until 2026-11-17 they ran; the three `fn-transform` cases were accepted failures, as in
+go-xslt.
+
 Every failing case is named here in backticks under a heading with its status and reason. `QT3IT` fails on any
 failing case that is not named here, so a regression is loud and a newly accepted failure needs a written reason.
 Remove an entry when its case passes. Status **Open** means winnable later; **Accepted** means a decision not to.
-
-### fn:transform unavailable
-`fn-transform-901`, `fn-transform-902`, `fn-transform-err-14`
-
-**Status:** Accepted (decision).
-They depend on the feature `fn-transform-XSLT` (901, 902) or `fn-transform-XSLT30` (err-14) being *not* satisfied and
-expect `fn:transform` to report that no (XSLT 3.0) processor is available. With phoxtrot-xslt on the class path
-`fn:transform` is a real XSLT 3.0 processor, which necessarily contradicts them. go-xslt accepts the same cases.
 
 ### Schema-validated sources with the JDK validator
 `K2-DataFunc-6`, `fn-normalize-space-24`, `fn-string-length-23`, `json-to-xml-016`, `json-to-xml-017`,

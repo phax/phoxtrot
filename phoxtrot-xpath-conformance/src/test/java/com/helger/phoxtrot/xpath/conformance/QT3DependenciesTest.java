@@ -92,6 +92,13 @@ public final class QT3DependenciesTest
     assertEquals ("feature-not-claimed:fn-load-xquery-module",
                   QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-load-xquery-module", "true"))));
     assertNull (QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-load-xquery-module", "false"))));
+    // fn:transform is an XSLT 3.0 processor; its absence is not tested
+    assertEquals ("feature-claimed:fn-transform-XSLT",
+                  QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-transform-XSLT", "false"))));
+    assertEquals ("feature-claimed:fn-transform-XSLT30",
+                  QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-transform-XSLT", ""),
+                                                          new QT3Dependency ("feature", "fn-transform-XSLT30", "false"))));
+    assertNull (QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("feature", "fn-transform-XSLT30", ""))));
     // Test set dependency first in the union
     assertEquals (QT3Dependencies.SKIP_SPEC_INAPPLICABLE,
                   QT3Dependencies.getSkipReason (List.of (new QT3Dependency ("spec", "XQ30+", ""),

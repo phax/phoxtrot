@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xpath.conformance;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -33,7 +34,10 @@ import com.helger.annotation.style.PresentForCodeCoverage;
  * 3.0/3.1 changed), a <code>unicode-normalization-form</code> dependency
  * on <code>FULLY-NORMALIZED</code> with <code>satisfied="false"</code>, and
  * the feature <code>fn-load-xquery-module</code> (loading XQuery library
- * modules needs an XQuery processor, so the feature is not claimed).
+ * modules needs an XQuery processor, so the feature is not claimed), and
+ * the absence (<code>satisfied="false"</code>) of a claimed
+ * <code>fn:transform</code> feature (such a case only applies to a processor
+ * without XSLT 3.0).
  * Every other dependency (feature, xml-version, xsd-version,
  * default-language, limits, unicode-version, ...) is left to run, so a gap is
  * scored as a fail, not hidden behind a skip. Some of them configure the run
@@ -61,6 +65,12 @@ public final class QT3Dependencies
    * raises FOQM0006, as F&amp;O 3.1 specifies for a processor without XQuery.
    */
   public static final String FEATURE_LOAD_XQUERY_MODULE = "fn-load-xquery-module";
+
+  /**
+   * The <code>fn:transform</code> features the engine claims: the harness has
+   * phoxtrot-xslt on its class path, an XSLT 3.0 processor.
+   */
+  private static final Set <String> CLAIMED_TRANSFORM_FEATURES = Set.of ("fn-transform-XSLT", "fn-transform-XSLT30");
 
   /**
    * A parsed spec token like <code>XP31+</code>.
@@ -152,7 +162,10 @@ public final class QT3Dependencies
    * (<code>norm-form-not:FULLY-NORMALIZED</code>), or a satisfied
    * {@link #FEATURE_LOAD_XQUERY_MODULE} dependency
    * (<code>feature-not-claimed:fn-load-xquery-module</code>; with
-   * <code>satisfied="false"</code> the case runs). A <code>spec</code>
+   * <code>satisfied="false"</code> the case runs), or
+   * <code>fn-transform-XSLT</code> or <code>fn-transform-XSLT30</code> with
+   * <code>satisfied="false"</code>
+   * (<code>feature-claimed:</code> plus the feature). A <code>spec</code>
    * dependency with <code>satisfied="false"</code> never excludes. Each
    * dependency of the list is checked on its own, so a case excluded by the
    * test set's spec cannot be re-admitted by its own.
@@ -176,6 +189,9 @@ public final class QT3Dependencies
         return "norm-form-not:" + aDep.value ();
       if ("feature".equals (aDep.type ()) && aDep.isSatisfied () && FEATURE_LOAD_XQUERY_MODULE.equals (aDep.value ()))
         return "feature-not-claimed:" + aDep.value ();
+      // The case wants a processor without (this level of) fn:transform
+      if ("feature".equals (aDep.type ()) && !aDep.isSatisfied () && CLAIMED_TRANSFORM_FEATURES.contains (aDep.value ()))
+        return "feature-claimed:" + aDep.value ();
     }
     return null;
   }

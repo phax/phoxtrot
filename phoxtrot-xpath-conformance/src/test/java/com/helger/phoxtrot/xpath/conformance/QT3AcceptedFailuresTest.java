@@ -91,7 +91,6 @@ public final class QT3AcceptedFailuresTest
   public void testRepositoryFiles () throws IOException
   {
     final ICommonsSet <String> aQT3 = QT3AcceptedFailures.getDocumentedNames (Files.readString (Path.of ("docs/accepted-failures/qt3.md")));
-    assertTrue (aQT3.contains ("fn-transform-901"));
     assertTrue (aQT3.contains ("fn-unparsed-text-054a"));
     // A name in the prose (the skipped test set) is not accepted
     assertFalse (aQT3.contains ("fn-function-lookup-760"));
