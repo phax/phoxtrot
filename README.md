@@ -242,6 +242,10 @@ v0.3.1 - work in progress
   which halves the validation time of an e-invoice with a 200 KB attachment
 * `XdmTreeBuilder` uses a new buffer for each text node that is merged from several character events: a reused
   buffer that once held a non-Latin-1 character stays UTF-16, so all later text was inflated and compressed again
+* XSD: new `XsdSchema.assessText` validates instance text like `validateText` and also reports the governing type
+  definition of every element and attribute (`XsdAssessment`, `XsdNodeType`), with `xsi:type`, conditional type
+  assignment, substitution groups and wildcards resolved. Nodes are identified by their element positions, so a
+  caller can map them to its own parse of the same text
 
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with

@@ -185,6 +185,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   dependency: only the DOM tests of `phoxtrot-xdm` and the xsdtests baseline of `phoxtrot-xsd-conformance` use it.
 - XSD: the native validator (`phoxtrot-xsd`) does XSD 1.0 and 1.1; `XsdSchemaProvider` (schema-aware XPath/XSLT) compiles as
   1.1. `XsdNativeIT` gates both versions (`phoxtrot-xsd-conformance/target/xsd-native-fails.txt`, `xsd-native11-fails.txt`).
+- XSD: `XsdSchema.assessText` exposes the governing types the validator records (`XsdValidationRun.noteNodeType`,
+  otherwise only used by `XsdBridge`) as `XsdNodeType` (0-based element-only position path + attribute name + view).
+  It is the public API XMLPerm (`../xmlperm`) uses to derive facets per instance node - keep it stable.
   A run claims the version tokens of `XsdSuiteRules.getClaimedTokens` (the version, and for 1.1 the CTA XPath subset of
   the validator: the native one claims `full-xpath-in-CTA`); a queried schema test whose compilation crashes counts as
   queried, not as fail. Identity-constraint selectors and fields are walked on the tree by `XsdIdentityPath` (parsed at

@@ -2016,12 +2016,16 @@ final class XsdInstanceValidator
    * @param aOptions
    *        The options, <code>null</code> to stop at the first error (the
    *        verdict is the same; only the list of errors is shorter).
+   * @param aRunHolder
+   *        If not <code>null</code>, the governing types of the nodes are
+   *        recorded and the run is passed out, so that they can be read.
    */
   @NonNull
   private static XsdValidationResult _validateDocument (@NonNull final XsdSchema aSchemaIn,
                                                         @NonNull final IXdmNode aDocument,
                                                         @Nullable final Path aInstanceDir,
-                                                        @Nullable final XsdValidationOptions aOptions)
+                                                        @Nullable final XsdValidationOptions aOptions,
+                                                        @Nullable final Wrapper <XsdValidationRun> aRunHolder)
   {
     XsdSchema aSchema = aSchemaIn;
     final IXdmNode aRoot = XsdNodes.rootElement (aDocument);
@@ -2053,6 +2057,11 @@ final class XsdInstanceValidator
     if (aLateHint != null)
       return XsdValidationResult.createInvalid (aLateHint);
     final XsdValidationRun aRun = new XsdValidationRun (aSchema, aDocument);
+    if (aRunHolder != null)
+    {
+      aRun.enableNodeTypes ();
+      aRunHolder.set (aRun);
+    }
     final XsdErrorCollector aCollector = aOptions == null ? null : new XsdErrorCollector (aOptions.getMaxErrors ());
     final String sLanguage = aOptions == null ? "" : aOptions.getLanguage ();
     if (aCollector != null)
@@ -2122,7 +2131,7 @@ final class XsdInstanceValidator
       return XsdValidationResult.createInvalid (XsdError.of ("", "instance not well-formed: " + ex.getMessage ()));
     }
     final Path aAbsolute = aInstance.toAbsolutePath ();
-    return _validateDocument (aSchema, aDocument, aAbsolute.getParent (), aOptions);
+    return _validateDocument (aSchema, aDocument, aAbsolute.getParent (), aOptions, null);
   }
 
   /**
@@ -2150,6 +2159,81 @@ final class XsdInstanceValidator
     {
       return XsdValidationResult.createInvalid (XsdError.of ("", "instance not well-formed: " + ex.getMessage ()));
     }
-    return _validateDocument (aSchema, aDocument, null, aOptions);
+    return _validateDocument (aSchema, aDocument, null, aOptions, null);
+  }
+
+  private static void _collectNodeTypesRecursive (@NonNull final IXdmNode aElement,
+                                                  @NonNull final ICommonsList <Integer> aPath,
+                                                  @NonNull final ICommonsMap <IXdmNode, IXsdType> aTypes,
+                                                  @NonNull final XsdSchemaView aView,
+                                                  @NonNull final ICommonsList <XsdNodeType> aTarget)
+  {
+    final IXsdTypeDefinitionView aType = aView.typeDef (aTypes.get (aElement));
+    if (aType != null)
+      aTarget.add (new XsdNodeType (aPath.getClone (), null, aType));
+    final int nAttrs = aElement.getAttributeCount ();
+    for (int i = 0; i < nAttrs; i++)
+    {
+      final IXdmNode aAttr = aElement.getAttributeAtIndex (i);
+      final IXsdTypeDefinitionView aAttrType = aView.typeDef (aTypes.get (aAttr));
+      if (aAttrType != null)
+        aTarget.add (new XsdNodeType (aPath.getClone (), nameOf (aAttr), aAttrType));
+    }
+    int nElementIndex = 0;
+    final int nCount = aElement.getChildCount ();
+    for (int i = 0; i < nCount; i++)
+    {
+      final IXdmNode aChild = aElement.getChildAtIndex (i);
+      if (aChild.isElement ())
+      {
+        aPath.add (Integer.valueOf (nElementIndex++));
+        _collectNodeTypesRecursive (aChild, aPath, aTypes, aView, aTarget);
+        aPath.removeLast ();
+      }
+    }
+  }
+
+  /**
+   * Validate instance text and record the governing type of every element
+   * and attribute.
+   *
+   * @param aSchema
+   *        The compiled schema.
+   * @param sInstance
+   *        The instance document text.
+   * @param aOptions
+   *        The options.
+   * @return The assessment. Never <code>null</code>.
+   */
+  @NonNull
+  static XsdAssessment assessText (@NonNull final XsdSchema aSchema,
+                                   @NonNull final String sInstance,
+                                   @NonNull final XsdValidationOptions aOptions)
+  {
+    final IXdmNode aDocument;
+    try
+    {
+      aDocument = new XdmParser ().setRecordLocations (true).parse (sInstance);
+    }
+    catch (final XdmParseException ex)
+    {
+      return new XsdAssessment (XsdValidationResult.createInvalid (XsdError.of ("",
+                                                                                "instance not well-formed: " +
+                                                                                    ex.getMessage ())),
+                                new CommonsArrayList <> ());
+    }
+    final Wrapper <XsdValidationRun> aRunHolder = new Wrapper <> ();
+    final XsdValidationResult aResult = _validateDocument (aSchema, aDocument, null, aOptions, aRunHolder);
+    final ICommonsList <XsdNodeType> aNodeTypes = new CommonsArrayList <> ();
+    final XsdValidationRun aRun = aRunHolder.get ();
+    final IXdmNode aRoot = XsdNodes.rootElement (aDocument);
+    // No run if the validation stopped before (e.g. a misplaced schema location hint)
+    if (aRun != null && aRoot != null)
+      _collectNodeTypesRecursive (aRoot,
+                                  new CommonsArrayList <> (Integer.valueOf (0)),
+                                  aRun.getNodeTypes (),
+                                  aRun.getSchema ().getView (),
+                                  aNodeTypes);
+    return new XsdAssessment (aResult, aNodeTypes);
   }
 }

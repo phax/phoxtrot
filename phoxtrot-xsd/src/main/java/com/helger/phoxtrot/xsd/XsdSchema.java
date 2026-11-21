@@ -660,6 +660,32 @@ public final class XsdSchema
   }
 
   /**
+   * Assess instance document text like
+   * {@link #validateText(String, XsdValidationOptions)} and also report the
+   * governing type definition of every element and attribute: the type the
+   * validator actually assessed it against, after <code>xsi:type</code>,
+   * conditional type assignment, substitution groups and wildcards. A tool can
+   * use it to learn the facets, enumerations or content model that apply to a
+   * node of a concrete instance.
+   *
+   * @param sInstance
+   *        The instance document text.
+   * @param aOptions
+   *        The language of the messages and the error limit.
+   * @return The assessment. Never <code>null</code>.
+   * @throws XsdUnsupportedException
+   *         if the instance or schema uses a construct that is not implemented
+   *         (no verdict)
+   */
+  @NonNull
+  public XsdAssessment assessText (@NonNull final String sInstance, @NonNull final XsdValidationOptions aOptions)
+  {
+    ValueEnforcer.notNull (sInstance, "Instance");
+    ValueEnforcer.notNull (aOptions, "Options");
+    return _noVerdictOnMissingFunctionality ( () -> XsdInstanceValidator.assessText (this, sInstance, aOptions));
+  }
+
+  /**
    * The validation of {@link #validateText(String)} that stops at the first
    * error, as the in-place validation of the bridge does: the verdict and the
    * first error are the ones the collecting validation is compared against.
