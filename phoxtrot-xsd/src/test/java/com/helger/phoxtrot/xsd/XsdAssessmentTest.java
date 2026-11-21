@@ -167,6 +167,19 @@ public final class XsdAssessmentTest
   }
 
   @Test
+  public void testValueCheck ()
+  {
+    final XsdSimpleTypeView aAmount = (XsdSimpleTypeView) _schema ().getView ().getType (new XsdName (NS, "Amount"));
+    assertTrue (aAmount.isValidValue ("12.50"));
+    // whiteSpace collapse is applied
+    assertTrue (aAmount.isValidValue (" 1 "));
+    assertFalse (aAmount.isValidValue ("-1"));
+    assertFalse (aAmount.isValidValue ("1.234"));
+    assertFalse (aAmount.isValidValue ("abc"));
+    assertEquals ("cvc-minInclusive-valid", aAmount.getValueError ("-1").code ());
+  }
+
+  @Test
   public void testInvalid ()
   {
     // The amount is invalid, the validation continues and still reports the following nodes

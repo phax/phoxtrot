@@ -249,6 +249,9 @@ v0.3.1 - work in progress
 * XSD: new `XsdSimpleTypeView.getEffectiveFacets` adds the facets XSD Datatypes defines for the built-in derived types
   (the bounds of `xs:byte`, `xs:int`, `xs:unsignedLong`, `xs:positiveInteger` etc. and `fractionDigits` 0 of
   `xs:integer`) to the declared ones; `getFacets` still reports only the declared facets
+* XSD: new `XsdSimpleTypeView.getValueError`/`isValidValue` check a value against a simple type exactly as the validator
+  does (whiteSpace, lexical space, all facets), and new `XsdPatternMatcher` matches the regular expression of a
+  `pattern` facet without a schema
 
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with

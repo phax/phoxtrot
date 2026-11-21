@@ -120,6 +120,49 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
   }
 
   /**
+   * Check a value against this type: the whiteSpace facet is applied, then the
+   * lexical space and all facets (patterns, enumerations, bounds, lengths,
+   * digits, list items, union members) are checked, exactly as the validator
+   * checks an element or attribute value. A value of a QName- or
+   * NOTATION-based type is checked without namespace context.
+   *
+   * @param sValue
+   *        The raw value. May not be <code>null</code>.
+   * @return <code>null</code> if the value is valid, the first error
+   *         otherwise.
+   * @throws XsdUnsupportedException
+   *         if the check uses a construct that is not implemented (no
+   *         verdict)
+   */
+  @Nullable
+  public XsdError getValueError (@NonNull final String sValue)
+  {
+    try
+    {
+      XsdSimpleTypeValidator.validate (m_aType, sValue);
+      return null;
+    }
+    catch (final XsdInvalidException ex)
+    {
+      return ex.getError ();
+    }
+  }
+
+  /**
+   * @param sValue
+   *        The raw value. May not be <code>null</code>.
+   * @return <code>true</code> if the value is valid against this type, see
+   *         {@link #getValueError(String)}.
+   * @throws XsdUnsupportedException
+   *         if the check uses a construct that is not implemented (no
+   *         verdict)
+   */
+  public boolean isValidValue (@NonNull final String sValue)
+  {
+    return getValueError (sValue) == null;
+  }
+
+  /**
    * @param ePrim
    *        A built-in type.
    * @return The inclusive lower and upper bound XSD Datatypes defines for a
