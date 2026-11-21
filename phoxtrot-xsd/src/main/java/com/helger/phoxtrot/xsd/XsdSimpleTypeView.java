@@ -120,6 +120,82 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
   }
 
   /**
+   * @param ePrim
+   *        A built-in type.
+   * @return The inclusive lower and upper bound XSD Datatypes defines for a
+   *         built-in integer type (each <code>null</code> if unbounded), or
+   *         <code>null</code> for a type without built-in bounds.
+   */
+  @Nullable
+  private static String [] _getBuiltinBounds (@NonNull final EAtomicType ePrim)
+  {
+    return switch (ePrim)
+    {
+      case LONG -> new String [] { "-9223372036854775808", "9223372036854775807" };
+      case INT -> new String [] { "-2147483648", "2147483647" };
+      case SHORT -> new String [] { "-32768", "32767" };
+      case BYTE -> new String [] { "-128", "127" };
+      case NON_NEGATIVE_INTEGER -> new String [] { "0", null };
+      case UNSIGNED_LONG -> new String [] { "0", "18446744073709551615" };
+      case UNSIGNED_INT -> new String [] { "0", "4294967295" };
+      case UNSIGNED_SHORT -> new String [] { "0", "65535" };
+      case UNSIGNED_BYTE -> new String [] { "0", "255" };
+      case POSITIVE_INTEGER -> new String [] { "1", null };
+      case NON_POSITIVE_INTEGER -> new String [] { null, "0" };
+      case NEGATIVE_INTEGER -> new String [] { null, "-1" };
+      default -> null;
+    };
+  }
+
+  /**
+   * Like {@link #getFacets()}, but including the facets XSD Datatypes defines
+   * for the built-in derived types: <code>fractionDigits</code> 0 for
+   * <code>xs:integer</code> and all types derived from it, and the bounds of
+   * <code>xs:long</code>, <code>xs:int</code>, <code>xs:short</code>,
+   * <code>xs:byte</code>, the unsigned types and the
+   * (non-)positive/(non-)negative integer types. On each side a declared bound
+   * (inclusive or exclusive) replaces the built-in one, as a restriction can
+   * only narrow it; a declared <code>fractionDigits</code> replaces the
+   * built-in 0. The built-in pattern of <code>xs:integer</code> is not added.
+   * For list and union types this is the same as {@link #getFacets()}.
+   *
+   * @return The effective constraining facets. Never <code>null</code>.
+   */
+  @NonNull
+  public XsdFacetsView getEffectiveFacets ()
+  {
+    final XsdFacetsView aDeclared = getFacets ();
+    if (m_aType.m_eVariety != EXsdVariety.ATOMIC)
+      return aDeclared;
+    final EAtomicType ePrim = m_aType.resolvePrim ();
+    if (!ePrim.isDerivedFrom (EAtomicType.INTEGER))
+      return aDeclared;
+
+    String sMinIncl = aDeclared.minInclusive ();
+    String sMaxIncl = aDeclared.maxInclusive ();
+    final String [] aBounds = _getBuiltinBounds (ePrim);
+    if (aBounds != null)
+    {
+      if (sMinIncl == null && aDeclared.minExclusive () == null)
+        sMinIncl = aBounds[0];
+      if (sMaxIncl == null && aDeclared.maxExclusive () == null)
+        sMaxIncl = aBounds[1];
+    }
+    return new XsdFacetsView (aDeclared.length (),
+                              aDeclared.minLength (),
+                              aDeclared.maxLength (),
+                              sMinIncl,
+                              sMaxIncl,
+                              aDeclared.minExclusive (),
+                              aDeclared.maxExclusive (),
+                              aDeclared.totalDigits (),
+                              aDeclared.fractionDigits () != null ? aDeclared.fractionDigits () : Integer.valueOf (0),
+                              aDeclared.whiteSpace (),
+                              aDeclared.patterns (),
+                              aDeclared.explicitTimezone ());
+  }
+
+  /**
    * @return The expanded name; for a reference to a built-in type that is the
    *         built-in's own; {@link XsdName#NONE} for an anonymous type.
    */

@@ -117,6 +117,56 @@ public final class XsdAssessmentTest
   }
 
   @Test
+  public void testEffectiveFacets ()
+  {
+    final String sSchema = "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'><xs:element name='d'><xs:complexType><xs:sequence>" +
+                           "<xs:element name='b' type='xs:byte'/>" +
+                           "<xs:element name='p' type='xs:positiveInteger'/>" +
+                           "<xs:element name='i' type='xs:integer'/>" +
+                           "<xs:element name='u' type='xs:unsignedLong'/>" +
+                           "<xs:element name='r'><xs:simpleType><xs:restriction base='xs:int'>" +
+                           "<xs:maxExclusive value='10'/></xs:restriction></xs:simpleType></xs:element>" +
+                           "<xs:element name='m'><xs:simpleType><xs:restriction base='xs:decimal'>" +
+                           "<xs:minInclusive value='0'/></xs:restriction></xs:simpleType></xs:element>" +
+                           "</xs:sequence></xs:complexType></xs:element></xs:schema>";
+    final XsdSchema aSchema = XsdSchema.compile (new CommonsArrayList <> (XsdSchemaSource.ofText (sSchema, null)),
+                                                 EXsdVersion.V10,
+                                                 null);
+    final ICommonsList <XsdNodeType> aTypes = aSchema.assessText ("<d><b>1</b><p>1</p><i>1</i><u>1</u><r>1</r><m>1</m></d>",
+                                                                  new XsdValidationOptions ())
+                                                     .nodeTypes ();
+    assertEquals (7, aTypes.size ());
+
+    final XsdSimpleTypeView aByte = (XsdSimpleTypeView) aTypes.get (1).type ();
+    // The declared facets do not contain the built-in ones
+    assertNull (aByte.getFacets ().minInclusive ());
+    assertEquals ("-128", aByte.getEffectiveFacets ().minInclusive ());
+    assertEquals ("127", aByte.getEffectiveFacets ().maxInclusive ());
+    assertEquals (Integer.valueOf (0), aByte.getEffectiveFacets ().fractionDigits ());
+
+    final XsdFacetsView aPositive = ((XsdSimpleTypeView) aTypes.get (2).type ()).getEffectiveFacets ();
+    assertEquals ("1", aPositive.minInclusive ());
+    assertNull (aPositive.maxInclusive ());
+
+    final XsdFacetsView aInteger = ((XsdSimpleTypeView) aTypes.get (3).type ()).getEffectiveFacets ();
+    assertNull (aInteger.minInclusive ());
+    assertNull (aInteger.maxInclusive ());
+    assertEquals (Integer.valueOf (0), aInteger.fractionDigits ());
+
+    assertEquals ("18446744073709551615", ((XsdSimpleTypeView) aTypes.get (4).type ()).getEffectiveFacets ().maxInclusive ());
+
+    // A declared exclusive bound replaces the built-in inclusive one of its side only
+    final XsdFacetsView aRestricted = ((XsdSimpleTypeView) aTypes.get (5).type ()).getEffectiveFacets ();
+    assertEquals ("-2147483648", aRestricted.minInclusive ());
+    assertNull (aRestricted.maxInclusive ());
+    assertEquals ("10", aRestricted.maxExclusive ());
+
+    // Not an integer type: unchanged
+    final XsdSimpleTypeView aDecimal = (XsdSimpleTypeView) aTypes.get (6).type ();
+    assertEquals (aDecimal.getFacets (), aDecimal.getEffectiveFacets ());
+  }
+
+  @Test
   public void testInvalid ()
   {
     // The amount is invalid, the validation continues and still reports the following nodes

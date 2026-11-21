@@ -246,6 +246,9 @@ v0.3.1 - work in progress
   definition of every element and attribute (`XsdAssessment`, `XsdNodeType`), with `xsi:type`, conditional type
   assignment, substitution groups and wildcards resolved. Nodes are identified by their element positions, so a
   caller can map them to its own parse of the same text
+* XSD: new `XsdSimpleTypeView.getEffectiveFacets` adds the facets XSD Datatypes defines for the built-in derived types
+  (the bounds of `xs:byte`, `xs:int`, `xs:unsignedLong`, `xs:positiveInteger` etc. and `fractionDigits` 0 of
+  `xs:integer`) to the declared ones; `getFacets` still reports only the declared facets
 
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with
