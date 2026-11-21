@@ -1520,3 +1520,37 @@ declaration, a global in its own declaration is XPST0008, a local of the same na
 testEscapingRuns`, `XdmAtomicTest`, `XsdIdentityValidationTest` (three-field tuples, whitespace in `xs:string` keys);
 `XdmSequenceTest.testLiteralExpr` uses 1000 instead of 1, as it needs two equal instances. Full conformance gate
 unchanged (QT3 22,419 of 22,478, XSLT30 8,640 of 8,647, XSD 1.0 39,396 of 39,401, XSD 1.1 41,596 of 41,600).
+
+## Suggestions from the XMLPerm wiki (2026-11-21)
+
+### S52 - Undeclared `xml:*` attributes are accepted (XSD 1.0, and simple types in 1.1)
+
+Found 2026-11-21 while writing the XMLPerm wiki (phoxtrot `424e897`): the example of the XMLPerm mutator
+`xml-attributes` adds `xml:lang`, `xml:space`, `xml:base` and `xml:id` to an element whose type declares none of them,
+and phoxtrot judges every created document valid.
+
+Two places exempt the whole `xml` namespace (both ported from go-xslt in `58d989e`):
+
+- `XsdAttributeValidator.validateAttributes`: an `xml:*` attribute without an attribute use is skipped under 1.0
+  ("1.0 keeps the lenient skip"); under 1.1 it needs an admitting attribute wildcard.
+- `XsdInstanceValidator._validateAgainstType`: on a simple-typed element every `xsi:*` and `xml:*` attribute is
+  skipped, under 1.0 and 1.1.
+
+The specification exempts only four `xsi` attributes, and no `xml` attribute: cvc-complex-type.3.2 (1.0) and
+cvc-complex-type.3.2.2 (1.1) for complex types, cvc-type.3.1.1 for simple types (the attributes must be empty except
+`xsi:type`, `xsi:nil`, `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation`). An undeclared `xml:lang` is therefore
+invalid unless an attribute use or a wildcard admits it - the usual way is `<xs:attribute ref="xml:lang"/>` with the
+imported `xml.xsd`. The same applies to an `xsi` attribute other than the four (e.g. `xsi:foo`), which both places
+accept as well.
+
+Proposal: exempt only the four `xsi` attributes in both places, under 1.0 and 1.1, and treat any other `xml:*` or
+`xsi:*` attribute like an attribute of another namespace (attribute use, else wildcard, else cvc-complex-type.3.2.2 /
+cvc-type.3.1.1). If the leniency is kept on purpose (go-xslt compatibility, a conformance test that depends on it),
+document it in the README as a known deviation, so that users of the validator know an `xml:*` attribute is never
+reported.
+
+Tests: an undeclared `xml:lang` on an element of a complex type without wildcard is cvc-complex-type.3.2.2 under 1.0
+and 1.1; with `ref="xml:lang"` or an `##other` wildcard it is valid; on a simple-typed element it is cvc-type.3.1.1;
+`xsi:type`/`xsi:nil` stay accepted everywhere, `xsi:foo` is rejected. Full conformance gate (XSD 1.0 and 1.1) unchanged
+or better. XMLPerm: once fixed, the wiki example of `xml-attributes` can use a schema again and the mutator could derive
+"invalid" for an attribute the schema type does not admit.
