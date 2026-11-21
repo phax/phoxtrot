@@ -63,8 +63,10 @@ public final class XdmTreeBuilder extends DefaultHandler2
   // The pending text of a single character event; null if there is none or
   // more than one event was merged into m_aText
   private String m_sText;
-  // The pending text of several character events
-  private final StringBuilder m_aText = new StringBuilder ();
+  // The pending text of several character events; a new one per text node, as a builder that once
+  // held a non-Latin-1 character stays UTF-16 after setLength (0), so all later text would be
+  // inflated and compressed again
+  private StringBuilder m_aText = new StringBuilder ();
   // The shared indentation strings (a line end and spaces, or a line end and
   // tabs) by their length - 1
   private final String [] m_aSpaceIndents = new String [MAX_SHARED_INDENT];
@@ -173,7 +175,7 @@ public final class XdmTreeBuilder extends DefaultHandler2
       if (!m_aText.isEmpty ())
       {
         sValue = m_aText.toString ();
-        m_aText.setLength (0);
+        m_aText = new StringBuilder ();
       }
       else
         return;

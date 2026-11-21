@@ -236,6 +236,13 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
+v0.3.1 - work in progress
+* XSD: the xs:base64Binary lexical check uses a lookup table and a tight loop for the leading run of base64
+  characters instead of range comparisons, whose branches are mispredicted on base64 data: about 8 times faster,
+  which halves the validation time of an e-invoice with a 200 KB attachment
+* `XdmTreeBuilder` uses a new buffer for each text node that is merged from several character events: a reused
+  buffer that once held a non-Latin-1 character stays UTF-16, so all later text was inflated and compressed again
+
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with
   `urn:fdc:helger.com:phoxtrot:jaxp:` instead of `http://helger.com/phoxtrot/jaxp/`, and `XdmSource.FEATURE` is

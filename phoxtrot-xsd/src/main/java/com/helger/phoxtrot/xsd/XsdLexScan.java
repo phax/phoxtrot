@@ -34,6 +34,25 @@ import com.helger.phoxtrot.xpath.ops.XsdLexical;
 @Immutable
 final class XsdLexScan
 {
+  /**
+   * The base64 characters (A-Z, a-z, 0-9, '+' and '/') by their ASCII code. A
+   * table lookup instead of range comparisons, whose branches are mispredicted
+   * on (random) base64 data all the time.
+   */
+  private static final boolean [] BASE64_CHARS = new boolean [128];
+
+  static
+  {
+    for (char c = 'A'; c <= 'Z'; c++)
+      BASE64_CHARS[c] = true;
+    for (char c = 'a'; c <= 'z'; c++)
+      BASE64_CHARS[c] = true;
+    for (char c = '0'; c <= '9'; c++)
+      BASE64_CHARS[c] = true;
+    BASE64_CHARS['+'] = true;
+    BASE64_CHARS['/'] = true;
+  }
+
   @PresentForCodeCoverage
   private static final XsdLexScan INSTANCE = new XsdLexScan ();
 
@@ -147,7 +166,7 @@ final class XsdLexScan
 
   private static boolean _isBase64Char (final char c)
   {
-    return (c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9') || c == '+' || c == '/';
+    return c < BASE64_CHARS.length && BASE64_CHARS[c];
   }
 
   /**
@@ -162,13 +181,18 @@ final class XsdLexScan
   static boolean isBase64BinaryLex (@NonNull final String sValue)
   {
     final int nLen = sValue.length ();
+    // The leading run of base64 characters (usually all but the padding) in a
+    // tight loop
+    int nRun = 0;
+    while (nRun < nLen && _isBase64Char (sValue.charAt (nRun)))
+      nRun++;
     // Base64 characters and '=' seen, spaces excluded
-    int n = 0;
+    int n = nRun;
     // '=' seen so far; nothing but '=' may follow the first
     int nPad = 0;
     // The last base64 character, the one before any padding
-    char cLast = 0;
-    for (int i = 0; i < nLen; i++)
+    char cLast = nRun > 0 ? sValue.charAt (nRun - 1) : 0;
+    for (int i = nRun; i < nLen; i++)
     {
       final char c = sValue.charAt (i);
       if (_isBase64Char (c))
