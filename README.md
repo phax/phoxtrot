@@ -253,6 +253,13 @@ v0.3.1 - work in progress
   does (whiteSpace, lexical space, all facets), and new `XsdPatternMatcher` matches the regular expression of a
   `pattern` facet without a schema
 * XSD: `XsdNodeType` (of `XsdSchema.assessText`) also reports the element declaration an element was assessed against
+* XSD: an undeclared `xml:*` attribute (`xml:lang`, `xml:space`, `xml:base`, `xml:id`) is now invalid under 1.0 and
+  1.1 unless an attribute use (`ref="xml:lang"`) or a wildcard admits it (cvc-complex-type.3.2.2, on a simple-typed
+  element cvc-type.3.1.1); before, it was accepted under 1.0 and on every simple-typed element. Only `xsi:type`,
+  `xsi:nil`, `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation` are exempt, so `xsi:foo` is rejected too
+* XSLT: functions registered with `XsltExtensionRegistry.registerFunctions` are now also visible in static expressions
+  (`use-when`, static variables and parameters, shadow attributes), so `function-available` answers there as at run
+  time; the run-time XSLT functions (`current()`, `key()`, `current-group()` etc.) stay unavailable there
 
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with

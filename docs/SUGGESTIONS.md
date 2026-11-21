@@ -1360,6 +1360,15 @@ in two namespaces, a tree without document node, against the uncached `getPath`)
 
 ### S49 - `use-when` does not see functions registered through `XsltExtensionRegistry.registerFunctions`
 
+Status: done (2026-11-21). `XsltExtensionRegistry` records how many function contributors it registered while it was
+built (`XsltFunctions.registerRuntime` and the default extensions: accumulators, grouping, merge); the new
+`contributeUserFunctions` calls only the later ones, and the `StylesheetLoader` constructor calls it for the library of
+the static expressions. So `function-available` in `use-when`, static variables and shadow attributes answers as at run
+time for a user function, and such a function may also be called there; `current()`, `key()`, `current-group()` and
+the other run-time XSLT functions stay unavailable in static expressions (XSLT 3.0 section 9.7). A user contributor is
+therefore called twice per compilation. Tests: `UserFunctionsInStaticExpressionsTest` (`use-when` with and without
+arity, wrong arity, unknown function, a call in a static variable, the run-time XSLT functions unavailable).
+
 Found 2026-11-13 in ph-schematron (phoxtrot `a653b31`, JDK 25). ph-schematron registers an extension function
 `Q{urn:com:helger:schematron:pure-xslt-functions:v1.0}index-by-ns-name#1` with
 `XsltExtensionRegistry.getInstance ().registerFunctions (...)`, so that a stylesheet can compute the SVRL `location` in
@@ -1524,6 +1533,13 @@ unchanged (QT3 22,419 of 22,478, XSLT30 8,640 of 8,647, XSD 1.0 39,396 of 39,401
 ## Suggestions from the XMLPerm wiki (2026-11-21)
 
 ### S52 - Undeclared `xml:*` attributes are accepted (XSD 1.0, and simple types in 1.1)
+
+Status: done (2026-11-21), as proposed. `XsdAttributeValidator.isExemptAttribute` names the four `xsi` attributes; it
+is the only exemption in `validateAttributes` and in the simple-type checks of `XsdInstanceValidator`
+(`_validateAgainstType`, and `_assessNilledElement`, which had the same exemption). Any other `xml:*` or `xsi:*`
+attribute needs an attribute use or a wildcard (cvc-complex-type.3.2.2) and is cvc-type.3.1.1 on a simple-typed
+element, under 1.0 and 1.1. Tests: `XsdInstanceValidationTest.testXmlAndXsiAttributes`. `XsdNativeIT` unchanged
+(XSD 1.0 39,396 of 39,401, XSD 1.1 41,596 of 41,600, same fail lists).
 
 Found 2026-11-21 while writing the XMLPerm wiki (phoxtrot `424e897`): the example of the XMLPerm mutator
 `xml-attributes` adds `xml:lang`, `xml:space`, `xml:base` and `xml:id` to an element whose type declares none of them,

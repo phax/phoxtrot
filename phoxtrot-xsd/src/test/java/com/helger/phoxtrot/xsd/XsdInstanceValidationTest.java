@@ -262,6 +262,59 @@ public final class XsdInstanceValidationTest
     assertTrue (aTally.m_aWrong.toString (), aTally.m_aWrong.isEmpty ());
   }
 
+  /**
+   * @return The code of the first error of validating the instance, <code>""</code> if it is valid.
+   */
+  private static String _firstErrorCode (final XsdSchema aSchema, final String sInstance)
+  {
+    final XsdValidationResult aResult = aSchema.validateText (sInstance);
+    return aResult.valid () ? "" : aResult.errors ().get (0).code ();
+  }
+
+  /**
+   * Only xsi:type, xsi:nil, xsi:schemaLocation and xsi:noNamespaceSchemaLocation need neither an attribute use nor a
+   * wildcard (cvc-complex-type.3.2, cvc-type.3.1.1); an undeclared xml:* attribute or another xsi attribute is
+   * invalid under 1.0 and 1.1.
+   */
+  @Test
+  public void testXmlAndXsiAttributes ()
+  {
+    final String sSchema = """
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+  <xs:element name="plain" nillable="true"><xs:complexType><xs:sequence/></xs:complexType></xs:element>
+  <xs:element name="withRef"><xs:complexType><xs:sequence/><xs:attribute ref="xml:lang"/></xs:complexType></xs:element>
+  <xs:element name="withOther"><xs:complexType><xs:sequence/><xs:anyAttribute namespace="##other" processContents="lax"/></xs:complexType></xs:element>
+  <xs:element name="simple" type="xs:int" nillable="true"/>
+</xs:schema>""";
+    final String sXsi = " xmlns:xsi='http://www.w3.org/2001/XMLSchema-instance'";
+    for (final EXsdVersion eVersion : new EXsdVersion [] { EXsdVersion.V10, EXsdVersion.V11 })
+    {
+      final Compiled aCompiled = XsdTestSupport.compile (sSchema, null, eVersion);
+      assertEquals (aCompiled.message (), EVerdict.VALID, aCompiled.verdict ());
+      final XsdSchema aSchema = aCompiled.schema ();
+      final String sVer = eVersion.getID () + ": ";
+      // Complex type without wildcard
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<plain/>"));
+      for (final String sAttr : new String [] { "xml:lang='en'", "xml:space='preserve'", "xml:base='a/'", "xml:id='i'" })
+        assertEquals (sVer + sAttr, "cvc-complex-type.3.2.2", _firstErrorCode (aSchema, "<plain " + sAttr + "/>"));
+      assertEquals (sVer, "cvc-complex-type.3.2.2", _firstErrorCode (aSchema, "<plain" + sXsi + " xsi:foo='x'/>"));
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<plain" + sXsi + " xsi:nil='false'/>"));
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<plain" + sXsi + " xsi:noNamespaceSchemaLocation='x.xsd'/>"));
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<plain" + sXsi + " xsi:schemaLocation='urn:x x.xsd'/>"));
+      // An attribute use or an ##other wildcard admits xml:lang
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<withRef xml:lang='en'/>"));
+      assertEquals (sVer, "cvc-complex-type.3.2.2", _firstErrorCode (aSchema, "<withRef xml:space='preserve'/>"));
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<withOther xml:lang='en' xml:space='preserve'/>"));
+      // Simple type
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<simple>1</simple>"));
+      assertEquals (sVer, "cvc-type.3.1.1", _firstErrorCode (aSchema, "<simple xml:lang='en'>1</simple>"));
+      assertEquals (sVer, "cvc-type.3.1.1", _firstErrorCode (aSchema, "<simple" + sXsi + " xsi:foo='x'>1</simple>"));
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<simple" + sXsi + " xsi:nil='true'/>"));
+      assertEquals (sVer, "cvc-type.3.1.1", _firstErrorCode (aSchema, "<simple" + sXsi + " xsi:nil='true' xml:lang='en'/>"));
+      assertEquals (sVer, "", _firstErrorCode (aSchema, "<simple" + sXsi + " xsi:type='xs:int' xmlns:xs='http://www.w3.org/2001/XMLSchema'>1</simple>"));
+    }
+  }
+
   /** A not-well-formed instance and one without a document element are invalid, never "no verdict". */
   @Test
   public void testInstanceNotWellFormed ()

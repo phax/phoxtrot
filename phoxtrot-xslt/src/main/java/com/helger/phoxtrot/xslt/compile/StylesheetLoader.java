@@ -113,7 +113,8 @@ public final class StylesheetLoader
   /**
    * Create a loader. The function library for static expressions is a child
    * of the shared default library with the XSLT functions allowed in static expressions,
-   * and the system-property function of the claims of the options (streaming,
+   * the extension functions registered by the user through
+   * {@link XsltExtensionRegistry#registerFunctions(java.util.function.Consumer)}, and the system-property function of the claims of the options (streaming,
    * backwards compatibility).
    *
    * @param aOptions
@@ -125,6 +126,9 @@ public final class StylesheetLoader
     m_aOptions = aOptions;
     m_aStaticFunctions = FunctionLibrary.getDefault ().createChild ();
     XsltFunctions.registerStatic (m_aStaticFunctions);
+    // The extension functions of the user are visible to function-available in static expressions,
+    // as at run time (they may also be called there)
+    XsltExtensionRegistry.getInstance ().contributeUserFunctions (m_aStaticFunctions);
     XsltFunctions.registerClaims (m_aStaticFunctions, aOptions.isStreamingClaim (), aOptions.isBackwardsCompatibleClaim ());
   }
 

@@ -183,6 +183,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - Schema-awareness has one schema processor, the native validator (`XdmSchemaSupport` loads `XsdSchemaProvider` by
   name if `phoxtrot-xsd` is on the class path; `JdkSchemaProvider` is only used explicitly). Xerces-J is no runtime
   dependency: only the DOM tests of `phoxtrot-xdm` and the xsdtests baseline of `phoxtrot-xsd-conformance` use it.
+- XSD attributes: only `xsi:type`, `xsi:nil`, `xsi:schemaLocation` and `xsi:noNamespaceSchemaLocation` need neither
+  an attribute use nor a wildcard (`XsdAttributeValidator.isExemptAttribute`, also for simple-typed elements); every
+  `xml:*` attribute needs a use or a wildcard, under 1.0 and 1.1.
 - XSD: the native validator (`phoxtrot-xsd`) does XSD 1.0 and 1.1; `XsdSchemaProvider` (schema-aware XPath/XSLT) compiles as
   1.1. `XsdNativeIT` gates both versions (`phoxtrot-xsd-conformance/target/xsd-native-fails.txt`, `xsd-native11-fails.txt`).
 - XSD: `XsdSchema.assessText` exposes the governing types the validator records (`XsdValidationRun.noteNodeType`,
@@ -213,6 +216,11 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   never answer a whole-document question from it. Tests tell streamed from buffered runs with
   `StreamedRun.getStreamedCount (<instruction>)`. The memory test is `StreamedMemoryTest` (forked JVM, `-Xmx32m`,
   `-Dstreamed.memory.records=<n>`, one stylesheet per streamed construct).
+- Extension functions: `XsltExtensionRegistry.registerFunctions` contributors registered while the registry is built
+  (`XsltFunctions.registerRuntime`, the default extensions) go only into the stylesheet library; later (user)
+  contributors also into the library of the static expressions (`contributeUserFunctions`, called by the
+  `StylesheetLoader` constructor). A new XSLT function that XSLT 3.0 section 9.7 excludes from static expressions is
+  registered from a default extension, never later.
 - EXSLT - Common: the core functions `exsl:node-set` and `exsl:object-type` (`com.helger.phoxtrot.xslt.fn.ExsltCommon`,
   registered with the static XSLT functions, so `function-available` sees them); no other EXSLT module and no
   `exsl:document`.

@@ -1313,7 +1313,8 @@ final class XsdInstanceValidator
    * go-xslt <code>validateAgainstType</code>: validate an element against its
    * governing type (xsi:type, conditional type assignment and substitution
    * already resolved) and record that type as the element's annotation. For
-   * a simple type, attributes other than xsi: and xml: ones are cvc-type.3.1.1
+   * a simple type, attributes other than the four xsi ones (xsi:type, xsi:nil
+   * and the two schema location hints) are cvc-type.3.1.1
    * and child elements cvc-type.3.1.2; the text (or the declaration's default
    * or fixed value for an element without character or element children) is
    * validated against the type and its ID values are noted. A complex type is
@@ -1352,8 +1353,8 @@ final class XsdInstanceValidator
       for (int i = 0; i < nAttrs; i++)
       {
         final IXdmNode aAttr = aElement.getAttributeAtIndex (i);
-        final String sNS = aAttr.getName ().namespaceUri ();
-        if (XsdConstants.NS_XSI.equals (sNS) || XsdConstants.NS_XML.equals (sNS))
+        // cvc-type.3.1.1: only the four xsi attributes, no xml:* attribute
+        if (XsdAttributeValidator.isExemptAttribute (aAttr.getName ().namespaceUri (), aAttr.getName ().localName ()))
           continue;
         throw XsdCompiler.invalid ("cvc-type.3.1.1",
                                    "attribute " + aAttr.getName ().localName () + " not allowed on a simple-typed element");
@@ -1394,8 +1395,8 @@ final class XsdInstanceValidator
       for (int i = 0; i < nAttrs; i++)
       {
         final IXdmNode aAttr = aElement.getAttributeAtIndex (i);
-        final String sNS = aAttr.getName ().namespaceUri ();
-        if (XsdConstants.NS_XSI.equals (sNS) || XsdConstants.NS_XML.equals (sNS))
+        // cvc-type.3.1.1: only the four xsi attributes, no xml:* attribute
+        if (XsdAttributeValidator.isExemptAttribute (aAttr.getName ().namespaceUri (), aAttr.getName ().localName ()))
           continue;
         throw XsdCompiler.invalid ("cvc-type.3.1.1",
                                    "attribute " + aAttr.getName ().localName () + " not allowed on a simple-typed element");

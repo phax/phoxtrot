@@ -156,15 +156,43 @@ final class XsdAttributeValidator
   }
 
   /**
+   * The attributes that need neither an attribute use nor a wildcard: the four
+   * <code>xsi</code> attributes of cvc-complex-type.3 (1.0) and
+   * cvc-complex-type.3.2 (1.1), which cvc-type.3.1.1 also allows on a
+   * simple-typed element. No <code>xml:*</code> attribute is exempt: an
+   * undeclared <code>xml:lang</code> needs an attribute use (usually
+   * <code>ref="xml:lang"</code>) or an admitting wildcard, as does an
+   * <code>xsi</code> attribute of another local name.
+   *
+   * @param sNamespaceURI
+   *        Namespace URI of the attribute.
+   * @param sLocalName
+   *        Local name of the attribute.
+   * @return <code>true</code> for <code>xsi:type</code>, <code>xsi:nil</code>,
+   *         <code>xsi:schemaLocation</code> and
+   *         <code>xsi:noNamespaceSchemaLocation</code>.
+   */
+  static boolean isExemptAttribute (@Nullable final String sNamespaceURI, @NonNull final String sLocalName)
+  {
+    if (!XsdConstants.NS_XSI.equals (sNamespaceURI))
+      return false;
+    return switch (sLocalName)
+    {
+      case "type", "nil", "schemaLocation", "noNamespaceSchemaLocation" -> true;
+      default -> false;
+    };
+  }
+
+  /**
    * go-xslt <code>validateAttributes</code>: check an element's attributes
    * against a complex type's (effective) attribute uses and attribute
    * wildcard.
    * <p>
    * Each attribute is matched to the last use of its name. A prohibited use
-   * counts as no use. Without a use, an <code>xsi:*</code> attribute is
-   * always allowed, and so is an <code>xml:*</code> one under 1.0 (under 1.1
-   * it needs the wildcard); anything else must match the attribute wildcard
-   * (cvc-complex-type.3.2.2). A skip wildcard accepts it unchecked, a lax or
+   * counts as no use. Without a use, one of the four <code>xsi</code>
+   * attributes of {@link #isExemptAttribute(String, String)} is always
+   * allowed; anything else, <code>xml:*</code> attributes included, must match
+   * the attribute wildcard (cvc-complex-type.3.2.2). A skip wildcard accepts it unchecked, a lax or
    * strict one assesses it against the global attribute declaration of that
    * name; a missing declaration is cvc-assess-attr for a strict wildcard
    * and ignored for a lax one. An attribute with a use is validated against
@@ -206,21 +234,14 @@ final class XsdAttributeValidator
       final XsdName aName = XsdName.of (aAttr.getName ());
       final String sValue = aAttr.getValue ();
       XsdAttributeUse aUse = aIndex.lookup (aName);
-      // xsi:* and xml:* attributes are always permitted, but when one is
-      // explicitly declared (e.g. ref="xml:base" use="required", or
+      // xsi:type, xsi:nil, xsi:schemaLocation and xsi:noNamespaceSchemaLocation
+      // are always permitted, but when one is explicitly declared (e.g.
       // ref="xsi:type" with a fixed value) it must still be validated and
-      // counted present - so only skip one that is not declared
-      final boolean bXsi = XsdConstants.NS_XSI.equals (aName.space ());
-      final boolean bXml = XsdConstants.NS_XML.equals (aName.space ());
-      if (aUse == null && (bXsi || bXml))
-      {
-        // In 1.1 an undeclared xml:* attribute is not exempt: it needs a
-        // named use or an admitting attribute wildcard. xsi:* stays
-        // always-permitted; 1.0 keeps the lenient skip
-        if (aRun.isXsd11 () && bXml && (aWC == null || !aWC.matches (aName)))
-          throw XsdCompiler.invalid ("cvc-complex-type.3.2.2", "attribute " + aName + " is not allowed");
+      // counted present - so only skip one that is not declared. Any other
+      // xsi:* or xml:* attribute needs a use or the wildcard, under 1.0 and
+      // 1.1 (cvc-complex-type.3.2 / 3.2.2)
+      if (aUse == null && isExemptAttribute (aName.space (), aName.local ()))
         continue;
-      }
       // A prohibited attribute use denotes absence, not an active ban: the
       // attribute is simply not a named use, so it must instead be permitted
       // by the attribute wildcard (XSD 1.0 cvc-complex-type.3.2)

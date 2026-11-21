@@ -98,6 +98,9 @@ public final class XsltExtensionRegistry
   private final ICommonsList <IOutputCustomizer> m_aOutputCustomizers = new CommonsArrayList <> ();
   private final ICommonsList <ICompileFinisher> m_aFinishers = new CommonsArrayList <> ();
   private final ICommonsSet <String> m_aSystemPropertiesYes = new CommonsHashSet <> ();
+  // The number of function contributors registered while the registry was built (the run-time XSLT
+  // functions and those of the default extensions); the later ones are user extension functions
+  private int m_nBuiltinFunctionContributors;
 
   private XsltExtensionRegistry ()
   {}
@@ -140,6 +143,7 @@ public final class XsltExtensionRegistry
         LOGGER.error ("Failed to register the XSLT extension '" + sClassName + "'", ex);
       }
     }
+    ret.m_aRWLock.writeLocked ( () -> { ret.m_nBuiltinFunctionContributors = ret.m_aFunctionContributors.size (); });
     return ret;
   }
 
@@ -235,7 +239,11 @@ public final class XsltExtensionRegistry
 
   /**
    * Register functions: the contributor is called for the function library of every stylesheet
-   * before any expression of it is compiled.
+   * before any expression of it is compiled. A contributor registered after the registry was built
+   * (every one registered through {@link #getInstance()}) is also called for the library of the
+   * static expressions of every compilation (<code>use-when</code>, static variables and
+   * parameters, shadow attributes; see {@link #contributeUserFunctions(FunctionLibrary)}), so
+   * <code>function-available</code> gives the same answer there as at run time.
    *
    * @param aContributor
    *        Registers functions into the library.
@@ -358,6 +366,25 @@ public final class XsltExtensionRegistry
   {
     // The contributors are called without holding the lock
     final ICommonsList <Consumer <FunctionLibrary>> aList = m_aRWLock.readLockedGet (m_aFunctionContributors::getClone);
+    for (final Consumer <FunctionLibrary> aContributor : aList)
+      aContributor.accept (aLibrary);
+  }
+
+  /**
+   * Let every contributor registered after the registry was built add its functions to the library,
+   * in registration order: the extension functions of the user, without the run-time XSLT functions
+   * and the functions of the default extensions (which XSLT 3.0 section 9.7 excludes from static
+   * expressions, e.g. <code>current()</code>, <code>key()</code>, <code>current-group()</code>). The
+   * contributors run on a snapshot of the list, without the lock held.
+   *
+   * @param aLibrary
+   *        The library of the static expressions of a new compilation.
+   */
+  public void contributeUserFunctions (@NonNull final FunctionLibrary aLibrary)
+  {
+    // The contributors are called without holding the lock
+    final ICommonsList <Consumer <FunctionLibrary>> aList = m_aRWLock.readLockedGet ( () -> new CommonsArrayList <> (m_aFunctionContributors.subList (m_nBuiltinFunctionContributors,
+                                                                                                                         m_aFunctionContributors.size ())));
     for (final Consumer <FunctionLibrary> aContributor : aList)
       aContributor.accept (aLibrary);
   }
