@@ -40,11 +40,17 @@ import com.helger.collection.commons.ICommonsList;
  *        The expanded name of the attribute, <code>null</code> for an element.
  * @param type
  *        The governing type definition.
+ * @param declaration
+ *        The element declaration an element was assessed against (global, local
+ *        or substituted), <code>null</code> for an attribute or an element
+ *        assessed by its type only (e.g. <code>xsi:type</code> under a lax
+ *        wildcard).
  * @author Philip Helger
  */
 public record XsdNodeType (@NonNull ICommonsList <Integer> elementPath,
                            @Nullable XsdName attribute,
-                           @NonNull IXsdTypeDefinitionView type)
+                           @NonNull IXsdTypeDefinitionView type,
+                           @Nullable XsdElementView declaration)
 {
   /**
    * @return <code>true</code> if the node is an attribute.

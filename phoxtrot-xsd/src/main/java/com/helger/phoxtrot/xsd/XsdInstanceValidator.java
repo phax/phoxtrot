@@ -1456,6 +1456,7 @@ final class XsdInstanceValidator
                                                    @NonNull final ICommonsMap <XsdName, KeyTable> aScopes,
                                                    @Nullable final ICommonsList <String> aExtraFixed)
   {
+    aRun.noteNodeDeclaration (aElement, aDecl);
     IXsdType aType = aDecl.m_aType;
     final String sXsiType = XsdNodes.attrNS (aElement, XsdConstants.NS_XSI, "type");
     if (sXsiType != null)
@@ -2060,6 +2061,7 @@ final class XsdInstanceValidator
     if (aRunHolder != null)
     {
       aRun.enableNodeTypes ();
+      aRun.enableNodeDeclarations ();
       aRunHolder.set (aRun);
     }
     final XsdErrorCollector aCollector = aOptions == null ? null : new XsdErrorCollector (aOptions.getMaxErrors ());
@@ -2165,19 +2167,23 @@ final class XsdInstanceValidator
   private static void _collectNodeTypesRecursive (@NonNull final IXdmNode aElement,
                                                   @NonNull final ICommonsList <Integer> aPath,
                                                   @NonNull final ICommonsMap <IXdmNode, IXsdType> aTypes,
+                                                  @NonNull final ICommonsMap <IXdmNode, XsdElementDecl> aDecls,
                                                   @NonNull final XsdSchemaView aView,
                                                   @NonNull final ICommonsList <XsdNodeType> aTarget)
   {
     final IXsdTypeDefinitionView aType = aView.typeDef (aTypes.get (aElement));
     if (aType != null)
-      aTarget.add (new XsdNodeType (aPath.getClone (), null, aType));
+    {
+      final XsdElementDecl aDecl = aDecls.get (aElement);
+      aTarget.add (new XsdNodeType (aPath.getClone (), null, aType, aDecl == null ? null : aView.element (aDecl)));
+    }
     final int nAttrs = aElement.getAttributeCount ();
     for (int i = 0; i < nAttrs; i++)
     {
       final IXdmNode aAttr = aElement.getAttributeAtIndex (i);
       final IXsdTypeDefinitionView aAttrType = aView.typeDef (aTypes.get (aAttr));
       if (aAttrType != null)
-        aTarget.add (new XsdNodeType (aPath.getClone (), nameOf (aAttr), aAttrType));
+        aTarget.add (new XsdNodeType (aPath.getClone (), nameOf (aAttr), aAttrType, null));
     }
     int nElementIndex = 0;
     final int nCount = aElement.getChildCount ();
@@ -2187,7 +2193,7 @@ final class XsdInstanceValidator
       if (aChild.isElement ())
       {
         aPath.add (Integer.valueOf (nElementIndex++));
-        _collectNodeTypesRecursive (aChild, aPath, aTypes, aView, aTarget);
+        _collectNodeTypesRecursive (aChild, aPath, aTypes, aDecls, aView, aTarget);
         aPath.removeLast ();
       }
     }
@@ -2232,6 +2238,7 @@ final class XsdInstanceValidator
       _collectNodeTypesRecursive (aRoot,
                                   new CommonsArrayList <> (Integer.valueOf (0)),
                                   aRun.getNodeTypes (),
+                                  aRun.getNodeDeclarations (),
                                   aRun.getSchema ().getView (),
                                   aNodeTypes);
     return new XsdAssessment (aResult, aNodeTypes);

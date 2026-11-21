@@ -101,6 +101,9 @@ public final class XsdAssessmentTest
     assertEquals (new XsdName (NS, "Amount"), aAmountType.getName ());
     assertEquals ("0", aAmountType.getFacets ().minInclusive ());
     assertEquals (Integer.valueOf (2), aAmountType.getFacets ().fractionDigits ());
+    // The local element declaration it was assessed against
+    assertEquals (new XsdName (NS, "amount"), aAmount.declaration ().getName ());
+    assertFalse (aAmount.declaration ().isNillable ());
 
     // An attribute follows its element
     assertEquals (_path (0, 1), aTypes.get (2).elementPath ());
@@ -108,6 +111,7 @@ public final class XsdAssessmentTest
     final XsdNodeType aQty = aTypes.get (3);
     assertEquals (_path (0, 1), aQty.elementPath ());
     assertEquals (new XsdName ("", "qty"), aQty.attribute ());
+    assertNull (aQty.declaration ());
     assertEquals (new XsdName (XsdConstants.NS_XS, "positiveInteger"), ((XsdSimpleTypeView) aQty.type ()).getName ());
 
     // xsi:type is resolved: the derived type governs, not the declared one

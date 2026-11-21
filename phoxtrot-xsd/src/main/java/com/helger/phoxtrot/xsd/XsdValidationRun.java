@@ -148,6 +148,7 @@ final class XsdValidationRun
    * Validate path.
    */
   private ICommonsMap <IXdmNode, IXsdType> m_aNodeTypes;
+  private ICommonsMap <IXdmNode, XsdElementDecl> m_aNodeDecls;
   private ICommonsSet <IXdmNode> m_aNodeNilled;
   private ICommonsMap <IXdmNode, ICommonsList <DefaultAttr>> m_aNodeDefaults;
   private ICommonsMap <IXdmNode, DefaultContent> m_aNodeDefaultContent;
@@ -291,6 +292,13 @@ final class XsdValidationRun
       m_aNodeTypes = new CommonsHashMap <> ();
   }
 
+  /** Enable recording of the element declarations validated elements were assessed against. */
+  void enableNodeDeclarations ()
+  {
+    if (m_aNodeDecls == null)
+      m_aNodeDecls = new CommonsHashMap <> ();
+  }
+
   /** Enable recording of the [nilled] property of validated elements. */
   void enableNodeNilled ()
   {
@@ -308,6 +316,13 @@ final class XsdValidationRun
       m_aNodeDefaults = new CommonsHashMap <> ();
     if (m_aNodeDefaultContent == null)
       m_aNodeDefaultContent = new CommonsHashMap <> ();
+  }
+
+  /** @return The recorded element declarations; <code>null</code> if not enabled. */
+  @Nullable
+  ICommonsMap <IXdmNode, XsdElementDecl> getNodeDeclarations ()
+  {
+    return m_aNodeDecls;
   }
 
   /** @return The recorded type annotations; <code>null</code> if not enabled. */
@@ -367,6 +382,22 @@ final class XsdValidationRun
   void leaveElement ()
   {
     m_nDepth--;
+  }
+
+  /**
+   * Record the element declaration an element is assessed against. Does
+   * nothing unless declarations are recorded (see
+   * {@link #enableNodeDeclarations()}).
+   *
+   * @param aElement
+   *        The element.
+   * @param aDecl
+   *        Its declaration.
+   */
+  void noteNodeDeclaration (@NonNull final IXdmNode aElement, @NonNull final XsdElementDecl aDecl)
+  {
+    if (m_aNodeDecls != null)
+      m_aNodeDecls.put (aElement, aDecl);
   }
 
   /**

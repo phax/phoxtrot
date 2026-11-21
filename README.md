@@ -252,6 +252,7 @@ v0.3.1 - work in progress
 * XSD: new `XsdSimpleTypeView.getValueError`/`isValidValue` check a value against a simple type exactly as the validator
   does (whiteSpace, lexical space, all facets), and new `XsdPatternMatcher` matches the regular expression of a
   `pattern` facet without a schema
+* XSD: `XsdNodeType` (of `XsdSchema.assessText`) also reports the element declaration an element was assessed against
 
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with
