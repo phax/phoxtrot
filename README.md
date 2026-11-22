@@ -308,7 +308,7 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
-v0.3.1 - work in progress
+v0.4.0 - work in progress
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`
