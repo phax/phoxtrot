@@ -23,7 +23,7 @@ Status: initially released.
 
 Schema-awareness and streaming are available as opt-ins (streaming: the streamability analysis, streamed execution of guaranteed-streamable constructs and output written while it is built).
 XSLT 1.0 stylesheets run with backwards compatible behaviour (claimed by default; 8,752 of 8,762 cases with the claim), with the EXSLT - Common functions `exsl:node-set` and `exsl:object-type`.
-A JAXP `TransformerFactory` and a W3C DOM bridge are included.
+A JAXP `TransformerFactory`, a W3C DOM bridge and a command line client (also as Docker image) are included.
 See [docs/PLAN.md](docs/PLAN.md) for the roadmap.
 
 ## Modules
@@ -36,6 +36,7 @@ See [docs/PLAN.md](docs/PLAN.md) for the roadmap.
 | `phoxtrot-xslt` | XSLT 3.0: stylesheet compiler, modules, templates and modes, all instruction families, XSLT functions, packages, schema-awareness, streaming (analysis, streamed execution, output written while it is built), JAXP `TransformerFactory` | usable |
 | `phoxtrot-xslt-conformance` | W3C xslt30-test harness (not deployed) | usable |
 | `phoxtrot-xsd` | Native XML Schema 1.0 and 1.1 validator (port of go-xslt's `internal/xsd`): loader, include/import/redefine/override, schema-for-schemas checks, simple types and facets, content models with open content, instance validation with identity constraints, assertions and conditional type assignment, read-only component view, validation API that reports all errors; the default schema provider for XPath and XSLT (schemas compiled as XSD 1.1) | usable |
+| `phoxtrot-cli` | Command line client: check and run stylesheets, check, analyse and evaluate XPath expressions, check XML Schemas and validate documents (executable JAR, not part of the BOM; Dockerfile) | usable |
 | `phoxtrot-xsd-conformance` | W3C xsdtests (XML Schema) harness with a pluggable validator (not deployed) | usable |
 | `phoxtrot-xslt-benchmark` | JMH benchmarks and profiling workloads for parsing, XPath, XSLT, XSD, streaming and compiling (standalone, not in the reactor, not deployed; see its `README.md` and `docs/benchmarks`) | usable |
 | `phoxtrot-xdm-memory-benchmark` | Retained heap of the node tree compared with ph-xml MicroDOM and Saxon TinyTree (standalone, not deployed) | usable |
@@ -226,6 +227,71 @@ declarations; `XdmToSax.emit` writes a tree as SAX events. `XdmDomView` shows a 
 copying it (`new XdmDomView (aDoc).getNode (aXdmNode)`, one DOM node per XDM node, `XdmDomView.getXdmNode` back), e.g.
 to report a node an XPath expression matched to code that expects `org.w3c.dom` nodes.
 
+## Command line client
+
+`phoxtrot-cli` builds an executable JAR (`phoxtrot-cli-x.y.z-shaded.jar`, Java 21) for checking stylesheets,
+expressions and schemas without writing Java code, e.g. in a build or CI step:
+
+```
+java -jar phoxtrot-cli-x.y.z-shaded.jar <group> <command> [options]
+```
+
+| Command | Description |
+|---------|-------------|
+| `xslt check STYLESHEET...` | Compile stylesheets and report their static errors with module, line and column, without running them. `--streamable` claims streaming and enforces the streamability rules (XTSE3430) |
+| `xslt run -s STYLESHEET [SOURCE]` | Run a stylesheet and write the principal result to `-o FILE` (deleted again if the run fails) or the standard output. `-p NAME=VALUE` and `--xparam NAME=XPATH` set parameters, `--initial-template [NAME]` and `--initial-mode NAME` select the start, `--streamed` reads the source as a stream, `--result-documents DIR` allows `xsl:result-document` with `href` and writes its results to `DIR` (UTF-8), `--trace` and `--trace-instructions` print what is entered. `xsl:message` and the trace go to the error output |
+| `xpath check XPATH... / -f FILE...` | Compile expressions and report their static errors with line and column. `--declare NAME[=TYPE]` declares variables, `--static-typing` with `--context-type ITEMTYPE` raises type errors at compile time, `--xslt-functions` knows the XSLT functions |
+| `xpath streamability XPATH...` | The streamability verdict (XSLT 3.0 section 19) with posture, sweep and the construct that causes it; `--mode STREAMED\|BURST\|GROUNDED`, `--pattern` for match patterns, `--streamed-var NAME` |
+| `xpath eval XPATH...` | Evaluate expressions against `-c FILE` (optional) and print each result; `--var NAME=VALUE`, `--xvar NAME=XPATH`, `--method adaptive\|xml\|json\|text`, `--indent` |
+| `xsd check SCHEMA...` | Compile schema documents as one schema and report its error |
+| `xsd validate --xsd SCHEMA FILE...` | Validate documents and report every error with line and column (`--max-errors N`); `xsi:schemaLocation` hints are not followed |
+| `help [COMMAND]`, `generate-completion` | The help of a command; a bash/zsh completion script |
+
+Shared options: `--ns PREFIX=URI` (XPath commands), `--xsd-version 1.0|1.1` (XSD commands, default 1.0),
+`--schema-aware`, `--no-backwards-compatible` and `--static-param NAME=VALUE` (XSLT commands), `--threading MODE` and
+`--max-steps N`, `-q`/`--quiet` and `-v`/`--verbose`. Names are `local`, `prefix:local` (with `--ns`; `xsl:` is
+predefined for the XSLT commands), `Q{uri}local` or `{uri}local`; string values are `xs:untypedAtomic`, so they are
+converted to the declared type.
+
+Secure by default: only local files are read, never the network, without external entities, and only from the folders
+of the files named on the command line (stylesheet, source, context document, schemas) and the `--resource-dir DIR`
+folders. A refused access is reported as warning, and the engine then raises its error (XTSE0165 for a module, FODC0002
+for a document). `--allow-file-access` allows any local file; only then are the schema documents that an
+`xsl:import-schema` schema references read. `xsl:result-document` with `href` is rejected (XTSE0010) unless
+`--result-documents` is given, and its results must stay inside that folder.
+
+Exit codes: `0` success, `1` a check failed (static error, not streamable, invalid document) or a run raised an error,
+`2` invalid command line, `3` technical error (I/O, unreadable source, unusable schema, no verdict of the validator).
+
+`examples/basic` has an invoice with stylesheets, XPath files and an XSD 1.1 schema, and one script per command group
+(see its `README.md`).
+
+### Docker
+
+`phoxtrot-cli/Dockerfile` builds an image with the client (Eclipse Temurin 25 JRE); the arguments of `docker run`
+after the image name are passed to the client. Mount the files to work on to `/data`, the working directory of the
+image:
+
+```
+docker run --rm -v "$PWD:/data" phelger/phoxtrot xslt check --streamable my.xsl
+docker run --rm -v "$PWD:/data" phelger/phoxtrot xslt run -s to-html.xsl -o out.html invoice.xml
+docker run --rm -v "$PWD:/data" phelger/phoxtrot xsd validate --xsd-version 1.1 --xsd invoice.xsd invoice.xml
+```
+
+Only files below the mounted folder are visible, so included modules and documents must be inside it too. The exit
+code of the client is the exit code of `docker run`.
+
+`docker/build.sh` builds the image:
+
+| Call | Builds |
+|------|--------|
+| `docker/build.sh snapshot [--mvn]` | The current `-SNAPSHOT` version for this machine, loaded into the local Docker, tagged `<version>` and `snapshot`, smoke tested |
+| `docker/build.sh snapshot --push [--mvn]` | The same for linux/amd64 and linux/arm64, pushed |
+| `docker/build.sh release [--mvn]` | A released version for linux/amd64 and linux/arm64, pushed, tagged `<version>` and `latest` |
+
+`--mvn` builds the shaded JAR first; without it, `phoxtrot-cli/target` must contain exactly the JAR of the version in
+`pom.xml`. `IMAGE` overrides the image name `phelger/phoxtrot`. Pushing needs a `docker login` first.
+
 ## Implementation-dependent values
 
 * `fn:generate-id` returns `d`, the number of the node's tree in the run, `n` and the number of the node in that tree,
@@ -243,6 +309,11 @@ basis of this project. See [NOTICE](NOTICE).
 # News and noteworthy
 
 v0.3.1 - work in progress
+* New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
+  `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
+  `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`
+  is given, and allows `xsl:result-document` with `href` only with `--result-documents`. With a Dockerfile
+  (`phoxtrot-cli/Dockerfile`, `docker/build.sh`) and examples (`examples/basic`)
 * XSD: the xs:base64Binary lexical check uses a lookup table and a tight loop for the leading run of base64
   characters instead of range comparisons, whose branches are mispredicted on base64 data: about 8 times faster,
   which halves the validation time of an e-invoice with a 200 KB attachment

@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inv:Invoice xmlns:inv="urn:example:invoice" id="INV-1">
+  <inv:Buyer>ACME Corp.</inv:Buyer>
+  <inv:Line qty="2" price="10.50">Widget</inv:Line>
+  <inv:Line qty="1" price="99.00">Gadget</inv:Line>
+  <inv:Line qty="5" price="1.20">Bolt</inv:Line>
+  <inv:Total>126.00</inv:Total>
+</inv:Invoice>

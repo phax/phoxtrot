@@ -1,0 +1,6 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<inv:Invoice xmlns:inv="urn:example:invoice" id="INV-2">
+  <inv:Line qty="2" price="10.50">Widget</inv:Line>
+  <inv:Line qty="0" price="99.00">Gadget</inv:Line>
+  <inv:Total>125.00</inv:Total>
+</inv:Invoice>

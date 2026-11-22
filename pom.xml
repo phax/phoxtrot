@@ -64,6 +64,7 @@
   
   <properties>
     <java.version>21</java.version>
+    <picocli.version>4.7.7</picocli.version>
   </properties>
   
   <modules>
@@ -72,6 +73,7 @@
     <module>phoxtrot-xpath</module>
     <module>phoxtrot-xsd</module>
     <module>phoxtrot-xslt</module>
+    <module>phoxtrot-cli</module>
     <module>phoxtrot-xpath-conformance</module>
     <module>phoxtrot-xslt-conformance</module>
     <module>phoxtrot-xsd-conformance</module>
@@ -122,6 +124,12 @@
         <groupId>com.helger.phoxtrot</groupId>
         <artifactId>phoxtrot-xsd</artifactId>
         <version>${project.version}</version>
+      </dependency>
+      
+      <dependency>
+        <groupId>info.picocli</groupId>
+        <artifactId>picocli</artifactId>
+        <version>${picocli.version}</version>
       </dependency>
     </dependencies>
   </dependencyManagement>

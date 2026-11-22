@@ -8,9 +8,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - The W3C suite runs are integration tests (`*IT`, failsafe) and only run with `-Pconformance`:
   `mvn install -Pconformance` is the full gate; `-Dit.test=<IT class>` picks one. XSLT30 alone takes about 12 minutes.
 - Names: the project is `phoxtrot` (always lowercase), groupId `com.helger.phoxtrot`, every module directory equals its
-  artifactId (`phoxtrot-xdm`, `phoxtrot-xpath`, `phoxtrot-xslt`, `phoxtrot-xsd`, `phoxtrot-*-conformance`, the two
-  benchmarks); packages `com.helger.phoxtrot.xdm` (`phoxtrot-xdm`), `.xpath` (`phoxtrot-xpath`, the QT3 harness and the
-  benchmarks), `.xslt` and `.xsd`.
+  artifactId (`phoxtrot-xdm`, `phoxtrot-xpath`, `phoxtrot-xslt`, `phoxtrot-xsd`, `phoxtrot-cli`,
+  `phoxtrot-*-conformance`, the two benchmarks); packages `com.helger.phoxtrot.xdm` (`phoxtrot-xdm`), `.xpath`
+  (`phoxtrot-xpath`, the QT3 harness and the benchmarks), `.xslt`, `.xsd` and `.cli`.
 - Benchmarks: `phoxtrot-xslt-benchmark` (JMH, standalone like `phoxtrot-xdm-memory-benchmark`: own POM, not in the
   reactor, never installed). Build with `mvn -o -q clean package -f phoxtrot-xslt-benchmark/pom.xml` (always `clean`: an
   incremental compile can drop `META-INF/BenchmarkList`); it uses the engine jars of `~/.m2`,
@@ -20,6 +20,16 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   generated (`BenchData`, fixed seed) and every workload checks its result once against a value computed in Java; a new
   workload needs such a check, and its case ID in both `EWorkloadGroup.getAllCaseIDs` and the `@Param` list of its JMH
   class. Reports: `docs/benchmarks/` (dated reports before the rename use the old module and package names).
+- Command line client (`phoxtrot-cli`, package `com.helger.phoxtrot.cli`, modelled on `../xmlperm/ph-xmlperm-cli`):
+  picocli, shaded executable JAR (not in the BOM), groups `xslt` (`check`, `run`), `xpath` (`check`, `streamability`,
+  `eval`) and `xsd` (`check`, `validate`); exit codes 0/1/2/3 (`PhoxtrotCli.EXIT_*`). Secure by default: every file
+  read goes through `CliResourceResolver` (local files only, no external entities, only below the folders of the files
+  on the command line and `--resource-dir`, unless `--allow-file-access`); `xsl:result-document` with `href` only with
+  `--result-documents DIR` (`setSecondaryResultsAllowed`), its results written by the CLI and confined to `DIR`;
+  `xsi:schemaLocation` hints are never followed. Tests run the client in-process (`CliRunner`) and use the files of
+  `examples/basic`, whose scripts must keep matching the commands. Docker: `phoxtrot-cli/Dockerfile` (Temurin 25 JRE,
+  `-XX:-UseBASE64Intrinsics` as in xmlperm), `docker/build.sh snapshot|release [--mvn] [--push]`, image
+  `phelger/phoxtrot`; README "Command line client" documents every option.
 - Version and build time: `PhoxtrotVersion.BUILD_VERSION`/`BUILD_TIMESTAMP` (`phoxtrot-xdm`), read from
   `phoxtrot-version.properties`, which Maven filters (`phoxtrot-xdm/pom.xml` filters only `*.properties` resources).
 - W3C suites live outside the repo in `../../git-thirdparty/{qt3tests,xslt30-test,xsdtests}`; never copy them in.

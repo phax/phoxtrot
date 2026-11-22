@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- XSD 1.1: the assertion checks the total; with XSD 1.0 the schema is in error -->
+<xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema"
+           xmlns:inv="urn:example:invoice"
+           targetNamespace="urn:example:invoice"
+           elementFormDefault="qualified">
+  <xs:element name="Invoice">
+    <xs:complexType>
+      <xs:sequence>
+        <xs:element name="Buyer" type="xs:string"/>
+        <xs:element name="Line" maxOccurs="unbounded">
+          <xs:complexType>
+            <xs:simpleContent>
+              <xs:extension base="xs:string">
+                <xs:attribute name="qty" type="xs:positiveInteger" use="required"/>
+                <xs:attribute name="price" type="xs:decimal" use="required"/>
+              </xs:extension>
+            </xs:simpleContent>
+          </xs:complexType>
+        </xs:element>
+        <xs:element name="Total" type="xs:decimal"/>
+      </xs:sequence>
+      <xs:attribute name="id" type="xs:ID" use="required"/>
+      <xs:assert test="inv:Total = sum(inv:Line/(@qty * @price))"/>
+    </xs:complexType>
+  </xs:element>
+</xs:schema>

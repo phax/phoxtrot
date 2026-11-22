@@ -1,0 +1,5 @@
+(: The total must be the sum of the line amounts. The context item is the invoice document.
+   Static typing is pessimistic: "treat as" says what only the schema knows. :)
+let $invoice := /inv:Invoice treat as element(inv:Invoice)
+return xs:decimal($invoice/inv:Total treat as element())
+       = sum($invoice/inv:Line ! (xs:decimal(@qty treat as attribute()) * xs:decimal(@price treat as attribute())))

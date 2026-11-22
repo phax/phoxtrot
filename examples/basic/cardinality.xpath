@@ -1,0 +1,3 @@
+(: Compiles without static typing, but upper-case takes at most one string and an invoice may have several
+   lines: XPTY0004 with static typing. :)
+upper-case(/inv:Invoice/inv:Line)
