@@ -51,6 +51,7 @@ public final class XsltElementSpecs
    * @param noText
    *        <code>true</code> if non-whitespace text is not allowed.
    */
+  @Immutable
   public record Spec (@NonNull ICommonsSet <String> attrs,
                       @NonNull ICommonsSet <String> required,
                       @Nullable ICommonsSet <String> children,

@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -32,6 +33,7 @@ import com.helger.collection.commons.ICommonsList;
  *        <code>strict</code>, <code>lax</code> or <code>skip</code>.
  * @author Philip Helger
  */
+@Immutable
 public record XsdWildcardView (@NonNull String mode, @NonNull ICommonsList <String> namespaces, @NonNull String processContents) implements
                               IXsdTermView
 {}

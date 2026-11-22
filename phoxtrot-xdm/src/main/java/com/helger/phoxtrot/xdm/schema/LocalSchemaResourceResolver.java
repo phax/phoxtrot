@@ -44,6 +44,7 @@ import com.helger.annotation.concurrent.Immutable;
 public final class LocalSchemaResourceResolver implements LSResourceResolver
 {
   /** An input whose stream fails, for a resource that is not allowed. */
+  @Immutable
   private static final class RefusedInput implements LSInput
   {
     private final String m_sSystemId;

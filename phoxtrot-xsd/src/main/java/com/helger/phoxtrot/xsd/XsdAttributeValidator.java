@@ -20,6 +20,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -59,6 +60,7 @@ final class XsdAttributeValidator
    * a map filled in order would hold) and whether an attribute of a use's
    * name was present (go-xslt <code>attrUseIndex</code>).
    */
+  @NotThreadSafe
   private static final class AttrUseIndex
   {
     private final ICommonsList <XsdAttributeUse> m_aUses;

@@ -21,6 +21,7 @@ import java.util.ArrayDeque;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.phoxtrot.xdm.ENodeKind;
 import com.helger.phoxtrot.xdm.IXdmItem;
@@ -49,6 +50,7 @@ final class AdaptiveWriter
    * parentheses if it is a single item, otherwise as a parenthesised,
    * comma-separated list (<code>()</code> for the empty sequence).
    */
+  @Immutable
   private record Member (XdmSequence value)
   {}
 

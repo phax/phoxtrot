@@ -130,6 +130,7 @@ public final class XPathStreamability
   private static final EStreamUsage N = EStreamUsage.NAVIGATION;
 
   /** A function whose short form defaults an argument to "." or to "/". */
+  @Immutable
   private record ContextDefault (int arity, boolean root)
   {}
 

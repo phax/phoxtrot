@@ -23,6 +23,7 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.ICommonsMap;
@@ -123,6 +124,7 @@ final class XPathStaticTyping
    * @param max
    *        The maximum number of items, 0, 1 or {@link #MANY}.
    */
+  @Immutable
   record StaticType (@NonNull List <ItemType> items, int min, int max)
   {
     static final StaticType EMPTY = new StaticType (List.of (), 0, 0);
@@ -208,6 +210,7 @@ final class XPathStaticTyping
    *        The static type of the context item, <code>null</code> for the one
    *        of the static context.
    */
+  @Immutable
   private record Scope (@NonNull ICommonsMap <XdmQName, StaticType> variables, @Nullable StaticType focus)
   {
     @NonNull

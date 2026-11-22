@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xdm;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.base.enforce.ValueEnforcer;
 
 /**
@@ -34,6 +35,7 @@ import com.helger.base.enforce.ValueEnforcer;
  *        prefix".
  * @author Philip Helger
  */
+@Immutable
 public record XdmQName (@NonNull String namespaceUri, @NonNull String localName, @NonNull String prefix)
 {
   public XdmQName

@@ -44,6 +44,7 @@ public final class NodeCopier
   private NodeCopier ()
   {}
 
+  @Immutable
   private record Job (@NonNull IXdmNode source, @NonNull IXdmNode target)
   {}
 

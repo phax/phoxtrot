@@ -23,6 +23,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsArrayList;
@@ -62,6 +63,7 @@ public final class XsltTransformRequest
   public static final int UNLIMITED_DEPTH = Integer.MAX_VALUE;
 
   /** A template parameter of the initial template or initial mode. */
+  @Immutable
   public record TemplateParam (@NonNull XdmQName name, @NonNull XdmSequence value, boolean tunnel)
   {}
 

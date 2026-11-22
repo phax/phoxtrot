@@ -462,6 +462,7 @@ public final class ContentOutput implements IXsltOutput
    * attributes and namespaces in it are errors, and it separates adjacent
    * atomic values.
    */
+  @NotThreadSafe
   private final class DocumentContent implements IXsltOutput
   {
     private boolean m_bAtomic;

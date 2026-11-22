@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xslt.ext.assertion;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.ENodeKind;
 import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xdm.IXdmNode;
@@ -47,6 +48,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class AssertExtension implements IXsltExtension
 {
   private static final XdmQName XTMM9001 = new XdmQName (XPathException.ERR_NAMESPACE, "XTMM9001", "err");

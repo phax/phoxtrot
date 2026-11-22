@@ -24,6 +24,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
@@ -81,10 +82,12 @@ final class XsdExplain
   {}
 
   /** An enclosing group together with the particle that holds it (the group's own occurrence bounds). */
+  @Immutable
   private record AncEntry (@NonNull XsdModelGroup group, @NonNull XsdParticle particle)
   {}
 
   /** An edge label: an element declaration or a wildcard with the context it stands in. */
+  @Immutable
   private static final class Label
   {
     final XsdElementDecl m_aDecl;
@@ -105,10 +108,12 @@ final class XsdExplain
   }
 
   /** A labelled edge of the automaton: the target state and its label. */
+  @Immutable
   private record Edge (int to, @NonNull Label label)
   {}
 
   /** A growable int array. */
+  @NotThreadSafe
   private static final class IntList
   {
     private int [] m_aData = new int [4];
@@ -133,6 +138,7 @@ final class XsdExplain
   }
 
   /** The position automaton: states, epsilon edges, labelled edges and both reversed. */
+  @NotThreadSafe
   private static final class Nfa
   {
     final ICommonsList <IntList> m_aEps = new CommonsArrayList <> ();
@@ -186,6 +192,7 @@ final class XsdExplain
   }
 
   /** Builds the automaton of a particle with its occurrence bounds, unrolled. */
+  @NotThreadSafe
   private static final class NfaBuilder
   {
     final Nfa m_aNfa = new Nfa ();
@@ -378,6 +385,7 @@ final class XsdExplain
   }
 
   /** The new (closed) state set after a child, and the labels the child was matched by. */
+  @Immutable
   private record StepResult (@NonNull BitSet next, @NonNull ICommonsList <Label> labels)
   {}
 
@@ -453,6 +461,7 @@ final class XsdExplain
   }
 
   /** The alternative labels at each step of a cheapest insertion path, and the closed state set reached. */
+  @Immutable
   private record Insertions (@NonNull ICommonsList <ICommonsList <Label>> steps, @NonNull BitSet reached)
   {}
 
@@ -493,6 +502,7 @@ final class XsdExplain
   }
 
   /** One finding of {@link #_explainContent}. */
+  @Immutable
   private static final class CardDefect
   {
     final String m_sKind;

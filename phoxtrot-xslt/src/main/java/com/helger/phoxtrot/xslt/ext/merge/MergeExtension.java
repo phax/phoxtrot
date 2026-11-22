@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmConstants;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
@@ -36,6 +37,7 @@ import com.helger.phoxtrot.xslt.runtime.XsltStateKey;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class MergeExtension implements IXsltExtension
 {
   /**

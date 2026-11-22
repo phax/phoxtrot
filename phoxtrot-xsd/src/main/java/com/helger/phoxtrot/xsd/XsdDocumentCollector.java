@@ -47,6 +47,7 @@ final class XsdDocumentCollector
   private final XsdCompiler m_aC;
 
   /** The state of one {@link #stripVersioning} run: the first vc error. */
+  @NotThreadSafe
   private static final class VcState
   {
     private final EXsdVersion m_eVersion;

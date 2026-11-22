@@ -22,6 +22,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmParser;
 
 /**
@@ -41,6 +42,7 @@ import com.helger.phoxtrot.xdm.XdmParser;
  *        none ({@link XdmParser#setEntityResolver(EntityResolver)}).
  * @author Philip Helger
  */
+@Immutable
 record JaxpParserSettings (boolean loadExternalEntities,
                            @NonNull String accessExternalDtd,
                            @Nullable EntityResolver entityResolver)

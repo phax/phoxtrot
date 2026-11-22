@@ -396,6 +396,7 @@ public final class FnHigherOrder
   }
 
   /** An item of the <code>fn:sort</code> input with its prepared sort key. */
+  @Immutable
   private record SortEntry (IXdmItem item, XdmSequence key)
   {}
 

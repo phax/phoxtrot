@@ -21,6 +21,7 @@ import java.util.Locale;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.CommonsHashSet;
@@ -81,6 +82,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class ResultDocumentExtension implements IXsltExtension
 {
   /**
@@ -107,6 +109,7 @@ public final class ResultDocumentExtension implements IXsltExtension
                                                                                     "build-tree");
 
   /** The compiled instruction. */
+  @Immutable
   private static final class ResultDocumentInstruction extends AbstractInstruction
   {
     private final Avt m_aHref;

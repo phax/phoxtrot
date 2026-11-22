@@ -58,6 +58,7 @@ public final class PackageChecks
    * declaring element, and per name for the modes that exist only through
    * the mode attribute of template rules (they have no declaration).
    */
+  @Immutable
   public record Exposure (@NonNull ICommonsMap <XslElement, String> byElement,
                           @NonNull ICommonsMap <XdmQName, String> implicitModes)
   {}
@@ -66,6 +67,7 @@ public final class PackageChecks
    * One checked xsl:expose: its component kind ("*" for all), visibility and
    * the tokens of its names attribute.
    */
+  @Immutable
   private record ExposeRule (@NonNull XslElement element,
                              @NonNull String kind,
                              @NonNull String visibility,

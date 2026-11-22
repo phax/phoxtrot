@@ -21,6 +21,7 @@ import java.nio.file.Path;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.ICommonsSet;
 import com.helger.phoxtrot.xdm.IXdmNode;
@@ -32,6 +33,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdSchemaDocument
 {
   /** The xs:schema element. */

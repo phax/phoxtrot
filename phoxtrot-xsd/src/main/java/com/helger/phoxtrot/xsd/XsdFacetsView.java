@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -57,6 +58,7 @@ import com.helger.collection.commons.ICommonsList;
  *        <code>optional</code>; empty when unset.
  * @author Philip Helger
  */
+@Immutable
 public record XsdFacetsView (@Nullable Integer length,
                              @Nullable Integer minLength,
                              @Nullable Integer maxLength,

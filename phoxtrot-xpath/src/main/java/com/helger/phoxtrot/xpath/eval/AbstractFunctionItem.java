@@ -16,6 +16,7 @@
  */
 package com.helger.phoxtrot.xpath.eval;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xpath.value.IXdmFunction;
 
 /**
@@ -23,6 +24,7 @@ import com.helger.phoxtrot.xpath.value.IXdmFunction;
  *
  * @author Philip Helger
  */
+@Immutable
 public abstract class AbstractFunctionItem implements IXdmFunction
 {
   /**

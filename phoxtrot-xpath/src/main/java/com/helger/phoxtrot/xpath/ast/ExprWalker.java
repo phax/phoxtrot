@@ -641,6 +641,7 @@ public final class ExprWalker
    * The local variables in scope of a subexpression, innermost first: a
    * persistent list shared by the subexpressions of one scope.
    */
+  @Immutable
   private record LocalScope (@NonNull XdmQName name, @Nullable LocalScope next)
   {
     static boolean contains (@Nullable final LocalScope aScope, @NonNull final XdmQName aName)
@@ -653,6 +654,7 @@ public final class ExprWalker
   }
 
   /** A subexpression still to visit, with the local variables in its scope. */
+  @Immutable
   private record ScopedExpr (@NonNull IExpr expr, @Nullable LocalScope scope)
   {}
 

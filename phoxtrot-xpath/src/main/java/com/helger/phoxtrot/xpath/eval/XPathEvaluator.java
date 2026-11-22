@@ -31,6 +31,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
@@ -249,6 +250,7 @@ public final class XPathEvaluator
    * compared for equality with an expression that has the same value for every candidate. The
    * strings of that value are computed on first use, so within one predicate application.
    */
+  @NotThreadSafe
   private static final class NameComparison
   {
     private final IExpr m_aComparison;

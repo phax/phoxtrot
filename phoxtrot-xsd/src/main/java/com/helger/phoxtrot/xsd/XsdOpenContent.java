@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
+
 /**
  * An XSD 1.1 {open content} property: extra children the content model admits,
  * anywhere (interleave) or after the model (suffix). Mode <code>none</code>
@@ -26,6 +28,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdOpenContent
 {
   static final String MODE_INTERLEAVE = "interleave";

@@ -21,6 +21,8 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.ICommonsList;
@@ -53,6 +55,7 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class UserFunction implements IXPathFunction
 {
   private final XslElement m_aElement;
@@ -132,6 +135,7 @@ public final class UserFunction implements IXPathFunction
    * Identity of a node as part of a memo key: equal only to a key for the
    * same node object, hashed by identity.
    */
+  @Immutable
   private record NodeKey (@NonNull IXdmNode node)
   {
     @Override

@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xslt.pkg;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
@@ -38,6 +39,7 @@ import com.helger.phoxtrot.xslt.tree.XslModule;
 public final class PackageUnit
 {
   /** One xsl:use-package of this package with the unit it loaded. */
+  @Immutable
   public record Use (@NonNull XslElement element, @NonNull PackageUnit used)
   {}
 

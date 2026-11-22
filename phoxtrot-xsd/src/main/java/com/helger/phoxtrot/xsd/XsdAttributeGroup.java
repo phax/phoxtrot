@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 
@@ -28,6 +29,7 @@ import com.helger.collection.commons.ICommonsList;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdAttributeGroup
 {
   ICommonsList <XsdAttributeUse> m_aUses = new CommonsArrayList <> ();

@@ -22,6 +22,8 @@ import java.io.Writer;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -56,9 +58,11 @@ import com.helger.phoxtrot.xslt.tree.XslModule;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class CompiledStylesheet implements XsltExecutable
 {
   /** The global context item declaration. */
+  @Immutable
   public record GlobalContextItem (@Nullable SeqType as, @NonNull String use)
   {}
 
@@ -68,6 +72,7 @@ public final class CompiledStylesheet implements XsltExecutable
    * collation), the function library, the visible global variables and the
    * decimal formats.
    */
+  @Immutable
   public record HostScope (@NonNull XslElement element,
                            @NonNull FunctionLibrary functions,
                            @NonNull ICommonsList <XdmQName> variables,

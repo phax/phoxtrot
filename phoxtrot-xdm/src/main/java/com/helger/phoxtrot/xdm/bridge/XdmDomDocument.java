@@ -34,6 +34,7 @@ import org.w3c.dom.NodeList;
 import org.w3c.dom.ProcessingInstruction;
 import org.w3c.dom.Text;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.EIDKind;
 import com.helger.phoxtrot.xdm.IXdmNode;
 
@@ -43,6 +44,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
  *
  * @author Philip Helger
  */
+@Immutable
 final class XdmDomDocument extends AbstractXdmDomNode implements Document
 {
   XdmDomDocument (@NonNull final XdmDomView aView, @NonNull final IXdmNode aNode)

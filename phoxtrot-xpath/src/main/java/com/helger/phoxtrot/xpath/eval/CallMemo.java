@@ -63,6 +63,7 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 final class CallMemo
 {
   /** What is known about one call site, for one function library state. */
+  @Immutable
   static final class Plan
   {
     private final boolean m_bEligible;
@@ -78,6 +79,7 @@ final class CallMemo
   }
 
   /** The last value of a call, with what it was computed for. */
+  @Immutable
   private record Entry (@NonNull StaticContext staticContext, @Nullable IXdmItem item, @NonNull Object [] tokens, @NonNull XdmSequence value)
   {}
 

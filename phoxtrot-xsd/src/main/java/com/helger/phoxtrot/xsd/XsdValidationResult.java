@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 
@@ -32,6 +33,7 @@ import com.helger.collection.commons.ICommonsList;
  *        The errors, empty when valid.
  * @author Philip Helger
  */
+@Immutable
 public record XsdValidationResult (boolean valid, @NonNull ICommonsList <XsdError> errors)
 {
   /** @return A valid result. */

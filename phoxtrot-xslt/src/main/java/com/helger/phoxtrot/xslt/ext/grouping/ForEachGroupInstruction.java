@@ -23,6 +23,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.Nonnegative;
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.ICommonsList;
@@ -82,6 +83,7 @@ public final class ForEachGroupInstruction
   }
 
   /** One group being formed. */
+  @NotThreadSafe
   private static final class Group
   {
     private final ICommonsList <IXdmItem> m_aItems = new CommonsArrayList <> ();
@@ -239,6 +241,7 @@ public final class ForEachGroupInstruction
    * value is in the bucket of that value, so the first match is the one a scan
    * over all groups would find.
    */
+  @NotThreadSafe
   private static final class GroupIndex
   {
     private final ICollation m_aCollation;
@@ -575,6 +578,7 @@ public final class ForEachGroupInstruction
    * record is retained and the groups are formed at the end of the document,
    * exactly as the buffered execution forms them.
    */
+  @NotThreadSafe
   private final class StreamedGrouping implements IStreamRecordHandler
   {
     private final XsltContext m_aCtx;

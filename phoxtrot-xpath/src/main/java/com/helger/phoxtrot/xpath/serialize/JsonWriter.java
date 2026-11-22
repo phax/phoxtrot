@@ -21,6 +21,7 @@ import java.util.ArrayDeque;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.string.StringHex;
 import com.helger.collection.commons.CommonsHashSet;
@@ -48,6 +49,7 @@ final class JsonWriter
    * A value still to be written on the work stack, with the nesting depth
    * used for indentation.
    */
+  @Immutable
   private record Task (XdmSequence value, int depth)
   {}
 

@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xslt.ext.number;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xslt.compile.IXsltExtension;
 import com.helger.phoxtrot.xslt.compile.XsltExtensionRegistry;
 
@@ -26,6 +27,7 @@ import com.helger.phoxtrot.xslt.compile.XsltExtensionRegistry;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class NumberExtension implements IXsltExtension
 {
   /**

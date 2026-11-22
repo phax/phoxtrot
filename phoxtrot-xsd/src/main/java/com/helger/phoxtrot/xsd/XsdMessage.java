@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * One <code>msg:message</code> entry of an <code>xs:appinfo</code> (namespace
  * {@link XsdConstants#NS_MESSAGES}): a readable diagnostic for an assertion, an
@@ -36,5 +38,6 @@ import org.jspecify.annotations.NonNull;
  *        for both.
  * @author Philip Helger
  */
+@Immutable
 record XsdMessage (@NonNull String rule, @NonNull String lang, @NonNull String text, @NonNull String on)
 {}

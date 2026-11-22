@@ -209,6 +209,7 @@ final class MarkupWriter
    * next child, the qualified name for the end tag, the size of the namespace undo log before the
    * start tag, and the indentation decisions taken when it was opened.
    */
+  @NotThreadSafe
   private static final class Frame
   {
     private final IXdmNode m_aElement;

@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -52,6 +53,7 @@ final class XsdComponentChecks
   private final XsdCompiler m_aC;
 
   /** One entry of the XSD 1.1 consistency table. */
+  @Immutable
   private record EdcEntry (@NonNull Object sig, int alts, @NonNull XsdElementDecl decl)
   {}
 

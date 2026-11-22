@@ -46,6 +46,7 @@ public sealed class XdmCommentNode extends AbstractXdmValueNode
    * {@link IXdmNode} that take a location. The location is kept in two fields of its own instead of
    * the details holder.
    */
+  @NotThreadSafe
   static final class Located extends XdmCommentNode
   {
     private int m_nLine;

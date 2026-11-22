@@ -56,10 +56,12 @@ import com.helger.phoxtrot.xpath.ops.AtomicComparator;
 public final class XdmMap implements IXdmItem
 {
   /** A map entry. */
+  @Immutable
   public record Entry (@NonNull XdmAtomic key, @NonNull XdmSequence value)
   {}
 
   /** An entry as stored in the trie. Never changed after it was made. */
+  @Immutable
   private static final class Slot
   {
     private final Object m_aMapKey;
@@ -85,6 +87,7 @@ public final class XdmMap implements IXdmItem
    * levels exhaust the 32-bit hash and a collision list ends a path, so the
    * recursions below are bounded.
    */
+  @Immutable
   private static final class Node
   {
     private final int m_nBitmap;

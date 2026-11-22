@@ -26,6 +26,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.annotation.style.VisibleForTesting;
 import com.helger.base.wrapper.Wrapper;
@@ -840,6 +841,7 @@ final class XsdInstanceValidator
   }
 
   /** One level of the iterative walk of {@link #_laxAssessSubtree}: an element and the next child to look at. */
+  @NotThreadSafe
   private static final class LaxFrame
   {
     final IXdmNode m_aNode;

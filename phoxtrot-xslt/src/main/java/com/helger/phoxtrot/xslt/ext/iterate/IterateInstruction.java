@@ -21,6 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.Nonnegative;
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.IXdmNode;
@@ -179,6 +180,7 @@ public final class IterateInstruction
    * are carried from one to the next (XSLT 3.0 section 19.8.4.22). A port of
    * go-xslt's <code>strbIterState</code>.
    */
+  @NotThreadSafe
   private final class StreamedIteration implements IStreamRecordHandler
   {
     private final XsltContext m_aBase;

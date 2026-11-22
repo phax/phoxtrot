@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsLinkedHashMap;
 import com.helger.collection.commons.ICommonsList;
@@ -32,6 +33,7 @@ import com.helger.phoxtrot.xpath.CompiledXPath;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdIdentityConstraint
 {
   /** <code>key</code>, <code>keyref</code> or <code>unique</code>. */

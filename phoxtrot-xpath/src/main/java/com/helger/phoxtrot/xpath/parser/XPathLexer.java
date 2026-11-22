@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xpath.parser;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.string.XmlWhitespace;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
@@ -32,6 +33,7 @@ import com.helger.phoxtrot.xpath.XPathException;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XPathLexer
 {
   private final String m_sSrc;

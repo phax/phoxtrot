@@ -144,6 +144,7 @@ final class UnicodeCategories
    * @param jdk
    *        Its category in the running JDK.
    */
+  @Immutable
   private record Difference (int codePoint, @NonNull String pinned, @NonNull String jdk)
   {}
 
@@ -231,6 +232,7 @@ final class UnicodeCategories
    * expression of every category name is built from the differences. The initialisation fails with
    * an {@link IllegalStateException} if the resource is missing.
    */
+  @Immutable
   private static final class Holder
   {
     // First code point of every run of equal category, ascending

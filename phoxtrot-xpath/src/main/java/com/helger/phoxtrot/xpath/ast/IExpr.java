@@ -22,6 +22,7 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.fn.FunctionCallSite;
 import com.helger.phoxtrot.xpath.value.XdmAtomic;
@@ -44,6 +45,7 @@ public sealed interface IExpr
    * built once with the expression and returned by every evaluation; it does
    * not take part in equality.
    */
+  @Immutable
   record LiteralExpr (@NonNull XdmAtomic value, @NonNull XdmSequence sequence) implements IExpr
   {
     /**
@@ -86,10 +88,12 @@ public sealed interface IExpr
   }
 
   /** A variable reference <code>$name</code>. */
+  @Immutable
   record VarRefExpr (@NonNull XdmQName name) implements IExpr
   {}
 
   /** The context item expression <code>.</code> */
+  @Immutable
   record ContextItemExpr () implements IExpr
   {}
 
@@ -99,6 +103,7 @@ public sealed interface IExpr
    * evaluation (see {@link FunctionCallSite}); it does not take part in
    * equality.
    */
+  @Immutable
   record FunctionCallExpr (@NonNull XdmQName name, @NonNull List <IExpr> args, @NonNull FunctionCallSite site) implements
                           IExpr
   {
@@ -117,26 +122,32 @@ public sealed interface IExpr
   }
 
   /** The argument placeholder <code>?</code> of a partial function application. */
+  @Immutable
   record PlaceholderExpr () implements IExpr
   {}
 
   /** A named function reference <code>name#arity</code>. */
+  @Immutable
   record NamedFunctionRefExpr (@NonNull XdmQName name, int arity) implements IExpr
   {}
 
   /** One parameter of an inline function. */
+  @Immutable
   record Param (@NonNull XdmQName name, @Nullable SeqType type)
   {}
 
   /** <code>function($a as T, ...) as R { body }</code> */
+  @Immutable
   record InlineFunctionExpr (@NonNull List <Param> params, @Nullable SeqType returnType, @NonNull IExpr body) implements IExpr
   {}
 
   /** A dynamic function call <code>base(args)</code>; an argument may be a {@link PlaceholderExpr}. */
+  @Immutable
   record DynamicCallExpr (@NonNull IExpr base, @NonNull List <IExpr> args) implements IExpr
   {}
 
   /** The comma operator and parenthesised sequences; the empty sequence has no items. */
+  @Immutable
   record SequenceExpr (@NonNull List <IExpr> items) implements IExpr
   {}
 
@@ -144,14 +155,17 @@ public sealed interface IExpr
    * The logical operators <code>and</code>/<code>or</code> and the
    * arithmetic operators, see {@link EBinaryOp}.
    */
+  @Immutable
   record BinaryExpr (@NonNull EBinaryOp op, @NonNull IExpr left, @NonNull IExpr right) implements IExpr
   {}
 
   /** Unary minus ({@code negate}) or plus. */
+  @Immutable
   record UnaryExpr (boolean negate, @NonNull IExpr operand) implements IExpr
   {}
 
   /** A general, value or node comparison, see {@link EComparisonOp}. */
+  @Immutable
   record ComparisonExpr (@NonNull EComparisonOp op, @NonNull IExpr left, @NonNull IExpr right) implements IExpr
   {}
 
@@ -168,6 +182,7 @@ public sealed interface IExpr
    * @param childTests
    *        The tests of the <code>child::</code> steps, possibly empty.
    */
+  @Immutable
   record StepUnion (@NonNull List <NodeTest> attributeTests, @NonNull List <NodeTest> childTests)
   {
     /**
@@ -245,6 +260,7 @@ public sealed interface IExpr
    * and the operands (see {@link StepUnion}); an evaluator may use it in place
    * of evaluating the operands.
    */
+  @Immutable
   record SetExpr (@NonNull ESetOp op, @NonNull IExpr left, @NonNull IExpr right, @Nullable StepUnion stepUnion) implements
                  IExpr
   {
@@ -273,34 +289,42 @@ public sealed interface IExpr
   }
 
   /** The range expression <code>from to to</code>. */
+  @Immutable
   record RangeExpr (@NonNull IExpr from, @NonNull IExpr to) implements IExpr
   {}
 
   /** The string concatenation operator <code>||</code> with two or more operands. */
+  @Immutable
   record StringConcatExpr (@NonNull List <IExpr> parts) implements IExpr
   {}
 
   /** <code>if (condition) then thenExpr else elseExpr</code> */
+  @Immutable
   record IfExpr (@NonNull IExpr condition, @NonNull IExpr thenExpr, @NonNull IExpr elseExpr) implements IExpr
   {}
 
   /** One variable binding of for, let and quantified expressions. */
+  @Immutable
   record Binding (@NonNull XdmQName name, @Nullable SeqType type, @NonNull IExpr expr)
   {}
 
   /** <code>for $v in e, ... return body</code> */
+  @Immutable
   record ForExpr (@NonNull List <Binding> bindings, @NonNull IExpr body) implements IExpr
   {}
 
   /** <code>let $v := e, ... return body</code> */
+  @Immutable
   record LetExpr (@NonNull List <Binding> bindings, @NonNull IExpr body) implements IExpr
   {}
 
   /** <code>some</code> / <code>every</code> */
+  @Immutable
   record QuantifiedExpr (boolean every, @NonNull List <Binding> bindings, @NonNull IExpr satisfies) implements IExpr
   {}
 
   /** <code>e1 ! e2 ! e3</code> with at least two steps. */
+  @Immutable
   record SimpleMapExpr (@NonNull List <IExpr> steps) implements IExpr
   {}
 
@@ -321,6 +345,7 @@ public sealed interface IExpr
    *        evaluator may use in place of both. <code>null</code> if there is
    *        none.
    */
+  @Immutable
   record StepExpr (@Nullable EAxis axis,
                    boolean axisExplicit,
                    @Nullable NodeTest test,
@@ -359,30 +384,37 @@ public sealed interface IExpr
    * location path. <code>absolute</code> marks a leading <code>/</code>; with
    * no steps it is the root expression <code>/</code>.
    */
+  @Immutable
   record PathExpr (@Nullable IExpr start, boolean absolute, @NonNull List <StepExpr> steps) implements IExpr
   {}
 
   /** A primary expression followed by predicates: <code>$x[1]</code>. */
+  @Immutable
   record FilterExpr (@NonNull IExpr primary, @NonNull List <IExpr> predicates) implements IExpr
   {}
 
   /** <code>operand instance of type</code> */
+  @Immutable
   record InstanceOfExpr (@NonNull IExpr operand, @NonNull SeqType type) implements IExpr
   {}
 
   /** <code>operand treat as type</code> */
+  @Immutable
   record TreatExpr (@NonNull IExpr operand, @NonNull SeqType type) implements IExpr
   {}
 
   /** <code>cast as</code> / <code>castable as</code>; the type is a SingleType (atomic with optional <code>?</code>). */
+  @Immutable
   record CastExpr (@NonNull IExpr operand, @NonNull SeqType type, boolean castable) implements IExpr
   {}
 
   /** <code>map { k : v, ... }</code> */
+  @Immutable
   record MapConstructorExpr (@NonNull List <IExpr> keys, @NonNull List <IExpr> values) implements IExpr
   {}
 
   /** <code>[a, b]</code> (curly = false, one member per item) or <code>array { e }</code> (curly = true). */
+  @Immutable
   record ArrayConstructorExpr (@NonNull List <IExpr> items, boolean curly) implements IExpr
   {}
 
@@ -391,6 +423,7 @@ public sealed interface IExpr
    * form <code>?key</code>, <code>key</code> is <code>null</code> for the
    * wildcard <code>?*</code>.
    */
+  @Immutable
   record LookupExpr (@Nullable IExpr base, @Nullable IExpr key) implements IExpr
   {}
 }

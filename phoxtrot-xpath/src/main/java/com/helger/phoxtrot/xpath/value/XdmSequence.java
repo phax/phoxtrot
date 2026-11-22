@@ -29,6 +29,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.Nonnegative;
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsArrayList;
@@ -308,6 +309,7 @@ public final class XdmSequence implements Iterable <IXdmItem>
    * buffer over to the sequence when it is exactly full and copies it only on
    * the next {@link #add(IXdmItem)}.
    */
+  @NotThreadSafe
   public static final class Builder
   {
     private final int m_nInitialCapacity;
@@ -470,6 +472,7 @@ public final class XdmSequence implements Iterable <IXdmItem>
    * @param <T>
    *        The item type the filling code works with.
    */
+  @NotThreadSafe
   public static final class ListBuilder <T extends IXdmItem> extends AbstractList <T> implements RandomAccess
   {
     private final Builder m_aBuilder = new Builder ();

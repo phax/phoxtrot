@@ -58,6 +58,7 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 public final class DynamicContext
 {
   /** Shared by all contexts derived from one root context. */
+  @NotThreadSafe
   private static final class RunState
   {
     private OffsetDateTime m_aCurrentDateTime = OffsetDateTime.now ();
@@ -111,6 +112,7 @@ public final class DynamicContext
    * then the value is kept. A failure is kept as well and raised again on
    * every later use, so that every reference sees the same outcome.
    */
+  @NotThreadSafe
   private static final class LazyValue
   {
     private Supplier <XdmSequence> m_aSupplier;

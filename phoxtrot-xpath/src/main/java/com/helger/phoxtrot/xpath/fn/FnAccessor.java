@@ -25,6 +25,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
@@ -250,6 +251,7 @@ public final class FnAccessor
   }
 
   /** The document number of one tree and the last node number given out in it. */
+  @NotThreadSafe
   private static final class GeneratedTreeIDs
   {
     private final int m_nDocument;
@@ -268,6 +270,7 @@ public final class FnAccessor
    * make the run keep every node it saw. The counters never go back: an
    * identifier is not given out twice, even after its node was forgotten.
    */
+  @NotThreadSafe
   private static final class GeneratedIDs
   {
     // IXdmNode does not override equals and hashCode: identity semantics
@@ -329,6 +332,7 @@ public final class FnAccessor
    * same <code>fn:path</code> step, with the number of children the parent had
    * when it was counted.
    */
+  @Immutable
   private record SiblingPosition (int position, int parentChildCount)
   {}
 
@@ -337,6 +341,7 @@ public final class FnAccessor
    * {@link #_isSameStep(IXdmNode, IXdmNode)}): the kind, and the name of an
    * element or processing instruction.
    */
+  @Immutable
   private record StepKey (@NonNull ENodeKind kind, @Nullable XdmQName name)
   {}
 
@@ -347,6 +352,7 @@ public final class FnAccessor
    * The keys are the child nodes by identity (weakly, as in
    * {@link GeneratedIDs}), and the values reference no node.
    */
+  @NotThreadSafe
   private static final class SiblingPositions
   {
     private final Map <IXdmNode, SiblingPosition> m_aPositions = new WeakHashMap <> ();

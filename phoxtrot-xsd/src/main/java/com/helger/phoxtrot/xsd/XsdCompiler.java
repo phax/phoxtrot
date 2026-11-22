@@ -22,6 +22,7 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -76,6 +77,7 @@ final class XsdCompiler
                                                                                         "error");
 
   /** A pending top-level component: its declaration plus the document it came from. */
+  @Immutable
   record Work (@NonNull XsdSchemaDocument sd, @NonNull IXdmNode node)
   {}
 
@@ -84,6 +86,7 @@ final class XsdCompiler
    * item type) closing a cycle is a circular derivation; a union member edge
    * is soft.
    */
+  @Immutable
   private record StDep (@NonNull XsdName name, boolean hard)
   {}
 

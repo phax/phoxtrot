@@ -23,6 +23,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -64,6 +65,7 @@ final class XsdUpa
    * group spine is duplicated; element and wildcard terms stay shared. A cyclic
    * group reference keeps its cycle.
    */
+  @NotThreadSafe
   private static final class Unfolder
   {
     private final ICommonsMap <XsdModelGroup, XsdParticle> m_aActive = new CommonsHashMap <> ();

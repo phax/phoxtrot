@@ -45,6 +45,7 @@ import org.xml.sax.ext.EntityResolver2;
 import org.xml.sax.helpers.DefaultHandler;
 
 import com.helger.annotation.Nonnegative;
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.io.nonblocking.NonBlockingStringReader;
@@ -120,6 +121,7 @@ public class XdmParser
    * without a system ID gets the absolute system ID of the entity, so that the base URI of the
    * nodes read from it stays the entity's URI.
    */
+  @Immutable
   private static final class UserEntityResolver implements EntityResolver2
   {
     private final EntityResolver m_aDelegate;

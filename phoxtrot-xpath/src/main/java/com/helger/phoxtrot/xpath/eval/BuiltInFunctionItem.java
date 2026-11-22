@@ -21,6 +21,7 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.ast.SeqType;
@@ -37,6 +38,7 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class BuiltInFunctionItem extends AbstractFunctionItem
 {
   private final FunctionDef m_aDef;

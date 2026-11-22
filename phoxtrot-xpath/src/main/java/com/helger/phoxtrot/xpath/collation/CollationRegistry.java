@@ -23,6 +23,7 @@ import java.util.Locale;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.compare.CompareHelper;
@@ -101,6 +102,7 @@ public final class CollationRegistry
    * U+0130 becomes two chars), so it keeps the default substring matching of
    * {@link ICollation} on the original strings.
    */
+  @Immutable
   private abstract static class AbstractFoldingCollation implements ICollation
   {
     private final String m_sUri;
@@ -143,6 +145,7 @@ public final class CollationRegistry
   }
 
   /** ASCII letters fold, nothing else (HTML ASCII case-insensitive). */
+  @Immutable
   private static final class AsciiCaseInsensitiveCollation extends AbstractFoldingCollation
   {
     AsciiCaseInsensitiveCollation (@NonNull final String sUri)
@@ -201,6 +204,7 @@ public final class CollationRegistry
   }
 
   /** Full lower-casing (the QT3 catalogue's case-blind collation). */
+  @Immutable
   private static final class CaseBlindCollation extends AbstractFoldingCollation
   {
     CaseBlindCollation (@NonNull final String sUri)

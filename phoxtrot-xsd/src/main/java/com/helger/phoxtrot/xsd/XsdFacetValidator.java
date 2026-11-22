@@ -51,6 +51,7 @@ final class XsdFacetValidator
    *        <code>true</code> if the datatype's partial order holds no relation
    *        between the two, the bound fails.
    */
+  @Immutable
   private record BoundOrder (int c, boolean ok, boolean incomparable)
   {}
 

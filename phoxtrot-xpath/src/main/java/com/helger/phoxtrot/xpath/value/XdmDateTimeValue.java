@@ -25,6 +25,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.string.XmlWhitespace;
 import com.helger.phoxtrot.xpath.XPathException;
 
@@ -148,6 +149,7 @@ public final class XdmDateTimeValue
   /**
    * Lexical scanner state for one parse call.
    */
+  @NotThreadSafe
   private static final class Scanner
   {
     private final String m_s;

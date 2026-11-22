@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xpath;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * Why an expression or pattern is not motionless: the innermost construct that has the verdict of the whole on its
  * own (see {@link XPathStreamabilityAnalyzer}). It is a hint for the author, without position in the expression text.
@@ -29,6 +31,7 @@ import org.jspecify.annotations.NonNull;
  *        <code>for</code>. Never <code>null</code>.
  * @author Philip Helger
  */
+@Immutable
 public record XPathStreamabilityReason (@NonNull EStreamabilityConstruct construct, @NonNull String name)
 {
   @Override

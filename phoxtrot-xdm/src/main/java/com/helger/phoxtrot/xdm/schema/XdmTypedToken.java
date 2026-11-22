@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xdm.schema;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmQName;
 
 /**
@@ -34,5 +35,6 @@ import com.helger.phoxtrot.xdm.XdmQName;
  *        type, or the type itself).
  * @author Philip Helger
  */
+@Immutable
 public record XdmTypedToken (@NonNull String lexical, @NonNull XdmQName builtinType, @NonNull IXdmTypeDefinition type)
 {}

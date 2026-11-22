@@ -38,6 +38,7 @@ import org.jspecify.annotations.Nullable;
 import org.xml.sax.InputSource;
 
 import com.helger.annotation.Nonnegative;
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.string.XmlWhitespace;
@@ -99,6 +100,7 @@ public final class XdmStreamReader implements AutoCloseable
    * A queued event: what was read, the node it concerns and the depth of that node (see
    * {@link XdmStreamReader#getDepth()}).
    */
+  @Immutable
   private record Event (@NonNull EEvent kind, @NonNull AbstractXdmNode node, int depth)
   {}
 

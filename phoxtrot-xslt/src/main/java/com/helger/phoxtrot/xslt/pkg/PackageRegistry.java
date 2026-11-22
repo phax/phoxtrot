@@ -21,6 +21,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.InputSource;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.io.nonblocking.NonBlockingStringReader;
 import com.helger.collection.commons.CommonsArrayList;
@@ -60,6 +61,7 @@ public final class PackageRegistry
    * @param baseUri
    *        The URI of the package module or <code>null</code>.
    */
+  @Immutable
   public record ResolvedPackage (@NonNull String key,
                                  @NonNull String name,
                                  @NonNull PackageVersion version,
@@ -73,6 +75,7 @@ public final class PackageRegistry
    * <code>m_bNotPackage</code> when something else was parsed), and its name
    * and version.
    */
+  @NotThreadSafe
   private static final class Entry
   {
     private final XsltCompileOptions.PackageSource m_aSource;

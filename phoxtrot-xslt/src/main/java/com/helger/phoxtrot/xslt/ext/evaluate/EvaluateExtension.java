@@ -21,6 +21,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.CommonsLinkedHashMap;
 import com.helger.collection.commons.ICommonsList;
@@ -71,6 +72,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class EvaluateExtension implements IXsltExtension
 {
   /** Extension data key: the function library of dynamic expressions. */

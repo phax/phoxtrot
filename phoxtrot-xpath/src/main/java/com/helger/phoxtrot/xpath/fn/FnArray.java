@@ -57,6 +57,7 @@ public final class FnArray
   /**
    * A member of the <code>array:sort</code> input with its prepared sort key.
    */
+  @Immutable
   private record SortEntry (XdmSequence member, XdmSequence key)
   {}
 

@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xslt.tree;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.phoxtrot.xdm.XdmConstants;
 
 /**
@@ -26,6 +27,7 @@ import com.helger.phoxtrot.xdm.XdmConstants;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class XslText extends XslNode
 {
   private final String m_sValue;

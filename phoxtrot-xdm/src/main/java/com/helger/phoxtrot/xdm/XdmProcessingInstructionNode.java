@@ -56,6 +56,7 @@ public sealed class XdmProcessingInstructionNode extends AbstractXdmValueNode
    * {@link IXdmNode} that take a location. The location is kept in two fields of its own instead of
    * the details holder.
    */
+  @NotThreadSafe
   static final class Located extends XdmProcessingInstructionNode
   {
     private int m_nLine;

@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xslt.model;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.XdmQName;
@@ -30,6 +32,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class SpaceRules
 {
   /**
@@ -39,6 +42,7 @@ public final class SpaceRules
    * from xsl:strip-space (<code>strip</code>) or xsl:preserve-space, and the
    * import precedence of the declaration.
    */
+  @Immutable
   public record Rule (@NonNull String namespaceUri,
                       @NonNull String localName,
                       boolean anyNamespace,

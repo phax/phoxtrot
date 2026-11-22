@@ -22,6 +22,7 @@ import java.util.function.Function;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.ast.IExpr;
@@ -63,10 +64,12 @@ public final class FunctionCallSite
    * <code>frozen</code> tells whether the library was frozen before the
    * lookup.
    */
+  @Immutable
   private record Entry (@NonNull FunctionLibrary library, boolean frozen, long stamp, @Nullable FunctionDef def)
   {}
 
   /** The memo plan of the evaluator for one library state. */
+  @Immutable
   private record MemoPlanEntry (@NonNull FunctionLibrary library, boolean frozen, long stamp, @NonNull Object plan)
   {}
 
@@ -75,6 +78,7 @@ public final class FunctionCallSite
    * function definition, for one setting of the XPath 1.0 compatibility mode.
    * Immutable.
    */
+  @Immutable
   public static final class ConvertedLiterals
   {
     private final FunctionDef m_aDef;

@@ -22,6 +22,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsLinkedHashMap;
@@ -38,6 +39,7 @@ import com.helger.phoxtrot.xpath.fn.FnAccessor;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class XslElement extends XslNode
 {
   /** XSLT 3.0 as a version number. */

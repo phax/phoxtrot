@@ -23,6 +23,7 @@ import org.w3c.dom.Element;
 import org.w3c.dom.Node;
 import org.w3c.dom.TypeInfo;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmConstants;
 import com.helger.phoxtrot.xdm.XdmQName;
@@ -35,6 +36,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
  *
  * @author Philip Helger
  */
+@Immutable
 final class XdmDomNamespaceAttr extends AbstractXdmDomNode implements Attr
 {
   private final IXdmNode m_aOwner;

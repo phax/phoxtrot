@@ -63,6 +63,7 @@ final class XsdIdentityPath
    * One step: its kind and the expanded name it tests, <code>null</code>
    * meaning any namespace or any local name.
    */
+  @Immutable
   private static final class Step
   {
     private final EStepKind m_eKind;
@@ -92,6 +93,7 @@ final class XsdIdentityPath
   }
 
   /** One alternative of the union: an optional <code>.//</code> and its steps. */
+  @Immutable
   private static final class Alternative
   {
     private final boolean m_bDescendant;

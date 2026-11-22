@@ -21,6 +21,7 @@ import java.util.ArrayDeque;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.ICommonsList;
@@ -53,6 +54,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class TryCatchExtension implements IXsltExtension
 {
   /** The namespace of the err:* variables. */
@@ -73,6 +75,7 @@ public final class TryCatchExtension implements IXsltExtension
    * One name test of xsl:catch/@errors; <code>null</code> parts are
    * wildcards.
    */
+  @Immutable
   private record NameTest (@Nullable String namespaceUri, @Nullable String localName)
   {
     boolean matches (@NonNull final XdmQName aCode)
@@ -86,6 +89,7 @@ public final class TryCatchExtension implements IXsltExtension
    * One compiled xsl:catch: the name tests of its errors attribute and either
    * its select expression or its content (never both).
    */
+  @Immutable
   private record Catch (@NonNull ICommonsList <NameTest> tests,
                         @Nullable XPathExpr select,
                         @Nullable SequenceConstructor body)

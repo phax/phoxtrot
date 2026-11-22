@@ -30,6 +30,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.string.StringHelper;
 import com.helger.collection.map.IntIntMap;
@@ -162,6 +163,7 @@ public final class FormatDateTime
   private static final FormatDateTime INSTANCE = new FormatDateTime ();
 
   /** The per-call decisions for $language, $calendar and $place. */
+  @NotThreadSafe
   private static final class Options
   {
     private boolean m_bLangFallback;
@@ -174,14 +176,17 @@ public final class FormatDateTime
   }
 
   /** A width modifier: 0 means unspecified. */
+  @Immutable
   private record Width (String modifier, int min, int max)
   {}
 
   /** A parsed timezone digit pattern. */
+  @Immutable
   private record TzPattern (int hourDigits, int minuteDigits, String separator, int zero)
   {}
 
   /** A parsed fractional-seconds pattern. */
+  @NotThreadSafe
   private static final class FracPattern
   {
     private int m_nMandatory;

@@ -24,6 +24,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -65,6 +66,7 @@ final class XsdContentMatcher
    * @param start
    *        The index of the first child it may consume.
    */
+  @Immutable
   private record MKey (XsdParticle particle, int start)
   {}
 
@@ -72,6 +74,7 @@ final class XsdContentMatcher
    * One matching run over a fixed child list. The result sets of its methods
    * are memoised and shared: they must not be modified.
    */
+  @NotThreadSafe
   private static final class Matcher
   {
     private final XsdSchema m_aSchema;

@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xslt.ext.sourcedocument;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmParseException;
@@ -56,6 +57,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class SourceDocumentExtension implements IXsltExtension
 {
   /**

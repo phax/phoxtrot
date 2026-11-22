@@ -148,6 +148,7 @@ public final class SortKeyDef
   }
 
   /** The evaluated attributes of a sort key. */
+  @Immutable
   private record Settings (boolean descending, @Nullable String dataType, int caseOrder, @Nullable ICollation collation)
   {}
 
@@ -408,6 +409,7 @@ public final class SortKeyDef
    * themselves: xsl:for-each-group sorts groups, xsl:merge compares merge
    * keys. Valid for one execution of the instruction only.
    */
+  @Immutable
   public static final class Evaluated
   {
     private final ICommonsList <SortKeyDef> m_aKeys;

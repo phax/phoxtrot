@@ -55,6 +55,7 @@ import com.helger.phoxtrot.xpath.value.XdmDurationValue;
 public final class AtomicCaster
 {
   /** Inclusive bounds of a derived integer type; <code>null</code> is unbounded. */
+  @Immutable
   private record IntRange (@Nullable BigInteger lo, @Nullable BigInteger hi)
   {}
 

@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xdm.bridge;
 import org.jspecify.annotations.NonNull;
 import org.w3c.dom.Comment;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmNode;
 
 /**
@@ -26,6 +27,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
  *
  * @author Philip Helger
  */
+@Immutable
 final class XdmDomComment extends AbstractXdmDomCharacterData implements Comment
 {
   XdmDomComment (@NonNull final XdmDomView aView, @NonNull final IXdmNode aNode)

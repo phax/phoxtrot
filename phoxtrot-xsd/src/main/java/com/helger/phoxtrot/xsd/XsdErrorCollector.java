@@ -20,6 +20,8 @@ import java.util.Comparator;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 
@@ -32,9 +34,11 @@ import com.helger.collection.commons.ICommonsList;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdErrorCollector
 {
   /** An error with the msg:message entries its wording is chosen from. */
+  @Immutable
   record Entry (@NonNull XsdError error, @NonNull ICommonsList <XsdMessage> messages)
   {}
 

@@ -25,6 +25,7 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
@@ -374,6 +375,7 @@ final class PatternMatcher
    * {@link PatternMatcher#getLastStep(IExpr.PathExpr)}): the effective axis, the node test and the principal node
    * kind of the axis. Immutable, so a compiled pattern can share it between threads.
    */
+  @Immutable
   static final class LastStep
   {
     private final EAxis m_eAxis;
@@ -502,6 +504,7 @@ final class PatternMatcher
    * parentless node itself: child-or-top, attribute-or-top). Immutable, so a compiled pattern can share it between
    * threads.
    */
+  @Immutable
   static final class DirectPath
   {
     private final boolean m_bAbsolute;
@@ -616,6 +619,7 @@ final class PatternMatcher
   }
 
   /** The search of one path for one candidate. */
+  @NotThreadSafe
   private final class PathSearch
   {
     private final IExpr.PathExpr m_aPath;

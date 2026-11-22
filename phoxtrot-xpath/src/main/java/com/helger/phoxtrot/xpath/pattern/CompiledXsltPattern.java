@@ -125,6 +125,7 @@ public final class CompiledXsltPattern implements XsltPattern
    * A part of a pattern still to be split into union paths, with the predicates of the enclosing
    * parenthesised unions that are distributed over its paths (in the order they apply).
    */
+  @Immutable
   private record PendingPart (@NonNull IExpr expr, @NonNull List <IExpr> predicates)
   {}
 

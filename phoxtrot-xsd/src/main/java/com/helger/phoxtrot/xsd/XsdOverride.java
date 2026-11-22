@@ -64,6 +64,7 @@ final class XsdOverride
    * @param dstParent
    *        The copy that receives the copy of <code>src</code> as last child.
    */
+  @Immutable
   private record CloneStep (@NonNull IXdmNode src, @NonNull IXdmNode dstParent)
   {}
 

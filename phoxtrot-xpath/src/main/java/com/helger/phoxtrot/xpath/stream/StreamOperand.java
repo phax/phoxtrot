@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xpath.stream;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * One operand of a construct, already classified, as input to the general
  * streamability rules (XSLT 3.0 section 19.8.1, see
@@ -52,6 +54,7 @@ import org.jspecify.annotations.NonNull;
  *        XTSE3430 diagnostic, see {@link StreamContext#markDefinite()}.
  * @author Philip Helger
  */
+@Immutable
 public record StreamOperand (@NonNull EPosture posture,
                              @NonNull ESweep sweep,
                              @NonNull EStreamUsage usage,

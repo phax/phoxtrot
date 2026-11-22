@@ -22,6 +22,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.base.array.ArrayHelper;
 import com.helger.collection.commons.CommonsArrayList;
@@ -46,6 +47,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class OutputDefinition
 {
   /** All serialization attributes of xsl:output. */

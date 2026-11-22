@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.CommonsHashSet;
@@ -40,6 +42,7 @@ import com.helger.phoxtrot.xpath.value.EAtomicType;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdValidationRun
 {
   /**
@@ -66,6 +69,7 @@ final class XsdValidationRun
    * <code>childModel</code>): what would otherwise be recomputed for every
    * element of the instance.
    */
+  @NotThreadSafe
   static final class ChildModel
   {
     final XsdParticle m_aParticle;
@@ -112,10 +116,12 @@ final class XsdValidationRun
   }
 
   /** The element and the node an ID value is bound to (go-xslt <code>idBinding</code>). */
+  @Immutable
   private record IdBinding (IXdmNode el, IXdmNode src)
   {}
 
   /** An attribute a value constraint supplied (go-xslt <code>defaultAttr</code>). */
+  @Immutable
   record DefaultAttr (@NonNull XsdName name, @NonNull String value, @Nullable IXsdType type)
   {}
 
@@ -124,6 +130,7 @@ final class XsdValidationRun
    * or element children (cvc-elt.5.1), and the simple type it was validated
    * against.
    */
+  @Immutable
   record DefaultContent (@NonNull String value, @NonNull XsdSimpleType type)
   {}
 

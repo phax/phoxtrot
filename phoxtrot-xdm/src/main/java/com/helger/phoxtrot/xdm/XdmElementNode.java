@@ -263,6 +263,7 @@ public sealed class XdmElementNode extends AbstractXdmParentNode
    * {@link IXdmNode} that take a location. The location is kept in two fields of its own instead of
    * the details holder.
    */
+  @NotThreadSafe
   static final class Located extends XdmElementNode
   {
     private int m_nLine;

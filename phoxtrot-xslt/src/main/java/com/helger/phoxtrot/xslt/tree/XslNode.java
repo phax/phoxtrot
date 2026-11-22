@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xslt.tree;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
+
 /**
  * A node of a stylesheet module after static processing (use-when, shadow
  * attributes): either an element or a text node. Comments and processing
@@ -26,6 +28,7 @@ import org.jspecify.annotations.Nullable;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public abstract class XslNode
 {
   private final XslModule m_aModule;

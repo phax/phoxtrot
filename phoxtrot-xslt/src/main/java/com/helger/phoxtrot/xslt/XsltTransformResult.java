@@ -85,6 +85,7 @@ public record XsltTransformResult (@NonNull XdmSequence principalRaw,
   }
 
   /** One xsl:result-document result. */
+  @Immutable
   public record SecondaryResult (@NonNull String href,
                                  @NonNull XdmSequence raw,
                                  @Nullable IXdmNode tree,

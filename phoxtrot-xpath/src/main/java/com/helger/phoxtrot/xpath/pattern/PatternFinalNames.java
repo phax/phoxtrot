@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmQName;
 
 /**
@@ -33,5 +34,6 @@ import com.helger.phoxtrot.xdm.XdmQName;
  *        The attribute names.
  * @author Philip Helger
  */
+@Immutable
 public record PatternFinalNames (@NonNull List <XdmQName> elementNames, @NonNull List <XdmQName> attributeNames)
 {}

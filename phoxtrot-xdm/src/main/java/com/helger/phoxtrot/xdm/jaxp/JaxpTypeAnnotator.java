@@ -29,6 +29,7 @@ import org.xml.sax.ContentHandler;
 import org.xml.sax.Locator;
 import org.xml.sax.SAXException;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -57,6 +58,7 @@ final class JaxpTypeAnnotator implements ContentHandler
   private static final XdmQName ANY_TYPE = new XdmQName (XdmConstants.NS_XS, "anyType", "xs");
 
   // The annotation and the value type of a node, compared by identity
+  @Immutable
   private record TypeKey (@NonNull TypeInfo typeInfo, @NonNull TypeInfo valueTypeInfo)
   {
     @Override

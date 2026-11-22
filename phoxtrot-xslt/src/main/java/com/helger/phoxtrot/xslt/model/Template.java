@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xslt.model;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
@@ -34,6 +36,7 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class Template
 {
   /**
@@ -42,6 +45,7 @@ public final class Template
    * <code>as</code> attribute) and the trimmed <code>use</code> value
    * (required, optional or absent).
    */
+  @Immutable
   public record ContextItemDecl (@Nullable SeqType as, @NonNull String use)
   {}
 

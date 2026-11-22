@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xpath.stream;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * The result of a streamability classification: a posture and a sweep (XSLT
  * 3.0 section 19.7).
@@ -28,6 +30,7 @@ import org.jspecify.annotations.NonNull;
  *        The sweep.
  * @author Philip Helger
  */
+@Immutable
 public record PostureSweep (@NonNull EPosture posture, @NonNull ESweep sweep)
 {
   /** Grounded and motionless: the result for an absent operand. */

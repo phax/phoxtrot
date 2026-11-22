@@ -32,6 +32,7 @@ import org.w3c.dom.Node;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.UserDataHandler;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.IXdmNode;
@@ -43,6 +44,7 @@ import com.helger.phoxtrot.xdm.XdmConstants;
  *
  * @author Philip Helger
  */
+@Immutable
 public abstract sealed class AbstractXdmDomNode implements Node permits
                                                 XdmDomDocument,
                                                 XdmDomElement,
@@ -52,6 +54,7 @@ public abstract sealed class AbstractXdmDomNode implements Node permits
                                                 XdmDomProcessingInstruction
 {
   /** One pair of nodes compared by {@link #isEqualNode(Node)}. */
+  @Immutable
   private record Pair (@NonNull Node left, @NonNull Node right)
   {}
 

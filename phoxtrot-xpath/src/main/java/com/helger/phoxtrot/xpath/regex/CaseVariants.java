@@ -50,6 +50,7 @@ final class CaseVariants
    * Lazily initialised table of the case variant classes, built on first use
    * of {@link CaseVariants#getVariants(int)}.
    */
+  @Immutable
   private static final class Holder
   {
     // For every code point with case variants: all members of its class

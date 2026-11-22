@@ -20,6 +20,7 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.base.string.StringHelper;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.context.EXsdVersion;
@@ -34,6 +35,7 @@ import com.helger.phoxtrot.xpath.regex.XPathRegex;
  *
  * @author Philip Helger
  */
+@Immutable
 final class XsdPattern
 {
   private final String m_sSource;

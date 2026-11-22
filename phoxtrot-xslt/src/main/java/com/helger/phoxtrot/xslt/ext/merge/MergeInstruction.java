@@ -20,6 +20,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.CommonsLinkedHashMap;
@@ -70,6 +71,7 @@ public final class MergeInstruction
   private static final XdmQName SNAPSHOT = new XdmQName (XdmConstants.NS_FN, "snapshot");
 
   /** A compiled xsl:merge-source. */
+  @Immutable
   private record Source (@NonNull XslElement element,
                          @Nullable String name,
                          @NonNull XPathExpr select,
@@ -84,6 +86,7 @@ public final class MergeInstruction
   {}
 
   /** One item of an input sequence with its merge key values. */
+  @Immutable
   private record Entry (@NonNull IXdmItem item, int source, @NonNull XdmAtomic [] keys)
   {}
 
@@ -91,6 +94,7 @@ public final class MergeInstruction
    * One input sequence of the merge: the entries of a source evaluated in
    * full, or the records of a document read as a stream, one at a time.
    */
+  @NotThreadSafe
   private static final class Input
   {
     private final Source m_aSource;

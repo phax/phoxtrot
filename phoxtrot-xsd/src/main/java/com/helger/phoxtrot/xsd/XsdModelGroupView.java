@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -29,6 +30,7 @@ import com.helger.collection.commons.ICommonsList;
  *        The particles, in order.
  * @author Philip Helger
  */
+@Immutable
 public record XsdModelGroupView (@NonNull EXsdCompositor compositor, @NonNull ICommonsList <XsdParticleView> particles) implements
                                 IXsdTermView
 {}

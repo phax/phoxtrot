@@ -38,6 +38,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.io.nonblocking.NonBlockingStringReader;
@@ -219,6 +220,7 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
   private static final Pattern PSEUDO_ATTR = Pattern.compile ("([A-Za-z_][\\w.-]*)\\s*=\\s*(?:\"([^\"]*)\"|'([^']*)')");
 
   /** The identity stylesheet, compiled once. */
+  @Immutable
   private static final class IdentityHolder
   {
     static final XsltExecutable IDENTITY = XsltCompiler.compile ("<xsl:stylesheet version='3.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'>" +

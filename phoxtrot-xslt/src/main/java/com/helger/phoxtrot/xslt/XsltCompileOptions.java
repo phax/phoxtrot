@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xslt;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsArrayList;
@@ -62,6 +63,7 @@ public final class XsltCompileOptions
    *        The package version, or <code>null</code> to use
    *        xsl:package/@package-version.
    */
+  @Immutable
   public record PackageSource (@Nullable String text,
                                @Nullable IXdmNode node,
                                @Nullable String baseUri,
@@ -96,6 +98,7 @@ public final class XsltCompileOptions
    * @param systemId
    *        The absolute URI of the schema document.
    */
+  @Immutable
   public record HostSchema (@Nullable String namespace, @NonNull String systemId)
   {}
 

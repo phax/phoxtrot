@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
@@ -56,6 +57,7 @@ import com.helger.phoxtrot.xpath.ast.SeqType;
  *        declared-streamable.
  * @author Philip Helger
  */
+@Immutable
 public record StreamFunctionSignature (@NonNull EStreamFunctionCategory category,
                                        @NonNull List <EStreamUsage> paramUsages,
                                        @NonNull EStreamUsage firstAdjust,

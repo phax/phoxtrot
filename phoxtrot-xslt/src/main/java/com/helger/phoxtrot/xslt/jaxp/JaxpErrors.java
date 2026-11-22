@@ -49,6 +49,7 @@ final class JaxpErrors
    * A stylesheet location: module URI, 1-based line and column, -1 where
    * unknown (as {@link SourceLocator} wants it).
    */
+  @Immutable
   record Location (@Nullable String systemId, int line, int column) implements SourceLocator
   {
     @Nullable
@@ -86,6 +87,7 @@ final class JaxpErrors
   }
 
   /** The default error listener: warnings and errors are logged, fatal errors thrown. */
+  @Immutable
   static final class LoggingErrorListener implements ErrorListener
   {
     public void warning (@NonNull final TransformerException ex)

@@ -48,6 +48,7 @@ public final class PackageVersionRanges
    * lower bound <code>lo</code> and/or upper bound <code>hi</code> for "V+",
    * "V to W", "to W" and their ".*" forms (<code>hiIsPrefix</code>).
    */
+  @Immutable
   private record Range (boolean any,
                         long @Nullable [] prefix,
                         @Nullable PackageVersion exact,

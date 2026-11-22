@@ -23,6 +23,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.string.StringHelper;
 import com.helger.collection.commons.CommonsArrayList;
@@ -48,6 +49,7 @@ public final class FnUri
    * A URI reference split into its five RFC 3986 components (appendix B). A
    * <code>null</code> component is absent, which differs from an empty one.
    */
+  @NotThreadSafe
   private static final class UriRef
   {
     private String m_sScheme;

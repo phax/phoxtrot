@@ -90,6 +90,7 @@ public final class SchemaImportCompiler
                                                      "<xs:attribute name='id' type='xs:ID'/>" +
                                                      "</xs:schema>";
 
+  @Immutable
   private record Decl (@NonNull XdmSchemaSource source, int precedence)
   {}
 

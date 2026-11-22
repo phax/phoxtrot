@@ -45,9 +45,11 @@ public final class XsltState
   /** A state with nothing set. */
   public static final XsltState EMPTY = new XsltState (null, null, null, null, null);
 
+  @Immutable
   private record Tunnel (@NonNull XdmQName name, @NonNull XdmSequence value, @Nullable Tunnel next)
   {}
 
+  @Immutable
   private record Slot (@NonNull XsltStateKey <?> key, @Nullable Object value, @Nullable Slot next)
   {}
 

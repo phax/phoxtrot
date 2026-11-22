@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -47,6 +48,7 @@ import com.helger.collection.commons.ICommonsList;
  *        wildcard).
  * @author Philip Helger
  */
+@Immutable
 public record XsdNodeType (@NonNull ICommonsList <Integer> elementPath,
                            @Nullable XsdName attribute,
                            @NonNull IXsdTypeDefinitionView type,

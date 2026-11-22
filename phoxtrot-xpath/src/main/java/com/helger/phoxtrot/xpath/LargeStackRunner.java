@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.wrapper.Wrapper;
@@ -71,6 +72,7 @@ public final class LargeStackRunner
    * many as there are concurrent calls (no queue, so a call never waits for another one), each kept
    * for {@link #POOL_KEEP_ALIVE_SECONDS} after its last call.
    */
+  @ThreadSafe
   private static final class PoolHolder
   {
     private static final AtomicInteger THREAD_COUNTER = new AtomicInteger (0);

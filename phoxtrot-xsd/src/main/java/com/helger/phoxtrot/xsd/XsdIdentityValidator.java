@@ -20,6 +20,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
@@ -68,6 +69,7 @@ final class XsdIdentityValidator
    * The set of key tuples gathered for one key/unique constraint at one scope
    * element (go-xslt <code>keyTable</code>).
    */
+  @NotThreadSafe
   static final class KeyTable
   {
     private final ICommonsSet <String> m_aTuples = new CommonsHashSet <> ();

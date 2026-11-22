@@ -24,6 +24,7 @@ import java.util.Arrays;
 import org.jspecify.annotations.NonNull;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.string.StringHelper;
 import com.helger.collection.commons.ICommonsList;
@@ -49,6 +50,7 @@ public final class FormatNumber
    * A format-number input: an exact non-negative magnitude with its sign, or a
    * non-finite value.
    */
+  @NotThreadSafe
   private static final class Input
   {
     private BigDecimal m_aAbs;
@@ -61,6 +63,7 @@ public final class FormatNumber
   }
 
   /** The analysis of one sub-picture (F&amp;O 4.7.4). */
+  @NotThreadSafe
   private static final class SubPicture
   {
     private String m_sPrefix = "";

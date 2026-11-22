@@ -69,6 +69,7 @@ public final class ResultDrain
   private static final AtomicLong DRAINED_RUNS = new AtomicLong (0);
 
   /** An element (or the document node) under construction. */
+  @NotThreadSafe
   private static final class Level
   {
     private final ContentOutput m_aContent;

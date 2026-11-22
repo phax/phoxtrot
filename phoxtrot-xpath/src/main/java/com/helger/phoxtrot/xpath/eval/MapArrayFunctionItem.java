@@ -21,6 +21,7 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.ast.SeqType;
@@ -36,6 +37,7 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
  *
  * @author Philip Helger
  */
+@Immutable
 final class MapArrayFunctionItem extends AbstractFunctionItem
 {
   private final IXdmItem m_aMapOrArray;

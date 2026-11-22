@@ -26,6 +26,7 @@ import java.util.function.Predicate;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -96,10 +97,12 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
 public final class StylesheetCompiler
 {
   /** An xsl:namespace-alias. */
+  @Immutable
   public record NamespaceAlias (@NonNull String resultPrefix, @NonNull String resultUri, int precedence)
   {}
 
   /** A reference from xsl:call-template, checked when all templates are known. */
+  @Immutable
   private record CallTemplateRef (@NonNull XslElement element,
                                   @NonNull XdmQName name,
                                   @NonNull ICommonsList <XdmQName> nonTunnelParams)
@@ -109,6 +112,7 @@ public final class StylesheetCompiler
    * A reference to an attribute set ([xsl:]use-attribute-sets), checked when
    * all attribute sets are known.
    */
+  @Immutable
   private record AttributeSetRef (@NonNull XslElement element, @NonNull XdmQName name)
   {}
 
@@ -116,10 +120,12 @@ public final class StylesheetCompiler
    * The xsl:function that currently wins for a name and arity, with the import
    * precedence of its declaration.
    */
+  @Immutable
   private record FunctionEntry (@NonNull UserFunction function, int precedence)
   {}
 
   /** The key of an xsl:namespace-alias: its package and literal namespace URI. */
+  @Immutable
   private record AliasKey (@NonNull PackageUnit unit, @NonNull String literalUri)
   {}
 
@@ -130,6 +136,7 @@ public final class StylesheetCompiler
    * XTSE0630, XTSE0660, XTSE0770, XTSE0810), so the error is raised only by
    * {@link #check(String)} once all declarations are known.
    */
+  @NotThreadSafe
   private static final class DuplicateTracker
   {
     private final ICommonsMap <Object, Integer> m_aHighest = new CommonsHashMap <> ();
@@ -185,6 +192,7 @@ public final class StylesheetCompiler
    * the return type, each <code>item()*</code> where no <code>as</code>
    * attribute is given.
    */
+  @Immutable
   private record FunctionSignature (@NonNull ICommonsList <SeqType> paramTypes, @NonNull SeqType returnType)
   {}
 

@@ -23,6 +23,7 @@ import java.util.Locale;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.string.StringHelper;
 import com.helger.collection.commons.CommonsArrayList;
@@ -76,6 +77,7 @@ final class RegexTranslator
    * @param javaGroups
    *        Per XPath group (index 1..groupCount) the Java group number.
    */
+  @Immutable
   record Result (@NonNull String javaPattern,
                  @Nullable String builtInJavaPattern,
                  int groupCount,
@@ -84,6 +86,7 @@ final class RegexTranslator
   {}
 
   /** A parsed character class expression. */
+  @NotThreadSafe
   private static final class CharClass
   {
     boolean m_bNegated;

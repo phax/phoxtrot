@@ -25,6 +25,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.wrapper.Wrapper;
 import com.helger.collection.map.ConcurrentBoundedCache;
 import com.helger.phoxtrot.xpath.XPathException;
@@ -70,6 +71,7 @@ public final class XPathRegex
    * the dynamic context now and then, so that a catastrophically backtracking
    * expression can be cancelled.
    */
+  @NotThreadSafe
   private static final class InterruptibleCharSequence implements CharSequence
   {
     private final String m_sValue;

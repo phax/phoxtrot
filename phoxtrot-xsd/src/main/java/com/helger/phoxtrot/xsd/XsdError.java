@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * A single schema-compile or instance-validation error.
  *
@@ -45,6 +47,7 @@ import org.jspecify.annotations.NonNull;
  *        declaration concerned; empty otherwise.
  * @author Philip Helger
  */
+@Immutable
 public record XsdError (int line,
                         int column,
                         @NonNull String code,

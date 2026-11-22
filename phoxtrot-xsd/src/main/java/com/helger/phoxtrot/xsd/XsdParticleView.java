@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -35,6 +36,7 @@ import com.helger.collection.commons.ICommonsList;
  *        The term.
  * @author Philip Helger
  */
+@Immutable
 public record XsdParticleView (@NonNull ICommonsList <XsdDocumentation> documentation,
                                int minOccurs,
                                int maxOccurs,

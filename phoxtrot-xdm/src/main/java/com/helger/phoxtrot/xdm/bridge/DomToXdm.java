@@ -37,6 +37,7 @@ import org.xml.sax.helpers.AttributesImpl;
 import org.xml.sax.helpers.LocatorImpl;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.wrapper.Wrapper;
@@ -88,6 +89,7 @@ public final class DomToXdm
   {}
 
   /** The resolved name of a DOM element or attribute. */
+  @Immutable
   private record Name (@NonNull String uri, @NonNull String local, @NonNull String prefix)
   {
     @NonNull
@@ -103,6 +105,7 @@ public final class DomToXdm
    * data only at the next element, comment, processing instruction or end event, merged into one
    * text node, so the first DOM text node of such a run is kept until then.
    */
+  @NotThreadSafe
   private static final class NodeRecorder
   {
     private final ICommonsMap <IXdmNode, Node> m_aMap = new CommonsHashMap <> ();

@@ -60,6 +60,7 @@ public final class FunctionLibrary
   public static final String NS_ARRAY = "http://www.w3.org/2005/xpath-functions/array";
 
   /** A registered function with its parsed signature. */
+  @ThreadSafe
   public static final class FunctionDef
   {
     private final XdmQName m_aName;

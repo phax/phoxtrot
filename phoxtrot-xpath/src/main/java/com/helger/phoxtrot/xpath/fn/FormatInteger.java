@@ -24,6 +24,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.string.StringHelper;
 import com.helger.collection.list.IntArrayList;
@@ -42,6 +43,7 @@ import com.helger.phoxtrot.xpath.XPathException;
 public final class FormatInteger
 {
   /** A parsed decimal-digit-pattern. */
+  @NotThreadSafe
   public static final class DigitPattern
   {
     private int m_nMandatory;
@@ -405,6 +407,7 @@ public final class FormatInteger
    * @param variant
    *        The text between the parentheses, or empty.
    */
+  @Immutable
   private record Modifier (boolean ordinal, String variant)
   {}
 

@@ -22,6 +22,7 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsArrayList;
@@ -82,6 +83,7 @@ public final class XPathBurstAnalysis
    * @param step
    *        The axis step. May be <code>null</code>.
    */
+  @Immutable
   public record BurstFailure (@Nullable IExpr expression, IExpr.@Nullable StepExpr step)
   {}
 
@@ -105,6 +107,7 @@ public final class XPathBurstAnalysis
    * The regions the nodes of a value can come from (0 for values without nodes of the document) and the construct
    * that introduced the first of the {@link #SOURCED} ones.
    */
+  @Immutable
   private record Region (int flags, @Nullable BurstFailure source)
   {
     static final Region NONE = new Region (0, null);
@@ -126,6 +129,7 @@ public final class XPathBurstAnalysis
   }
 
   /** What a local variable binding shadowed, to restore it when the binding goes out of scope. */
+  @Immutable
   private record Shadowed (@NonNull XdmQName name, @Nullable Region previous, boolean bound)
   {}
 

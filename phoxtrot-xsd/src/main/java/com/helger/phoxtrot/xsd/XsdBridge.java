@@ -22,6 +22,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.base.concurrent.SimpleReadWriteLock;
 import com.helger.base.string.XmlWhitespace;
@@ -68,6 +69,7 @@ final class XsdBridge implements IXdmSchemaSet
   private static final String ANONYMOUS_PREFIX = "#t";
 
   /** The cloned subtree of a validation and, in document order, its elements and attributes with the originals. */
+  @Immutable
   private record Cloned (@NonNull IXdmNode root,
                          @NonNull ICommonsList <IXdmNode> clones,
                          @NonNull ICommonsList <IXdmNode> originals)
@@ -78,6 +80,7 @@ final class XsdBridge implements IXdmSchemaSet
    * against. Also the key of the schema types cached by
    * {@link XsdValidationRun#getAssertSchemaType}.
    */
+  @Immutable
   record TypeKey (@NonNull IXsdType type, @NonNull IXsdType valueType)
   {
     /**

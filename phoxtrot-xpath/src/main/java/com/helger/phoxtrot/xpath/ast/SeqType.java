@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xpath.ast;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * A SequenceType: an item type with an occurrence indicator, or
  * <code>empty-sequence()</code>.
@@ -34,6 +36,7 @@ import org.jspecify.annotations.Nullable;
  *        a cast target: itemType is then the item type of the list.
  * @author Philip Helger
  */
+@Immutable
 public record SeqType (boolean empty, @Nullable ItemType itemType, @NonNull EOccurrence occurrence, boolean listCast)
 {
   /** <code>item()*</code> */

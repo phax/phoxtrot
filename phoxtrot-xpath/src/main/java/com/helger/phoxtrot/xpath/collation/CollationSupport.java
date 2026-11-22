@@ -34,6 +34,7 @@ import com.helger.base.string.StringHelper;
 final class CollationSupport
 {
   /** A collation key as an int array with value semantics. */
+  @Immutable
   static final class IntKey implements Comparable <IntKey>
   {
     private final int [] m_aKey;

@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xslt.ext.map;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.ops.Atomizer;
@@ -45,6 +46,7 @@ import com.helger.phoxtrot.xslt.tree.XslText;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class MapExtension implements IXsltExtension
 {
   /**

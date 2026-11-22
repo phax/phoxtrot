@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -31,5 +32,6 @@ import com.helger.collection.commons.ICommonsList;
  *        The effective attribute wildcard, <code>null</code> for none.
  * @author Philip Helger
  */
+@Immutable
 record XsdEffectiveAttributes (@NonNull ICommonsList <XsdAttributeUse> uses, @Nullable XsdWildcard wildcard)
 {}

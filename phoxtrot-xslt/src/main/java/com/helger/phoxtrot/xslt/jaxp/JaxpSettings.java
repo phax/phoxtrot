@@ -21,6 +21,7 @@ import javax.xml.transform.URIResolver;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xpath.EThreading;
 import com.helger.phoxtrot.xslt.IXsltMessageListener;
 import com.helger.phoxtrot.xslt.IXsltTraceListener;
@@ -54,6 +55,7 @@ import com.helger.phoxtrot.xslt.IXsltTraceListener;
  *        transformer.
  * @author Philip Helger
  */
+@Immutable
 record JaxpSettings (@Nullable URIResolver uriResolver,
                      @NonNull String accessExternalStylesheet,
                      @NonNull JaxpParserSettings parserSettings,

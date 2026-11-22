@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xslt.tree;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.phoxtrot.xdm.IXdmNode;
 
 /**
@@ -27,6 +28,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class XslModule
 {
   private final String m_sUri;

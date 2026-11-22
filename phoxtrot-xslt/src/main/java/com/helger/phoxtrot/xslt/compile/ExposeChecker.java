@@ -47,6 +47,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
 public final class ExposeChecker
 {
   /** A component of the package. */
+  @Immutable
   private record Component (@NonNull String kind,
                             @NonNull XdmQName name,
                             int arity,

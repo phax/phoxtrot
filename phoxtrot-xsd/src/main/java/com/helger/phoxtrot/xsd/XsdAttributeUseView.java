@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xsd;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -41,6 +42,7 @@ import com.helger.collection.commons.ICommonsList;
  *        The fixed value, <code>null</code> if none.
  * @author Philip Helger
  */
+@Immutable
 public record XsdAttributeUseView (@NonNull ICommonsList <XsdDocumentation> documentation,
                                    @NonNull XsdAttributeDeclView declaration,
                                    @NonNull XsdName name,

@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xslt.model;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.XdmQName;
@@ -31,9 +33,11 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class AttributeSet
 {
   /** One xsl:attribute-set declaration. */
+  @Immutable
   public record Decl (@NonNull XslElement element,
                       @NonNull ICommonsList <XdmQName> uses,
                       @NonNull SequenceConstructor body)

@@ -23,6 +23,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.numeric.mutable.MutableBoolean;
 import com.helger.collection.commons.CommonsArrayList;
@@ -160,10 +161,12 @@ public final class XsltStreamability
                                                           "undeclare-prefixes" };
 
   /** The first construct found non-streamable in one walk. */
+  @Immutable
   private record Failure (@Nullable XslNode location, @NonNull String reason)
   {}
 
   /** The outcome of classifying one sequence constructor. */
+  @Immutable
   private record Verdict (@NonNull PostureSweep result, @Nullable XsltException error)
   {
     boolean isStreamable ()

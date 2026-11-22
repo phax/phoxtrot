@@ -25,6 +25,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.string.StringHelper;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.CommonsHashSet;
@@ -286,6 +287,7 @@ final class UcaCollation implements ICollation
   }
 
   /** A growing int array. */
+  @NotThreadSafe
   private static final class IntList
   {
     private int [] m_aData = new int [32];

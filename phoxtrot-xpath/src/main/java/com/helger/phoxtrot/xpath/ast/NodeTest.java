@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xpath.ast;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.schema.IXdmAttributeDeclaration;
 import com.helger.phoxtrot.xdm.schema.IXdmElementDeclaration;
@@ -62,6 +63,7 @@ import com.helger.phoxtrot.xdm.schema.IXdmTypeDefinition;
  *        <code>null</code>.
  * @author Philip Helger
  */
+@Immutable
 public record NodeTest (@NonNull ENodeTestKind kind,
                         boolean anyName,
                         boolean anyNamespace,

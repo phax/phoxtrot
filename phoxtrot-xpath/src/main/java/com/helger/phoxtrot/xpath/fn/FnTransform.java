@@ -23,7 +23,7 @@ import java.util.ServiceLoader;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.concurrent.SimpleReadWriteLock;
 import com.helger.phoxtrot.xdm.XdmConstants;
@@ -37,7 +37,7 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
  *
  * @author Philip Helger
  */
-@Immutable
+@ThreadSafe
 public final class FnTransform
 {
   @PresentForCodeCoverage

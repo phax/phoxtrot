@@ -21,6 +21,7 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
@@ -57,6 +58,7 @@ public class XsltException extends XPathException
    *        1-based column of the <code>xsl:function</code> element, 0 if
    *        unknown.
    */
+  @Immutable
   public record FunctionFrame (@NonNull XdmQName name, int arity, @Nullable String moduleUri, int line, int column)
   {}
 

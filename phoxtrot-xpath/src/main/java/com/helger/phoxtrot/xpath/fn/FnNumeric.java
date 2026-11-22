@@ -379,6 +379,7 @@ public final class FnNumeric
   }
 
   /** The signatures of the generator's functions, parsed on first use. */
+  @Immutable
   private static final class RngSignatures
   {
     static final XPathParser.FunctionSignature NEXT = XPathParser.parseFunctionSignature (SIG_NEXT,
@@ -388,6 +389,7 @@ public final class FnNumeric
   }
 
   /** The <code>next</code> and <code>permute</code> functions of a generator. */
+  @Immutable
   private static final class RngFunction implements IXdmFunction
   {
     private final long m_nSeed;

@@ -25,6 +25,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.collection.commons.CommonsArrayList;
@@ -119,6 +120,7 @@ public final class Engine
    * indexes and, in a multi-package stylesheet, the package whose xsl:key
    * declarations it uses (<code>null</code> otherwise).
    */
+  @Immutable
   private record KeyIndexId (@NonNull XdmQName name, @NonNull IXdmNode root, @Nullable PackageUnit unit)
   {}
 
@@ -205,6 +207,7 @@ public final class Engine
    * A resolver that applies xsl:strip-space to the documents it returns, so
    * that documents read by document() and fn:doc are stripped too.
    */
+  @Immutable
   private final class StrippingResolver implements IResourceResolver
   {
     private final IResourceResolver m_aDelegate;

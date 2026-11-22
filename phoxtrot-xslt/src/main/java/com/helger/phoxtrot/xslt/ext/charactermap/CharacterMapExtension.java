@@ -23,6 +23,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.CommonsHashSet;
@@ -54,12 +55,14 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class CharacterMapExtension implements IXsltExtension
 {
   /** The key of the character maps in the extension data of a stylesheet. */
   private static final Object DATA_KEY = new Object ();
 
   /** One compiled xsl:character-map. */
+  @Immutable
   private record CharacterMap (@NonNull XslElement element,
                                int precedence,
                                @NonNull ICommonsList <XdmQName> uses,

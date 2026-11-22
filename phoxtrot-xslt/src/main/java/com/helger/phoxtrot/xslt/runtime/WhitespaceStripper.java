@@ -52,6 +52,7 @@ public final class WhitespaceStripper
    * attributes and children are appended to, and whether xml:space="preserve"
    * is inherited from its ancestors.
    */
+  @Immutable
   private record Job (@NonNull IXdmNode source, @NonNull IXdmNode target, boolean preserve)
   {}
 

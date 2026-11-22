@@ -20,6 +20,7 @@ import org.jspecify.annotations.NonNull;
 import org.w3c.dom.CharacterData;
 import org.w3c.dom.DOMException;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmNode;
 
 /**
@@ -27,6 +28,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
  *
  * @author Philip Helger
  */
+@Immutable
 abstract sealed class AbstractXdmDomCharacterData extends AbstractXdmDomNode implements CharacterData permits
                                                   XdmDomText, XdmDomComment
 {

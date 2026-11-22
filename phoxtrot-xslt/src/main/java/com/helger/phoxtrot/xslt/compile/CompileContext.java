@@ -63,6 +63,7 @@ public final class CompileContext
    * One local variable binding in a singly linked list of the local variables
    * in scope, innermost first. Shared between contexts, never changed.
    */
+  @Immutable
   private record Scope (@NonNull XdmQName name, @Nullable Scope next)
   {}
 

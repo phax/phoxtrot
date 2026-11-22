@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xdm.schema;
 
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * One schema document to compile.
  *
@@ -29,5 +31,6 @@ import org.jspecify.annotations.Nullable;
  *        The document text, or <code>null</code> to read it from the system ID.
  * @author Philip Helger
  */
+@Immutable
 public record XdmSchemaSource (@Nullable String systemId, @Nullable String text)
 {}

@@ -75,6 +75,7 @@ public final class XdmToDom
   /**
    * One step of the walk: a node to write under a DOM parent, or (with close) an element to close.
    */
+  @Immutable
   private record Step (@NonNull IXdmNode node, @Nullable Node parent, boolean close)
   {}
 

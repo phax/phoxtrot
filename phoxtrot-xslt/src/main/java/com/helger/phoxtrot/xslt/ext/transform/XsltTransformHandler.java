@@ -21,6 +21,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.InputSource;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.base.io.nonblocking.NonBlockingStringReader;
 import com.helger.collection.commons.CommonsArrayList;
@@ -117,6 +118,7 @@ public final class XsltTransformHandler implements ITransformHandler
    * the default function library is being built, and parsing the types needs
    * that library (a lock-order deadlock otherwise).
    */
+  @Immutable
   private static final class OptionTypes
   {
     static final ICommonsMap <String, SeqType> MAP = _create ();
@@ -203,6 +205,7 @@ public final class XsltTransformHandler implements ITransformHandler
   }
 
   /** The options after the option parameter conventions, by name. */
+  @Immutable
   private static final class Options
   {
     private final ICommonsMap <String, XdmSequence> m_aValues = new CommonsHashMap <> ();
@@ -282,6 +285,7 @@ public final class XsltTransformHandler implements ITransformHandler
    * the calling stylesheet (<code>null</code> outside a transformation) and
    * the calling engine (<code>null</code> outside a transformation).
    */
+  @Immutable
   private record Host (@Nullable String staticBaseUri,
                        @NonNull IResourceResolver compileResolver,
                        @Nullable IResourceResolver runResolver,

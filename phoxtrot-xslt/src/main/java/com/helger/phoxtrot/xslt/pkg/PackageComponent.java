@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xslt.pkg;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xslt.tree.XslElement;
 
@@ -38,6 +39,7 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
  *        The declaration, <code>null</code> for a mode used only implicitly.
  * @author Philip Helger
  */
+@Immutable
 public record PackageComponent (@NonNull String kind,
                                 @Nullable XdmQName name,
                                 int arity,

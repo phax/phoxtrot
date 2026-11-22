@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.XdmQName;
 
 /**
@@ -31,6 +32,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
  *        The local name.
  * @author Philip Helger
  */
+@Immutable
 public record XsdName (@NonNull String space, @NonNull String local)
 {
   /** The empty name. */

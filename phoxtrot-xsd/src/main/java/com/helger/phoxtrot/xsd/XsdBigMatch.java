@@ -24,6 +24,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -47,6 +48,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
 final class XsdBigMatch
 {
   /** The names and wildcards an iteration of a particle can start with. */
+  @NotThreadSafe
   private static final class First
   {
     final ICommonsSet <XsdName> m_aNames = new CommonsHashSet <> ();
@@ -57,6 +59,7 @@ final class XsdBigMatch
    * The static pre-scan (go-xslt <code>bigDeterministic</code>): it accepts
    * only models the greedy interpreter is provably exact on.
    */
+  @NotThreadSafe
   private static final class Scan
   {
     private final XsdSchema m_aSchema;
@@ -273,6 +276,7 @@ final class XsdBigMatch
    * One greedy counting run (go-xslt <code>bigRun</code>); unsure records that
    * an invalid outcome might be an artefact of the greedy iteration allocation.
    */
+  @NotThreadSafe
   static final class Run
   {
     private final XsdSchema m_aSchema;

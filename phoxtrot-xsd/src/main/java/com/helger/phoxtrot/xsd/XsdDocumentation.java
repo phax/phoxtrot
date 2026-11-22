@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * One <code>xs:documentation</code> of an <code>xs:annotation</code>. Only kept
  * when the schema is compiled with documentation (see
@@ -32,5 +34,6 @@ import org.jspecify.annotations.NonNull;
  *        and trailing white space removed.
  * @author Philip Helger
  */
+@Immutable
 public record XsdDocumentation (@NonNull String lang, @NonNull String source, @NonNull String text)
 {}

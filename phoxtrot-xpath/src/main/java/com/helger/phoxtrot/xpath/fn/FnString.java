@@ -65,6 +65,7 @@ public final class FnString
    * Characters that are "composing" for FULLY-NORMALIZED (F&amp;O 3.1 section
    * 5.4.6): the second character of a canonical composition, computed once.
    */
+  @Immutable
   private static final class ComposingHolder
   {
     static final BitSet SECOND_OF_COMPOSITION = _build ();

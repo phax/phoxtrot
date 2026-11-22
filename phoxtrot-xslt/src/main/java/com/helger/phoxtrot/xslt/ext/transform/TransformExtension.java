@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xslt.ext.transform;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xslt.XsltCompileOptions;
 import com.helger.phoxtrot.xslt.compile.IXsltExtension;
 import com.helger.phoxtrot.xslt.compile.XsltExtensionRegistry;
@@ -33,6 +34,7 @@ import com.helger.phoxtrot.xslt.model.CompiledStylesheet;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class TransformExtension implements IXsltExtension
 {
   private static final Object KEY_OPTIONS = new Object ();

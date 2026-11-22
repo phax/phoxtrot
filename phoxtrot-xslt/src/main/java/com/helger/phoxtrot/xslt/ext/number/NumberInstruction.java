@@ -29,6 +29,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.ENodeKind;
@@ -105,6 +106,7 @@ public final class NumberInstruction extends AbstractInstruction
    *        predicate. A candidate from the name index then matches without
    *        testing it.
    */
+  @Immutable
   private record NumberPattern (@NonNull XsltPattern pattern,
                                 @NonNull StaticContext staticContext,
                                 @Nullable List <XdmQName> elementNames,
@@ -118,6 +120,7 @@ public final class NumberInstruction extends AbstractInstruction
    * document of the selected node if it is a document that is not streamed,
    * and the running count of level="any".
    */
+  @NotThreadSafe
   private static final class Counting
   {
     private final XsltContext m_aCtx;

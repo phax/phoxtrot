@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xslt.instr;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xslt.tree.XslElement;
 
 /**
@@ -26,6 +27,7 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
  *
  * @author Philip Helger
  */
+@Immutable
 public abstract class AbstractInstruction implements IInstruction
 {
   private final XslElement m_aElement;

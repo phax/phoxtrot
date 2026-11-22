@@ -21,6 +21,7 @@ import java.util.Collection;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.base.clone.ICloneable;
 import com.helger.base.enforce.ValueEnforcer;
@@ -45,6 +46,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 public final class StreamContext implements ICloneable <StreamContext>
 {
   private EPosture m_eContextPosture;

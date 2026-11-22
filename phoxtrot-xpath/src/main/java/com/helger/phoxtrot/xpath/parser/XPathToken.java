@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xpath.parser;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * A single token of an XPath expression.
  *
@@ -33,6 +35,7 @@ import org.jspecify.annotations.Nullable;
  *        The character offset of the token start in the expression.
  * @author Philip Helger
  */
+@Immutable
 record XPathToken (@NonNull ETokenKind kind, @NonNull String text, @Nullable String uri, int pos)
 {
   /** @return <code>true</code> for an unprefixed name with the given text. */

@@ -23,6 +23,7 @@ import org.w3c.dom.NamedNodeMap;
 import org.w3c.dom.NodeList;
 import org.w3c.dom.TypeInfo;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmNode;
 
 /**
@@ -30,6 +31,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
  *
  * @author Philip Helger
  */
+@Immutable
 final class XdmDomElement extends AbstractXdmDomNode implements Element
 {
   XdmDomElement (@NonNull final XdmDomView aView, @NonNull final IXdmNode aNode)

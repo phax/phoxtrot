@@ -26,7 +26,9 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.Nonnegative;
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
+import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsArrayList;
@@ -43,12 +45,14 @@ import com.helger.collection.commons.ICommonsOrderedMap;
 public final class XdmDocumentNode extends AbstractXdmParentNode
 {
   /** A parent node (by identity) and the name of its child elements. */
+  @Immutable
   private record ChildKey (@NonNull IXdmNode parent, @NonNull XdmQName name)
   {}
 
   /**
    * The elements (or attributes) of a numbered tree by name, each list in document order.
    */
+  @Immutable
   private static final class NameIndex
   {
     // The numbering the index was built for
@@ -65,6 +69,7 @@ public final class XdmDocumentNode extends AbstractXdmParentNode
   /**
    * The child elements by name of the parents asked for in a numbered tree, filled on demand.
    */
+  @ThreadSafe
   private static final class ChildLists
   {
     // The numbering the lists belong to

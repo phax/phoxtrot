@@ -20,6 +20,7 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.XdmQName;
@@ -37,6 +38,7 @@ import com.helger.phoxtrot.xslt.model.VariableDef;
  *        <code>true</code> for a tunnel parameter.
  * @author Philip Helger
  */
+@Immutable
 public record ParamValue (@NonNull XdmQName name, @NonNull XdmSequence value, boolean tunnel)
 {
   /**

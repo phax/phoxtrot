@@ -81,6 +81,7 @@ public final class AtomicComparator
    * {@link AtomicComparator#_getCanonicalNumber(Object)}, so record equality is
    * equality of the exact mathematical value.
    */
+  @Immutable
   private record NumericKey (@NonNull Object value)
   {}
 
@@ -88,10 +89,12 @@ public final class AtomicComparator
    * Map key of a string, xs:anyURI or xs:untypedAtomic value: equal by
    * codepoints, whatever the type.
    */
+  @Immutable
   private record StringKey (@NonNull String value)
   {}
 
   /** Map key of an xs:boolean value. */
+  @Immutable
   private record BooleanKey (boolean value)
   {}
 
@@ -100,6 +103,7 @@ public final class AtomicComparator
    * local name, as defined by {@link XdmQName}; a QName never equals a
    * NOTATION.
    */
+  @Immutable
   private record QNameKey (boolean notation, @NonNull XdmQName name)
   {}
 
@@ -108,6 +112,7 @@ public final class AtomicComparator
    * trailing zeros stripped, so that durations of any duration type with the
    * same value are equal.
    */
+  @Immutable
   private record DurationKey (long months, @NonNull BigDecimal seconds)
   {}
 
@@ -115,6 +120,7 @@ public final class AtomicComparator
    * Map key of a binary value: equal by content, but an xs:hexBinary never
    * equals an xs:base64Binary.
    */
+  @Immutable
   private static final class BinaryKey
   {
     private final boolean m_bBase64;
@@ -148,6 +154,7 @@ public final class AtomicComparator
    * account. The payload class offers no normalised form, so the hash code is
    * only per type and timezone presence.
    */
+  @Immutable
   private static final class DateTimeKey
   {
     private final EAtomicType m_ePrim;
@@ -188,14 +195,17 @@ public final class AtomicComparator
   }
 
   /** Bucket key of a numeric value, see getDistinctBucketKey. */
+  @Immutable
   private record NumericBucket (double value)
   {}
 
   /** Bucket key of a string-like value, see getDistinctBucketKey. */
+  @Immutable
   private record StringBucket (Object key)
   {}
 
   /** A pair of items or sequences still to compare in fn:deep-equal. */
+  @Immutable
   private record DeepPair (@NonNull Object left, @NonNull Object right)
   {}
 

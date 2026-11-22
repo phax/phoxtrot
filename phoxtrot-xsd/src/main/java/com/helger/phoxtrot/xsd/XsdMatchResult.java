@@ -16,6 +16,8 @@
  */
 package com.helger.phoxtrot.xsd;
 
+import com.helger.annotation.concurrent.Immutable;
+
 /**
  * The result of matching a child-element sequence against a content model.
  *
@@ -27,5 +29,6 @@ package com.helger.phoxtrot.xsd;
  *        match".
  * @author Philip Helger
  */
+@Immutable
 record XsdMatchResult (boolean matched, boolean decided)
 {}

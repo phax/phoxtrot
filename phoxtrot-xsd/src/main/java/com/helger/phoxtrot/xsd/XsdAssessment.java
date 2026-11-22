@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -37,5 +38,6 @@ import com.helger.collection.commons.ICommonsList;
  *        <code>xsi:</code> attributes have no entry.
  * @author Philip Helger
  */
+@Immutable
 public record XsdAssessment (@NonNull XsdValidationResult result, @NonNull ICommonsList <XsdNodeType> nodeTypes)
 {}

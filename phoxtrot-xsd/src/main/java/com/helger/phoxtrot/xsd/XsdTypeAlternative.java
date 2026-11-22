@@ -16,6 +16,7 @@
  */
 package com.helger.phoxtrot.xsd;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsLinkedHashMap;
 import com.helger.collection.commons.ICommonsOrderedMap;
 import com.helger.phoxtrot.xpath.CompiledXPath;
@@ -26,6 +27,7 @@ import com.helger.phoxtrot.xpath.CompiledXPath;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdTypeAlternative
 {
   /** The <code>@test</code> source text, empty for the default alternative. */

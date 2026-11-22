@@ -21,6 +21,8 @@ import java.util.Set;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.ICommonsList;
@@ -47,13 +49,16 @@ import com.helger.phoxtrot.xpath.context.EXsdVersion;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdRestrictionChecker
 {
   /** Element count range of a particle; <code>max</code> is -1 if unbounded. */
+  @Immutable
   private record Bounds (long min, long max)
   {}
 
   /** Summed occurrences of derived particles mapped onto one base particle. */
+  @NotThreadSafe
   private static final class Acc
   {
     long m_nLo;

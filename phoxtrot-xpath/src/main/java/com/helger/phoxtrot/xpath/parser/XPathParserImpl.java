@@ -28,6 +28,7 @@ import java.util.function.Supplier;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.wrapper.Wrapper;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
@@ -67,6 +68,7 @@ import com.helger.phoxtrot.xpath.value.XdmAtomic;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XPathParserImpl
 {
   /**

@@ -149,6 +149,7 @@ public final class XdmSaxEmitter
       for (final String sName : aRoot.getAllParsedEntityNames ())
         aDTDHandler.unparsedEntityDecl (sName, null, sName, "");
     // Stack entries: a node to open, or (with bClose) an element to close
+    @Immutable
     record Entry (@NonNull IXdmNode node, boolean close, @Nullable Map <String, String> namespaces)
     {}
     final ArrayDeque <Entry> aStack = new ArrayDeque <> ();

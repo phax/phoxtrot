@@ -25,6 +25,8 @@ import java.util.WeakHashMap;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.CommonsHashSet;
@@ -79,6 +81,7 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  *
  * @author Philip Helger
  */
+@Immutable
 public final class AccumulatorExtension implements IXsltExtension
 {
   /** The name of the variable holding the current value in a rule. */
@@ -101,6 +104,7 @@ public final class AccumulatorExtension implements IXsltExtension
    * select expression or the contained sequence constructor (exactly one of
    * the two is non-<code>null</code>).
    */
+  @Immutable
   private record Rule (@NonNull CompiledPattern match,
                        boolean end,
                        @Nullable XPathExpr select,
@@ -114,6 +118,7 @@ public final class AccumulatorExtension implements IXsltExtension
    * (<code>null</code> means item()*), the streamable attribute and the rules
    * in document order.
    */
+  @Immutable
   private record Accumulator (@NonNull XslElement element,
                               @NonNull XdmQName name,
                               @NonNull XPathExpr initial,
@@ -128,10 +133,12 @@ public final class AccumulatorExtension implements IXsltExtension
    * checked against the declared accumulators in
    * {@link #_finish(CompileContext)}.
    */
+  @Immutable
   private record UseRef (@NonNull XslElement element, @NonNull ICommonsList <XdmQName> names)
   {}
 
   /** The values of one accumulator over one tree: before and after per node. */
+  @NotThreadSafe
   private static final class TreeValues
   {
     private final Map <IXdmNode, XdmSequence> m_aBefore = new IdentityHashMap <> ();
@@ -155,6 +162,7 @@ public final class AccumulatorExtension implements IXsltExtension
    * of an open ancestor of a snapshot) is asked from the original, which is
    * kept for that.
    */
+  @Immutable
   private record FrozenValues (@NonNull IXdmNode root,
                                @NonNull Map <Accumulator, XdmSequence []> values,
                                @Nullable IXdmNode live)
@@ -178,10 +186,12 @@ public final class AccumulatorExtension implements IXsltExtension
   }
 
   /** Restrictions of the accumulators applicable to a tree. */
+  @Immutable
   private record TreeRestriction (@Nullable ICommonsSet <XdmQName> names, boolean streamed)
   {}
 
   /** Per-run state. */
+  @NotThreadSafe
   private static final class RunData
   {
     private final ICommonsMap <Accumulator, Map <IXdmNode, TreeValues>> m_aValues = new CommonsHashMap <> ();
@@ -631,6 +641,7 @@ public final class AccumulatorExtension implements IXsltExtension
    * {@link #_computeTree(Accumulator, IXdmNode, TreeValues, XsltContext)}, at
    * the moment each node is live.
    */
+  @NotThreadSafe
   private static final class StreamedValues implements IStreamAccumulators
   {
     private final Engine m_aEngine;

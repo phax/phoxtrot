@@ -260,6 +260,9 @@ v0.3.1 - work in progress
 * XSLT: functions registered with `XsltExtensionRegistry.registerFunctions` are now also visible in static expressions
   (`use-when`, static variables and parameters, shadow attributes), so `function-available` answers there as at run
   time; the run-time XSLT functions (`current()`, `key()`, `current-group()` etc.) stay unavailable there
+* The classes and records of the engine modules (enums, interfaces and exceptions excepted) carry a concurrency
+  annotation (`@Immutable`, `@NotThreadSafe` or `@ThreadSafe`); `FnTransform` is now `@ThreadSafe` instead of
+  `@Immutable`
 
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with

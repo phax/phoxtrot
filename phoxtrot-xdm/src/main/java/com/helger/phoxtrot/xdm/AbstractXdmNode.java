@@ -27,6 +27,7 @@ import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.Nonnegative;
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.base.enforce.ValueEnforcer;
@@ -55,6 +56,7 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
    * reused while a node still references it. The sequence number orders different trees by the
    * moment they were numbered and never wraps in practice (2^63).
    */
+  @Immutable
   static final class TreeStamp
   {
     private final long m_nSequence;
@@ -72,6 +74,7 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
    * of {@link XdmElementNode}; a reader without the lock that sees a holder created for them sees
    * default values in all other fields, which is what a node without holder has.
    */
+  @NotThreadSafe
   private static final class Details
   {
     // Namespace declarations of an element

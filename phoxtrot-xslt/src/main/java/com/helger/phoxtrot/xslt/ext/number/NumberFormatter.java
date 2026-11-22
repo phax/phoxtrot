@@ -54,6 +54,7 @@ public final class NumberFormatter
    * @param glyphs
    *        The code points.
    */
+  @Immutable
   private record Family (long start, int [] glyphs)
   {}
 
@@ -74,6 +75,7 @@ public final class NumberFormatter
    * between them and the suffix. Read-only once created, so an xsl:number with
    * a constant format shares one between all evaluations.
    */
+  @Immutable
   record Picture (String prefix, ICommonsList <String> tokens, ICommonsList <String> seps, String suffix)
   {}
 

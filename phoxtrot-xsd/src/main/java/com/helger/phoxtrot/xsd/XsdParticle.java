@@ -20,6 +20,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.ICommonsList;
 
 /**
@@ -29,6 +30,7 @@ import com.helger.collection.commons.ICommonsList;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdParticle
 {
   int m_nMin;

@@ -52,6 +52,7 @@ public final class PackageModel
    * <code>visible</code> to it, accepted as <code>abstracts</code>, and those
    * whose visibility an xsl:accept <code>stated</code>.
    */
+  @NotThreadSafe
   private record UsedVisibility (@NonNull ICommonsSet <String> hidden,
                                  @NonNull ICommonsSet <String> visible,
                                  @NonNull ICommonsSet <String> abstracts,

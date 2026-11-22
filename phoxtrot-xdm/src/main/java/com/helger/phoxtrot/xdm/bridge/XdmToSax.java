@@ -71,6 +71,7 @@ public final class XdmToSax
   {}
 
   /** One step of the walk: a node to open, or (with close) an element to close. */
+  @Immutable
   private record Step (@NonNull IXdmNode node, boolean close, @Nullable ICommonsList <String> prefixes)
   {}
 

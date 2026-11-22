@@ -50,6 +50,7 @@ import com.helger.phoxtrot.xpath.context.StaticContext;
 public final class XPathParser
 {
   /** Result of {@link #parseFunctionSignature(String, StaticContext)}. */
+  @Immutable
   public record FunctionSignature (@NonNull List <SeqType> paramTypes, @NonNull SeqType returnType)
   {}
 
@@ -62,6 +63,7 @@ public final class XPathParser
    *        The source text of every union operand of the pattern, keyed by
    *        identity (an {@link IdentityHashMap}).
    */
+  @Immutable
   public record PatternParseResult (@NonNull IExpr pattern, @NonNull Map <IExpr, String> sources)
   {}
 

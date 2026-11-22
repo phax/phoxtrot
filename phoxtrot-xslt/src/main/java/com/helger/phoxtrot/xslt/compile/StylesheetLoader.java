@@ -21,6 +21,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -78,6 +79,7 @@ public final class StylesheetLoader
    * order. <code>importLo</code> is the index of the lowest level that belongs
    * to the module's import subtree (its own index if it imports nothing).
    */
+  @Immutable
   public record Level (@NonNull ICommonsList <XslElement> declarations, int importLo)
   {}
 

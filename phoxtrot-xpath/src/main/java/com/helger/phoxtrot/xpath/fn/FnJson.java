@@ -27,6 +27,7 @@ import org.jspecify.annotations.Nullable;
 import org.xml.sax.EntityResolver;
 
 import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.string.StringHex;
 import com.helger.base.string.XmlWhitespace;
@@ -68,10 +69,12 @@ public final class FnJson
   private static final String NS_FN = XdmConstants.NS_FN;
 
   /** The resolved options of the JSON parsing functions. */
+  @Immutable
   private record JsonOptions (String duplicates, boolean escape, UnaryOperator <String> fallback, boolean validate)
   {}
 
   /** A container being built while parsing into XDM maps and arrays. */
+  @NotThreadSafe
   private static final class XdmFrame
   {
     private final XdmMap.Builder m_aMap;
@@ -86,6 +89,7 @@ public final class FnJson
   }
 
   /** Builds the XDM value of fn:parse-json. */
+  @NotThreadSafe
   private static final class XdmHandler implements JsonParser.IHandler
   {
     private final String m_sDuplicates;
@@ -192,6 +196,7 @@ public final class FnJson
   }
 
   /** A map or array element being built by fn:json-to-xml. */
+  @NotThreadSafe
   private static final class XmlFrame
   {
     private final IXdmNode m_aElement;
@@ -209,6 +214,7 @@ public final class FnJson
   }
 
   /** Builds the XML representation of fn:json-to-xml. */
+  @NotThreadSafe
   private static final class XmlHandler implements JsonParser.IHandler
   {
     private final String m_sDuplicates;
@@ -842,6 +848,7 @@ public final class FnJson
   }
 
   /** A pending element of fn:xml-to-json, or a literal to write. */
+  @Immutable
   private record XmlTask (IXdmNode element, boolean inMap, int depth, String literal)
   {}
 

@@ -21,6 +21,7 @@ import java.util.List;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.schema.IXdmTypeDefinition;
 import com.helger.phoxtrot.xpath.value.EAtomicType;
 
@@ -50,6 +51,7 @@ import com.helger.phoxtrot.xpath.value.EAtomicType;
  *        base, or <code>xs:anyAtomicType</code>. <code>null</code> for built-in types.
  * @author Philip Helger
  */
+@Immutable
 public record ItemType (@NonNull Kind kind,
                         @Nullable EAtomicType atomicType,
                         @Nullable NodeTest nodeTest,

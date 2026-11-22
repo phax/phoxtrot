@@ -18,6 +18,7 @@ package com.helger.phoxtrot.xsd;
 
 import org.jspecify.annotations.NonNull;
 
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.ICommonsList;
@@ -32,6 +33,7 @@ import com.helger.collection.commons.ICommonsSet;
  *
  * @author Philip Helger
  */
+@NotThreadSafe
 final class XsdComplexType implements IXsdType
 {
   static final XsdName ANY_TYPE_NAME = new XsdName (XsdConstants.NS_XS, "anyType");

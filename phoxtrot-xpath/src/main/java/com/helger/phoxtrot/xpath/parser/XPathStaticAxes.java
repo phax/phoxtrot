@@ -85,6 +85,7 @@ final class XPathStaticAxes
    *        independent of their kind (the result of
    *        <code>fn:parse-xml-fragment</code>).
    */
+  @Immutable
   private record Shape (@NonNull EStepKind kind, @Nullable XdmQName name, boolean parentless)
   {
     static final Shape UNKNOWN = new Shape (EStepKind.ANY, null, false);

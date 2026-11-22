@@ -47,6 +47,7 @@ import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.base.rt.NonBlockingProperties;
@@ -122,6 +123,7 @@ import com.helger.phoxtrot.xslt.XsltTransformResult;
 public class PhoxtrotTransformer extends Transformer
 {
   /** A parameter as set and as converted to XDM. */
+  @Immutable
   private record Param (@NonNull Object value, @NonNull XdmSequence converted)
   {}
 
@@ -144,6 +146,7 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /** Passes the messages of a transformation to the error listener. */
+  @Immutable
   private static final class ErrorListenerMessages implements IXsltMessageListener
   {
     private final ErrorListener m_aErrorListener;
