@@ -339,6 +339,46 @@ public final class FunctionLibrary
   }
 
   /**
+   * Create the definition completely, including the optional implementation for dynamic calls, and
+   * only then put it into the map under the write lock, so no other thread and no
+   * {@link #freeze()} can see it half set up.
+   *
+   * @param sNamespaceUri
+   *        Function namespace.
+   * @param sLocalName
+   *        Local name.
+   * @param sSignature
+   *        Signature as in the F&amp;O spec, without parameter names.
+   * @param aImpl
+   *        Implementation for static calls.
+   * @param bFocusDependent
+   *        <code>true</code> if the implementation reads the focus.
+   * @param aDynamicCallImpl
+   *        Implementation for dynamic calls. May be <code>null</code> to use <code>aImpl</code>.
+   */
+  private void _register (@NonNull final String sNamespaceUri,
+                          @NonNull final String sLocalName,
+                          @NonNull final String sSignature,
+                          @NonNull final IXPathFunction aImpl,
+                          final boolean bFocusDependent,
+                          @Nullable final IXPathFunction aDynamicCallImpl)
+  {
+    ValueEnforcer.notNull (sNamespaceUri, "NamespaceUri");
+    ValueEnforcer.notEmpty (sLocalName, "LocalName");
+    ValueEnforcer.notEmpty (sSignature, "Signature");
+    ValueEnforcer.notNull (aImpl, "Impl");
+    final int nArity = _countParams (sSignature);
+    final XdmQName aName = new XdmQName (sNamespaceUri, sLocalName);
+    final FunctionDef aDef = new FunctionDef (aName, sSignature, aImpl, bFocusDependent);
+    aDef.m_aDynamicCallImpl = aDynamicCallImpl;
+    m_aRWLock.writeLocked (() -> {
+      _checkWritable ();
+      m_aMap.put (_key (sNamespaceUri, sLocalName, nArity), aDef);
+      m_nModCount++;
+    });
+  }
+
+  /**
    * Register a function.
    *
    * @param sNamespaceUri
@@ -382,18 +422,7 @@ public final class FunctionLibrary
                                    @NonNull final IXPathFunction aImpl,
                                    final boolean bFocusDependent)
   {
-    ValueEnforcer.notNull (sNamespaceUri, "NamespaceUri");
-    ValueEnforcer.notEmpty (sLocalName, "LocalName");
-    ValueEnforcer.notEmpty (sSignature, "Signature");
-    ValueEnforcer.notNull (aImpl, "Impl");
-    final int nArity = _countParams (sSignature);
-    final XdmQName aName = new XdmQName (sNamespaceUri, sLocalName);
-    final FunctionDef aDef = new FunctionDef (aName, sSignature, aImpl, bFocusDependent);
-    m_aRWLock.writeLocked (() -> {
-      _checkWritable ();
-      m_aMap.put (_key (sNamespaceUri, sLocalName, nArity), aDef);
-      m_nModCount++;
-    });
+    _register (sNamespaceUri, sLocalName, sSignature, aImpl, bFocusDependent, null);
     return this;
   }
 
@@ -424,11 +453,7 @@ public final class FunctionLibrary
                                    @NonNull final IXPathFunction aDynamicCallImpl)
   {
     ValueEnforcer.notNull (aDynamicCallImpl, "DynamicCallImpl");
-    register (sNamespaceUri, sLocalName, sSignature, aImpl, bFocusDependent);
-    final int nArity = _countParams (sSignature);
-    m_aRWLock.readLockedGet (() -> m_aMap.get (_key (sNamespaceUri,
-                                                     sLocalName,
-                                                     nArity))).m_aDynamicCallImpl = aDynamicCallImpl;
+    _register (sNamespaceUri, sLocalName, sSignature, aImpl, bFocusDependent, aDynamicCallImpl);
     return this;
   }
 

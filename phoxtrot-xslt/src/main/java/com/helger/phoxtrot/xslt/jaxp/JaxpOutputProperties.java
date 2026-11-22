@@ -26,7 +26,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.style.PresentForCodeCoverage;
-import com.helger.base.array.ArrayHelper;
 import com.helger.base.rt.NonBlockingProperties;
 import com.helger.collection.commons.CommonsLinkedHashMap;
 import com.helger.collection.commons.ICommonsOrderedMap;
@@ -83,7 +82,7 @@ final class JaxpOutputProperties
       throw new NullPointerException ("Output property name");
     if (isNamespaced (sName))
       return;
-    if ("use-character-maps".equals (sName) || !ArrayHelper.contains (OutputDefinition.ATTRIBUTES, sName))
+    if ("use-character-maps".equals (sName) || !OutputDefinition.ATTRIBUTES.contains (sName))
       throw new IllegalArgumentException ("The output property '" + sName + "' is not supported");
   }
 

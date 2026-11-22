@@ -54,7 +54,8 @@ import com.helger.phoxtrot.xslt.tree.XslModule;
 
 /**
  * A compiled stylesheet. Built by the compiler; after compilation it is not
- * modified any more and can be used by several transformations at once.
+ * modified any more and can be used by several transformations at once, if it
+ * is handed to their threads safely (see {@link XsltExecutable}).
  *
  * @author Philip Helger
  */

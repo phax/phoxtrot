@@ -43,7 +43,11 @@ import com.helger.phoxtrot.xpath.context.EXsdVersion;
  * {@link #getView()}.
  * <p>
  * A compiled schema is immutable and may be shared between threads; the state
- * of one validation lives in the validation run, never here.
+ * of one validation lives in the validation run, never here. Its maps and
+ * components are filled after construction and are not guarded, so it must be
+ * handed to other threads safely (a <code>final</code> or <code>volatile</code>
+ * field, a concurrent collection, an executor or the start of the thread);
+ * through a plain field another thread may see it incomplete.
  *
  * @author Philip Helger
  */

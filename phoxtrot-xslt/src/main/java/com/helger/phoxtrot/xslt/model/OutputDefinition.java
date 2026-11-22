@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xslt.model;
 
 import java.math.BigDecimal;
+import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
@@ -24,7 +25,6 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
-import com.helger.base.array.ArrayHelper;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.CommonsLinkedHashMap;
@@ -50,29 +50,29 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
 @NotThreadSafe
 public final class OutputDefinition
 {
-  /** All serialization attributes of xsl:output. */
-  public static final String [] ATTRIBUTES = { "method",
-                                               "allow-duplicate-names",
-                                               "build-tree",
-                                               "byte-order-mark",
-                                               "cdata-section-elements",
-                                               "doctype-public",
-                                               "doctype-system",
-                                               "encoding",
-                                               "escape-uri-attributes",
-                                               "html-version",
-                                               "include-content-type",
-                                               "indent",
-                                               "item-separator",
-                                               "json-node-output-method",
-                                               "media-type",
-                                               "normalization-form",
-                                               "omit-xml-declaration",
-                                               "standalone",
-                                               "suppress-indentation",
-                                               "undeclare-prefixes",
-                                               "use-character-maps",
-                                               "version" };
+  /** All serialization attributes of xsl:output (unmodifiable, shared by all threads). */
+  public static final List <String> ATTRIBUTES = List.of ("method",
+                                                          "allow-duplicate-names",
+                                                          "build-tree",
+                                                          "byte-order-mark",
+                                                          "cdata-section-elements",
+                                                          "doctype-public",
+                                                          "doctype-system",
+                                                          "encoding",
+                                                          "escape-uri-attributes",
+                                                          "html-version",
+                                                          "include-content-type",
+                                                          "indent",
+                                                          "item-separator",
+                                                          "json-node-output-method",
+                                                          "media-type",
+                                                          "normalization-form",
+                                                          "omit-xml-declaration",
+                                                          "standalone",
+                                                          "suppress-indentation",
+                                                          "undeclare-prefixes",
+                                                          "use-character-maps",
+                                                          "version");
 
   private final XdmQName m_aName;
   private final ICommonsOrderedMap <String, String> m_aValues = new CommonsLinkedHashMap <> ();
@@ -342,7 +342,7 @@ public final class OutputDefinition
     {
       final String sAttr = aEntry.getKey ();
       final String sValue = aEntry.getValue ();
-      if (!ArrayHelper.contains (ATTRIBUTES, sAttr))
+      if (!ATTRIBUTES.contains (sAttr))
         throw new IllegalArgumentException ("'" + sAttr + "' is not a serialization parameter of xsl:output");
       switch (sAttr)
       {

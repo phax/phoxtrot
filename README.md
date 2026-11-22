@@ -116,6 +116,12 @@ Boolean aValid = LargeStackRunner.run (() -> Boolean.valueOf (aXPath.evaluateEff
   `SeqType`s; the arguments are converted by the XPath 3.1 function conversion rules before the call (see
   `IXPathFunction`). A compiled stylesheet's library is frozen; register into a `createChild ()`.
 * `CompiledXPath.getFreeVariables ()`: the variables of the static context an expression uses, to bind only these.
+* Threads: a `CompiledXPath`, a compiled `XsltExecutable` and a compiled `XsdSchema` may be used by several threads at
+  once if they are handed over safely (a `final` or `volatile` field, a concurrent collection, an executor); the
+  `StaticContext` of a compiled expression must not change afterwards, and a `DynamicContext` (with the function items
+  an evaluation returns) is for one thread at a time. A node tree that several threads read must be numbered first:
+  parsed trees are, a tree built with the `IXdmNode.create*` factories or `appendChild` needs `assignDocumentOrder ()`
+  on its root, because comparing nodes of an unnumbered tree numbers it without synchronisation.
 * Limits: `DynamicContext.setMaxSteps` (loop iterations and function calls, unlimited by default), the function call
   depth (10,000) and `LargeStackRunner` for a thread with a large stack.
 * Errors: `XPathException` with code, description and error object; a static error has its position in the
@@ -263,6 +269,17 @@ v0.3.1 - work in progress
 * The classes and records of the engine modules (enums, interfaces and exceptions excepted) carry a concurrency
   annotation (`@Immutable`, `@NotThreadSafe` or `@ThreadSafe`); `FnTransform` is now `@ThreadSafe` instead of
   `@Immutable`
+* XSLT: the lazily built in-scope namespaces of a stylesheet element (`xsl:evaluate`,
+  `XsltExecutable.createStaticContext`) are published safely, so concurrent transformations of one compiled stylesheet
+  no longer race on them
+* `FunctionLibrary.register` with an implementation for dynamic calls registers the complete definition under the
+  write lock; before, the dynamic implementation was set afterwards without the lock and the frozen check
+* XSLT API change: `OutputDefinition.ATTRIBUTES` is an unmodifiable `List`, `XsltElementSpecs.STANDARD_ATTRIBUTES`
+  and `ElementValidator.TOP_LEVEL_DECLARATIONS` are unmodifiable `Set`s, and `XsltExtensionRegistry.EXTENSION_CLASS_NAMES`,
+  `XsltExtensionRegistry.CORE_DECLARATIONS` and `XsltFunctions.SYSTEM_PROPERTIES` are private: before, any caller
+  could change these shared tables for every thread
+* Documented the thread rules of `CompiledXPath`, `XsltExecutable`, `XsdSchema` and node trees (README "XPath API",
+  Javadoc)
 
 v0.3.0 - 2026-11-17
 * JAXP: the attribute names of `PhoxtrotTransformerFactory` (`ATTR_PREFIX`) are now URNs starting with

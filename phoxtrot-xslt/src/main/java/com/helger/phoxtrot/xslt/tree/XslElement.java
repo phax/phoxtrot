@@ -51,7 +51,10 @@ public final class XslElement extends XslNode
   private final XdmQName m_aName;
   private final ICommonsOrderedMap <XdmQName, String> m_aAttrs = new CommonsLinkedHashMap <> ();
   private final ICommonsList <XslNode> m_aChildren = new CommonsArrayList <> ();
-  private ICommonsOrderedMap <String, String> m_aInScopeNamespaces;
+  // Lazily built and never changed afterwards (callers get a copy); volatile because xsl:evaluate and
+  // createStaticContext read it from concurrent transformations of one compiled stylesheet. Two threads may both
+  // build it, with the same content.
+  private volatile ICommonsOrderedMap <String, String> m_aInScopeNamespaces;
   // Import precedence and the lowest precedence of the modules imported by the
   // module of this declaration; only set on top-level elements
   private int m_nPrecedence;

@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xslt.compile;
 
 import java.util.Map;
+import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -93,27 +94,27 @@ public final class ElementValidator
                                                                                    "type",
                                                                                    "validation",
                                                                                    "inherit-namespaces");
-  /** The XSLT elements allowed as children of xsl:stylesheet. */
-  public static final ICommonsSet <String> TOP_LEVEL_DECLARATIONS = new CommonsHashSet <> ("accumulator",
-                                                                                           "attribute-set",
-                                                                                           "character-map",
-                                                                                           "decimal-format",
-                                                                                           "function",
-                                                                                           "global-context-item",
-                                                                                           "import",
-                                                                                           "import-schema",
-                                                                                           "include",
-                                                                                           "key",
-                                                                                           "mode",
-                                                                                           "namespace-alias",
-                                                                                           "output",
-                                                                                           "param",
-                                                                                           "preserve-space",
-                                                                                           "strip-space",
-                                                                                           "template",
-                                                                                           "variable",
-                                                                                           "use-package",
-                                                                                           "expose");
+  /** The XSLT elements allowed as children of xsl:stylesheet (unmodifiable, shared by all threads). */
+  public static final Set <String> TOP_LEVEL_DECLARATIONS = Set.of ("accumulator",
+                                                                    "attribute-set",
+                                                                    "character-map",
+                                                                    "decimal-format",
+                                                                    "function",
+                                                                    "global-context-item",
+                                                                    "import",
+                                                                    "import-schema",
+                                                                    "include",
+                                                                    "key",
+                                                                    "mode",
+                                                                    "namespace-alias",
+                                                                    "output",
+                                                                    "param",
+                                                                    "preserve-space",
+                                                                    "strip-space",
+                                                                    "template",
+                                                                    "variable",
+                                                                    "use-package",
+                                                                    "expose");
   /**
    * Per XSLT element: the local names of the XSLT elements it may appear in.
    * Elements not listed may appear wherever their parent's content model

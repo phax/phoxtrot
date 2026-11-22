@@ -752,7 +752,8 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
    * attributes, in the order of its {@link XdmNamespaceNode#getNamespaceIndex() namespace index}. A
    * tree that is not numbered is numbered first ({@link #assignDocumentOrder()}), so the call may
    * number either tree. Nodes of different trees compare by tree number, i.e. by the order in which
-   * the trees were numbered.
+   * the trees were numbered. The numbering on demand is not synchronised, so a tree read by several
+   * threads at once must be numbered before it is handed over (see {@link IXdmNode}).
    *
    * @param aLeft
    *        First node. May not be <code>null</code>.

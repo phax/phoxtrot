@@ -66,20 +66,20 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
 public final class XsltFunctions
 {
   /** The system properties in the XSLT namespace. */
-  public static final String [] SYSTEM_PROPERTIES = { "version",
-                                                      "vendor",
-                                                      "vendor-url",
-                                                      "product-name",
-                                                      "product-version",
-                                                      "is-schema-aware",
-                                                      "supports-serialization",
-                                                      "supports-backwards-compatibility",
-                                                      "supports-namespace-axis",
-                                                      "supports-streaming",
-                                                      "supports-dynamic-evaluation",
-                                                      "supports-higher-order-functions",
-                                                      "xpath-version",
-                                                      "xsd-version" };
+  private static final String [] SYSTEM_PROPERTIES = { "version",
+                                                       "vendor",
+                                                       "vendor-url",
+                                                       "product-name",
+                                                       "product-version",
+                                                       "is-schema-aware",
+                                                       "supports-serialization",
+                                                       "supports-backwards-compatibility",
+                                                       "supports-namespace-axis",
+                                                       "supports-streaming",
+                                                       "supports-dynamic-evaluation",
+                                                       "supports-higher-order-functions",
+                                                       "xpath-version",
+                                                       "xsd-version" };
 
   private static final String NS = XdmConstants.NS_FN;
 

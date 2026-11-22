@@ -16,6 +16,8 @@
  */
 package com.helger.phoxtrot.xslt.compile;
 
+import java.util.Set;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -58,16 +60,16 @@ public final class XsltElementSpecs
                       boolean noText)
   {}
 
-  /** The standard attributes allowed on every XSLT element. */
-  public static final ICommonsSet <String> STANDARD_ATTRIBUTES = new CommonsHashSet <> ("version",
-                                                                                       "exclude-result-prefixes",
-                                                                                       "extension-element-prefixes",
-                                                                                       "xpath-default-namespace",
-                                                                                       "expand-text",
-                                                                                       "default-collation",
-                                                                                       "use-when",
-                                                                                       "default-validation",
-                                                                                       "default-mode");
+  /** The standard attributes allowed on every XSLT element (unmodifiable, shared by all threads). */
+  public static final Set <String> STANDARD_ATTRIBUTES = Set.of ("version",
+                                                                "exclude-result-prefixes",
+                                                                "extension-element-prefixes",
+                                                                "xpath-default-namespace",
+                                                                "expand-text",
+                                                                "default-collation",
+                                                                "use-when",
+                                                                "default-validation",
+                                                                "default-mode");
 
   private static final ICommonsMap <String, Spec> SPECS = new CommonsHashMap <> ();
 

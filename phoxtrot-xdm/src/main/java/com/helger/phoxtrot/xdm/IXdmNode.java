@@ -34,6 +34,13 @@ import com.helger.collection.commons.ICommonsOrderedMap;
  * {@link #compareDocumentOrder(IXdmNode, IXdmNode)} numbers an unnumbered tree on demand. Adding or
  * removing a child or an attribute in a numbered tree removes the numbering of the whole tree,
  * which is then assigned again on demand.<br>
+ * The numbering on demand writes to every node of the tree without synchronisation. A tree that
+ * several threads read at the same time must therefore be numbered before it is handed to them:
+ * trees of {@link XdmParser}, {@link XdmTreeBuilder} and {@link XdmStreamReader} already are, a
+ * tree built with the <code>create*</code> factories, {@link #appendChild(IXdmNode)} or
+ * {@link #removeChild(IXdmNode)} needs a call of {@link #assignDocumentOrder()} on its root, and
+ * the hand-over itself must be safe (for example a <code>final</code> or <code>volatile</code>
+ * field, a concurrent collection or the start of the thread).<br>
  * Every node kind has its own implementation class that only carries the fields of that kind; a
  * property a kind does not have reads as its default value. Namespace nodes are not stored: an
  * element only keeps the namespace declarations it carries itself, see
@@ -222,7 +229,10 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
 
   /**
    * Compare two nodes in document order. Nodes of different trees are ordered by the creation order
-   * of their trees, which is stable but otherwise implementation dependent as XPath allows.
+   * of their trees, which is stable but otherwise implementation dependent as XPath allows. An
+   * unnumbered tree is numbered first, without synchronisation: for a tree that other threads read
+   * at the same time, call {@link #assignDocumentOrder()} before handing it over (see the type
+   * description).
    *
    * @param aLeft
    *        First node. May not be <code>null</code>.

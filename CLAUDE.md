@@ -347,6 +347,13 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   it, so its section 19 analysis is unchanged. Bound variables (`addBoundVariable`) are not modelled in the analyses:
   `analyze` wraps the expression in a `LetExpr` with their stored bindings, so the result equals the written `let`
   form by construction; patterns are not wrapped.
+- Concurrency: every class and record (not enums, interfaces, exceptions) carries `@Immutable`, `@NotThreadSafe` or
+  `@ThreadSafe`; a new one does too. Compiled artefacts (`CompiledXPath`, `XsltExecutable`/`CompiledStylesheet` with its
+  model and `Xsl*` tree, `XsdSchema` with its components) are filled during compilation, unguarded, and shared by
+  concurrent runs after a safe hand-over: run-time code never writes to them, and a lazy cache in them is `volatile`
+  holding a value that is never changed (as `XslElement.getInScopeNamespaces`). The document order numbering on demand
+  (`compareDocumentOrder`) is deliberately unsynchronised (documented on `IXdmNode`): a tree shared between threads is
+  numbered before it is handed over. Shared static tables are private or unmodifiable (`List.of`/`Set.of`).
 - When merging parallel work, check for the same mechanism implemented twice in different places (a clean git merge
   does not catch it); it happened with the XPath 1.0 compatibility conversions.
 

@@ -26,7 +26,11 @@ import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 
 /**
- * A compiled stylesheet. Immutable and usable from several threads at once.
+ * A compiled stylesheet. Immutable and usable from several threads at once. Its
+ * model is filled during compilation and not guarded afterwards, so it must be
+ * handed to other threads safely (a <code>final</code> or <code>volatile</code>
+ * field, a concurrent collection, an executor or the start of the thread);
+ * through a plain field another thread may see it incomplete.
  *
  * @author Philip Helger
  */

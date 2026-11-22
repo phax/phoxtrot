@@ -32,6 +32,13 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 /**
  * A compiled XPath expression. Immutable and usable from several threads at
  * once, each with its own {@link DynamicContext}.
+ * <p>
+ * The compiled expression keeps the {@link StaticContext} it was compiled with
+ * (no copy): that static context must not be changed after compilation, or
+ * concurrent evaluations race with the change and the meaning of the
+ * expression changes. A {@link DynamicContext} and everything derived from it
+ * (including function items returned by an evaluation, which keep the context
+ * of their run) belong to one thread at a time.
  *
  * @author Philip Helger
  */

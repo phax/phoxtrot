@@ -53,37 +53,37 @@ public final class XsltExtensionRegistry
    * The classes of the instruction families, each implementing {@link IXsltExtension}. Missing
    * classes are skipped.
    */
-  public static final String [] EXTENSION_CLASS_NAMES = { "com.helger.phoxtrot.xslt.ext.number.NumberExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.grouping.GroupingExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.merge.MergeExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.iterate.IterateExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.trycatch.TryCatchExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.resultdocument.ResultDocumentExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.accumulator.AccumulatorExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.evaluate.EvaluateExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.map.MapExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.sourcedocument.SourceDocumentExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.assertion.AssertExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.fork.ForkExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.charactermap.CharacterMapExtension",
-                                                          "com.helger.phoxtrot.xslt.ext.transform.TransformExtension" };
+  private static final String [] EXTENSION_CLASS_NAMES = { "com.helger.phoxtrot.xslt.ext.number.NumberExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.grouping.GroupingExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.merge.MergeExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.iterate.IterateExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.trycatch.TryCatchExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.resultdocument.ResultDocumentExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.accumulator.AccumulatorExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.evaluate.EvaluateExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.map.MapExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.sourcedocument.SourceDocumentExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.assertion.AssertExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.fork.ForkExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.charactermap.CharacterMapExtension",
+                                                           "com.helger.phoxtrot.xslt.ext.transform.TransformExtension" };
 
   /** Declarations the stylesheet compiler handles itself. */
-  public static final String [] CORE_DECLARATIONS = { "attribute-set",
-                                                      "decimal-format",
-                                                      "function",
-                                                      "global-context-item",
-                                                      "import",
-                                                      "include",
-                                                      "key",
-                                                      "mode",
-                                                      "namespace-alias",
-                                                      "output",
-                                                      "param",
-                                                      "preserve-space",
-                                                      "strip-space",
-                                                      "template",
-                                                      "variable" };
+  private static final String [] CORE_DECLARATIONS = { "attribute-set",
+                                                       "decimal-format",
+                                                       "function",
+                                                       "global-context-item",
+                                                       "import",
+                                                       "include",
+                                                       "key",
+                                                       "mode",
+                                                       "namespace-alias",
+                                                       "output",
+                                                       "param",
+                                                       "preserve-space",
+                                                       "strip-space",
+                                                       "template",
+                                                       "variable" };
 
   private static final Logger LOGGER = LoggerFactory.getLogger (XsltExtensionRegistry.class);
 
