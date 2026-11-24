@@ -32,6 +32,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `phelger/phoxtrot`; README "Command line client" documents every option.
 - Version and build time: `PhoxtrotVersion.BUILD_VERSION`/`BUILD_TIMESTAMP` (`phoxtrot-xdm`), read from
   `phoxtrot-version.properties`, which Maven filters (`phoxtrot-xdm/pom.xml` filters only `*.properties` resources).
+- Property tests (`*PropertyTest`, ph-commons `ph-unittest-property`, test scope in `phoxtrot-xdm`, `-xpath`, `-xsd`,
+  `-xslt`) run in the normal build; `-Dph.property.tries.factor=<n>` runs them longer, `-Dph.property.seed=<n>`
+  replays a failure. Shared generators: `XdmDocumentGenerator` (xdm), `XPathPropertyTestHelper` (xpath),
+  `RandomXmlDocument` (xslt). A new fast path gets a differential property against a form that defeats it.
 - W3C suites live outside the repo in `../../git-thirdparty/{qt3tests,xslt30-test,xsdtests}`; never copy them in.
 - Copyright header is "Philip Helger" only. Tim Riep appears in `NOTICE` and `README.md` only.
 - Never read Saxon sources (MPL); work from the W3C specs and the Go code.

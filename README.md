@@ -309,6 +309,10 @@ basis of this project. See [NOTICE](NOTICE).
 # News and noteworthy
 
 v0.4.0 - work in progress
+* Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree
+  changes and the DOM bridge, the XPath parser, operators, optimised evaluation paths, regex, string and format
+  functions, maps and arrays, the XSD lexical checks, built-in types and facets, and the XSLT compiler, template rule
+  and key indexes, patterns, `xsl:number`, sorting, grouping, streaming, the result drain and the JAXP adapter
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`
