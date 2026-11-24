@@ -35,7 +35,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - Property tests (`*PropertyTest`, ph-commons `ph-unittest-property`, test scope in `phoxtrot-xdm`, `-xpath`, `-xsd`,
   `-xslt`) run in the normal build; `-Dph.property.tries.factor=<n>` runs them longer, `-Dph.property.seed=<n>`
   replays a failure. Shared generators: `XdmDocumentGenerator` (xdm), `XPathPropertyTestHelper` (xpath),
-  `RandomXmlDocument` (xslt). A new fast path gets a differential property against a form that defeats it.
+  `XsdPropertyTestHelper` (xsd), `RandomXmlDocument` (xslt). A new fast path gets a differential property against a
+  form that defeats it. A property that shows an open engine bug stays as its own method with `@Ignore ("<bug>")`;
+  remove the `@Ignore` with the fix.
 - W3C suites live outside the repo in `../../git-thirdparty/{qt3tests,xslt30-test,xsdtests}`; never copy them in.
 - Copyright header is "Philip Helger" only. Tim Riep appears in `NOTICE` and `README.md` only.
 - Never read Saxon sources (MPL); work from the W3C specs and the Go code.

@@ -311,8 +311,12 @@ basis of this project. See [NOTICE](NOTICE).
 v0.4.0 - work in progress
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree
   changes and the DOM bridge, the XPath parser, operators, optimised evaluation paths, regex, string and format
-  functions, maps and arrays, the XSD lexical checks, built-in types and facets, and the XSLT compiler, template rule
-  and key indexes, patterns, `xsl:number`, sorting, grouping, streaming, the result drain and the JAXP adapter
+  functions, maps and arrays, serialisation, JSON, date/time arithmetic, sequence functions, collations, binary casts
+  and case mapping, the XSD lexical checks, built-in types, facets (patterns, temporal bounds, white space, lists,
+  value equality), identity constraints and content models, the name checks, node accessors, the read-only DOM view
+  and the namespace fixup, and the XSLT compiler, template rule and key indexes, patterns, `xsl:number`, sorting,
+  grouping, `xsl:analyze-string`, `xsl:iterate`, `xsl:merge`, `on-no-match`, output methods, character maps,
+  accumulators, computed names, simple content, streaming, the result drain and the JAXP adapter
 * `IXdmNode.appendChild` refuses a node that is the new parent itself or one of its ancestors (it made the tree a
   cycle, so walks up to the root and the document order numbering never ended)
 * `XdmStreamReader` reads documents whose encoding has a Java name (`UTF8`, `Cp1252`, `ISO8859_1`) as `XdmParser`
