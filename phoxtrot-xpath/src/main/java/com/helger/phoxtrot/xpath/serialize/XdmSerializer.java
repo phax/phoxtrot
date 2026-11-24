@@ -271,6 +271,10 @@ public final class XdmSerializer
    *        If not <code>null</code>, the markup writer moves the buffer
    *        content to this writer in pieces while writing; the rest stays in
    *        the buffer for the caller to write. Ignored by the other methods.
+   * @param bCheckCommentEncoding
+   *        <code>false</code> to write a character the encoding cannot represent in a
+   *        comment or processing instruction as it is instead of raising SERE0008 (see
+   *        {@link MarkupWriter#setCheckCommentEncoding(boolean)}).
    * @throws XPathException
    *         SEPM0016 for an unknown method, and the errors of
    *         {@link #checkParams} and of the method writers
@@ -278,7 +282,8 @@ public final class XdmSerializer
   private static void _serialize (@NonNull final XdmSequence aSeq,
                                   @NonNull final SerializationParams aParams,
                                   @NonNull final StringBuilder aSB,
-                                  @Nullable final Writer aTarget)
+                                  @Nullable final Writer aTarget,
+                                  final boolean bCheckCommentEncoding)
   {
     ValueEnforcer.notNull (aSeq, "Seq");
     ValueEnforcer.notNull (aParams, "Params");
@@ -301,8 +306,12 @@ public final class XdmSerializer
       case SerializationParams.METHOD_XML:
       case SerializationParams.METHOD_XHTML:
       case SerializationParams.METHOD_HTML:
-        new MarkupWriter (aParams, aCharset, aSB, sMethod, aTarget).write (normalize (aSeq, aParams.getItemSeparator ()));
+      {
+        final MarkupWriter aMarkup = new MarkupWriter (aParams, aCharset, aSB, sMethod, aTarget);
+        aMarkup.setCheckCommentEncoding (bCheckCommentEncoding);
+        aMarkup.write (normalize (aSeq, aParams.getItemSeparator ()));
         break;
+      }
       default:
         throw XPathException.of ("SEPM0016", "Unsupported serialization method '" + sMethod + "'");
     }
@@ -323,7 +332,28 @@ public final class XdmSerializer
   public static String serialize (@NonNull final XdmSequence aSeq, @NonNull final SerializationParams aParams)
   {
     final StringBuilder aSB = new StringBuilder ();
-    _serialize (aSeq, aParams, aSB, null);
+    _serialize (aSeq, aParams, aSB, null, true);
+    return aSB.toString ();
+  }
+
+  /**
+   * Serialize a node for the adaptive method, which writes it with the xml method: as
+   * {@link #serialize(XdmSequence, SerializationParams)}, but a character the encoding cannot
+   * represent in a comment or processing instruction is written as it is instead of raising
+   * SERE0008, as the adaptive method is meant to serialize any instance without an error
+   * (Serialization 3.1 section 10).
+   *
+   * @param aSeq
+   *        The sequence to serialize.
+   * @param aParams
+   *        The serialization parameters.
+   * @return The serialized form.
+   */
+  @NonNull
+  static String serializeForAdaptive (@NonNull final XdmSequence aSeq, @NonNull final SerializationParams aParams)
+  {
+    final StringBuilder aSB = new StringBuilder ();
+    _serialize (aSeq, aParams, aSB, null, false);
     return aSB.toString ();
   }
 
@@ -351,7 +381,7 @@ public final class XdmSerializer
   {
     ValueEnforcer.notNull (aWriter, "Writer");
     final StringBuilder aSB = new StringBuilder ();
-    _serialize (aSeq, aParams, aSB, aWriter);
+    _serialize (aSeq, aParams, aSB, aWriter, true);
     try
     {
       aWriter.append (aSB);

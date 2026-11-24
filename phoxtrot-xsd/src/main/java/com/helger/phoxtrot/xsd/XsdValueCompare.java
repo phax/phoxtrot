@@ -39,7 +39,9 @@ import com.helger.phoxtrot.xpath.value.XdmDurationValue;
  * Casting and ordering of atomic values for the facet checks (go-xslt
  * <code>xpath.CastTo</code> and <code>xpath.CompareAtomic</code> as the XSD
  * code uses them). Values without timezone compare with the implicit timezone
- * UTC, so results never depend on the machine.
+ * UTC, so results never depend on the machine; for equality use
+ * {@link #isEqual(XdmAtomic, XdmAtomic)}, which keeps a value without a
+ * timezone apart from one with a timezone.
  *
  * @author Philip Helger
  */
@@ -206,6 +208,34 @@ final class XsdValueCompare
     {
       return null;
     }
+  }
+
+  /**
+   * Equality of two atomic values of one primitive, as the enumeration facet
+   * and value constraints use it (Datatypes 1.1 2.2.2). Two date/time values of
+   * which exactly one has a timezone offset are never equal: their order is
+   * either strict or indeterminate (Datatypes 1.1 D.2.1, 1.0 3.2.7.4, where
+   * only the case with both or neither timezoned can return
+   * <code>P = Q</code>). Otherwise the values are equal if
+   * {@link #compare(XdmAtomic, XdmAtomic)} orders them as 0; values without a
+   * timezone are compared field by field there, as both get the same implicit
+   * timezone.
+   *
+   * @param aA
+   *        Left value.
+   * @param aB
+   *        Right value.
+   * @return <code>true</code> if equal; <code>false</code> if not equal or not
+   *         comparable (NaN).
+   */
+  static boolean isEqual (@NonNull final XdmAtomic aA, @NonNull final XdmAtomic aB)
+  {
+    if (aA.getValue () instanceof final XdmDateTimeValue aTA &&
+        aB.getValue () instanceof final XdmDateTimeValue aTB &&
+        aTA.hasTimezone () != aTB.hasTimezone ())
+      return false;
+    final Integer aC = compare (aA, aB);
+    return aC != null && aC.intValue () == 0;
   }
 
   /**

@@ -171,7 +171,8 @@ final class AdaptiveWriter
    * an EQName if it has a namespace but no prefix; a namespace node as
    * <code>xmlns="uri"</code> or <code>xmlns:prefix="uri"</code>. Every other
    * node is serialized with the xml method and the same parameters, but
-   * without item separator and byte order mark.
+   * without item separator and byte order mark, and with comments and
+   * processing instructions written without the encoding check.
    *
    * @param aNode
    *        The node.
@@ -201,7 +202,7 @@ final class AdaptiveWriter
     aNodeParams.setMethod (SerializationParams.METHOD_XML);
     aNodeParams.setItemSeparator (null);
     aNodeParams.setByteOrderMark (false);
-    m_aSB.append (XdmSerializer.serialize (XdmSequence.of (aNode), aNodeParams));
+    m_aSB.append (XdmSerializer.serializeForAdaptive (XdmSequence.of (aNode), aNodeParams));
   }
 
   /**

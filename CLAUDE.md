@@ -205,7 +205,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - XSD: the native validator (`phoxtrot-xsd`) does XSD 1.0 and 1.1; `XsdSchemaProvider` (schema-aware XPath/XSLT) compiles as
   1.1. Every `XsdSimpleTypeValidator` entry point takes the schema's `EXsdVersion`; lexical rules that differ between the
   versions (`+INF`, year 0000) belong in `checkPrimitiveLexical`, so list items, union members and facet values get
-  them too. `XsdNativeIT` gates both versions (`phoxtrot-xsd-conformance/target/xsd-native-fails.txt`, `xsd-native11-fails.txt`).
+  them too. Value equality (enumeration, fixed values) goes through `XsdSimpleTypeValidator._valuesEqualRecursive`
+  and `XsdValueCompare.isEqual` (first accepting union member, never lexical except for patterns; date/time with
+  and without timezone never equal); `compare` is for the ordered facets only. `XsdNativeIT` gates both versions (`phoxtrot-xsd-conformance/target/xsd-native-fails.txt`, `xsd-native11-fails.txt`).
 - XSD: `XsdSchema.assessText` exposes the governing types the validator records (`XsdValidationRun.noteNodeType`,
   otherwise only used by `XsdBridge`) as `XsdNodeType` (0-based element-only position path + attribute name + view).
   It is the public API XMLPerm (`../xmlperm`) uses to derive facets per instance node - keep it stable.

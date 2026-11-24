@@ -24,7 +24,6 @@ import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.helger.phoxtrot.xpath.context.EXsdVersion;
@@ -247,7 +246,7 @@ public final class XsdValueEqualityPropertyTest
   /**
    * Model property: an enumeration facet with the first one to three forms as values accepts a
    * form exactly when its value equals one of them, under both versions. The binary types and
-   * dateTimes with and without timezone in one case are left to the ignored tests below.
+   * dateTimes with and without timezone in one case are left to the test below.
    */
   @Test
   public void testEnumerationComparesValues ()
@@ -264,7 +263,6 @@ public final class XsdValueEqualityPropertyTest
    * <code>Q Q = =</code> (XML Schema 1.1 Part 2, sections 3.3.15 and 3.3.16: the value space is
    * the set of octet sequences).
    */
-  @Ignore ("Engine bug: the enumeration facet compares hexBinary and base64Binary values lexically")
   @Test
   public void testEnumerationComparesBinaryValues ()
   {
@@ -277,7 +275,7 @@ public final class XsdValueEqualityPropertyTest
   /**
    * Model property for XSD 1.1: an attribute declared with a fixed value accepts an attribute value
    * in an instance exactly when its value equals the fixed one. dateTimes with and without
-   * timezone in one case are left to the ignored test below.
+   * timezone in one case are left to the test below.
    */
   @Test
   public void testFixedAttributeComparesValues ()
@@ -291,7 +289,6 @@ public final class XsdValueEqualityPropertyTest
    * between <code>2000-01-20T12:00:00</code> and <code>2000-01-20T12:00:00Z</code>), neither in an
    * enumeration nor as fixed value.
    */
-  @Ignore ("Engine bug: dateTime equality (enumeration, fixed) treats a value without timezone as UTC")
   @Test
   public void testDateTimeWithAndWithoutTimezoneNeverEqual ()
   {
@@ -333,7 +330,6 @@ public final class XsdValueEqualityPropertyTest
    * the other order <code>1</code> is the boolean true, so <code>true</code> is accepted and
    * <code>01</code> is not.
    */
-  @Ignore ("Engine bug: the enumeration facet of a union compares the lexical forms, not the values of the accepting member")
   @Test
   public void testUnionEnumerationUsesFirstMember ()
   {

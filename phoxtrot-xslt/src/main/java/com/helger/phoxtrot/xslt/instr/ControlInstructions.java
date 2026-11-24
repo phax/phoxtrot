@@ -347,7 +347,9 @@ public final class ControlInstructions
    * invalid flags (FORX0001 from the regex compiler) raise XTDE1145, every
    * other compile error XTDE1140. All matching and non-matching substrings
    * are collected first, in order, because the position and size of the
-   * focus refer to the whole list. Then xsl:matching-substring runs for each
+   * focus refer to the whole list. A zero-length match is allowed; the code
+   * point after it starts the next non-matching substring and the search goes
+   * on behind that code point. Then xsl:matching-substring runs for each
    * match and xsl:non-matching-substring for each text between matches, with
    * the substring as context item; a part whose element is missing produces
    * nothing but still counts for the positions. While a matching part runs,
@@ -395,8 +397,9 @@ public final class ControlInstructions
       final ICommonsList <String []> aGroups = new CommonsArrayList <> ();
       final Matcher aMatcher = aCompiled.matcher (aRtCtx.getDynamicContext (), sInput);
       int nLast = 0;
+      int nFrom = 0;
       final int nGroupCount = aCompiled.getGroupCount ();
-      while (aMatcher.find ())
+      while (aMatcher.find (nFrom))
       {
         if (aMatcher.start () > nLast)
         {
@@ -415,6 +418,16 @@ public final class ControlInstructions
         aGroups.add (aMatchGroups);
         nLast = aMatcher.end ();
         aRtCtx.getDynamicContext ().checkInterrupt ();
+        if (aMatcher.start () < nLast)
+          nFrom = nLast;
+        else
+        {
+          // A zero-length match: the character after it belongs to the next non-matching substring
+          // (section 17.1), and that character is a whole code point, never half a surrogate pair
+          if (nLast >= sInput.length ())
+            break;
+          nFrom = nLast + Character.charCount (sInput.codePointAt (nLast));
+        }
       }
       if (nLast < sInput.length ())
       {

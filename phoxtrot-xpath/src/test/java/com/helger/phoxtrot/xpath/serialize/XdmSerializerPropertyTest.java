@@ -30,7 +30,6 @@ import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.helger.phoxtrot.xdm.ENodeKind;
@@ -364,7 +363,6 @@ public final class XdmSerializerPropertyTest
    * and the definition of SERE0008).
    */
   @Test
-  @Ignore ("Engine bug: comments and PIs are written without an encoding check, so the output holds unencodable characters")
   public void testUnencodableCommentOrPI ()
   {
     new PropertyChecker ().setTries (300)
@@ -392,7 +390,6 @@ public final class XdmSerializerPropertyTest
    * all (XML 1.1 section 2.2).
    */
   @Test
-  @Ignore ("Engine bug: CR (and with XML 1.1 C1 controls) inside a CDATA section are written raw: wrong value or not well-formed")
   public void testCdataSpecialCharacters ()
   {
     new PropertyChecker ().setTries (200)
@@ -432,7 +429,6 @@ public final class XdmSerializerPropertyTest
    * reference (the round-trip requirement of Serialization 3.1 section 5).
    */
   @Test
-  @Ignore ("Engine bug: with version 1.1, U+2028 is written raw and re-parses as a line feed")
   public void testXml11LineSeparator ()
   {
     new PropertyChecker ().setTries (200)
@@ -570,7 +566,6 @@ public final class XdmSerializerPropertyTest
    * {@link XdmSerializer}).
    */
   @Test
-  @Ignore ("Engine deviation from the class contract: startElement/endElement without content gives <a></a>, XdmSerializer <a/>")
   public void testIncrementalEmptyElement ()
   {
     new PropertyChecker ().setTries (200)

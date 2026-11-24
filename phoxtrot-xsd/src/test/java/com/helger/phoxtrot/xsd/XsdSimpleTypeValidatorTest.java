@@ -146,19 +146,32 @@ public final class XsdSimpleTypeValidatorTest
   public void testUnionRestrictionChain ()
   {
     // A restriction of a restricted union keeps the facets of every step of
-    // its base chain
+    // its base chain (an enumeration value must be in the value space of the
+    // base, so the enumeration is on the base and the pattern on the type)
     for (final EXsdVersion eVersion : EXsdVersion.values ())
     {
       final XsdSimpleType aType = _type ("<xs:simpleType name='u0'><xs:union memberTypes='xs:int xs:boolean'/></xs:simpleType>" +
-                                         "<xs:simpleType name='u1'><xs:restriction base='u0'><xs:pattern value='[0-9]+'/></xs:restriction></xs:simpleType>" +
-                                         "<xs:simpleType name='t'><xs:restriction base='u1'>" +
+                                         "<xs:simpleType name='u1'><xs:restriction base='u0'>" +
                                          "<xs:enumeration value='true'/><xs:enumeration value='12'/>" +
-                                         "</xs:restriction></xs:simpleType>",
+                                         "</xs:restriction></xs:simpleType>" +
+                                         "<xs:simpleType name='t'><xs:restriction base='u1'><xs:pattern value='[0-9]+'/></xs:restriction></xs:simpleType>",
                                          eVersion);
       assertTrue (_valid (aType, "12", EXsdVersion.V11));
       assertFalse (_valid (aType, "true", EXsdVersion.V11));
       assertFalse (_valid (aType, "13", EXsdVersion.V11));
     }
+    // An enumeration value outside the value space of the base union is a
+    // schema error (Datatypes 4.3.5.5)
+    for (final EXsdVersion eVersion : EXsdVersion.values ())
+      assertEquals (EVerdict.INVALID,
+                    XsdTestSupport.compile (XS +
+                                            "<xs:simpleType name='u0'><xs:union memberTypes='xs:int xs:boolean'/></xs:simpleType>" +
+                                            "<xs:simpleType name='u1'><xs:restriction base='u0'><xs:pattern value='[0-9]+'/></xs:restriction></xs:simpleType>" +
+                                            "<xs:simpleType name='t'><xs:restriction base='u1'><xs:enumeration value='true'/></xs:restriction></xs:simpleType>" +
+                                            "</xs:schema>",
+                                            null,
+                                            eVersion)
+                                  .verdict ());
   }
 
   @Test

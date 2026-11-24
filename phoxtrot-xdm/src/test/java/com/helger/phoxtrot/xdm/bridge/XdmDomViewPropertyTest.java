@@ -25,10 +25,10 @@ import static org.junit.Assert.assertTrue;
 import java.io.StringReader;
 import java.util.ArrayDeque;
 
+import javax.xml.XMLConstants;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.jspecify.annotations.NonNull;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.w3c.dom.Attr;
 import org.w3c.dom.Document;
@@ -178,6 +178,33 @@ public final class XdmDomViewPropertyTest
   }
 
   /**
+   * DOM Level 3 Core appendix B.3 <code>isDefaultNamespace (null)</code> computed on the JDK DOM.
+   * The JDK answer itself is no oracle here: for a prefixed element with an <code>xmlns</code>
+   * attribute it compares the element's own namespace with the declared one instead of the
+   * argument, so <code>&lt;p:a xmlns="urn:a" xmlns:p="urn:a"/&gt;</code> answers <code>true</code>.
+   */
+  private static boolean _isDefaultNamespaceNull (@NonNull final Node aNode)
+  {
+    Node aCur = switch (aNode)
+    {
+      case final Document aDoc -> aDoc.getDocumentElement ();
+      case final Attr aAttr -> aAttr.getOwnerElement ();
+      case final Element aElement -> aElement;
+      default -> aNode.getParentNode ();
+    };
+    while (aCur instanceof final Element aElement)
+    {
+      if (aElement.getPrefix () == null)
+        return aElement.getNamespaceURI () == null;
+      final Attr aDecl = aElement.getAttributeNodeNS (XMLConstants.XMLNS_ATTRIBUTE_NS_URI, "xmlns");
+      if (aDecl != null)
+        return aDecl.getValue ().isEmpty ();
+      aCur = aElement.getParentNode ();
+    }
+    return false;
+  }
+
+  /**
    * The view answers every query on every node as the JDK DOM does.
    */
   @Test
@@ -253,7 +280,6 @@ public final class XdmDomViewPropertyTest
    * processing instruction outside the document element, an element without default namespace
    * declaration in scope and a prefix) answers <code>false</code>.
    */
-  @Ignore ("XdmDomView bug: isDefaultNamespace (null) is true where DOM Level 3 Core appendix B.3 gives false (no element ancestor, prefixed element without default declaration)")
   @Test
   public void testIsDefaultNamespaceWithoutNamespace ()
   {
@@ -263,7 +289,7 @@ public final class XdmDomViewPropertyTest
       final ICommonsList <Node> aJdkNodes = _getNodesInOrder (_parseJdk (sXml));
       for (int i = 0; i < aJdkNodes.size (); ++i)
       {
-        final boolean bExpected = aJdkNodes.get (i).isDefaultNamespace (null);
+        final boolean bExpected = _isDefaultNamespaceNull (aJdkNodes.get (i));
         assertEquals (_describe (aJdkNodes.get (i)),
                       Boolean.valueOf (bExpected),
                       Boolean.valueOf (aViewNodes.get (i).isDefaultNamespace (null)));

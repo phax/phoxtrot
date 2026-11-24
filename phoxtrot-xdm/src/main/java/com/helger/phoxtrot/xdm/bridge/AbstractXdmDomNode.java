@@ -590,9 +590,25 @@ public abstract sealed class AbstractXdmDomNode implements Node permits
     return null;
   }
 
+  /**
+   * Follows DOM Level 3 Core appendix B.3: the nearest element, starting at the namespace context
+   * element of this node, that has no prefix (its own namespace URI) or declares the default
+   * namespace (the declared URI) decides. Without such an element, for example for a node outside
+   * the document element or a prefixed root element without a default namespace declaration, the
+   * answer is <code>false</code>. The empty string stands for no namespace, as <code>null</code>.
+   */
   public boolean isDefaultNamespace (final String sNamespaceUri)
   {
-    return Objects.equals (lookupNamespaceURI (null), nullIfEmpty (sNamespaceUri));
+    final String sWanted = nullIfEmpty (sNamespaceUri);
+    for (IXdmNode aCur = getNamespaceContextElement (); aCur != null && aCur.isElement (); aCur = aCur.getParent ())
+    {
+      if (!aCur.getName ().hasPrefix ())
+        return Objects.equals (nullIfEmpty (aCur.getName ().namespaceUri ()), sWanted);
+      final String sDeclared = aCur.getDeclaredNamespaceUri ("");
+      if (sDeclared != null)
+        return Objects.equals (nullIfEmpty (sDeclared), sWanted);
+    }
+    return false;
   }
 
   public String lookupNamespaceURI (final String sPrefix)

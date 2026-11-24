@@ -220,6 +220,8 @@ final class MarkupWriter
     private final boolean m_bSetsSuppress;
     private final boolean m_bMayIndentChildren;
     private int m_nNext = 0;
+    // Incremental writing: the start tag lacks its closing '>' until the first content arrives
+    private boolean m_bStartTagOpen = false;
 
     Frame (@NonNull final IXdmNode aElement,
            final int nDepth,
@@ -256,6 +258,8 @@ final class MarkupWriter
   private final ICommonsList <String []> m_aUndo = new CommonsArrayList <> ();
   private boolean m_bSuppress = false;
   private boolean m_bDoctypeDone = false;
+  // false only for the nodes of the adaptive method, which writes comments and PIs unchecked
+  private boolean m_bCheckCommentEncoding = true;
   // The elements opened by openElement, innermost first
   private final ArrayDeque <Frame> m_aOpen = new ArrayDeque <> ();
 
@@ -299,6 +303,21 @@ final class MarkupWriter
   }
 
   /**
+   * Decide whether a character the encoding cannot represent in a comment or processing instruction
+   * is SERE0008 (the default, Serialization 3.1 sections 5.1.3, 6.1.3 and 7.4.2) or is written as it is.
+   * The adaptive method switches the check off for the nodes it writes with the xml method, as it
+   * is meant to serialize any instance without an error (Serialization 3.1 section 10, W3C XSLT
+   * test output-0707).
+   *
+   * @param bCheck
+   *        <code>true</code> to check.
+   */
+  void setCheckCommentEncoding (final boolean bCheck)
+  {
+    m_bCheckCommentEncoding = bCheck;
+  }
+
+  /**
    * The HTML version that decides between the HTML5 and the older rules: the html-version parameter
    * if set, else for the html method the version parameter if it is a decimal number, else 4. For
    * the xhtml method the version parameter is the XML version and is not consulted.
@@ -335,23 +354,70 @@ final class MarkupWriter
   }
 
   /**
-   * The common per-character tail of text and attribute escaping: characters outside the encoding,
-   * XML 1.1 control characters and (html/xhtml) C1 controls become character references.
+   * @return <code>true</code> for the characters the xml and xhtml methods always write as
+   *         character references, regardless of the version parameter: the non-whitespace C0
+   *         controls #x1 to #x1F (bar tab, LF and CR), #x7F to #x9F (NEL included) and LINE
+   *         SEPARATOR #x2028 (Serialization 3.1 section 5). CR, tab and LF are not included, as
+   *         they depend on the context.
    */
-  private void _appendChar (@NonNull final StringBuilder aSB, final int cp)
+  private static boolean _isAlwaysReferenced (final int cp)
   {
-    // The C0 controls (bar tab, LF and CR) cannot be written in XML 1.0 in any
-    // form (Serialization 3.1 section 4)
+    return (cp >= 0x1 && cp <= 0x1F && cp != 0x9 && cp != 0xA && cp != 0xD) ||
+           (cp >= 0x7F && cp <= 0x9F) ||
+           cp == 0x2028;
+  }
+
+  /**
+   * With the xml and xhtml methods and XML 1.0: a non-whitespace C0 control character cannot be
+   * written in any form (Serialization 3.1 section 4).
+   *
+   * @throws XPathException
+   *         SERE0006 for such a character
+   */
+  private void _checkXml10Char (final int cp)
+  {
     if (!m_bXml11 && !m_bHtml && cp >= 0x1 && cp <= 0x1F && cp != 0x9 && cp != 0xA && cp != 0xD)
       throw XPathException.of ("SERE0006",
                                "The character #x" +
                                            Integer.toHexString (cp).toUpperCase (Locale.ROOT) +
                                            " cannot be serialized as XML 1.0");
+  }
 
-    if ((m_bXml11 &&
-         ((cp >= 0x1 && cp <= 0x1F && cp != 0x9 && cp != 0xA && cp != 0xD) || (cp >= 0x7F && cp <= 0x9F))) ||
-        ((m_bHtml || m_bXhtml) && cp >= 0x80 && cp <= 0x9F) ||
-        !m_aCharset.canEncode (cp))
+  /**
+   * The common per-character tail of text and attribute escaping: characters outside the encoding
+   * become character references, and so do with the xml and xhtml methods the control characters
+   * #x1 to #x1F (XML 1.1 only), #x7F to #x9F and LINE SEPARATOR (see
+   * {@link #_isAlwaysReferenced(int)}), with the html method the C1 controls #x80 to #x9F.
+   *
+   * @throws XPathException
+   *         SERE0006 for a C0 control character with XML 1.0
+   */
+  private void _appendChar (@NonNull final StringBuilder aSB, final int cp)
+  {
+    // Fast path: from U+00A0 on, only LINE SEPARATOR is one of the control
+    // characters checked here, so the rest needs the encoding check only
+    if (cp < 0xA0 || cp == 0x2028)
+    {
+      if (m_bHtml)
+      {
+        if (cp >= 0x80 && cp <= 0x9F)
+        {
+          _charRef (aSB, cp);
+          return;
+        }
+      }
+      else
+      {
+        _checkXml10Char (cp);
+        if (_isAlwaysReferenced (cp))
+        {
+          _charRef (aSB, cp);
+          return;
+        }
+      }
+    }
+
+    if (!m_aCharset.canEncode (cp))
       _charRef (aSB, cp);
     else
       if (m_bHtml && cp == 0xA0)
@@ -953,8 +1019,13 @@ final class MarkupWriter
   /**
    * Write text as CDATA sections (cdata-section-elements). The text is normalised; a
    * <code>]]&gt;</code> inside is split over two sections, and a character the encoding cannot
-   * represent ends the current section and is written as a character reference between sections.
-   * The character map is not applied.
+   * represent ends the current section and is written as a character reference between sections
+   * (Serialization 3.1 section 5.1.5). The same holds for the characters that must be character
+   * references to survive the round trip (section 5): CR and those of
+   * {@link #_isAlwaysReferenced(int)}. The character map is not applied.
+   *
+   * @throws XPathException
+   *         SERE0006 for a C0 control character with XML 1.0
    */
   private void _writeCData (@NonNull final String sText)
   {
@@ -964,7 +1035,16 @@ final class MarkupWriter
     {
       final int cp = s.codePointAt (i);
       i += Character.charCount (cp);
-      if (!m_aCharset.canEncode (cp))
+      // Fast path: a printable ASCII character is always written as it is
+      final boolean bAsIs;
+      if (cp >= 0x20 && cp < 0x7F)
+        bAsIs = true;
+      else
+      {
+        _checkXml10Char (cp);
+        bAsIs = cp != 0xD && !_isAlwaysReferenced (cp) && m_aCharset.canEncode (cp);
+      }
+      if (!bAsIs)
       {
         if (aRun.length () > 0)
         {
@@ -1014,13 +1094,38 @@ final class MarkupWriter
   }
 
   /**
+   * Append the target or data of a processing instruction or the content of a comment, where
+   * neither XML nor HTML recognises character references: written as it is.
+   *
+   * @throws XPathException
+   *         SERE0008 for a character the encoding cannot represent, unless the check is switched
+   *         off (see {@link #setCheckCommentEncoding(boolean)})
+   */
+  private void _appendUnreferenced (@NonNull final String s, @NonNull final String sContext)
+  {
+    if (m_bCheckCommentEncoding)
+      for (int i = 0; i < s.length ();)
+      {
+        final int cp = s.codePointAt (i);
+        i += Character.charCount (cp);
+        // Fast path: ASCII is encodable in every output encoding (OutputCharset.canEncode)
+        if (cp >= 0x80 && !m_aCharset.canEncode (cp))
+          throw XPathException.of ("SERE0008",
+                                   "The character U+" +
+                                               Integer.toHexString (cp) +
+                                               " cannot be represented in the output encoding inside " +
+                                               sContext);
+      }
+    m_aSB.append (s);
+  }
+
+  /**
    * Write a text, comment or processing instruction node; other node kinds are ignored. Text with
    * disable-output-escaping is written as it is, bar the characters the encoding cannot represent
    * (see {@link #_writeUnescaped(StringBuilder, String)}). Comments and processing instructions are
-   * written without any escaping or encoding check (the adaptive method delegates to this writer,
-   * and the W3C XSLT test output-0707 expects no error for a character outside the encoding in a
-   * comment there); a processing instruction ends with <code>&gt;</code> instead of
-   * <code>?&gt;</code> with the html method.
+   * written without any escaping; a character the encoding cannot represent there is SERE0008 (see
+   * {@link #_appendUnreferenced(String, String)}). A processing instruction ends with
+   * <code>&gt;</code> instead of <code>?&gt;</code> with the html method.
    *
    * @param aNode
    *        The node.
@@ -1038,12 +1143,18 @@ final class MarkupWriter
           _writeText (aNode.getValue (), aParent);
         break;
       case COMMENT:
-        m_aSB.append ("<!--").append (aNode.getValue ()).append ("-->");
+        m_aSB.append ("<!--");
+        _appendUnreferenced (aNode.getValue (), "a comment");
+        m_aSB.append ("-->");
         break;
       case PROCESSING_INSTRUCTION:
-        m_aSB.append ("<?").append (aNode.getName ().localName ());
+        m_aSB.append ("<?");
+        _appendUnreferenced (aNode.getName ().localName (), "a processing instruction");
         if (!aNode.getValue ().isEmpty ())
-          m_aSB.append (' ').append (aNode.getValue ());
+        {
+          m_aSB.append (' ');
+          _appendUnreferenced (aNode.getValue (), "a processing instruction");
+        }
         m_aSB.append (m_bHtml ? ">" : "?>");
         break;
       default:
@@ -1057,9 +1168,54 @@ final class MarkupWriter
   }
 
   /**
+   * Finish the start tag of an element without children (written up to, not including, the closing
+   * '&gt;') as the output method writes an empty element: with a Content-Type <code>meta</code>
+   * element as only content if one is given; with the html method an HTML element as start tag only
+   * (void element) or start and end tag; with the xhtml method an HTML element as
+   * <code>&lt;br /&gt;</code> (void element) or start and end tag; anything else as empty-element
+   * tag.
+   *
+   * @param aElement
+   *        The element.
+   * @param sQName
+   *        The qualified name its start tag uses.
+   * @param sMeta
+   *        The generated Content-Type <code>meta</code> element, may be <code>null</code>.
+   */
+  private void _finishEmptyElement (@NonNull final IXdmNode aElement,
+                                    @NonNull final String sQName,
+                                    @Nullable final String sMeta)
+  {
+    final String sLocalLC = aElement.getName ().localName ().toLowerCase (Locale.ROOT);
+    if (sMeta != null)
+      m_aSB.append ('>').append (sMeta).append ("</").append (sQName).append ('>');
+    else
+      if (m_bHtml && _isHtmlElement (aElement))
+      {
+        if (VOID_ELEMENTS.contains (sLocalLC))
+          m_aSB.append ('>');
+        else
+          m_aSB.append ("></").append (sQName).append ('>');
+      }
+      else
+        if (m_bXhtml && (_isHtmlElement (aElement) || (m_bHtml5 && !aElement.getName ().hasNamespace ())))
+        {
+          if (VOID_ELEMENTS.contains (sLocalLC))
+            m_aSB.append (" />");
+          else
+            m_aSB.append ("></").append (sQName).append ('>');
+        }
+        else
+          m_aSB.append ("/>");
+  }
+
+  /**
    * Open an element: write its start tag and either finish it (no children) or return a frame for
    * its children. With <code>bForceOpen</code> the element is treated as having children although
-   * it has none yet (its content is written incrementally).
+   * it has none yet (its content is written incrementally): unless a Content-Type
+   * <code>meta</code> element is added, its start tag is left without the closing '&gt;', which
+   * {@link #_completeStartTag()} adds before the first content and {@link #closeElement()} turns
+   * into the form of an empty element if no content came.
    */
   @Nullable
   private Frame _openElement (@NonNull final IXdmNode aElement,
@@ -1083,55 +1239,48 @@ final class MarkupWriter
     final String sMeta = _headNeedsMeta (aElement) ? _getContentTypeMeta () : null;
     if (!bForceOpen && aElement.getChildCount () == 0)
     {
-      final String sLocalLC = aElement.getName ().localName ().toLowerCase (Locale.ROOT);
-      if (sMeta != null)
-        m_aSB.append ('>').append (sMeta).append ("</").append (sQName).append ('>');
-      else
-        if (m_bHtml && _isHtmlElement (aElement))
-        {
-          if (VOID_ELEMENTS.contains (sLocalLC))
-            m_aSB.append ('>');
-          else
-            m_aSB.append ("></").append (sQName).append ('>');
-        }
-        else
-          if (m_bXhtml && (_isHtmlElement (aElement) || (m_bHtml5 && !aElement.getName ().hasNamespace ())))
-          {
-            if (VOID_ELEMENTS.contains (sLocalLC))
-              m_aSB.append (" />");
-            else
-              m_aSB.append ("></").append (sQName).append ('>');
-          }
-          else
-            m_aSB.append ("/>");
+      _finishEmptyElement (aElement, sQName, sMeta);
       _unwind (nMark);
       return null;
     }
-    m_aSB.append ('>');
-    if (sMeta != null)
-      m_aSB.append (sMeta);
+    final boolean bLeaveOpen = bForceOpen && sMeta == null;
+    if (!bLeaveOpen)
+    {
+      m_aSB.append ('>');
+      if (sMeta != null)
+        m_aSB.append (sMeta);
+    }
     if (bTriggersSuppress)
       m_bSuppress = true;
-    return new Frame (aElement,
-                      nDepth,
-                      sQName,
-                      nMark,
-                      bIndentClose,
-                      bTriggersSuppress,
-                      m_bIndent && _mayIndentIn (aElement));
+    final Frame ret = new Frame (aElement,
+                                 nDepth,
+                                 sQName,
+                                 nMark,
+                                 bIndentClose,
+                                 bTriggersSuppress,
+                                 m_bIndent && _mayIndentIn (aElement));
+    ret.m_bStartTagOpen = bLeaveOpen;
+    return ret;
   }
 
   /**
    * Write the end tag of an element opened by
    * {@link #_openElement(IXdmNode, int, IXdmNode, boolean, boolean, boolean)}, preceded by a line
    * break if indentation decided so, drop the namespace bindings of its start tag and end the
-   * suppress-indentation region the element started.
+   * suppress-indentation region the element started. An element opened incrementally that got no
+   * content is finished as an empty element instead (see
+   * {@link #_finishEmptyElement(IXdmNode, String, String)}), as the plain serializer writes it.
    */
   private void _closeElement (@NonNull final Frame aFrame)
   {
-    if (aFrame.m_bIndentClose)
-      _newline (aFrame.m_nDepth);
-    m_aSB.append ("</").append (aFrame.m_sQName).append ('>');
+    if (aFrame.m_bStartTagOpen)
+      _finishEmptyElement (aFrame.m_aElement, aFrame.m_sQName, null);
+    else
+    {
+      if (aFrame.m_bIndentClose)
+        _newline (aFrame.m_nDepth);
+      m_aSB.append ("</").append (aFrame.m_sQName).append ('>');
+    }
     _unwind (aFrame.m_nUndoMark);
     if (aFrame.m_bSetsSuppress)
       m_bSuppress = false;
@@ -1331,9 +1480,25 @@ final class MarkupWriter
   }
 
   /**
+   * Incremental writing: add the closing '&gt;' to the start tag of the innermost open element if
+   * it still lacks it, as content follows now. Any written node counts as content, as a child does
+   * for the plain serializer.
+   */
+  private void _completeStartTag ()
+  {
+    final Frame aParent = m_aOpen.peek ();
+    if (aParent != null && aParent.m_bStartTagOpen)
+    {
+      m_aSB.append ('>');
+      aParent.m_bStartTagOpen = false;
+    }
+  }
+
+  /**
    * Incremental writing: write the start tag of an element whose content follows through
    * {@link #writeNode(IXdmNode)} and {@link #openElement(IXdmNode)}, and which is closed by
-   * {@link #closeElement()}. The element is a child of the innermost open element, or a top-level
+   * {@link #closeElement()}. The closing '&gt;' of the start tag is only written with the first
+   * content, so that an element closed without content gets the form of an empty element. The element is a child of the innermost open element, or a top-level
    * node if none is open. Its name, attributes and namespaces must be final. Indentation is not
    * supported.
    *
@@ -1342,6 +1507,7 @@ final class MarkupWriter
    */
   void openElement (@NonNull final IXdmNode aElement)
   {
+    _completeStartTag ();
     final Frame aParent = m_aOpen.peek ();
     if (aParent == null)
       _beforeTopLevelElement (aElement);
@@ -1371,6 +1537,7 @@ final class MarkupWriter
    */
   void writeNode (@NonNull final IXdmNode aNode)
   {
+    _completeStartTag ();
     final Frame aParent = m_aOpen.peek ();
     if (aNode.getKind () == ENodeKind.ELEMENT)
     {

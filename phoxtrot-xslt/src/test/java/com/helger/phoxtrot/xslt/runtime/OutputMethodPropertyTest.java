@@ -29,7 +29,6 @@ import java.util.List;
 import javax.xml.parsers.DocumentBuilderFactory;
 
 import org.jspecify.annotations.NonNull;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.w3c.dom.Document;
 import org.w3c.dom.Element;
@@ -216,7 +215,6 @@ public final class OutputMethodPropertyTest
    * <code>&lt;pre&gt;&lt;![CDATA[\r]]&gt;&lt;/pre&gt;</code>.
    */
   @Test
-  @Ignore ("Engine bug: a CR in a CDATA section is written raw and does not survive the round trip (Serialization 3.1 sections 5 and 5.1.5)")
   public void testCarriageReturnInCDataSection ()
   {
     new PropertyChecker ().setTries (100).forAll (TEXTS, sText -> {
@@ -238,7 +236,6 @@ public final class OutputMethodPropertyTest
    * with the three characters unescaped.
    */
   @Test
-  @Ignore ("Engine bug: U+007F to U+009F and U+2028 are not written as character references (Serialization 3.1 section 5)")
   public void testControlCharactersEscaped ()
   {
     new PropertyChecker ().setTries (100).forAll (TEXTS, sText -> {

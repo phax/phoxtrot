@@ -339,24 +339,40 @@ final class XsdFacetValidator
   }
 
   /**
-   * Compare two lexicals by value for a value-based enumeration; for
-   * non-comparable types fall back to lexical equality.
+   * Compare two lexicals by value for a value-based enumeration with
+   * {@link XsdValueCompare#isEqual(XdmAtomic, XdmAtomic)}: numbers, date/time
+   * values, durations, booleans and the octets of hexBinary and base64Binary.
+   * For the other types (whose values are their normalised strings, or need a
+   * namespace context) and for values that do not cast or are not equal (NaN,
+   * which is identical to itself) fall back to lexical equality.
    */
   private static boolean _valueEqual (@NonNull final String sValue,
                                       @NonNull final String sEnum,
                                       @NonNull final EAtomicType ePrim)
   {
-    if (ePrim.isNumeric () || ePrim.isDateTimeFamily () || ePrim.isDurationFamily () || ePrim == EAtomicType.BOOLEAN)
+    if (ePrim.isNumeric () ||
+        ePrim.isDateTimeFamily () ||
+        ePrim.isDurationFamily () ||
+        ePrim.isBinary () ||
+        ePrim == EAtomicType.BOOLEAN)
     {
       final XdmAtomic aA = XsdValueCompare.castOrNull (sValue, ePrim);
       final XdmAtomic aB = XsdValueCompare.castOrNull (sEnum, ePrim);
-      if (aA == null || aB == null)
-        return sValue.equals (sEnum);
-      final Integer aC = XsdValueCompare.compare (aA, aB);
-      if (aC != null)
-        return aC.intValue () == 0;
+      if (aA != null && aB != null && XsdValueCompare.isEqual (aA, aB))
+        return true;
     }
     return sValue.equals (sEnum);
+  }
+
+  /**
+   * @param sValue
+   *        The value that is not in an enumeration.
+   * @return A new <code>cvc-enumeration-valid</code> error for the value.
+   */
+  @NonNull
+  static XsdInvalidException enumerationError (@NonNull final String sValue)
+  {
+    return XsdCompiler.invalid ("cvc-enumeration-valid", "value " + XsdLexHelper.quote (sValue) + " is not in the enumeration");
   }
 
   /**
@@ -680,6 +696,37 @@ final class XsdFacetValidator
   }
 
   /**
+   * The pattern facets of one restriction step: the value must match at least
+   * one alternative in every group (base patterns are a separate group,
+   * checked at that level, so AND across levels). Patterns always constrain
+   * the lexical form.
+   *
+   * @param aFacets
+   *        The facets.
+   * @param sValue
+   *        The normalised value.
+   * @throws XsdInvalidException
+   *         <code>cvc-pattern-valid</code> if a group has no matching
+   *         alternative
+   */
+  static void checkPatternIn (@NonNull final XsdFacetSet aFacets, @NonNull final String sValue)
+  {
+    for (final ICommonsList <XsdPattern> aGroup : aFacets.m_aPatterns)
+    {
+      boolean bOK = false;
+      for (final XsdPattern aPattern : aGroup)
+        if (aPattern.matches (sValue))
+        {
+          bOK = true;
+          break;
+        }
+      if (!bOK)
+        throw XsdCompiler.invalid ("cvc-pattern-valid",
+                                   "value " + XsdLexHelper.quote (sValue) + " does not match the required pattern");
+    }
+  }
+
+  /**
    * go-xslt <code>facetSet.checkPatternEnumIn</code>: the pattern and
    * enumeration facets, with the instance node an enumeration over
    * xs:QName/xs:NOTATION needs to expand the value.
@@ -700,22 +747,7 @@ final class XsdFacetValidator
                                   @NonNull final EAtomicType ePrim,
                                   @Nullable final IXdmNode aAt)
   {
-    // Pattern groups: match at least one alternative in every group (base
-    // patterns are a separate group, checked at that level, so AND across
-    // levels)
-    for (final ICommonsList <XsdPattern> aGroup : aFacets.m_aPatterns)
-    {
-      boolean bOK = false;
-      for (final XsdPattern aPattern : aGroup)
-        if (aPattern.matches (sValue))
-        {
-          bOK = true;
-          break;
-        }
-      if (!bOK)
-        throw XsdCompiler.invalid ("cvc-pattern-valid",
-                                   "value " + XsdLexHelper.quote (sValue) + " does not match the required pattern");
-    }
+    checkPatternIn (aFacets, sValue);
     if (aFacets.m_bHasEnum)
     {
       boolean bOK = false;
@@ -742,7 +774,7 @@ final class XsdFacetValidator
         }
       }
       if (!bOK)
-        throw XsdCompiler.invalid ("cvc-enumeration-valid", "value " + XsdLexHelper.quote (sValue) + " is not in the enumeration");
+        throw enumerationError (sValue);
     }
   }
 

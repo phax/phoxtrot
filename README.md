@@ -324,6 +324,22 @@ v0.4.0 - work in progress
 * XSD 1.0: `+INF` for xs:float/xs:double and the year 0000 in the date family are refused wherever an atomic value is
   checked (list items, union members, facet values, default and fixed values), not only for the type of an element
   or attribute
+* XSD value equality (enumeration, fixed values): an enumeration of a union compares the value of the first member
+  that accepts each side (with `memberTypes="xs:int xs:boolean"` the enumeration value `1` admits `01`, not `true`),
+  and an enumeration value outside the value space of the base union is a schema error; enumerations of
+  xs:hexBinary and xs:base64Binary compare octets (`0a` equals `0A`); a date/time value without timezone never equals
+  one with a timezone; a fixed value of a union equals the instance value when the values are equal, also if
+  different members accept them
+* Serialisation (xml and xhtml methods): CR, NEL, U+2028 and the control characters #x7F-#x9F (under version 1.1
+  also #x1-#x1F) are written as character references in text and attribute values, also inside CDATA sections
+  (which are closed for them, as for an unencodable character; a C0 control under version 1.0 is SERE0006 there as in
+  text); a character the encoding cannot hold in a comment or processing instruction is SERE0008 (xml, xhtml and html
+  methods, not the adaptive method); `XdmIncrementalSerializer` writes an element without content in the same form
+  as `XdmSerializer` (`<a/>`, `<br>`, `<br />`)
+* `xsl:analyze-string`: after a zero-length match the next character is a whole code point, so a character outside
+  the BMP is no longer split into its surrogates
+* `XdmDomView`: `isDefaultNamespace (null)` follows DOM Level 3 Core appendix B.3 (false for a node without an
+  element that is unprefixed or declares the default namespace, for example a comment outside the document element)
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`

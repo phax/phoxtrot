@@ -288,8 +288,12 @@ final class XsdSimpleTypeParser
     if (f.m_bHasLength && f.m_bHasMaxLength && nBaseMaxLen < 0)
       throw XsdCompiler.invalid ("length-minLength-maxLength",
                                  "length cannot appear with maxLength unless maxLength is inherited");
-    // Enumeration literals of a list restriction must be valid against the base
-    if (aType.m_eVariety == EXsdVariety.LIST && f.m_bHasEnum && aType.m_aBase != null)
+    // Enumeration literals of a list or union restriction must be valid against
+    // the base (Datatypes 1.1 and 1.0 4.3.5.5: each value is in the value
+    // space of the base); the atomic case is checked in validateFacetValues
+    if ((aType.m_eVariety == EXsdVariety.LIST || aType.m_eVariety == EXsdVariety.UNION) &&
+        f.m_bHasEnum &&
+        aType.m_aBase != null)
       for (final String sEnum : f.m_aEnumeration)
         if (!_isValidAgainst (aType.m_aBase, sEnum, eVersion))
           throw XsdCompiler.invalid ("enumeration-valid-restriction",

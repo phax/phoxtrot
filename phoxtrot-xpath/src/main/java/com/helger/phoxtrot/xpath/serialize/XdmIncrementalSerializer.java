@@ -187,7 +187,10 @@ public final class XdmIncrementalSerializer
 
   /**
    * Write the start tag of an element whose children follow. Its name,
-   * attributes and namespaces must be final, its namespaces fixed.
+   * attributes and namespaces must be final, its namespaces fixed. If
+   * {@link #endElement()} follows without content, the element is written as
+   * the plain serializer writes an empty element (e.g. <code>&lt;a/&gt;</code>
+   * with the xml method).
    *
    * @param aElement
    *        The element.

@@ -25,7 +25,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.helger.phoxtrot.xdm.XdmQName;
@@ -40,7 +39,6 @@ import com.helger.phoxtrot.xslt.XsltTransformRequest;
 import com.helger.unittest.property.ChoiceSequence;
 import com.helger.unittest.property.Generators;
 import com.helger.unittest.property.IGenerator;
-import com.helger.unittest.property.PropertyAssume;
 import com.helger.unittest.property.PropertyChecker;
 
 /**
@@ -346,38 +344,16 @@ public final class AnalyzeStringPropertyTest
   }
 
   /**
-   * @return <code>true</code> if the pattern matches a zero-length string
-   *         directly before a character outside the BMP of the input (also at
-   *         a position that the partition skips).
-   */
-  private static boolean _hasZeroLengthMatchBeforeSupplementary (@NonNull final Pattern aPattern, @NonNull final String sInput)
-  {
-    final Matcher aMatcher = aPattern.matcher (sInput);
-    aMatcher.useAnchoringBounds (false);
-    aMatcher.useTransparentBounds (true);
-    for (int nPos = 0; nPos < sInput.length (); nPos += Character.charCount (sInput.codePointAt (nPos)))
-      if (Character.isSupplementaryCodePoint (sInput.codePointAt (nPos)))
-      {
-        aMatcher.region (nPos, sInput.length ());
-        if (aMatcher.lookingAt () && aMatcher.end () == nPos)
-          return true;
-      }
-    return false;
-  }
-
-  /**
    * xsl:analyze-string partitions the input into matching and non-matching
    * substrings as section 17.1 describes, also for regular expressions that
-   * match a zero-length string, with regex-group(1) as Java's group 1. A
-   * zero-length match before a character outside the BMP is left to
-   * {@link #testZeroLengthMatchBeforeSupplementaryCharacter()}.
+   * match a zero-length string (also before a character outside the BMP),
+   * with regex-group(1) as Java's group 1.
    */
   @Test
   public void testAnalyzeStringInstruction ()
   {
     new PropertyChecker ().setTries (1500).forAll (INPUTS, REGEXES, (sInput, aRegex) -> {
       final Pattern aPattern = aRegex.getJavaPattern ();
-      PropertyAssume.that (!_hasZeroLengthMatchBeforeSupplementary (aPattern, sInput));
       final List <Segment> aSegments = _partition (aPattern, sInput);
       assertEquals (aRegex + " on '" + sInput + "'", _expectedAnalyze (aSegments), _run (INSTRUCTION, sInput, aRegex));
     });
@@ -386,23 +362,18 @@ public final class AnalyzeStringPropertyTest
   /**
    * After a zero-length match, section 17.1 moves the next character (a code
    * point, "a codepoint greater than 65535 is considered as one character, not
-   * as a surrogate pair") to the non-matching substring. The engine moves a
-   * single UTF-16 unit instead and splits the surrogate pair: for the input
-   * U+1F600 and the regex <code>a*</code> the result is
-   * <code>[](\ud83d)[](\ude00)[]</code> instead of
-   * <code>[](😀)[]</code>.
+   * as a surrogate pair") to the non-matching substring: for the input U+1F600
+   * and the regex <code>a*</code> the result is an empty match, U+1F600 as one
+   * non-matching substring and another empty match; the surrogate pair is never
+   * split.
    */
   @Test
-  @Ignore ("Engine bug: xsl:analyze-string splits a surrogate pair after a zero-length match (XSLT 3.0 section 17.1)")
   public void testZeroLengthMatchBeforeSupplementaryCharacter ()
   {
-    new PropertyChecker ().setTries (500).forAll (INPUTS, REGEXES, (sInput, aRegex) -> {
-      final Pattern aPattern = aRegex.getJavaPattern ();
-      PropertyAssume.that (_hasZeroLengthMatchBeforeSupplementary (aPattern, sInput));
-      final List <Segment> aSegments = _partition (aPattern, sInput);
-      assertEquals (aRegex + " on '" + sInput + "'", _expectedAnalyze (aSegments), _run (INSTRUCTION, sInput, aRegex));
-    });
+    assertEquals ("[|](\uD83D\uDE00)[|]", _run (INSTRUCTION, "\uD83D\uDE00", new Regex ("a*", "a*", "")));
+    assertEquals ("[|](\uD83D\uDE00)[|](b)[|]", _run (INSTRUCTION, "\uD83D\uDE00b", new Regex ("a*", "a*", "")));
   }
+
 
   /**
    * For a regular expression that matches no zero-length string,
