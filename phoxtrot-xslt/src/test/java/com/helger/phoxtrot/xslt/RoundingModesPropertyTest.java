@@ -18,12 +18,8 @@ package com.helger.phoxtrot.xslt;
 
 import static org.junit.Assert.assertEquals;
 
-import java.math.BigDecimal;
-import java.math.BigInteger;
 import java.math.RoundingMode;
-import java.net.URISyntaxException;
 import java.util.List;
-import java.util.Locale;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.Test;
@@ -52,89 +48,18 @@ import com.helger.unittest.property.PropertyChecker;
  */
 public final class RoundingModesPropertyTest
 {
-  /**
-   * One rounding case.
-   *
-   * @param value
-   *        The value to round.
-   * @param scale
-   *        The number of fraction digits to keep (negative: tens, hundreds,
-   *        ...).
-   */
-  private record Case (@NonNull BigDecimal value, int scale)
-  {}
-
-  private static final RoundingMode [] MODES = RoundingMode.values ();
+  private static final List <RoundingMode> MODES = RoundingTestCases.MODES;
 
   private static final XdmQName PARAM_VALUE = new XdmQName ("v");
   private static final XdmQName PARAM_SCALE = new XdmQName ("s");
   private static final XdmQName PARAM_MODES = new XdmQName ("modes");
 
-  /** Digit strings of 1 to 30 digits, leading zeros included */
-  private static final IGenerator <BigInteger> DIGITS = Generators.strings ("0123456789", 1, 30).map (BigInteger::new);
-
-  /**
-   * Cases of three kinds for a random scale: an arbitrary value, a value that
-   * is exactly halfway between two neighbours at the scale (the tie the HALF_*
-   * modes decide), and a value that needs no rounding at the scale.
-   */
-  private static final IGenerator <Case> CASES = Generators.ints (-6, 12)
-                                                           .flatMap (nScale -> Generators.oneOf (_arbitrary (nScale),
-                                                                                                 _tie (nScale),
-                                                                                                 _exact (nScale)));
-
   /** The mode names as rm:round gets them: exact, lower case, padded */
-  private static final IGenerator <List <Integer>> SPELLINGS = Generators.lists (Generators.ints (0, 2),
-                                                                                 MODES.length,
-                                                                                 MODES.length);
+  private static final IGenerator <List <Integer>> SPELLINGS = Generators.lists (RoundingTestCases.SPELLING_KINDS,
+                                                                                 MODES.size (),
+                                                                                 MODES.size ());
 
   private static final XsltExecutable DRIVER = _compileDriver ();
-
-  @NonNull
-  private static IGenerator <BigDecimal> _signed (@NonNull final IGenerator <BigDecimal> aGen)
-  {
-    return Generators.booleans ().flatMap (aNegative -> aGen.map (a -> aNegative.booleanValue () ? a.negate () : a));
-  }
-
-  @NonNull
-  private static IGenerator <Case> _arbitrary (final int nScale)
-  {
-    return _signed (Generators.ints (0, 15).flatMap (nValueScale -> DIGITS.map (a -> new BigDecimal (a, nValueScale.intValue ()))))
-                                                                                                                                     .map (a -> new Case (a,
-                                                                                                                                                          nScale));
-  }
-
-  @NonNull
-  private static IGenerator <Case> _tie (final int nScale)
-  {
-    // digits followed by a 5 one place behind the kept digits, optionally
-    // with trailing zeros (2.50 is the same tie as 2.5)
-    return _signed (Generators.ints (0, 2)
-                              .flatMap (nZeros -> DIGITS.map (a -> new BigDecimal (a.multiply (BigInteger.TEN)
-                                                                                    .add (BigInteger.valueOf (5))
-                                                                                    .multiply (BigInteger.TEN.pow (nZeros.intValue ())),
-                                                                                   nScale + 1 + nZeros.intValue ())))).map (a -> new Case (a,
-                                                                                                                                         nScale));
-  }
-
-  @NonNull
-  private static IGenerator <Case> _exact (final int nScale)
-  {
-    return _signed (Generators.ints (-6, 0).flatMap (nLess -> DIGITS.map (a -> new BigDecimal (a,
-                                                                                               nScale +
-                                                                                                  nLess.intValue ())))).map (a -> new Case (a,
-                                                                                                                                            nScale));
-  }
-
-  /**
-   * @return The local name of the function of a mode: <code>HALF_UP</code> is
-   *         <code>rm:half-up</code>.
-   */
-  @NonNull
-  private static String _getFunctionName (@NonNull final RoundingMode eMode)
-  {
-    return "rm:" + eMode.name ().toLowerCase (Locale.ROOT).replace ('_', '-');
-  }
 
   @NonNull
   private static String _getCatch (@NonNull final String sSelect)
@@ -168,64 +93,14 @@ public final class RoundingModesPropertyTest
                 "<xsl:template name='xsl:initial-template'>" +
                 "<xsl:variable name='d' as='xs:decimal' select='xs:decimal($v)'/>");
     for (final RoundingMode eMode : MODES)
-      aSB.append (_getCatch (_getFunctionName (eMode) + "($d, $s)"));
-    for (int i = 0; i < MODES.length; ++i)
+      aSB.append (_getCatch (RoundingTestCases.getFunctionName (eMode) + "($d, $s)"));
+    for (int i = 0; i < MODES.size (); ++i)
       aSB.append (_getCatch ("rm:round($d, $s, $modes[" + (i + 1) + "])"));
     aSB.append ("</xsl:template></xsl:stylesheet>");
     final XsltCompileOptions aOptions = new XsltCompileOptions ();
-    try
-    {
-      aOptions.setBaseUri (RoundingModesPropertyTest.class.getResource ("/rounding/rounding-modes.xsl")
-                                                          .toURI ()
-                                                          .resolve ("driver.xsl")
-                                                          .toString ());
-    }
-    catch (final URISyntaxException ex)
-    {
-      throw new IllegalStateException (ex);
-    }
+    aOptions.setBaseUri (RoundingTestCases.getResourceUri ("driver.xsl"));
     aOptions.setResolver (FileResourceResolver.INSTANCE);
     return XsltCompiler.compile (aSB.toString (), aOptions);
-  }
-
-  /**
-   * @return The canonical xs:decimal form of a value (no exponent, no
-   *         trailing fraction zeros, no decimal point for an integer).
-   */
-  @NonNull
-  private static String _getCanonical (@NonNull final BigDecimal aValue)
-  {
-    if (aValue.signum () == 0)
-      return "0";
-    return aValue.stripTrailingZeros ().toPlainString ();
-  }
-
-  /**
-   * @return What the driver writes for one mode: the canonical result of
-   *         <code>setScale</code>, or <code>!ROUNDING_NECESSARY</code>.
-   */
-  @NonNull
-  private static String _getExpected (@NonNull final Case aCase, @NonNull final RoundingMode eMode)
-  {
-    try
-    {
-      return _getCanonical (aCase.value ().setScale (aCase.scale (), eMode));
-    }
-    catch (final ArithmeticException ex)
-    {
-      return "!ROUNDING_NECESSARY";
-    }
-  }
-
-  @NonNull
-  private static String _getSpelling (@NonNull final RoundingMode eMode, final int nKind)
-  {
-    return switch (nKind)
-    {
-      case 0 -> eMode.name ();
-      case 1 -> eMode.name ().toLowerCase (Locale.ROOT);
-      default -> " \t" + eMode.name ().charAt (0) + eMode.name ().substring (1).toLowerCase (Locale.ROOT) + "\n ";
-    };
   }
 
   @NonNull
@@ -249,15 +124,15 @@ public final class RoundingModesPropertyTest
   @Test
   public void testFunctionsMatchJava ()
   {
-    new PropertyChecker ().setTries (1000).forAll (CASES, SPELLINGS, (aCase, aSpellings) -> {
+    new PropertyChecker ().setTries (1000).forAll (RoundingTestCases.CASES, SPELLINGS, (aCase, aSpellings) -> {
       final StringBuilder aExpected = new StringBuilder ();
       for (final RoundingMode eMode : MODES)
-        aExpected.append (_getExpected (aCase, eMode)).append (';');
+        aExpected.append (RoundingTestCases.getExpected (aCase, eMode)).append (';');
       final List <String> aModes = new CommonsArrayList <> ();
-      for (int i = 0; i < MODES.length; ++i)
+      for (int i = 0; i < MODES.size (); ++i)
       {
-        aExpected.append (_getExpected (aCase, MODES[i])).append (';');
-        aModes.add (_getSpelling (MODES[i], aSpellings.get (i).intValue ()));
+        aExpected.append (RoundingTestCases.getExpected (aCase, MODES.get (i))).append (';');
+        aModes.add (RoundingTestCases.getSpelling (MODES.get (i), aSpellings.get (i).intValue ()));
       }
       assertEquals (aCase.value ().toPlainString () + " at scale " + aCase.scale (),
                     aExpected.toString (),
@@ -284,7 +159,7 @@ public final class RoundingModesPropertyTest
     assertEquals ("1300;1200;1300;1200;1200;1200;1200;!ROUNDING_NECESSARY;1300;1200;1300;1200;1200;1200;1200;!ROUNDING_NECESSARY;",
                   _run ("1234.5", -2, aNames));
     final List <String> aUnknown = new CommonsArrayList <> ();
-    for (int i = 0; i < MODES.length; ++i)
+    for (int i = 0; i < MODES.size (); ++i)
       aUnknown.add ("HALF-UP");
     assertEquals ("2.35;2.34;2.35;2.34;2.35;2.34;2.34;!ROUNDING_NECESSARY;" +
                   "!UNKNOWN_MODE;!UNKNOWN_MODE;!UNKNOWN_MODE;!UNKNOWN_MODE;!UNKNOWN_MODE;!UNKNOWN_MODE;!UNKNOWN_MODE;!UNKNOWN_MODE;",
