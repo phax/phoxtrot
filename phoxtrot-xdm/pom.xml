@@ -52,6 +52,11 @@
       <artifactId>junit</artifactId>
       <scope>test</scope>
     </dependency>
+    <dependency>
+      <groupId>com.helger.commons</groupId>
+      <artifactId>ph-unittest-property</artifactId>
+      <scope>test</scope>
+    </dependency>
   </dependencies>
   
   <build>
