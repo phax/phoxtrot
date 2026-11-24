@@ -313,6 +313,13 @@ v0.4.0 - work in progress
   changes and the DOM bridge, the XPath parser, operators, optimised evaluation paths, regex, string and format
   functions, maps and arrays, the XSD lexical checks, built-in types and facets, and the XSLT compiler, template rule
   and key indexes, patterns, `xsl:number`, sorting, grouping, streaming, the result drain and the JAXP adapter
+* `IXdmNode.appendChild` refuses a node that is the new parent itself or one of its ancestors (it made the tree a
+  cycle, so walks up to the root and the document order numbering never ended)
+* `XdmStreamReader` reads documents whose encoding has a Java name (`UTF8`, `Cp1252`, `ISO8859_1`) as `XdmParser`
+  does; the JDK StAX parser knows only the IANA names, so a streamed run failed on a source the buffered run read
+* XSD 1.0: `+INF` for xs:float/xs:double and the year 0000 in the date family are refused wherever an atomic value is
+  checked (list items, union members, facet values, default and fixed values), not only for the type of an element
+  or attribute
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`

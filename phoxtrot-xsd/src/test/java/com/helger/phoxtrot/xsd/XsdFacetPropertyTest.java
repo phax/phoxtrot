@@ -77,11 +77,13 @@ public final class XsdFacetPropertyTest
                                   (XsdSimpleType) aCompiled11.schema ().m_aTypes.get (aName) };
   }
 
-  private static boolean _isValid (@NonNull final XsdSimpleType aType, @NonNull final String sRaw)
+  private static boolean _isValid (@NonNull final XsdSimpleType aType,
+                                   @NonNull final String sRaw,
+                                   @NonNull final EXsdVersion eVersion)
   {
     try
     {
-      XsdSimpleTypeValidator.validate (aType, sRaw);
+      XsdSimpleTypeValidator.validate (aType, sRaw, eVersion);
       return true;
     }
     catch (final XsdInvalidException ex)
@@ -98,8 +100,8 @@ public final class XsdFacetPropertyTest
                                     final boolean bExpected,
                                     @NonNull final String sRaw)
   {
-    assertEquals (sMessage + " (1.0)", bExpected, _isValid (aTypes[0], sRaw));
-    assertEquals (sMessage + " (1.1)", bExpected, _isValid (aTypes[1], sRaw));
+    assertEquals (sMessage + " (1.0)", bExpected, _isValid (aTypes[0], sRaw, EXsdVersion.V10));
+    assertEquals (sMessage + " (1.1)", bExpected, _isValid (aTypes[1], sRaw, EXsdVersion.V11));
   }
 
   /**

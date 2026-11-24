@@ -27,7 +27,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.jspecify.annotations.NonNull;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.helger.collection.commons.CommonsArrayList;
@@ -280,7 +279,6 @@ public final class XdmTreeMutationPropertyTest
    * and every walk up to the root or through the tree would loop forever.
    */
   @Test
-  @Ignore ("appendChild accepts an ancestor of the new parent and creates a cycle")
   public void testAppendAncestorIsRefused ()
   {
     new PropertyChecker ().setTries (100)

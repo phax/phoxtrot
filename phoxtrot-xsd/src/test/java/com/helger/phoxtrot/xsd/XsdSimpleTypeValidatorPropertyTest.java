@@ -25,7 +25,6 @@ import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
-import org.junit.Ignore;
 import org.junit.Test;
 
 import com.helger.collection.commons.CommonsArrayList;
@@ -132,7 +131,7 @@ public final class XsdSimpleTypeValidatorPropertyTest
   {
     try
     {
-      XsdSimpleTypeValidator.validate (_builtin (sBuiltin, eVersion), sRaw);
+      XsdSimpleTypeValidator.validate (_builtin (sBuiltin, eVersion), sRaw, eVersion);
       return true;
     }
     catch (final XsdInvalidException ex)
@@ -323,7 +322,6 @@ public final class XsdSimpleTypeValidatorPropertyTest
    * is not in the lexical space.
    */
   @Test
-  @Ignore ("Bug: +INF is accepted under XSD 1.0, XsdLexical.isDoubleLexical has no version")
   public void testDoubleAndFloat10 ()
   {
     final IGenerator <String> aValues = Generators.oneOf (Generators.strings ("0.9eE+- \t", 0, 7),

@@ -16,9 +16,18 @@
  */
 package com.helger.phoxtrot.xdm;
 
+import java.io.BufferedInputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URI;
+import java.nio.charset.Charset;
+import java.nio.charset.CharsetDecoder;
+import java.nio.charset.CodingErrorAction;
+import java.nio.charset.IllegalCharsetNameException;
+import java.nio.charset.StandardCharsets;
+import java.nio.charset.UnsupportedCharsetException;
+import java.util.Arrays;
 import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.IdentityHashMap;
@@ -26,6 +35,8 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Set;
 import java.util.function.Predicate;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import javax.xml.stream.XMLInputFactory;
 import javax.xml.stream.XMLStreamConstants;
@@ -106,6 +117,19 @@ public final class XdmStreamReader implements AutoCloseable
 
   /** The maximum number of nodes, so that the document order stays an int. */
   private static final int MAX_NODES = Integer.MAX_VALUE - 1;
+
+  /** The number of leading bytes in which the XML declaration is searched for its encoding name. */
+  private static final int MAX_DECLARATION_BYTES = 512;
+
+  /** The UTF-8 byte order mark. */
+  private static final byte [] UTF8_BOM = { (byte) 0xef, (byte) 0xbb, (byte) 0xbf };
+
+  /** The start of an XML declaration up to its encoding name (XML 1.0 productions 23, 24, 80, 81). */
+  private static final Pattern ENCODING_DECLARATION = Pattern.compile ("^<\\?xml[ \t\r\n]+version[ \t\r\n]*=[ \t\r\n]*(?:\"[^\"]*\"|'[^']*')" +
+                                                                       "[ \t\r\n]+encoding[ \t\r\n]*=[ \t\r\n]*(?:\"([A-Za-z][A-Za-z0-9._-]*)\"|'([A-Za-z][A-Za-z0-9._-]*)')");
+
+  /** The bytes of the start of an XML declaration in an encoding that is compatible with ASCII. */
+  private static final byte [] DECLARATION_START = "<?xml".getBytes (StandardCharsets.US_ASCII);
 
   private final XMLStreamReader m_aReader;
   private final InputStream m_aOwnedStream;
@@ -845,6 +869,96 @@ public final class XdmStreamReader implements AutoCloseable
   }
 
   /**
+   * @param sEncoding
+   *        An encoding name, from the source or from the XML declaration. May be <code>null</code>.
+   * @return The charset if the name is one that Java knows under another canonical name (as
+   *         <code>UTF8</code> or <code>Cp1252</code>) and that encodes the XML declaration as ASCII
+   *         does, <code>null</code> otherwise.
+   */
+  @Nullable
+  private static Charset _getAliasCharset (@Nullable final String sEncoding)
+  {
+    if (sEncoding == null)
+      return null;
+    final Charset aCharset;
+    try
+    {
+      aCharset = Charset.forName (sEncoding);
+    }
+    catch (final IllegalCharsetNameException | UnsupportedCharsetException ex)
+    {
+      // The StAX parser reports the unknown name
+      return null;
+    }
+    // A canonical name is left to the StAX parser, which knows the IANA names
+    if (aCharset.name ().equalsIgnoreCase (sEncoding))
+      return null;
+    // Only where the declaration itself reads the same as in ASCII
+    if (!aCharset.canEncode () || !Arrays.equals (DECLARATION_START, "<?xml".getBytes (aCharset)))
+      return null;
+    return aCharset;
+  }
+
+  /**
+   * @param aHead
+   *        The leading bytes of the document.
+   * @param nOffset
+   *        The offset after a byte order mark.
+   * @return The encoding name of the XML declaration at the offset, <code>null</code> if there is
+   *         none.
+   */
+  @Nullable
+  private static String _getDeclaredEncoding (final byte @NonNull [] aHead, final int nOffset)
+  {
+    final Matcher aMatcher = ENCODING_DECLARATION.matcher (new String (aHead,
+                                                                       nOffset,
+                                                                       aHead.length - nOffset,
+                                                                       StandardCharsets.ISO_8859_1));
+    if (!aMatcher.find ())
+      return null;
+    return aMatcher.group (1) != null ? aMatcher.group (1) : aMatcher.group (2);
+  }
+
+  /**
+   * Create the StAX reader for a byte stream. The JDK StAX parser knows only the IANA encoding names,
+   * while the JDK SAX parser of {@link XdmParser} also reads the Java names (as <code>UTF8</code>
+   * or <code>Cp1252</code>). For such a name, from the source or from the XML declaration, the bytes
+   * are decoded here and the parser reads characters; any other document is read from the bytes as
+   * before. Like the SAX parser, which reads a Java name with a Java reader, malformed and unmappable
+   * bytes become U+FFFD under such a name (under <code>UTF-8</code> they stay an error).
+   */
+  @NonNull
+  private static XMLStreamReader _createByteStreamReader (@NonNull final XMLInputFactory aFactory,
+                                                          @Nullable final String sSystemId,
+                                                          @NonNull final InputStream aIS,
+                                                          @Nullable final String sEncoding) throws XMLStreamException,
+                                                                                            IOException
+  {
+    final BufferedInputStream aBIS = new BufferedInputStream (aIS);
+    aBIS.mark (MAX_DECLARATION_BYTES);
+    final byte [] aHead = aBIS.readNBytes (MAX_DECLARATION_BYTES);
+    aBIS.reset ();
+    final boolean bUtf8Bom = aHead.length >= UTF8_BOM.length &&
+                             Arrays.equals (aHead, 0, UTF8_BOM.length, UTF8_BOM, 0, UTF8_BOM.length);
+    final Charset aCharset = _getAliasCharset (sEncoding != null ? sEncoding
+                                                                 : _getDeclaredEncoding (aHead,
+                                                                                         bUtf8Bom ? UTF8_BOM.length : 0));
+    // A byte order mark is skipped only for UTF-8; any other conflict is left to the StAX parser
+    if (aCharset != null && (!bUtf8Bom || aCharset.equals (StandardCharsets.UTF_8)))
+    {
+      if (bUtf8Bom)
+        aBIS.skipNBytes (UTF8_BOM.length);
+      // Replaced as by the Java reader of the SAX parser, so that both read the same characters
+      final CharsetDecoder aDecoder = aCharset.newDecoder ()
+                                              .onMalformedInput (CodingErrorAction.REPLACE)
+                                              .onUnmappableCharacter (CodingErrorAction.REPLACE);
+      return aFactory.createXMLStreamReader (sSystemId, new InputStreamReader (aBIS, aDecoder));
+    }
+    return sEncoding != null ? aFactory.createXMLStreamReader (aBIS, sEncoding)
+                             : aFactory.createXMLStreamReader (sSystemId, aBIS);
+  }
+
+  /**
    * Start reading a document. The prolog up to the start tag of the document element is read here,
    * so that a document this reader does not stream is refused before the first event.
    *
@@ -901,8 +1015,7 @@ public final class XdmStreamReader implements AutoCloseable
           aOwned = URI.create (sSystemId).toURL ().openStream ();
           aIS = aOwned;
         }
-        aReader = aSource.getEncoding () != null ? aFactory.createXMLStreamReader (aIS, aSource.getEncoding ())
-                                                 : aFactory.createXMLStreamReader (sSystemId, aIS);
+        aReader = _createByteStreamReader (aFactory, sSystemId, aIS, aSource.getEncoding ());
       }
     }
     catch (final XMLStreamException ex)

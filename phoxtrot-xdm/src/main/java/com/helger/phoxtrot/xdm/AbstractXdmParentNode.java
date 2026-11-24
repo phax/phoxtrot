@@ -90,7 +90,8 @@ public abstract sealed class AbstractXdmParentNode extends AbstractXdmNode permi
    * on demand.
    *
    * @throws IllegalArgumentException
-   *         if the node already has a parent, or is an attribute, namespace or document node
+   *         if the node already has a parent, is this node or one of its ancestors, or is an
+   *         attribute, namespace or document node
    */
   @Override
   public final void appendChild (@NonNull final IXdmNode aChild)
@@ -99,6 +100,15 @@ public abstract sealed class AbstractXdmParentNode extends AbstractXdmNode permi
     final AbstractXdmNode aRealChild = (AbstractXdmNode) aChild;
     if (aRealChild.getParent () != null)
       throw new IllegalArgumentException ("The child node already has a parent");
+    // A parentless child can only close a cycle if it is this node or one of its ancestors
+    if (aRealChild == this)
+      throw new IllegalArgumentException ("A node cannot be appended to itself");
+    // Fast path: an ancestor has children, so a childless node (text, or an element appended before its
+    // content) cannot be one and the walk up is skipped
+    if (aRealChild.getChildCount () > 0)
+      for (IXdmNode aCur = getParent (); aCur != null; aCur = aCur.getParent ())
+        if (aCur == aRealChild)
+          throw new IllegalArgumentException ("A node cannot be appended to one of its descendants");
     switch (aRealChild.getKind ())
     {
       case ATTRIBUTE:

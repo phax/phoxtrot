@@ -42,6 +42,7 @@ import com.helger.phoxtrot.xdm.schema.IXdmAttributeDeclaration;
 import com.helger.phoxtrot.xdm.schema.IXdmElementDeclaration;
 import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xdm.schema.IXdmTypeDefinition;
+import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.value.EAtomicType;
 import com.helger.phoxtrot.xsd.XsdValidationRun.DefaultAttr;
 import com.helger.phoxtrot.xsd.XsdValidationRun.DefaultContent;
@@ -402,11 +403,14 @@ final class XsdBridge implements IXdmSchemaSet
    * node's own type otherwise.
    */
   @NonNull
-  private static IXsdType _valueTypeOf (@NonNull final IXsdType aType, @NonNull final String sValue, @NonNull final IXdmNode aAt)
+  private static IXsdType _valueTypeOf (@NonNull final IXsdType aType,
+                                        @NonNull final String sValue,
+                                        @NonNull final IXdmNode aAt,
+                                        @NonNull final EXsdVersion eVersion)
   {
     if (aType instanceof final XsdSimpleType aSimple && aSimple != XsdSimpleType.ABSENT && aSimple.m_eVariety == EXsdVariety.UNION)
     {
-      final XsdSimpleType aMember = XsdTypeDefinition.acceptingMember (aSimple, sValue, aAt);
+      final XsdSimpleType aMember = XsdTypeDefinition.acceptingMember (aSimple, sValue, aAt, eVersion);
       if (aMember != null)
         return aMember;
     }
@@ -485,7 +489,7 @@ final class XsdBridge implements IXdmSchemaSet
         continue;
       }
       final boolean bNilled = bElement && aRun.getNodeNilled ().contains (aCopy);
-      final IXsdType aValueType = bNilled ? aType : _valueTypeOf (aType, aCopy.getStringValue (), aCopy);
+      final IXsdType aValueType = bNilled ? aType : _valueTypeOf (aType, aCopy.getStringValue (), aCopy, aRun.getSchema ().getVersion ());
       final XdmSchemaType aSchemaType = _schemaTypeOf (aCache, aType, aValueType);
       aOrig.setSchemaType (aSchemaType);
       aOrig.setTypeAnnotation (null);
@@ -544,7 +548,7 @@ final class XsdBridge implements IXdmSchemaSet
         bChanged = true;
         if (aDefault.type () != null)
         {
-          final IXsdType aValueType = _valueTypeOf (aDefault.type (), aDefault.value (), aOrig);
+          final IXsdType aValueType = _valueTypeOf (aDefault.type (), aDefault.value (), aOrig, aRun.getSchema ().getVersion ());
           final XdmSchemaType aSchemaType = _schemaTypeOf (aCache, aDefault.type (), aValueType);
           aAttr.setSchemaType (aSchemaType);
           final EIDKind eKind = _getSchemaIDKind (aSchemaType, aDefault.value ());
@@ -583,7 +587,7 @@ final class XsdBridge implements IXdmSchemaSet
       if (aDefault == null)
         continue;
       final IXdmNode aOrig = aCloned.originals ().get (i);
-      final IXsdType aValueType = _valueTypeOf (aDefault.type (), aDefault.value (), aCopy);
+      final IXsdType aValueType = _valueTypeOf (aDefault.type (), aDefault.value (), aCopy, aRun.getSchema ().getVersion ());
       final XsdSimpleType aWSType = aValueType instanceof final XsdSimpleType aST ? aST : aDefault.type ();
       final String sNormalised = XsdWhiteSpace.apply (aWSType.effectiveWhiteSpace (), aDefault.value ());
       if (sNormalised.isEmpty ())

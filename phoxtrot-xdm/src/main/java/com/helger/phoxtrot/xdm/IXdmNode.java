@@ -450,7 +450,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
    * @param aChild
    *        The child to append. May not be <code>null</code>.
    * @throws IllegalArgumentException
-   *         if the node already has a parent or is an attribute, namespace or document node
+   *         if the node already has a parent, is this node or one of its ancestors, or is an
+   *         attribute, namespace or document node
    * @throws IllegalStateException
    *         if this node cannot have children
    */

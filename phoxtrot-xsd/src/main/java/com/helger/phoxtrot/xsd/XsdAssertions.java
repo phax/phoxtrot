@@ -37,6 +37,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.CompiledXPath;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.context.IResourceResolver;
 import com.helger.phoxtrot.xpath.context.ResourceUri;
 import com.helger.phoxtrot.xpath.fn.FnAccessor;
@@ -441,7 +442,9 @@ final class XsdAssertions
    * the accepting member's reading for a union.
    */
   @NonNull
-  private static XdmSequence _typedValueOf (@NonNull final XsdSimpleType aType, @NonNull final String sRaw)
+  private static XdmSequence _typedValueOf (@NonNull final XsdSimpleType aType,
+                                            @NonNull final String sRaw,
+                                            @NonNull final EXsdVersion eVersion)
   {
     final String sValue = XsdWhiteSpace.apply (aType.effectiveWhiteSpace (), sRaw);
     switch (aType.m_eVariety)
@@ -450,8 +453,8 @@ final class XsdAssertions
         return typedListValue (XsdLexHelper.xmlFields (sValue), aType.m_aItem == null ? null : aType.m_aItem.resolvePrim ());
       case UNION:
       {
-        final XsdSimpleType aMember = XsdSimpleTypeValidator.firstMemberRaw (aType, sValue);
-        return aMember != null ? _typedValueOf (aMember, sValue) : XdmSequence.of (XdmAtomic.untyped (sValue));
+        final XsdSimpleType aMember = XsdSimpleTypeValidator.firstMemberRaw (aType, sValue, eVersion);
+        return aMember != null ? _typedValueOf (aMember, sValue, eVersion) : XdmSequence.of (XdmAtomic.untyped (sValue));
       }
       default:
         return typedAtomicValue (sValue, aType.resolvePrim ());
@@ -483,7 +486,7 @@ final class XsdAssertions
     // otherwise
     XdmSequence aValue = XdmSequence.EMPTY;
     if (aType.m_eKind == EXsdContentKind.SIMPLE && aType.m_aSimpleType != null)
-      aValue = _typedValueOf (aType.m_aSimpleType, XsdInstanceValidator.elementText (aElement));
+      aValue = _typedValueOf (aType.m_aSimpleType, XsdInstanceValidator.elementText (aElement), aRun.getSchema ().getVersion ());
     final IXdmNode aTree = _assertTree (aRun, aElement);
     for (final XsdAssertion aAssert : aAsserts)
     {

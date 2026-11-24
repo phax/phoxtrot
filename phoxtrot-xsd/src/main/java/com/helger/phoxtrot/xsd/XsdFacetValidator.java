@@ -531,13 +531,13 @@ final class XsdFacetValidator
           throw XsdCompiler.invalid ("",
                                      "fractionDigits must be 0 for integer-derived type " + ePrim.getQualifiedName ());
         if (f.m_bHasMinIncl)
-          _checkBoundValue (ePrim, f.m_sMinIncl);
+          _checkBoundValue (ePrim, f.m_sMinIncl, eVersion);
         if (f.m_bHasMaxIncl)
-          _checkBoundValue (ePrim, f.m_sMaxIncl);
+          _checkBoundValue (ePrim, f.m_sMaxIncl, eVersion);
         if (f.m_bHasMinExcl)
-          _checkBoundValue (ePrim, f.m_sMinExcl);
+          _checkBoundValue (ePrim, f.m_sMinExcl, eVersion);
         if (f.m_bHasMaxExcl)
-          _checkBoundValue (ePrim, f.m_sMaxExcl);
+          _checkBoundValue (ePrim, f.m_sMaxExcl, eVersion);
         if (f.m_bHasEnum)
         {
           final String sWS = aType.effectiveWhiteSpace ();
@@ -545,7 +545,7 @@ final class XsdFacetValidator
           {
             try
             {
-              XsdSimpleTypeValidator.checkPrimitiveLexical (ePrim, XsdWhiteSpace.apply (sWS, sEnum));
+              XsdSimpleTypeValidator.checkPrimitiveLexical (ePrim, XsdWhiteSpace.apply (sWS, sEnum), eVersion);
             }
             catch (final XsdInvalidException ex)
             {
@@ -593,11 +593,13 @@ final class XsdFacetValidator
    *         (schema error, no code) if the value is not a valid lexical of the
    *         primitive
    */
-  private static void _checkBoundValue (@NonNull final EAtomicType ePrim, @NonNull final String sBound)
+  private static void _checkBoundValue (@NonNull final EAtomicType ePrim,
+                                        @NonNull final String sBound,
+                                        @NonNull final EXsdVersion eVersion)
   {
     try
     {
-      XsdSimpleTypeValidator.checkPrimitiveLexical (ePrim, XsdWhiteSpace.collapse (sBound));
+      XsdSimpleTypeValidator.checkPrimitiveLexical (ePrim, XsdWhiteSpace.collapse (sBound), eVersion);
     }
     catch (final XsdInvalidException ex)
     {

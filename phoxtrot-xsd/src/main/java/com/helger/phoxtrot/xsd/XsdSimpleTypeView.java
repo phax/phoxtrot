@@ -139,7 +139,7 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
   {
     try
     {
-      XsdSimpleTypeValidator.validate (m_aType, sValue);
+      XsdSimpleTypeValidator.validate (m_aType, sValue, m_aView.getSchema ().getVersion ());
       return null;
     }
     catch (final XsdInvalidException ex)

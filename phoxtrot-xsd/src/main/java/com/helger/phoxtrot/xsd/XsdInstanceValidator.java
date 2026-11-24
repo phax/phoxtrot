@@ -41,6 +41,7 @@ import com.helger.phoxtrot.xdm.XdmDocumentNode;
 import com.helger.phoxtrot.xdm.XdmParseException;
 import com.helger.phoxtrot.xdm.XdmParser;
 import com.helger.phoxtrot.xdm.XdmQName;
+import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.value.EAtomicType;
 import com.helger.phoxtrot.xsd.XsdIdentityValidator.KeyTable;
 import com.helger.phoxtrot.xsd.XsdValidationRun.ChildModel;
@@ -456,51 +457,6 @@ final class XsdInstanceValidator
   }
 
   /**
-   * go-xslt <code>yearZeroOK</code>: reject the year 0000 in the date family
-   * under XSD 1.0 (1.1 adopts the proleptic calendar where it is valid), and
-   * "+INF" for float and double.
-   *
-   * @param aRun
-   *        The validation run.
-   * @param aType
-   *        The type the value is validated against.
-   * @param sRaw
-   *        The raw value.
-   * @throws XsdInvalidException
-   *         if the value is not valid under XSD 1.0
-   */
-  static void yearZeroOK (@NonNull final XsdValidationRun aRun,
-                          @Nullable final XsdSimpleType aType,
-                          @NonNull final String sRaw)
-  {
-    if (aRun.isXsd11 () || aType == null)
-      return;
-    switch (aType.resolvePrim ())
-    {
-      case DATE:
-      case DATE_TIME:
-      case G_YEAR:
-      case G_YEAR_MONTH:
-      {
-        String sValue = _trimSpace (sRaw);
-        if (sValue.startsWith ("-"))
-          sValue = sValue.substring (1);
-        if (sValue.startsWith ("0000"))
-          throw XsdCompiler.invalid ("cvc-datatype-valid", "year 0000 is not a valid year in XSD 1.0");
-        break;
-      }
-      case FLOAT:
-      case DOUBLE:
-        // "+INF" entered the float/double lexical space only in 1.1
-        if ("+INF".equals (_trimSpace (sRaw)))
-          throw XsdCompiler.invalid ("cvc-datatype-valid", "\"+INF\" is not a valid float/double lexical in XSD 1.0");
-        break;
-      default:
-        break;
-    }
-  }
-
-  /**
    * Whether the value constraint of an element declaration is replaced by the
    * element's own content (cvc-elt.5.2): the element has element children or
    * character children, whitespace-only text included. Otherwise the value
@@ -810,8 +766,7 @@ final class XsdInstanceValidator
       if (aGlobal == null || aGlobal.m_aType == null)
         continue;
       final String sValue = aAttr.getValue ();
-      yearZeroOK (aRun, aGlobal.m_aType, sValue);
-      XsdSimpleTypeValidator.validateIn (aGlobal.m_aType, sValue, aAttr);
+      XsdSimpleTypeValidator.validateIn (aGlobal.m_aType, sValue, aAttr, aRun.getSchema ().getVersion ());
       aRun.noteIDValues (aGlobal.m_aType, sValue, aElement, aAttr);
       aRun.annotateAssertType (aAttr, aGlobal.m_aType);
       aRun.noteNodeType (aAttr, aGlobal.m_aType);
@@ -1224,8 +1179,7 @@ final class XsdInstanceValidator
         if (aType.m_aSimpleType != null)
         {
           final String sText = _effectiveSimpleText (aRun, aDecl, aElement, aType.m_aSimpleType);
-          yearZeroOK (aRun, aType.m_aSimpleType, sText);
-          XsdSimpleTypeValidator.validateIn (aType.m_aSimpleType, sText, aElement);
+          XsdSimpleTypeValidator.validateIn (aType.m_aSimpleType, sText, aElement, aRun.getSchema ().getVersion ());
           aRun.annotateAssertType (aElement, aType.m_aSimpleType);
           aRun.noteIDValues (aType.m_aSimpleType, sText, _idBindingParent (aElement), aElement);
         }
@@ -1364,8 +1318,7 @@ final class XsdInstanceValidator
       if (_hasChildElements (aElement))
         throw XsdCompiler.invalid ("cvc-type.3.1.2", "simple-typed element must not have child elements");
       final String sText = _effectiveSimpleText (aRun, aDecl, aElement, aST);
-      yearZeroOK (aRun, aST, sText);
-      XsdSimpleTypeValidator.validateIn (aST, sText, aElement);
+      XsdSimpleTypeValidator.validateIn (aST, sText, aElement, aRun.getSchema ().getVersion ());
       aRun.annotateAssertType (aElement, aST);
       aRun.noteIDValues (aST, sText, _idBindingParent (aElement), aElement);
       return;
@@ -1566,10 +1519,10 @@ final class XsdInstanceValidator
     {
       final String sContent = elementText (aElement);
       final XsdSimpleType aST = XsdComponentParser.simpleContentType (aType);
-      boolean bEqual = _fixedMatches (aST, sContent, aDecl.m_sFixed);
+      boolean bEqual = _fixedMatches (aST, sContent, aDecl.m_sFixed, aRun.getSchema ().getVersion ());
       if (aExtraFixed != null)
         for (final String sAlt : aExtraFixed)
-          bEqual = bEqual || _fixedMatches (aST, sContent, sAlt);
+          bEqual = bEqual || _fixedMatches (aST, sContent, sAlt, aRun.getSchema ().getVersion ());
       if (!bEqual)
         throw XsdCompiler.invalid ("cvc-elt.5.2.2.2", "element " + aDecl.m_aName.local () + " must equal its fixed value");
     }
@@ -1586,10 +1539,11 @@ final class XsdInstanceValidator
    */
   private static boolean _fixedMatches (@Nullable final XsdSimpleType aType,
                                         @NonNull final String sContent,
-                                        @NonNull final String sFixed)
+                                        @NonNull final String sFixed,
+                                        @NonNull final EXsdVersion eVersion)
   {
     if (aType != null)
-      return XsdSimpleTypeValidator.fixedEqual (aType, sContent, sFixed);
+      return XsdSimpleTypeValidator.fixedEqual (aType, sContent, sFixed, eVersion);
     return XsdLexHelper.lexEqualCollapsed (sContent, sFixed);
   }
 

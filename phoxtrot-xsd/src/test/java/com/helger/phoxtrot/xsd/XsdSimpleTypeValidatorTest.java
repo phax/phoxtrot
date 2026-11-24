@@ -49,11 +49,13 @@ public final class XsdSimpleTypeValidatorTest
     return (XsdSimpleType) aCompiled.schema ().m_aTypes.get (new XsdName ("", "t"));
   }
 
-  private static boolean _valid (@NonNull final XsdSimpleType aType, @NonNull final String sValue)
+  private static boolean _valid (@NonNull final XsdSimpleType aType,
+                                 @NonNull final String sValue,
+                                 @NonNull final EXsdVersion eVersion)
   {
     try
     {
-      XsdSimpleTypeValidator.validate (aType, sValue);
+      XsdSimpleTypeValidator.validate (aType, sValue, eVersion);
       return true;
     }
     catch (final XsdInvalidException ex)
@@ -62,11 +64,13 @@ public final class XsdSimpleTypeValidatorTest
     }
   }
 
-  private static boolean _lexical (@NonNull final EAtomicType ePrim, @NonNull final String sValue)
+  private static boolean _lexical (@NonNull final EAtomicType ePrim,
+                                   @NonNull final String sValue,
+                                   @NonNull final EXsdVersion eVersion)
   {
     try
     {
-      XsdSimpleTypeValidator.checkPrimitiveLexical (ePrim, sValue);
+      XsdSimpleTypeValidator.checkPrimitiveLexical (ePrim, sValue, eVersion);
       return true;
     }
     catch (final XsdInvalidException ex)
@@ -78,41 +82,41 @@ public final class XsdSimpleTypeValidatorTest
   @Test
   public void testPrimitiveLexical ()
   {
-    assertTrue (_lexical (EAtomicType.INTEGER, "+12"));
-    assertFalse (_lexical (EAtomicType.INTEGER, "1.5"));
-    assertTrue (_lexical (EAtomicType.INTEGER, "123456789012345678901234567890"));
-    assertTrue (_lexical (EAtomicType.BYTE, "127"));
-    assertFalse (_lexical (EAtomicType.BYTE, "128"));
-    assertFalse (_lexical (EAtomicType.UNSIGNED_BYTE, "-1"));
-    assertTrue (_lexical (EAtomicType.UNSIGNED_LONG, "18446744073709551615"));
-    assertFalse (_lexical (EAtomicType.UNSIGNED_LONG, "18446744073709551616"));
-    assertFalse (_lexical (EAtomicType.POSITIVE_INTEGER, "0"));
-    assertTrue (_lexical (EAtomicType.NEGATIVE_INTEGER, "-1"));
-    assertTrue (_lexical (EAtomicType.DECIMAL, ".5"));
-    assertTrue (_lexical (EAtomicType.DECIMAL, "5."));
-    assertFalse (_lexical (EAtomicType.DECIMAL, "1/2"));
-    assertFalse (_lexical (EAtomicType.DECIMAL, "."));
-    assertTrue (_lexical (EAtomicType.DOUBLE, "1e400"));
-    assertTrue (_lexical (EAtomicType.DOUBLE, "-INF"));
-    assertTrue (_lexical (EAtomicType.FLOAT, "NaN"));
-    assertFalse (_lexical (EAtomicType.DOUBLE, "1e"));
-    assertTrue (_lexical (EAtomicType.DATE, "2024-02-29"));
-    assertFalse (_lexical (EAtomicType.DATE, "2023-02-29"));
-    assertTrue (_lexical (EAtomicType.BOOLEAN, "1"));
-    assertFalse (_lexical (EAtomicType.BOOLEAN, "yes"));
-    assertTrue (_lexical (EAtomicType.HEX_BINARY, "0aFF"));
-    assertFalse (_lexical (EAtomicType.HEX_BINARY, "0aF"));
-    assertTrue (_lexical (EAtomicType.BASE64_BINARY, "AQ=="));
-    assertFalse (_lexical (EAtomicType.BASE64_BINARY, "AQ="));
-    assertTrue (_lexical (EAtomicType.NCNAME, "a.b-c"));
-    assertFalse (_lexical (EAtomicType.NCNAME, "a:b"));
-    assertTrue (_lexical (EAtomicType.NAME, "a:b"));
-    assertTrue (_lexical (EAtomicType.NMTOKEN, "1:2"));
-    assertTrue (_lexical (EAtomicType.LANGUAGE, "en-GB"));
-    assertFalse (_lexical (EAtomicType.LANGUAGE, "toolonglanguage"));
-    assertTrue (_lexical (EAtomicType.QNAME, "p:a"));
-    assertFalse (_lexical (EAtomicType.QNAME, "a:b:c"));
-    assertTrue (_lexical (EAtomicType.STRING, "anything\u0001goes"));
+    assertTrue (_lexical (EAtomicType.INTEGER, "+12", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.INTEGER, "1.5", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.INTEGER, "123456789012345678901234567890", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.BYTE, "127", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.BYTE, "128", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.UNSIGNED_BYTE, "-1", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.UNSIGNED_LONG, "18446744073709551615", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.UNSIGNED_LONG, "18446744073709551616", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.POSITIVE_INTEGER, "0", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.NEGATIVE_INTEGER, "-1", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.DECIMAL, ".5", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.DECIMAL, "5.", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.DECIMAL, "1/2", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.DECIMAL, ".", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.DOUBLE, "1e400", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.DOUBLE, "-INF", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.FLOAT, "NaN", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.DOUBLE, "1e", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.DATE, "2024-02-29", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.DATE, "2023-02-29", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.BOOLEAN, "1", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.BOOLEAN, "yes", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.HEX_BINARY, "0aFF", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.HEX_BINARY, "0aF", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.BASE64_BINARY, "AQ==", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.BASE64_BINARY, "AQ=", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.NCNAME, "a.b-c", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.NCNAME, "a:b", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.NAME, "a:b", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.NMTOKEN, "1:2", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.LANGUAGE, "en-GB", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.LANGUAGE, "toolonglanguage", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.QNAME, "p:a", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.QNAME, "a:b:c", EXsdVersion.V11));
+    assertTrue (_lexical (EAtomicType.STRING, "anything\u0001goes", EXsdVersion.V11));
   }
 
   @Test
@@ -120,22 +124,22 @@ public final class XsdSimpleTypeValidatorTest
   {
     final XsdSimpleType aDecimal = _type ("<xs:simpleType name=\"t\"><xs:restriction base=\"xs:decimal\"/></xs:simpleType>",
                                           EXsdVersion.V11);
-    assertTrue (XsdSimpleTypeValidator.fixedEqual (aDecimal, "2", " 2.0 "));
-    assertFalse (XsdSimpleTypeValidator.fixedEqual (aDecimal, "2", "3"));
+    assertTrue (XsdSimpleTypeValidator.fixedEqual (aDecimal, "2", " 2.0 ", EXsdVersion.V11));
+    assertFalse (XsdSimpleTypeValidator.fixedEqual (aDecimal, "2", "3", EXsdVersion.V11));
     final XsdSimpleType aString = _type ("<xs:simpleType name=\"t\"><xs:restriction base=\"xs:string\"/></xs:simpleType>",
                                          EXsdVersion.V11);
-    assertTrue (XsdSimpleTypeValidator.fixedEqual (aString, "   1  2", "   1  2"));
-    assertFalse (XsdSimpleTypeValidator.fixedEqual (aString, "   1  2", " 1 2"));
+    assertTrue (XsdSimpleTypeValidator.fixedEqual (aString, "   1  2", "   1  2", EXsdVersion.V11));
+    assertFalse (XsdSimpleTypeValidator.fixedEqual (aString, "   1  2", " 1 2", EXsdVersion.V11));
     final XsdSimpleType aList = _type ("<xs:simpleType name=\"t\"><xs:list itemType=\"xs:int\"/></xs:simpleType>", EXsdVersion.V11);
-    assertTrue (XsdSimpleTypeValidator.fixedEqual (aList, "1 02", " 01   2 "));
-    assertFalse (XsdSimpleTypeValidator.fixedEqual (aList, "1 2", "1 2 3"));
+    assertTrue (XsdSimpleTypeValidator.fixedEqual (aList, "1 02", " 01   2 ", EXsdVersion.V11));
+    assertFalse (XsdSimpleTypeValidator.fixedEqual (aList, "1 2", "1 2 3", EXsdVersion.V11));
     final XsdSimpleType aUnion = _type ("<xs:simpleType name=\"t\"><xs:union memberTypes=\"xs:int xs:boolean\"/></xs:simpleType>",
                                         EXsdVersion.V11);
-    assertTrue (XsdSimpleTypeValidator.fixedEqual (aUnion, "1", "01"));
+    assertTrue (XsdSimpleTypeValidator.fixedEqual (aUnion, "1", "01", EXsdVersion.V11));
     // 1 is an int, true a boolean: different members
-    assertFalse (XsdSimpleTypeValidator.fixedEqual (aUnion, "1", "true"));
-    assertNotNull (XsdSimpleTypeValidator.firstMemberRaw (aUnion, "true"));
-    assertNull (XsdSimpleTypeValidator.firstMemberRaw (aUnion, "x"));
+    assertFalse (XsdSimpleTypeValidator.fixedEqual (aUnion, "1", "true", EXsdVersion.V11));
+    assertNotNull (XsdSimpleTypeValidator.firstMemberRaw (aUnion, "true", EXsdVersion.V11));
+    assertNull (XsdSimpleTypeValidator.firstMemberRaw (aUnion, "x", EXsdVersion.V11));
   }
 
   @Test
@@ -151,9 +155,9 @@ public final class XsdSimpleTypeValidatorTest
                                          "<xs:enumeration value='true'/><xs:enumeration value='12'/>" +
                                          "</xs:restriction></xs:simpleType>",
                                          eVersion);
-      assertTrue (_valid (aType, "12"));
-      assertFalse (_valid (aType, "true"));
-      assertFalse (_valid (aType, "13"));
+      assertTrue (_valid (aType, "12", EXsdVersion.V11));
+      assertFalse (_valid (aType, "true", EXsdVersion.V11));
+      assertFalse (_valid (aType, "13", EXsdVersion.V11));
     }
   }
 
@@ -163,29 +167,29 @@ public final class XsdSimpleTypeValidatorTest
     // XSD 1.0 tolerates a pure-union cycle (stE110); the member walks end
     final XsdSimpleType aSelf = _type ("<xs:simpleType name=\"t\"><xs:union memberTypes=\"t xs:int\"/></xs:simpleType>",
                                        EXsdVersion.V10);
-    assertTrue (_valid (aSelf, "12"));
-    assertFalse (_valid (aSelf, "x"));
-    assertNotNull (XsdSimpleTypeValidator.firstMemberRaw (aSelf, "12"));
-    assertTrue (XsdSimpleTypeValidator.fixedEqual (aSelf, "12", "012"));
+    assertTrue (_valid (aSelf, "12", EXsdVersion.V10));
+    assertFalse (_valid (aSelf, "x", EXsdVersion.V10));
+    assertNotNull (XsdSimpleTypeValidator.firstMemberRaw (aSelf, "12", EXsdVersion.V10));
+    assertTrue (XsdSimpleTypeValidator.fixedEqual (aSelf, "12", "012", EXsdVersion.V10));
     final XsdSimpleType aPair = _type ("<xs:simpleType name=\"t\"><xs:union memberTypes=\"u xs:int\"/></xs:simpleType>" +
                                        "<xs:simpleType name=\"u\"><xs:union memberTypes=\"t xs:boolean\"/></xs:simpleType>",
                                        EXsdVersion.V10);
-    assertTrue (_valid (aPair, "true"));
-    assertTrue (_valid (aPair, "7"));
-    assertFalse (_valid (aPair, "x"));
-    assertTrue (XsdSimpleTypeValidator.fixedEqual (aPair, "7", "07"));
+    assertTrue (_valid (aPair, "true", EXsdVersion.V10));
+    assertTrue (_valid (aPair, "7", EXsdVersion.V10));
+    assertFalse (_valid (aPair, "x", EXsdVersion.V10));
+    assertTrue (XsdSimpleTypeValidator.fixedEqual (aPair, "7", "07", EXsdVersion.V10));
     // The cycle collapses to the members that do not lead back, in member
     // order (boolean, int), so "1" is the boolean true like "true"
-    assertTrue (XsdSimpleTypeValidator.fixedEqual (aPair, "true", "1"));
-    assertFalse (XsdSimpleTypeValidator.fixedEqual (aPair, "true", "2"));
+    assertTrue (XsdSimpleTypeValidator.fixedEqual (aPair, "true", "1", EXsdVersion.V10));
+    assertFalse (XsdSimpleTypeValidator.fixedEqual (aPair, "true", "2", EXsdVersion.V10));
     // Many members that all lead back: linear, not exponential
     final StringBuilder aSB = new StringBuilder ("<xs:simpleType name=\"t\"><xs:union memberTypes=\"");
     for (int i = 0; i < 40; i++)
       aSB.append ("t ");
     aSB.append ("xs:int\"/></xs:simpleType>");
     final XsdSimpleType aWide = _type (aSB.toString (), EXsdVersion.V10);
-    assertTrue (_valid (aWide, "5"));
-    assertFalse (_valid (aWide, "x"));
+    assertTrue (_valid (aWide, "5", EXsdVersion.V10));
+    assertFalse (_valid (aWide, "x", EXsdVersion.V10));
   }
 
   @Test
@@ -194,7 +198,69 @@ public final class XsdSimpleTypeValidatorTest
     final XsdSimpleType aQName = _type ("<xs:simpleType name=\"t\"><xs:restriction base=\"xs:QName\"/></xs:simpleType>",
                                         EXsdVersion.V11);
     // Without a node only the shape is checked
-    assertTrue (_valid (aQName, "p:a"));
-    assertFalse (_valid (aQName, "a:b:c"));
+    assertTrue (_valid (aQName, "p:a", EXsdVersion.V11));
+    assertFalse (_valid (aQName, "a:b:c", EXsdVersion.V11));
+  }
+
+  @NonNull
+  private static EVerdict _schemaVerdict (@NonNull final String sBody, @NonNull final EXsdVersion eVersion)
+  {
+    return XsdTestSupport.compile (XS + sBody + "</xs:schema>", null, eVersion).verdict ();
+  }
+
+  private static boolean _instanceValid (@NonNull final String sElementType,
+                                         @NonNull final String sInstance,
+                                         @NonNull final EXsdVersion eVersion)
+  {
+    final Compiled aCompiled = XsdTestSupport.compile (XS + "<xs:element name=\"e\">" + sElementType + "</xs:element></xs:schema>",
+                                                       null,
+                                                       eVersion);
+    assertEquals (aCompiled.message (), EVerdict.VALID, aCompiled.verdict ());
+    return aCompiled.schema ().validateText (sInstance).valid ();
+  }
+
+  /**
+   * XSD 1.0 has no <code>+INF</code> for xs:float and xs:double and no year 0000 in the date
+   * family. The rule applies wherever an atomic value is checked: list items, union members,
+   * facet values and value constraints, not only the top-level type of an element or attribute.
+   */
+  @Test
+  public void testXsd10LexicalRules ()
+  {
+    for (final EAtomicType ePrim : new EAtomicType [] { EAtomicType.DOUBLE, EAtomicType.FLOAT })
+    {
+      assertFalse (_lexical (ePrim, "+INF", EXsdVersion.V10));
+      assertTrue (_lexical (ePrim, "+INF", EXsdVersion.V11));
+      assertTrue (_lexical (ePrim, "INF", EXsdVersion.V10));
+      assertTrue (_lexical (ePrim, "-INF", EXsdVersion.V10));
+    }
+    assertFalse (_lexical (EAtomicType.DATE, "0000-01-01", EXsdVersion.V10));
+    assertTrue (_lexical (EAtomicType.DATE, "0000-01-01", EXsdVersion.V11));
+    assertFalse (_lexical (EAtomicType.DATE_TIME, "-0000-01-01T00:00:00", EXsdVersion.V10));
+    assertFalse (_lexical (EAtomicType.G_YEAR, "0000", EXsdVersion.V10));
+    assertFalse (_lexical (EAtomicType.G_YEAR_MONTH, "0000-12", EXsdVersion.V10));
+    assertTrue (_lexical (EAtomicType.G_YEAR, "0001", EXsdVersion.V10));
+
+    final String sList = "<xs:simpleType><xs:list itemType=\"xs:double\"/></xs:simpleType>";
+    final String sUnion = "<xs:simpleType><xs:union memberTypes=\"xs:double xs:boolean\"/></xs:simpleType>";
+    final String sDateList = "<xs:simpleType><xs:list itemType=\"xs:date\"/></xs:simpleType>";
+    final String sYearUnion = "<xs:simpleType><xs:union memberTypes=\"xs:gYear xs:boolean\"/></xs:simpleType>";
+    assertFalse (_instanceValid (sList, "<e>1 +INF</e>", EXsdVersion.V10));
+    assertTrue (_instanceValid (sList, "<e>1 +INF</e>", EXsdVersion.V11));
+    assertFalse (_instanceValid (sUnion, "<e>+INF</e>", EXsdVersion.V10));
+    assertTrue (_instanceValid (sUnion, "<e>+INF</e>", EXsdVersion.V11));
+    assertFalse (_instanceValid (sDateList, "<e>0000-01-01</e>", EXsdVersion.V10));
+    assertTrue (_instanceValid (sDateList, "<e>0000-01-01</e>", EXsdVersion.V11));
+    assertFalse (_instanceValid (sYearUnion, "<e>0000</e>", EXsdVersion.V10));
+    assertTrue (_instanceValid (sYearUnion, "<e>0000</e>", EXsdVersion.V11));
+
+    for (final String sBody : new String [] { "<xs:simpleType name=\"t\"><xs:restriction base=\"xs:double\"><xs:enumeration value=\"+INF\"/></xs:restriction></xs:simpleType>",
+                                              "<xs:simpleType name=\"t\"><xs:restriction base=\"xs:double\"><xs:maxInclusive value=\"+INF\"/></xs:restriction></xs:simpleType>",
+                                              "<xs:element name=\"e\" type=\"xs:double\" default=\"+INF\"/>",
+                                              "<xs:simpleType name=\"t\"><xs:restriction base=\"xs:date\"><xs:enumeration value=\"0000-01-01\"/></xs:restriction></xs:simpleType>" })
+    {
+      assertEquals (sBody, EVerdict.INVALID, _schemaVerdict (sBody, EXsdVersion.V10));
+      assertEquals (sBody, EVerdict.VALID, _schemaVerdict (sBody, EXsdVersion.V11));
+    }
   }
 }

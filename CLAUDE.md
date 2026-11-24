@@ -201,7 +201,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   an attribute use nor a wildcard (`XsdAttributeValidator.isExemptAttribute`, also for simple-typed elements); every
   `xml:*` attribute needs a use or a wildcard, under 1.0 and 1.1.
 - XSD: the native validator (`phoxtrot-xsd`) does XSD 1.0 and 1.1; `XsdSchemaProvider` (schema-aware XPath/XSLT) compiles as
-  1.1. `XsdNativeIT` gates both versions (`phoxtrot-xsd-conformance/target/xsd-native-fails.txt`, `xsd-native11-fails.txt`).
+  1.1. Every `XsdSimpleTypeValidator` entry point takes the schema's `EXsdVersion`; lexical rules that differ between the
+  versions (`+INF`, year 0000) belong in `checkPrimitiveLexical`, so list items, union members and facet values get
+  them too. `XsdNativeIT` gates both versions (`phoxtrot-xsd-conformance/target/xsd-native-fails.txt`, `xsd-native11-fails.txt`).
 - XSD: `XsdSchema.assessText` exposes the governing types the validator records (`XsdValidationRun.noteNodeType`,
   otherwise only used by `XsdBridge`) as `XsdNodeType` (0-based element-only position path + attribute name + view).
   It is the public API XMLPerm (`../xmlperm`) uses to derive facets per instance node - keep it stable.
@@ -221,7 +223,8 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   compilation, reading the operands from the `StreamabilityIndex` the compiler fills only then) and
   `XsltTransformRequest.setSourceStreamed` (declaration only) / `setStreamedSourceUri` (read the principal source as a
   stream). The default run must keep claiming no streaming. Streamed execution: `com.helger.phoxtrot.xdm.XdmStreamReader`
-  (StAX, nodes numbered as created, `drop`/`skipSubtree`), `IResourceResolver.openDocumentStream`, and in
+  (StAX, nodes numbered as created, `drop`/`skipSubtree`; it decodes an encoding with a Java name such as `UTF8`
+  itself, with replacement as the SAX parser does, since StAX knows only the IANA names), `IResourceResolver.openDocumentStream`, and in
   `com.helger.phoxtrot.xslt.stream` `StreamPlanner` (shape), `StreamConsumer` (the streamed branch of for-each,
   apply-templates, copy-of, iterate, for-each-group, fork; created with an `IStreamHandlerFactory`), `StreamRecordPath`
   (child steps, motionless boolean predicates), `StreamedRun` (the driver: several paths in one pass, records retained

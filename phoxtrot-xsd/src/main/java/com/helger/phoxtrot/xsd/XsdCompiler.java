@@ -1299,7 +1299,7 @@ final class XsdCompiler
       throw invalid ("a-props-correct.3", "an ID-typed declaration must not have a value constraint");
     try
     {
-      XsdSimpleTypeValidator.validate (aST, v);
+      XsdSimpleTypeValidator.validate (aST, v, m_eVersion);
     }
     catch (final XsdInvalidException ex)
     {

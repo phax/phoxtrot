@@ -271,8 +271,7 @@ final class XsdAttributeValidator
         }
         if (aGlobal.m_aType != null)
         {
-          XsdInstanceValidator.yearZeroOK (aRun, aGlobal.m_aType, sValue);
-          XsdSimpleTypeValidator.validateIn (aGlobal.m_aType, sValue, aAttr);
+          XsdSimpleTypeValidator.validateIn (aGlobal.m_aType, sValue, aAttr, aRun.getSchema ().getVersion ());
           aRun.noteIDValues (aGlobal.m_aType, sValue, aElement, aAttr);
           aRun.annotateAssertType (aAttr, aGlobal.m_aType);
           aRun.noteNodeType (aAttr, aGlobal.m_aType); // wildcard-assessed: the global declaration governs
@@ -289,8 +288,7 @@ final class XsdAttributeValidator
       final XsdSimpleType aDeclType = aUse.m_aDecl.m_aType;
       if (aDeclType != null)
       {
-        XsdInstanceValidator.yearZeroOK (aRun, aDeclType, sValue);
-        XsdSimpleTypeValidator.validateIn (aDeclType, sValue, aAttr);
+        XsdSimpleTypeValidator.validateIn (aDeclType, sValue, aAttr, aRun.getSchema ().getVersion ());
         aRun.noteIDValues (aDeclType, sValue, aElement, aAttr);
         aRun.annotateAssertType (aAttr, aDeclType);
         aRun.noteNodeType (aAttr, aDeclType); // a named attribute use governs
@@ -304,7 +302,7 @@ final class XsdAttributeValidator
         // significant
         final boolean bEqual;
         if (aDeclType != null)
-          bEqual = XsdSimpleTypeValidator.fixedEqual (aDeclType, sValue, aUse.m_sFixed);
+          bEqual = XsdSimpleTypeValidator.fixedEqual (aDeclType, sValue, aUse.m_sFixed, aRun.getSchema ().getVersion ());
         else
           bEqual = XsdLexHelper.lexEqualCollapsed (sValue, aUse.m_sFixed);
         if (!bEqual)

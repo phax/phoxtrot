@@ -575,7 +575,7 @@ final class XsdRestrictionChecker
       if (!XsdLexHelper.lexEqualCollapsed (aRE.m_sFixed, aBT.m_sFixed))
       {
         final XsdSimpleType aST = XsdComponentParser.simpleContentType (aBT.m_aType);
-        if (aST == null || !XsdSimpleTypeValidator.fixedEqual (aST, aRE.m_sFixed, aBT.m_sFixed))
+        if (aST == null || !XsdSimpleTypeValidator.fixedEqual (aST, aRE.m_sFixed, aBT.m_sFixed, m_aSchema.m_eVersion))
           return false;
       }
     }

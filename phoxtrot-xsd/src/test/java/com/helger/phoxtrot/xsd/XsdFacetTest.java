@@ -296,7 +296,7 @@ public final class XsdFacetTest
         boolean bValid = true;
         try
         {
-          XsdSimpleTypeValidator.validate (aType, aCase.value ());
+          XsdSimpleTypeValidator.validate (aType, aCase.value (), eVersion);
         }
         catch (final XsdInvalidException ex)
         {
@@ -323,7 +323,7 @@ public final class XsdFacetTest
   {
     try
     {
-      XsdSimpleTypeValidator.validate (XsdSimpleType.ABSENT, "x");
+      XsdSimpleTypeValidator.validate (XsdSimpleType.ABSENT, "x", EXsdVersion.V11);
       assertTrue ("absent type must refuse every value", false);
     }
     catch (final XsdInvalidException ex)

@@ -26,6 +26,7 @@ import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.collection.commons.ICommonsSet;
 import com.helger.phoxtrot.xdm.IXdmNode;
+import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.ops.XsdLexical;
 import com.helger.phoxtrot.xpath.value.EAtomicType;
 import com.helger.phoxtrot.xpath.value.XdmAtomic;
@@ -120,6 +121,31 @@ final class XsdSimpleTypeValidator
   }
 
   /**
+   * XSD 1.0 prohibits the year 0000 in the date family; XSD 1.1 reads it as
+   * 1 BCE (proleptic calendar).
+   *
+   * @param ePrim
+   *        The built-in primitive.
+   * @param sValue
+   *        The normalised value.
+   * @return <code>true</code> if the primitive has a year and the year of the
+   *         value (after an optional minus) starts with <code>0000</code>.
+   */
+  private static boolean _isYearZero (@NonNull final EAtomicType ePrim, @NonNull final String sValue)
+  {
+    switch (ePrim)
+    {
+      case DATE:
+      case DATE_TIME:
+      case G_YEAR:
+      case G_YEAR_MONTH:
+        return sValue.startsWith ("0000") || sValue.startsWith ("-0000");
+      default:
+        return false;
+    }
+  }
+
+  /**
    * go-xslt <code>checkPrimitiveLexical</code>: validate against the built-in
    * primitive's lexical space. The string-family types are handled directly;
    * everything else defers to the cast of phoxtrot-xpath, with the integer and
@@ -129,10 +155,15 @@ final class XsdSimpleTypeValidator
    *        The built-in primitive.
    * @param sValue
    *        The normalised value.
+   * @param eVersion
+   *        The XSD version of the schema: XSD 1.0 has no <code>+INF</code> for
+   *        xs:float and xs:double and no year 0000 in the date family.
    * @throws XsdInvalidException
    *         if the value is not in the primitive's lexical space
    */
-  static void checkPrimitiveLexical (@NonNull final EAtomicType ePrim, @NonNull final String sValue)
+  static void checkPrimitiveLexical (@NonNull final EAtomicType ePrim,
+                                     @NonNull final String sValue,
+                                     @NonNull final EXsdVersion eVersion)
   {
     switch (ePrim)
     {
@@ -181,7 +212,8 @@ final class XsdSimpleTypeValidator
       case FLOAT:
         // Overflow maps to the infinities and is a valid double/float, so the
         // lexical shape is validated directly rather than through the cast
-        if (!XsdLexical.isDoubleLexical (sValue))
+        // "+INF" entered the float/double lexical space only in XSD 1.1
+        if (!XsdLexical.isDoubleLexical (sValue) || (eVersion == EXsdVersion.V10 && "+INF".equals (sValue)))
           throw _notValid (sValue, ePrim);
         return;
       default:
@@ -212,6 +244,8 @@ final class XsdSimpleTypeValidator
         throw _notValid (sValue, ePrim);
       return;
     }
+    if (eVersion == EXsdVersion.V10 && _isYearZero (ePrim, sValue))
+      throw XsdCompiler.invalid ("cvc-datatype-valid", "year 0000 is not a valid year in XSD 1.0");
     if (XsdValueCompare.castOrNull (sValue, ePrim) == null)
       throw _notValid (sValue, ePrim);
   }
@@ -336,6 +370,8 @@ final class XsdSimpleTypeValidator
    *        The unions being checked on the current path.
    * @param nDepth
    *        The current nesting depth.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    * @throws XsdUnsupportedException
@@ -345,7 +381,8 @@ final class XsdSimpleTypeValidator
                                            @NonNull final String sValue,
                                            @Nullable final IXdmNode aAt,
                                            @NonNull final ICommonsSet <XsdSimpleType> aActive,
-                                           final int nDepth)
+                                           final int nDepth,
+                                           @NonNull final EXsdVersion eVersion)
   {
     final ICommonsList <String> aItems = XsdLexHelper.xmlFields (sValue);
     // Every restriction step's facets apply (a derived list must still honour
@@ -376,7 +413,7 @@ final class XsdSimpleTypeValidator
     }
     if (aType.m_aItem != null)
       for (final String sItem : aItems)
-        _checkInRecursive (aType.m_aItem, sItem, aAt, aActive, nDepth + 1);
+        _checkInRecursive (aType.m_aItem, sItem, aAt, aActive, nDepth + 1, eVersion);
     if (bHasAsserts)
     {
       // $value is the sequence of typed items
@@ -412,6 +449,8 @@ final class XsdSimpleTypeValidator
    *        restored.
    * @param nDepth
    *        The current nesting depth.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if no member accepts the value, or a facet or assertion of the
    *         union or of a union in its base chain fails
@@ -422,7 +461,8 @@ final class XsdSimpleTypeValidator
                                             @NonNull final String sValue,
                                             @Nullable final IXdmNode aAt,
                                             @NonNull final ICommonsSet <XsdSimpleType> aActive,
-                                            final int nDepth)
+                                            final int nDepth,
+                                            @NonNull final EXsdVersion eVersion)
   {
     XsdSimpleType aAccepting = null;
     aActive.add (aType);
@@ -434,7 +474,7 @@ final class XsdSimpleTypeValidator
         // of its own), so validate, not check, the value against the member
         try
         {
-          _validateInRecursive (aMember, sValue, aAt, aActive, nDepth + 1);
+          _validateInRecursive (aMember, sValue, aAt, aActive, nDepth + 1, eVersion);
           aAccepting = aMember;
           break;
         }
@@ -509,6 +549,8 @@ final class XsdSimpleTypeValidator
    *        The unions being checked on the current path.
    * @param nDepth
    *        The current nesting depth.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    * @throws XsdUnsupportedException
@@ -518,7 +560,8 @@ final class XsdSimpleTypeValidator
                                              @NonNull final String sValue,
                                              @Nullable final IXdmNode aAt,
                                              @NonNull final ICommonsSet <XsdSimpleType> aActive,
-                                             final int nDepth)
+                                             final int nDepth,
+                                             @NonNull final EXsdVersion eVersion)
   {
     // The base chain, walked iteratively: the deepest base is checked first
     final ICommonsList <XsdSimpleType> aChain = new CommonsArrayList <> ();
@@ -540,14 +583,14 @@ final class XsdSimpleTypeValidator
       s = aBase;
     }
     if (aDelegate != null)
-      _checkInRecursive (aDelegate, sValue, aAt, aActive, nDepth + 1);
+      _checkInRecursive (aDelegate, sValue, aAt, aActive, nDepth + 1, eVersion);
     for (int i = aChain.size () - 1; i >= 0; i--)
     {
       final XsdSimpleType aLevel = aChain.get (i);
       final EAtomicType ePrim = aLevel.resolvePrim ();
       if (i == aChain.size () - 1 && aDelegate == null)
       {
-        checkPrimitiveLexical (ePrim, sValue);
+        checkPrimitiveLexical (ePrim, sValue, eVersion);
         // Skipped when no node is available (a value checked outside any
         // instance, e.g. a schema's own default): only the shape is checked
         if (aAt != null && (ePrim == EAtomicType.QNAME || ePrim == EAtomicType.NOTATION))
@@ -577,6 +620,8 @@ final class XsdSimpleTypeValidator
    *        The unions being checked on the current path.
    * @param nDepth
    *        The current nesting depth.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    * @throws XsdUnsupportedException
@@ -586,7 +631,8 @@ final class XsdSimpleTypeValidator
                                          @NonNull final String sValue,
                                          @Nullable final IXdmNode aAt,
                                          @NonNull final ICommonsSet <XsdSimpleType> aActive,
-                                         final int nDepth)
+                                         final int nDepth,
+                                         @NonNull final EXsdVersion eVersion)
   {
     if (nDepth > MAX_DEPTH)
       throw _tooDeep ();
@@ -602,17 +648,17 @@ final class XsdSimpleTypeValidator
     switch (aType.m_eVariety)
     {
       case LIST:
-        _checkListRecursive (aType, sValue, aAt, aActive, nDepth);
+        _checkListRecursive (aType, sValue, aAt, aActive, nDepth, eVersion);
         break;
       case UNION:
         // A union that is being checked already is a member that accepts no
         // value, which is what bounds a cyclic member list
         if (aActive.contains (aType))
           throw XsdCompiler.invalid ("cvc-datatype-valid", "value " + XsdLexHelper.quote (sValue) + " reaches a cyclic union");
-        _checkUnionRecursive (aType, sValue, aAt, aActive, nDepth);
+        _checkUnionRecursive (aType, sValue, aAt, aActive, nDepth, eVersion);
         break;
       default:
-        _checkAtomicRecursive (aType, sValue, aAt, aActive, nDepth);
+        _checkAtomicRecursive (aType, sValue, aAt, aActive, nDepth, eVersion);
         break;
     }
   }
@@ -631,6 +677,8 @@ final class XsdSimpleTypeValidator
    *        The unions being checked on the current path.
    * @param nDepth
    *        The current nesting depth.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    */
@@ -638,9 +686,10 @@ final class XsdSimpleTypeValidator
                                             @NonNull final String sRaw,
                                             @Nullable final IXdmNode aAt,
                                             @NonNull final ICommonsSet <XsdSimpleType> aActive,
-                                            final int nDepth)
+                                            final int nDepth,
+                                            @NonNull final EXsdVersion eVersion)
   {
-    _checkInRecursive (aType, XsdWhiteSpace.apply (aType.effectiveWhiteSpace (), sRaw), aAt, aActive, nDepth);
+    _checkInRecursive (aType, XsdWhiteSpace.apply (aType.effectiveWhiteSpace (), sRaw), aAt, aActive, nDepth, eVersion);
   }
 
   /**
@@ -653,17 +702,21 @@ final class XsdSimpleTypeValidator
    *        The union type.
    * @param sRaw
    *        The raw value.
+   * @param eVersion
+   *        The XSD version of the schema.
    * @return The accepting member, or <code>null</code> if none accepts it.
    */
   @Nullable
-  private static XsdSimpleType _firstMember (@NonNull final XsdSimpleType aType, @NonNull final String sRaw)
+  private static XsdSimpleType _firstMember (@NonNull final XsdSimpleType aType,
+                                             @NonNull final String sRaw,
+                                             @NonNull final EXsdVersion eVersion)
   {
     final ICommonsSet <XsdSimpleType> aActive = new CommonsHashSet <> ();
     aActive.add (aType);
     for (final XsdSimpleType aMember : aType.m_aMembers)
       try
       {
-        _validateInRecursive (aMember, sRaw, null, aActive, 1);
+        _validateInRecursive (aMember, sRaw, null, aActive, 1, eVersion);
         return aMember;
       }
       catch (final XsdInvalidException ex)
@@ -689,6 +742,8 @@ final class XsdSimpleTypeValidator
    *        The fixed value.
    * @param nDepth
    *        The current nesting depth.
+   * @param eVersion
+   *        The XSD version of the schema.
    * @return <code>true</code> if equal.
    * @throws XsdUnsupportedException
    *         beyond {@link #MAX_DEPTH}
@@ -696,7 +751,8 @@ final class XsdSimpleTypeValidator
   private static boolean _fixedEqualRecursive (@NonNull final XsdSimpleType aType,
                                                @NonNull final String sContent,
                                                @NonNull final String sFixed,
-                                               final int nDepth)
+                                               final int nDepth,
+                                               @NonNull final EXsdVersion eVersion)
   {
     if (nDepth > MAX_DEPTH)
       throw _tooDeep ();
@@ -706,9 +762,9 @@ final class XsdSimpleTypeValidator
       {
         // Each side takes the first member that accepts it; equal only when
         // both land in the same member and are equal there
-        final XsdSimpleType aMA = _firstMember (aType, sContent);
-        final XsdSimpleType aMB = _firstMember (aType, sFixed);
-        return aMA != null && aMA == aMB && _fixedEqualRecursive (aMA, sContent, sFixed, nDepth + 1);
+        final XsdSimpleType aMA = _firstMember (aType, sContent, eVersion);
+        final XsdSimpleType aMB = _firstMember (aType, sFixed, eVersion);
+        return aMA != null && aMA == aMB && _fixedEqualRecursive (aMA, sContent, sFixed, nDepth + 1, eVersion);
       }
       case LIST:
       {
@@ -724,7 +780,7 @@ final class XsdSimpleTypeValidator
               return false;
             continue;
           }
-          if (!_fixedEqualRecursive (aType.m_aItem, aFA.get (i), aFB.get (i), nDepth + 1))
+          if (!_fixedEqualRecursive (aType.m_aItem, aFA.get (i), aFB.get (i), nDepth + 1, eVersion))
             return false;
         }
         return true;
@@ -750,12 +806,16 @@ final class XsdSimpleTypeValidator
    *        The simple type. {@link XsdSimpleType#ABSENT} refuses every value.
    * @param sRaw
    *        The raw (not yet normalised) value.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    */
-  static void validate (@NonNull final XsdSimpleType aType, @NonNull final String sRaw)
+  static void validate (@NonNull final XsdSimpleType aType,
+                        @NonNull final String sRaw,
+                        @NonNull final EXsdVersion eVersion)
   {
-    validateIn (aType, sRaw, null);
+    validateIn (aType, sRaw, null, eVersion);
   }
 
   /**
@@ -769,12 +829,17 @@ final class XsdSimpleTypeValidator
    * @param aAt
    *        The element or attribute node the value sits on; <code>null</code>
    *        for none.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    */
-  static void validateIn (@NonNull final XsdSimpleType aType, @NonNull final String sRaw, @Nullable final IXdmNode aAt)
+  static void validateIn (@NonNull final XsdSimpleType aType,
+                          @NonNull final String sRaw,
+                          @Nullable final IXdmNode aAt,
+                          @NonNull final EXsdVersion eVersion)
   {
-    _validateInRecursive (aType, sRaw, aAt, new CommonsHashSet <> (), 0);
+    _validateInRecursive (aType, sRaw, aAt, new CommonsHashSet <> (), 0, eVersion);
   }
 
   /**
@@ -785,12 +850,16 @@ final class XsdSimpleTypeValidator
    *        The simple type.
    * @param sValue
    *        The normalised value.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    */
-  static void check (@NonNull final XsdSimpleType aType, @NonNull final String sValue)
+  static void check (@NonNull final XsdSimpleType aType,
+                     @NonNull final String sValue,
+                     @NonNull final EXsdVersion eVersion)
   {
-    _checkInRecursive (aType, sValue, null, new CommonsHashSet <> (), 0);
+    _checkInRecursive (aType, sValue, null, new CommonsHashSet <> (), 0, eVersion);
   }
 
   /**
@@ -803,12 +872,17 @@ final class XsdSimpleTypeValidator
    *        The normalised value.
    * @param aAt
    *        The instance node; may be <code>null</code>.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @throws XsdInvalidException
    *         if the value is not valid
    */
-  static void checkIn (@NonNull final XsdSimpleType aType, @NonNull final String sValue, @Nullable final IXdmNode aAt)
+  static void checkIn (@NonNull final XsdSimpleType aType,
+                       @NonNull final String sValue,
+                       @Nullable final IXdmNode aAt,
+                       @NonNull final EXsdVersion eVersion)
   {
-    _checkInRecursive (aType, sValue, aAt, new CommonsHashSet <> (), 0);
+    _checkInRecursive (aType, sValue, aAt, new CommonsHashSet <> (), 0, eVersion);
   }
 
   /**
@@ -824,13 +898,16 @@ final class XsdSimpleTypeValidator
    *        The instance value.
    * @param sFixed
    *        The fixed value.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @return <code>true</code> if equal.
    */
   static boolean fixedEqual (@NonNull final XsdSimpleType aType,
                              @NonNull final String sContent,
-                             @NonNull final String sFixed)
+                             @NonNull final String sFixed,
+                             @NonNull final EXsdVersion eVersion)
   {
-    return _fixedEqualRecursive (aType, sContent, sFixed, 0);
+    return _fixedEqualRecursive (aType, sContent, sFixed, 0, eVersion);
   }
 
   /**
@@ -842,11 +919,15 @@ final class XsdSimpleTypeValidator
    *        The union type.
    * @param sRaw
    *        The raw value.
+   * @param eVersion
+   *        The XSD version of the schema, for the lexical rules that differ.
    * @return The member, or <code>null</code>.
    */
   @Nullable
-  static XsdSimpleType firstMemberRaw (@NonNull final XsdSimpleType aType, @NonNull final String sRaw)
+  static XsdSimpleType firstMemberRaw (@NonNull final XsdSimpleType aType,
+                                       @NonNull final String sRaw,
+                                       @NonNull final EXsdVersion eVersion)
   {
-    return _firstMember (aType, sRaw);
+    return _firstMember (aType, sRaw, eVersion);
   }
 }

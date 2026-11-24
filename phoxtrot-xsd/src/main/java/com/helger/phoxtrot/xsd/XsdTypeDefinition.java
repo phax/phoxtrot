@@ -32,6 +32,7 @@ import com.helger.phoxtrot.xdm.schema.EXdmContentType;
 import com.helger.phoxtrot.xdm.schema.EXdmSimpleVariety;
 import com.helger.phoxtrot.xdm.schema.IXdmTypeDefinition;
 import com.helger.phoxtrot.xdm.schema.XdmTypedToken;
+import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.value.EAtomicType;
 
 /**
@@ -478,7 +479,8 @@ final class XsdTypeDefinition implements IXdmTypeDefinition
   @Nullable
   static XsdSimpleType acceptingMember (@NonNull final XsdSimpleType aUnion,
                                         @NonNull final String sRaw,
-                                        @Nullable final IXdmNode aAt)
+                                        @Nullable final IXdmNode aAt,
+                                        @NonNull final EXsdVersion eVersion)
   {
     XsdSimpleType aCur = aUnion;
     for (int i = 0; i < MAX_DEPTH; i++)
@@ -487,7 +489,7 @@ final class XsdTypeDefinition implements IXdmTypeDefinition
       for (final XsdSimpleType aMember : membersOf (aCur))
         try
         {
-          XsdSimpleTypeValidator.validateIn (aMember, sRaw, aAt);
+          XsdSimpleTypeValidator.validateIn (aMember, sRaw, aAt, eVersion);
           aFound = aMember;
           break;
         }
@@ -565,7 +567,7 @@ final class XsdTypeDefinition implements IXdmTypeDefinition
       case UNION:
       {
         final String sNormalised = XsdWhiteSpace.apply (aType.effectiveWhiteSpace (), sRaw);
-        final XsdSimpleType aMember = acceptingMember (aType, sNormalised, aAt);
+        final XsdSimpleType aMember = acceptingMember (aType, sNormalised, aAt, m_aBridge.getSchema ().getVersion ());
         // The value was found valid, so a member accepts it: no member here
         // means the unions are nested too deeply to follow
         if (aMember == null)
@@ -612,7 +614,7 @@ final class XsdTypeDefinition implements IXdmTypeDefinition
     final IXdmNode aAt = _namespaceContext (sLexical, aNamespaceResolver);
     try
     {
-      XsdSimpleTypeValidator.validateIn (aSimple, sLexical, aAt);
+      XsdSimpleTypeValidator.validateIn (aSimple, sLexical, aAt, m_aBridge.getSchema ().getVersion ());
       _collectTokensRecursive (aSimple, sLexical, aAt, ret, 0);
     }
     catch (final XsdInvalidException ex)

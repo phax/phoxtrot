@@ -33,6 +33,7 @@ import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.collection.commons.ICommonsSet;
 import com.helger.phoxtrot.xdm.IXdmNode;
+import com.helger.phoxtrot.xpath.context.EXsdVersion;
 import com.helger.phoxtrot.xpath.value.EAtomicType;
 
 /**
@@ -228,11 +229,13 @@ final class XsdSimpleTypeParser
    * Whether the enumeration value is valid against the base type
    * (go-xslt <code>st.base.validate(e) != nil</code>).
    */
-  private static boolean _isValidAgainst (@NonNull final XsdSimpleType aType, @NonNull final String sValue)
+  private static boolean _isValidAgainst (@NonNull final XsdSimpleType aType,
+                                          @NonNull final String sValue,
+                                          @NonNull final EXsdVersion eVersion)
   {
     try
     {
-      XsdSimpleTypeValidator.validate (aType, sValue);
+      XsdSimpleTypeValidator.validate (aType, sValue, eVersion);
       return true;
     }
     catch (final XsdInvalidException ex)
@@ -245,7 +248,7 @@ final class XsdSimpleTypeParser
    * go-xslt <code>checkFacetConsistency</code>: a restriction step's facets
    * narrow, never loosen, the corresponding facets of its base.
    */
-  private static void _checkFacetConsistency (@NonNull final XsdSimpleType aType)
+  private static void _checkFacetConsistency (@NonNull final XsdSimpleType aType, @NonNull final EXsdVersion eVersion)
   {
     if (aType.m_aBase == null && !aType.m_bBaseBuiltin)
       return;
@@ -288,7 +291,7 @@ final class XsdSimpleTypeParser
     // Enumeration literals of a list restriction must be valid against the base
     if (aType.m_eVariety == EXsdVariety.LIST && f.m_bHasEnum && aType.m_aBase != null)
       for (final String sEnum : f.m_aEnumeration)
-        if (!_isValidAgainst (aType.m_aBase, sEnum))
+        if (!_isValidAgainst (aType.m_aBase, sEnum, eVersion))
           throw XsdCompiler.invalid ("enumeration-valid-restriction",
                                      "enumeration value " + XsdLexHelper.quote (sEnum) + " is not valid against the base type");
     if (f.m_bHasTotalDigits && nBaseTotal >= 0 && f.m_nTotalDigits > nBaseTotal)
@@ -688,7 +691,7 @@ final class XsdSimpleTypeParser
           break;
       }
     parseFacets (aType, aRestriction);
-    _checkFacetConsistency (aType);
+    _checkFacetConsistency (aType, m_aC.m_eVersion);
     checkNotationUsable (aType);
     XsdFacetValidator.validateFacetValues (aType, m_aC.m_eVersion);
   }

@@ -590,7 +590,7 @@ final class XsdValidationRun
     XsdSimpleType aValueType = aType;
     if (aType.m_eVariety == EXsdVariety.UNION)
     {
-      final XsdSimpleType aMember = XsdTypeDefinition.acceptingMember (aType, sValue, aAt);
+      final XsdSimpleType aMember = XsdTypeDefinition.acceptingMember (aType, sValue, aAt, m_aSchema.m_eVersion);
       if (aMember != null)
         aValueType = aMember;
     }
@@ -733,7 +733,7 @@ final class XsdValidationRun
           boolean bValid = true;
           try
           {
-            XsdSimpleTypeValidator.validate (aMember, sValue);
+            XsdSimpleTypeValidator.validate (aMember, sValue, m_aSchema.m_eVersion);
           }
           catch (final XsdInvalidException ex)
           {

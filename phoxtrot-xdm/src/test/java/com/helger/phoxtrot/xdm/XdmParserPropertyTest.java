@@ -34,7 +34,6 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.xml.sax.InputSource;
 
@@ -344,7 +343,7 @@ public final class XdmParserPropertyTest
       {
         // Refused as documented
       }
-      if (!bUnsupported && !_isOtherEncodingDeclared (aBytes))
+      if (!bUnsupported)
       {
         assertEquals ("Read by the parser: " + (aParsed != null) + ", by the stream reader: " + (aStreamed != null),
                       Boolean.valueOf (aParsed != null),
@@ -360,7 +359,6 @@ public final class XdmParserPropertyTest
    * accepts is also read by {@link XdmStreamReader}, to the same tree.
    */
   @Test
-  @Ignore ("XdmStreamReader (StAX) refuses Java encoding names such as UTF8 or Cp1252 that XdmParser (SAX) accepts")
   public void testStreamReaderAcceptsEncodingNamesOfParser ()
   {
     new PropertyChecker ().setTries (50)
