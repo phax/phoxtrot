@@ -316,7 +316,8 @@ v0.4.0 - work in progress
   value equality), identity constraints and content models, the name checks, node accessors, the read-only DOM view
   and the namespace fixup, and the XSLT compiler, template rule and key indexes, patterns, `xsl:number`, sorting,
   grouping, `xsl:analyze-string`, `xsl:iterate`, `xsl:merge`, `on-no-match`, output methods, character maps,
-  accumulators, computed names, simple content, streaming, the result drain and the JAXP adapter
+  accumulators, computed names, simple content, streaming, the result drain and the JAXP adapter, and a stylesheet
+  with the `java.math.RoundingMode` modes as XSLT functions against `BigDecimal.setScale`
 * `IXdmNode.appendChild` refuses a node that is the new parent itself or one of its ancestors (it made the tree a
   cycle, so walks up to the root and the document order numbering never ended)
 * `XdmStreamReader` reads documents whose encoding has a Java name (`UTF8`, `Cp1252`, `ISO8859_1`) as `XdmParser`
