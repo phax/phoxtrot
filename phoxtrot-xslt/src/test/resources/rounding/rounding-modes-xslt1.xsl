@@ -7,7 +7,9 @@
   XSLT 1.0 has neither functions nor xs:decimal, and its numbers are IEEE
   doubles (2.675 is 2.67499999... there). These named templates therefore
   work on the decimal string digit by digit and are exact for any number of
-  digits.
+  digits. They use only XPath 1.0 functions and never compare a string with a
+  number, so they give the same results on XSLT 2.0 and 3.0 processors, also
+  with version="3.0".
 
   All public templates take
     $value - the number to round, as a string in xs:decimal notation:
@@ -134,6 +136,7 @@
     <xsl:variable name="int-part" select="substring-before(concat($unsigned, '.'), '.')"/>
     <xsl:variable name="frac-part" select="substring-after($unsigned, '.')"/>
     <xsl:variable name="digits" select="concat($int-part, $frac-part)"/>
+    <xsl:variable name="s" select="number($scale)"/>
     <xsl:choose>
       <xsl:when test="contains($m, '|') or not(contains('|UP|DOWN|CEILING|FLOOR|HALF_UP|HALF_DOWN|HALF_EVEN|UNNECESSARY|', concat('|', $m, '|')))">
         <xsl:message terminate="yes">rm:UNKNOWN_MODE: Unknown rounding mode: <xsl:value-of select="$mode"/></xsl:message>
@@ -141,12 +144,12 @@
       <xsl:when test="$digits = '' or translate($digits, '0123456789', '') != '' or contains($frac-part, '.')">
         <xsl:message terminate="yes">rm:INVALID_VALUE: Not a decimal number: <xsl:value-of select="$value"/></xsl:message>
       </xsl:when>
-      <xsl:when test="not($scale = floor($scale))">
+      <xsl:when test="not($s = floor($s))">
         <xsl:message terminate="yes">rm:INVALID_SCALE: Not an integer scale: <xsl:value-of select="$scale"/></xsl:message>
       </xsl:when>
       <xsl:otherwise>
         <!-- Number of leading digits that are kept; zero or less keeps none -->
-        <xsl:variable name="keep" select="string-length($int-part) + $scale"/>
+        <xsl:variable name="keep" select="string-length($int-part) + $s"/>
         <xsl:variable name="padded">
           <xsl:value-of select="$digits"/>
           <xsl:call-template name="rm:zeros">
@@ -161,9 +164,10 @@
         <xsl:variable name="kept" select="substring($padded, 1, $keep)"/>
         <xsl:variable name="dropped" select="concat($leading, substring($padded, $keep + 1))"/>
         <xsl:variable name="inexact" select="translate($dropped, '0', '') != ''"/>
-        <xsl:variable name="first" select="substring($dropped, 1, 1)"/>
+        <!-- Digits as numbers (an absent digit is 0): XSLT 2.0 and later refuse to compare a string with a number -->
+        <xsl:variable name="first" select="number(concat('0', substring($dropped, 1, 1)))"/>
         <xsl:variable name="beyond-half" select="translate(substring($dropped, 2), '0', '') != ''"/>
-        <xsl:variable name="odd" select="substring($kept, string-length($kept)) mod 2 = 1"/>
+        <xsl:variable name="odd" select="number(concat('0', substring($kept, string-length($kept)))) mod 2 = 1"/>
         <xsl:variable name="more-than-half" select="$first &gt; 5 or ($first = 5 and $beyond-half)"/>
         <!-- 'true' if the kept digits move one unit away from zero. One short
              expression per mode: the JDK processor refuses long XPath
@@ -207,18 +211,11 @@
             </xsl:otherwise>
           </xsl:choose>
           <xsl:call-template name="rm:zeros">
-            <xsl:with-param name="count" select="-$scale"/>
+            <xsl:with-param name="count" select="-$s"/>
           </xsl:call-template>
         </xsl:variable>
-        <!-- Number of fraction digits in $magnitude -->
-        <xsl:variable name="fraction-digits">
-          <xsl:choose>
-            <xsl:when test="$scale &gt; 0">
-              <xsl:value-of select="$scale"/>
-            </xsl:when>
-            <xsl:otherwise>0</xsl:otherwise>
-          </xsl:choose>
-        </xsl:variable>
+        <!-- Number of fraction digits in $magnitude: the scale, or 0 for a negative one -->
+        <xsl:variable name="fraction-digits" select="$s * number($s &gt; 0)"/>
         <!-- Leading zeros so that there is an integer digit before the point -->
         <xsl:variable name="all">
           <xsl:call-template name="rm:zeros">

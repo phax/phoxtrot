@@ -18,10 +18,16 @@ package com.helger.phoxtrot.xslt;
 
 import static org.junit.Assert.assertEquals;
 
+import java.io.IOException;
 import java.io.StringReader;
 import java.io.StringWriter;
+import java.io.UncheckedIOException;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.net.URI;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.List;
 
 import javax.xml.transform.ErrorListener;
@@ -52,34 +58,46 @@ import com.helger.unittest.property.PropertyChecker;
  * <code>rm:round</code> with the mode name in any case and with surrounding
  * spaces give the value of <code>BigDecimal.setScale (scale, RoundingMode)</code>,
  * and stop with <code>rm:ROUNDING_NECESSARY</code> exactly where Java throws
- * an <code>ArithmeticException</code>. Every case runs on phoxtrot (XSLT 1.0
- * behaviour through the backwards compatibility claim) and on the XSLT 1.0
- * processor of the JDK.
+ * an <code>ArithmeticException</code>. Every case runs on phoxtrot with XSLT
+ * 1.0 behaviour (backwards compatibility claim), on phoxtrot with XSLT 3.0
+ * behaviour (the templates with <code>version="3.0"</code>, so string and
+ * number comparisons follow the XPath 3.1 rules) and on the XSLT 1.0 processor
+ * of the JDK (which also refuses functions XPath 1.0 does not have).
  *
  * @author Philip Helger
  */
 public final class RoundingModesXslt1PropertyTest
 {
-  /** The two processors and the outcome of one run on each */
-  private record Outcome (@NonNull String phoxtrot, @NonNull String jdk)
+  /**
+   * The outcome of one run on each processor: phoxtrot with XSLT 1.0
+   * behaviour, phoxtrot with XSLT 3.0 behaviour (the templates in a copy with
+   * <code>version="3.0"</code>, without the backwards compatibility claim) and
+   * the XSLT 1.0 processor of the JDK.
+   */
+  private record Outcome (@NonNull String phoxtrot10, @NonNull String phoxtrot30, @NonNull String jdk)
   {}
 
   private static final List <RoundingMode> MODES = RoundingTestCases.MODES;
 
   private static final String DRIVER_URI = RoundingTestCases.getResourceUri ("driver1.xsl");
 
-  private static final XsltExecutable PHOXTROT = _compilePhoxtrot ();
+  private static final XsltExecutable PHOXTROT10 = _compilePhoxtrot10 ();
+
+  private static final XsltExecutable PHOXTROT30 = _compilePhoxtrot30 ();
 
   private static final Templates JDK = _compileJdk ();
 
+  /**
+   * @return The top-level elements of the driver: its parameters, and the
+   *         template <code>main</code> (also called for the document node)
+   *         that calls the template of <code>$mode</code> and then rm:round
+   *         with <code>$spelling</code>, separated by <code>;</code>.
+   */
   @NonNull
-  private static String _getDriver ()
+  private static String _getDriverDeclarations ()
   {
     final StringBuilder aSB = new StringBuilder ();
-    aSB.append ("<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'" +
-                " xmlns:rm='urn:x-rounding-mode' exclude-result-prefixes='rm'>" +
-                "<xsl:import href='rounding-modes-xslt1.xsl'/>" +
-                "<xsl:output method='text'/>" +
+    aSB.append ("<xsl:output method='text'/>" +
                 "<xsl:param name='v'/>" +
                 "<xsl:param name='s'/>" +
                 "<xsl:param name='mode'/>" +
@@ -96,17 +114,61 @@ public final class RoundingModesXslt1PropertyTest
     aSB.append ("</xsl:choose><xsl:text>;</xsl:text>" +
                 "<xsl:call-template name='rm:round'><xsl:with-param name='value' select='$v'/>" +
                 "<xsl:with-param name='scale' select='number($s)'/><xsl:with-param name='mode' select='$spelling'/>" +
-                "</xsl:call-template></xsl:template></xsl:stylesheet>");
+                "</xsl:call-template></xsl:template>");
     return aSB.toString ();
   }
 
+  /**
+   * @return The XSLT 1.0 driver that imports the templates.
+   */
   @NonNull
-  private static XsltExecutable _compilePhoxtrot ()
+  private static String _getDriver ()
+  {
+    return "<xsl:stylesheet version='1.0' xmlns:xsl='http://www.w3.org/1999/XSL/Transform'" +
+           " xmlns:rm='urn:x-rounding-mode' exclude-result-prefixes='rm'>" +
+           "<xsl:import href='rounding-modes-xslt1.xsl'/>" +
+           _getDriverDeclarations () +
+           "</xsl:stylesheet>";
+  }
+
+  @NonNull
+  private static XsltExecutable _compilePhoxtrot10 ()
   {
     final XsltCompileOptions aOptions = new XsltCompileOptions ();
     aOptions.setBaseUri (DRIVER_URI);
     aOptions.setResolver (FileResourceResolver.INSTANCE);
     return XsltCompiler.compile (_getDriver (), aOptions);
+  }
+
+  /**
+   * Compiles the templates as XSLT 3.0: the text of the stylesheet with
+   * <code>version="3.0"</code> and the driver declarations added, without the
+   * backwards compatibility claim, so that nothing runs with XSLT 1.0
+   * behaviour.
+   */
+  @NonNull
+  private static XsltExecutable _compilePhoxtrot30 ()
+  {
+    final String sUri = RoundingTestCases.getResourceUri ("rounding-modes-xslt1.xsl");
+    final String sText;
+    try
+    {
+      sText = Files.readString (Path.of (URI.create (sUri)), StandardCharsets.UTF_8);
+    }
+    catch (final IOException ex)
+    {
+      throw new UncheckedIOException (ex);
+    }
+    final String sStart = "<xsl:stylesheet version=\"1.0\"";
+    final String sEnd = "</xsl:stylesheet>";
+    if (!sText.contains (sStart) || !sText.contains (sEnd))
+      throw new IllegalStateException ("Unexpected stylesheet text");
+    final String sText30 = sText.replace (sStart, "<xsl:stylesheet version=\"3.0\"")
+                                .replace (sEnd, _getDriverDeclarations () + sEnd);
+    final XsltCompileOptions aOptions = new XsltCompileOptions ();
+    aOptions.setBaseUri (sUri);
+    aOptions.setBackwardsCompatibleClaim (false);
+    return XsltCompiler.compile (sText30, aOptions);
   }
 
   @NonNull
@@ -139,7 +201,8 @@ public final class RoundingModesXslt1PropertyTest
   }
 
   @NonNull
-  private static String _runPhoxtrot (@NonNull final String sValue,
+  private static String _runPhoxtrot (@NonNull final XsltExecutable aExec,
+                                      @NonNull final String sValue,
                                       @NonNull final String sScale,
                                       @NonNull final RoundingMode eMode,
                                       @NonNull final String sSpelling)
@@ -154,7 +217,7 @@ public final class RoundingModesXslt1PropertyTest
     aRequest.params ().put (new XdmQName ("spelling"), XdmSequence.of (XdmAtomic.string (sSpelling)));
     try
     {
-      return PHOXTROT.transform (aRequest).principalSerialized ();
+      return aExec.transform (aRequest).principalSerialized ();
     }
     catch (final RuntimeException ex)
     {
@@ -215,7 +278,9 @@ public final class RoundingModesXslt1PropertyTest
                                @NonNull final RoundingMode eMode,
                                @NonNull final String sSpelling)
   {
-    return new Outcome (_runPhoxtrot (sValue, sScale, eMode, sSpelling), _runJdk (sValue, sScale, eMode, sSpelling));
+    return new Outcome (_runPhoxtrot (PHOXTROT10, sValue, sScale, eMode, sSpelling),
+                        _runPhoxtrot (PHOXTROT30, sValue, sScale, eMode, sSpelling),
+                        _runJdk (sValue, sScale, eMode, sSpelling));
   }
 
   /**
@@ -275,7 +340,8 @@ public final class RoundingModesXslt1PropertyTest
                                                                       RoundingTestCases.getSpelling (eMode,
                                                                                                      aSpellingKind.intValue ()));
                                        final String sMsg = "'" + sValue + "' at scale " + aCase.scale () + " " + eMode;
-                                       assertEquals ("phoxtrot: " + sMsg, sExpected, aOutcome.phoxtrot ());
+                                       assertEquals ("phoxtrot 1.0: " + sMsg, sExpected, aOutcome.phoxtrot10 ());
+                                       assertEquals ("phoxtrot 3.0: " + sMsg, sExpected, aOutcome.phoxtrot30 ());
                                        assertEquals ("JDK: " + sMsg, sExpected, aOutcome.jdk ());
                                      }
                                    });
@@ -308,12 +374,14 @@ public final class RoundingModesXslt1PropertyTest
     {
       final Outcome aOutcome = _run (aCase[0], aCase[1], RoundingMode.valueOf (aCase[2]), aCase[2]);
       final String sMsg = "'" + aCase[0] + "' at scale " + aCase[1] + " " + aCase[2];
-      assertEquals ("phoxtrot: " + sMsg, aCase[3], aOutcome.phoxtrot ());
+      assertEquals ("phoxtrot 1.0: " + sMsg, aCase[3], aOutcome.phoxtrot10 ());
+      assertEquals ("phoxtrot 3.0: " + sMsg, aCase[3], aOutcome.phoxtrot30 ());
       assertEquals ("JDK: " + sMsg, aCase[3], aOutcome.jdk ());
     }
     // An unknown mode name for rm:round, after a valid template call
     final Outcome aUnknown = _run ("2.345", "2", RoundingMode.UP, "HALF-UP");
-    assertEquals ("phoxtrot", "!UNKNOWN_MODE", aUnknown.phoxtrot ());
+    assertEquals ("phoxtrot 1.0", "!UNKNOWN_MODE", aUnknown.phoxtrot10 ());
+    assertEquals ("phoxtrot 3.0", "!UNKNOWN_MODE", aUnknown.phoxtrot30 ());
     assertEquals ("JDK", "!UNKNOWN_MODE", aUnknown.jdk ());
   }
 }
