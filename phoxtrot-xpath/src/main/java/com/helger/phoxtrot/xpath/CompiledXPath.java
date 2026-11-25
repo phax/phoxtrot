@@ -49,7 +49,9 @@ public final class CompiledXPath
   private final String m_sSource;
   private final StaticContext m_aStaticCtx;
   private final IExpr m_aExpr;
-  private final CompiledExpr m_aCompiled;
+  // Compiled on the first evaluation, on the thread of the evaluation (whose
+  // stack takes the nesting the parser accepted); never changed afterwards
+  private volatile CompiledExpr m_aCompiled;
   // The free variables, computed on first use
   private volatile ICommonsOrderedSet <XdmQName> m_aFreeVariables;
 
@@ -58,7 +60,6 @@ public final class CompiledXPath
     m_sSource = sSource;
     m_aStaticCtx = aStaticCtx;
     m_aExpr = aExpr;
-    m_aCompiled = XPathEvaluator.compile (aExpr);
   }
 
   @NonNull
@@ -113,6 +114,19 @@ public final class CompiledXPath
   }
 
   /**
+   * @return The compiled form, compiled on the first call. Two threads may both
+   *         compile it, with the same result.
+   */
+  @NonNull
+  private CompiledExpr _getCompiled ()
+  {
+    CompiledExpr ret = m_aCompiled;
+    if (ret == null)
+      m_aCompiled = ret = XPathEvaluator.compile (m_aExpr, m_aStaticCtx);
+    return ret;
+  }
+
+  /**
    * Evaluate the expression. It always sees the static context it was compiled
    * with (decimal formats, default collation, base URI, namespaces for
    * lexical QNames in function arguments), also if the dynamic context was
@@ -127,7 +141,7 @@ public final class CompiledXPath
   public XdmSequence evaluate (@NonNull final DynamicContext aCtx)
   {
     final DynamicContext aRealCtx = aCtx.getStaticContext () == m_aStaticCtx ? aCtx : aCtx.withStaticContext (m_aStaticCtx);
-    return XPathEvaluator.evaluate (m_aCompiled, aRealCtx);
+    return XPathEvaluator.evaluate (_getCompiled (), aRealCtx);
   }
 
   /**
@@ -143,6 +157,6 @@ public final class CompiledXPath
   public boolean evaluateEffectiveBooleanValue (@NonNull final DynamicContext aCtx)
   {
     final DynamicContext aRealCtx = aCtx.getStaticContext () == m_aStaticCtx ? aCtx : aCtx.withStaticContext (m_aStaticCtx);
-    return XPathEvaluator.evaluateEffectiveBooleanValue (m_aCompiled, aRealCtx);
+    return XPathEvaluator.evaluateEffectiveBooleanValue (_getCompiled (), aRealCtx);
   }
 }

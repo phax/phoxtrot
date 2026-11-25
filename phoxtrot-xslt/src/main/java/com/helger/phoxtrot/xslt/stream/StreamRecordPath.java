@@ -277,7 +277,7 @@ public final class StreamRecordPath
       aTests.add (aTest);
       final ICommonsList <CompiledExpr> aCompiled = new CommonsArrayList <> (aStep.predicates ().size ());
       for (final IExpr aPredicate : aStep.predicates ())
-        aCompiled.add (XPathEvaluator.compile (aPredicate));
+        aCompiled.add (XPathEvaluator.compile (aPredicate, aSelect.getStaticContext ()));
       aPredicates.add (aCompiled);
     }
     return new StreamRecordPath (aSelect, aTests, aPredicates);

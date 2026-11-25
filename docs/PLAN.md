@@ -627,7 +627,7 @@ the QT3 cases expect; refined in ST3 to function coercion); inferred types keep 
 ## Interpreter speed on template-heavy stylesheets (2026-11-25)
 
 Status: option 1 done without a measurable gain (changes reverted); option 2 in progress on branch
-`closure-compilation`; option 3 in the backlog.
+`closure-compilation` (C1 and C4 done, C2 and C3 open); option 3 in the backlog.
 
 The rounding stylesheets of the property tests (`phoxtrot-xslt/src/test/resources/rounding`) gave a first comparison
 (quick measurement, 10,000 roundings in one transformation, JDK 21, median of 21 runs):
@@ -675,10 +675,10 @@ engine-independent reference case).
 
    | Stage | Content | Status |
    |-------|---------|--------|
-   | C1 | `XPathEvaluator.compile` builds a tree of `CompiledExpr` nodes (one class per expression kind, compiled children, shape analyses done once); `CompiledXPath`, `XPathExpr`, patterns (`CompiledXsltPattern`, `PatternMatcher.DirectPath`), streamed record paths and inline functions hold compiled expressions; the interpreter `switch` is gone | in progress |
+   | C1 | `XPathEvaluator.compile` builds a tree of `CompiledExpr` nodes (one class per expression kind, compiled children, shape analyses done once); `CompiledXPath`, `XPathExpr`, patterns (`CompiledXsltPattern`, `PatternMatcher.DirectPath`), streamed record paths and inline functions hold compiled expressions; the interpreter `switch` is gone; static calls keep the call memo plan creator | done: allocation per operation (JMH `-prof gc`) against main -3 % on the rounding templates, -1 % on the functions, -9 to -18 % on the XPath workloads, -4 % on XSLT recursion and iterate |
    | C2 | No `DynamicContext` per XSLT expression evaluation for the static context (`XPathExpr.evaluate`, `withStaticContext`) | open |
    | C3 | Frame slots for the XPath-local variables (`for`, `let`, quantifiers, inline function parameters) instead of the lookup by name | open |
-   | C4 | Slots for the XSLT local variables and parameters, assigned at stylesheet compile time | open |
+   | C4 | Slots for the XSLT local variables and parameters, assigned at stylesheet compile time | done: `VariableFrameLayout`/`VariableSlot` per body, a `VariableFrame` per activation changed in place, snapshots for inline function items, lazy values computed with the frame they are read from; `LocalVariableSlotTest`. Allocation per operation against C1 (both orders agree): -14 % on the rounding templates, -9 % on the functions, -6 % on `iterate`, -1 % on `recursion`, the XPath workloads unchanged. Time against main (C1 and C4 together, quiet machine, `compare.sh` in both orders, geometric mean): -6 to -10 % on the rounding workloads, -5 to -16 % on `iterate`, -5 to -7 % on `recursion`, -12 to -22 % on `grouping`, -2 to -7 % on `sort` and serialisation, `dispatch`, `identity` and `keys` level within the drift of the machine (the engine measured second is 5 to 10 % slower in every run) |
 3. **Byte code generation** (backlog), as XSLTC does for XSLT 1.0. A code generator for every construct of XSLT 3.0
    and XPath 3.1, with the same behaviour as the interpreter, and the W3C suites passing on both paths. On the JDK 21
    baseline it needs a byte code library (ASM; `java.lang.classfile` is final only from JDK 24). Compiling simple

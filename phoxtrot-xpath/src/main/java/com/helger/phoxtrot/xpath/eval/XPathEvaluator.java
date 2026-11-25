@@ -21,6 +21,7 @@ import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.IdentityHashMap;
 import java.util.List;
 import java.util.Locale;
@@ -52,6 +53,9 @@ import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.context.VariableFrame;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.fn.FnAccessor;
 import com.helger.phoxtrot.xpath.fn.FnBoolean;
 import com.helger.phoxtrot.xpath.fn.FnContext;
@@ -684,12 +688,12 @@ public final class XPathEvaluator
     // All predicates select the same nodes whatever the context position is
     private final boolean m_bFocusFreePredicates;
 
-    CompiledStep (final IExpr.@NonNull StepExpr aStep)
+    CompiledStep (@NonNull final ExprCompiler aC, final IExpr.@NonNull StepExpr aStep)
     {
       m_aStep = aStep;
-      m_aPredicates = _compileAll (aStep.predicates ());
-      m_aPostfix = aStep.postfix () == null ? null : compile (aStep.postfix ());
-      m_aFused = aStep.fused () == null ? null : new CompiledStep (aStep.fused ());
+      m_aPredicates = aC.compileAll (aStep.predicates ());
+      m_aPostfix = aStep.postfix () == null ? null : aC.compile (aStep.postfix ());
+      m_aFused = aStep.fused () == null ? null : new CompiledStep (aC, aStep.fused ());
       m_aIndexName = _getIndexableName (aStep);
       m_aChildName = aStep.axis () == EAxis.CHILD ? _getExactName (aStep.test ()) : null;
       boolean bFocusFree = true;
@@ -1126,16 +1130,16 @@ public final class XPathEvaluator
     // "//@name": the full evaluation answers it from the attribute index
     private final boolean m_bSubtreeAttributes;
 
-    PathNode (final IExpr.@NonNull PathExpr aPath)
+    PathNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull PathExpr aPath)
     {
       super (aPath);
       m_aPath = aPath;
-      m_aStart = aPath.start () == null ? null : compile (aPath.start ());
+      m_aStart = aPath.start () == null ? null : aC.compile (aPath.start ());
       final List <IExpr.StepExpr> aSteps = aPath.steps ();
       final int nSteps = aSteps.size ();
       m_aSteps = new CompiledStep [nSteps];
       for (int i = 0; i < nSteps; ++i)
-        m_aSteps[i] = new CompiledStep (aSteps.get (i));
+        m_aSteps[i] = new CompiledStep (aC, aSteps.get (i));
       if (nSteps == 0)
       {
         m_aLast = null;
@@ -1304,11 +1308,11 @@ public final class XPathEvaluator
     private final CompiledExpr m_aPrimary;
     private final CompiledExpr [] m_aPredicates;
 
-    FilterNode (final IExpr.@NonNull FilterExpr aExpr)
+    FilterNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull FilterExpr aExpr)
     {
       super (aExpr);
-      m_aPrimary = compile (aExpr.primary ());
-      m_aPredicates = _compileAll (aExpr.predicates ());
+      m_aPrimary = aC.compile (aExpr.primary ());
+      m_aPredicates = aC.compileAll (aExpr.predicates ());
     }
 
     @Override
@@ -1364,10 +1368,10 @@ public final class XPathEvaluator
   {
     private final CompiledExpr [] m_aItems;
 
-    SequenceNode (final IExpr.@NonNull SequenceExpr aExpr)
+    SequenceNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull SequenceExpr aExpr)
     {
       super (aExpr);
-      m_aItems = _compileAll (aExpr.items ());
+      m_aItems = aC.compileAll (aExpr.items ());
     }
 
     @Override
@@ -1609,14 +1613,28 @@ public final class XPathEvaluator
     // Kept, so that the memo creates no function objects per evaluation
     private final Function <FunctionLibrary, Object> m_aPlanCreator;
     private final Function <DynamicContext, XdmSequence> m_aDirect;
+    // The variables of the call bound by slot, for the tokens of the memo; null for none
+    private final Map <XdmQName, VariableSlot> m_aFrameVariables;
 
-    FunctionCallNode (final IExpr.@NonNull FunctionCallExpr aCall)
+    FunctionCallNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull FunctionCallExpr aCall)
     {
       super (aCall);
       m_aCall = aCall;
-      m_aArgs = _compileAll (aCall.args ());
+      m_aArgs = aC.compileAll (aCall.args ());
       m_aPlanCreator = CallMemo.createPlanCreator (aCall);
       m_aDirect = this::_evalDirect;
+      Map <XdmQName, VariableSlot> aFrameVariables = null;
+      for (final XdmQName aName : ExprWalker.getAllVariableReferences (aCall))
+      {
+        final VariableSlot aSlot = aC.getFrameVariable (aName);
+        if (aSlot != null)
+        {
+          if (aFrameVariables == null)
+            aFrameVariables = new HashMap <> ();
+          aFrameVariables.put (aName, aSlot);
+        }
+      }
+      m_aFrameVariables = aFrameVariables;
     }
 
     /**
@@ -1674,7 +1692,7 @@ public final class XPathEvaluator
       final CallMemo.Plan aPlan = CallMemo.getApplicablePlan (m_aCall, m_aPlanCreator, aCtx);
       if (aPlan == null)
         return _evalDirect (aCtx);
-      return CallMemo.evaluate (aPlan, m_aCall, aCtx, m_aDirect);
+      return CallMemo.evaluate (aPlan, m_aCall, m_aFrameVariables, aCtx, m_aDirect);
     }
   }
 
@@ -1691,11 +1709,11 @@ public final class XPathEvaluator
     private final CompiledExpr m_aBase;
     private final CompiledExpr [] m_aArgs;
 
-    DynamicCallNode (final IExpr.@NonNull DynamicCallExpr aExpr)
+    DynamicCallNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull DynamicCallExpr aExpr)
     {
       super (aExpr);
-      m_aBase = compile (aExpr.base ());
-      m_aArgs = _compileAll (aExpr.args ());
+      m_aBase = aC.compile (aExpr.base ());
+      m_aArgs = aC.compileAll (aExpr.args ());
     }
 
     /**
@@ -1766,11 +1784,14 @@ public final class XPathEvaluator
     private final IExpr.InlineFunctionExpr m_aFunction;
     private final CompiledExpr m_aBody;
 
-    InlineFunctionNode (final IExpr.@NonNull InlineFunctionExpr aExpr)
+    InlineFunctionNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull InlineFunctionExpr aExpr)
     {
       super (aExpr);
       m_aFunction = aExpr;
-      m_aBody = compile (aExpr.body ());
+      for (final IExpr.Param aParam : aExpr.params ())
+        aC.bind (aParam.name ());
+      m_aBody = aC.compile (aExpr.body ());
+      aC.unbind (aExpr.params ().size ());
     }
 
     @Override
@@ -1819,11 +1840,11 @@ public final class XPathEvaluator
     private final CompiledExpr m_aFrom;
     private final CompiledExpr m_aTo;
 
-    RangeNode (final IExpr.@NonNull RangeExpr aExpr)
+    RangeNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull RangeExpr aExpr)
     {
       super (aExpr);
-      m_aFrom = compile (aExpr.from ());
-      m_aTo = compile (aExpr.to ());
+      m_aFrom = aC.compile (aExpr.from ());
+      m_aTo = aC.compile (aExpr.to ());
     }
 
     /**
@@ -2006,12 +2027,12 @@ public final class XPathEvaluator
     private final CompiledExpr m_aLeft;
     private final CompiledExpr m_aRight;
 
-    ComparisonNode (final IExpr.@NonNull ComparisonExpr aExpr)
+    ComparisonNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull ComparisonExpr aExpr)
     {
       super (aExpr);
       m_eOp = aExpr.op ();
-      m_aLeft = compile (aExpr.left ());
-      m_aRight = compile (aExpr.right ());
+      m_aLeft = aC.compile (aExpr.left ());
+      m_aRight = aC.compile (aExpr.right ());
     }
 
     @Override
@@ -2058,12 +2079,12 @@ public final class XPathEvaluator
     private final CompiledExpr m_aLeft;
     private final CompiledExpr m_aRight;
 
-    BinaryNode (final IExpr.@NonNull BinaryExpr aExpr)
+    BinaryNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull BinaryExpr aExpr)
     {
       super (aExpr);
       m_eOp = aExpr.op ();
-      m_aLeft = compile (aExpr.left ());
-      m_aRight = compile (aExpr.right ());
+      m_aLeft = aC.compile (aExpr.left ());
+      m_aRight = aC.compile (aExpr.right ());
     }
 
     @Override
@@ -2089,11 +2110,11 @@ public final class XPathEvaluator
     private final boolean m_bNegate;
     private final CompiledExpr m_aOperand;
 
-    UnaryNode (final IExpr.@NonNull UnaryExpr aExpr)
+    UnaryNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull UnaryExpr aExpr)
     {
       super (aExpr);
       m_bNegate = aExpr.negate ();
-      m_aOperand = compile (aExpr.operand ());
+      m_aOperand = aC.compile (aExpr.operand ());
     }
 
     @Override
@@ -2113,10 +2134,10 @@ public final class XPathEvaluator
   {
     private final CompiledExpr [] m_aParts;
 
-    StringConcatNode (final IExpr.@NonNull StringConcatExpr aExpr)
+    StringConcatNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull StringConcatExpr aExpr)
     {
       super (aExpr);
-      m_aParts = _compileAll (aExpr.parts ());
+      m_aParts = aC.compileAll (aExpr.parts ());
     }
 
     /**
@@ -2224,12 +2245,12 @@ public final class XPathEvaluator
     // Null if the set expression is no union of single steps
     private final IExpr.StepUnion m_aStepUnion;
 
-    SetNode (final IExpr.@NonNull SetExpr aExpr)
+    SetNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull SetExpr aExpr)
     {
       super (aExpr);
       m_eOp = aExpr.op ();
-      m_aLeft = compile (aExpr.left ());
-      m_aRight = compile (aExpr.right ());
+      m_aLeft = aC.compile (aExpr.left ());
+      m_aRight = aC.compile (aExpr.right ());
       m_aStepUnion = aExpr.stepUnion ();
     }
 
@@ -2270,12 +2291,12 @@ public final class XPathEvaluator
     private final CompiledExpr m_aThen;
     private final CompiledExpr m_aElse;
 
-    IfNode (final IExpr.@NonNull IfExpr aExpr)
+    IfNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull IfExpr aExpr)
     {
       super (aExpr);
-      m_aCondition = compile (aExpr.condition ());
-      m_aThen = compile (aExpr.thenExpr ());
-      m_aElse = compile (aExpr.elseExpr ());
+      m_aCondition = aC.compile (aExpr.condition ());
+      m_aThen = aC.compile (aExpr.thenExpr ());
+      m_aElse = aC.compile (aExpr.elseExpr ());
     }
 
     @Override
@@ -2301,18 +2322,6 @@ public final class XPathEvaluator
   private record CompiledBinding (@NonNull XdmQName name, @Nullable SeqType type, @NonNull CompiledExpr expr)
   {}
 
-  @NonNull
-  private static CompiledBinding [] _compileBindings (@NonNull final List <IExpr.Binding> aBindings)
-  {
-    final CompiledBinding [] ret = new CompiledBinding [aBindings.size ()];
-    for (int i = 0; i < ret.length; ++i)
-    {
-      final IExpr.Binding aBinding = aBindings.get (i);
-      ret[i] = new CompiledBinding (aBinding.name (), aBinding.type (), compile (aBinding.expr ()));
-    }
-    return ret;
-  }
-
   /**
    * @return The value to bind to a variable: unchanged without a declared type, otherwise
    *         converted to the declared type with the function conversion rules.
@@ -2336,11 +2345,12 @@ public final class XPathEvaluator
     private final CompiledBinding [] m_aBindings;
     private final CompiledExpr m_aBody;
 
-    ForNode (final IExpr.@NonNull ForExpr aExpr)
+    ForNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull ForExpr aExpr)
     {
       super (aExpr);
-      m_aBindings = _compileBindings (aExpr.bindings ());
-      m_aBody = compile (aExpr.body ());
+      m_aBindings = aC.compileBindings (aExpr.bindings ());
+      m_aBody = aC.compile (aExpr.body ());
+      aC.unbind (m_aBindings.length);
     }
 
     /**
@@ -2402,11 +2412,12 @@ public final class XPathEvaluator
     private final CompiledBinding [] m_aBindings;
     private final CompiledExpr m_aBody;
 
-    LetNode (final IExpr.@NonNull LetExpr aExpr)
+    LetNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull LetExpr aExpr)
     {
       super (aExpr);
-      m_aBindings = _compileBindings (aExpr.bindings ());
-      m_aBody = compile (aExpr.body ());
+      m_aBindings = aC.compileBindings (aExpr.bindings ());
+      m_aBody = aC.compile (aExpr.body ());
+      aC.unbind (m_aBindings.length);
     }
 
     @Override
@@ -2431,12 +2442,13 @@ public final class XPathEvaluator
     private final CompiledBinding [] m_aBindings;
     private final CompiledExpr m_aSatisfies;
 
-    QuantifiedNode (final IExpr.@NonNull QuantifiedExpr aExpr)
+    QuantifiedNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull QuantifiedExpr aExpr)
     {
       super (aExpr);
       m_bEvery = aExpr.every ();
-      m_aBindings = _compileBindings (aExpr.bindings ());
-      m_aSatisfies = compile (aExpr.satisfies ());
+      m_aBindings = aC.compileBindings (aExpr.bindings ());
+      m_aSatisfies = aC.compile (aExpr.satisfies ());
+      aC.unbind (m_aBindings.length);
     }
 
     /**
@@ -2494,10 +2506,10 @@ public final class XPathEvaluator
   {
     private final CompiledExpr [] m_aSteps;
 
-    SimpleMapNode (final IExpr.@NonNull SimpleMapExpr aExpr)
+    SimpleMapNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull SimpleMapExpr aExpr)
     {
       super (aExpr);
-      m_aSteps = _compileAll (aExpr.steps ());
+      m_aSteps = aC.compileAll (aExpr.steps ());
     }
 
     @Override
@@ -2528,10 +2540,10 @@ public final class XPathEvaluator
     private final CompiledExpr m_aOperand;
     private final SeqType m_aType;
 
-    InstanceOfNode (final IExpr.@NonNull InstanceOfExpr aExpr)
+    InstanceOfNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull InstanceOfExpr aExpr)
     {
       super (aExpr);
-      m_aOperand = compile (aExpr.operand ());
+      m_aOperand = aC.compile (aExpr.operand ());
       m_aType = aExpr.type ();
     }
 
@@ -2553,10 +2565,10 @@ public final class XPathEvaluator
     private final CompiledExpr m_aOperand;
     private final SeqType m_aType;
 
-    TreatNode (final IExpr.@NonNull TreatExpr aExpr)
+    TreatNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull TreatExpr aExpr)
     {
       super (aExpr);
-      m_aOperand = compile (aExpr.operand ());
+      m_aOperand = aC.compile (aExpr.operand ());
       m_aType = aExpr.type ();
     }
 
@@ -2587,10 +2599,10 @@ public final class XPathEvaluator
     private final SeqType m_aType;
     private final boolean m_bCastable;
 
-    CastNode (final IExpr.@NonNull CastExpr aExpr)
+    CastNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull CastExpr aExpr)
     {
       super (aExpr);
-      m_aOperand = compile (aExpr.operand ());
+      m_aOperand = aC.compile (aExpr.operand ());
       m_aType = aExpr.type ();
       m_bCastable = aExpr.castable ();
     }
@@ -2616,11 +2628,11 @@ public final class XPathEvaluator
     private final CompiledExpr [] m_aKeys;
     private final CompiledExpr [] m_aValues;
 
-    MapConstructorNode (final IExpr.@NonNull MapConstructorExpr aExpr)
+    MapConstructorNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull MapConstructorExpr aExpr)
     {
       super (aExpr);
-      m_aKeys = _compileAll (aExpr.keys ());
-      m_aValues = _compileAll (aExpr.values ());
+      m_aKeys = aC.compileAll (aExpr.keys ());
+      m_aValues = aC.compileAll (aExpr.values ());
     }
 
     /**
@@ -2659,10 +2671,10 @@ public final class XPathEvaluator
     private final CompiledExpr [] m_aItems;
     private final boolean m_bCurly;
 
-    ArrayConstructorNode (final IExpr.@NonNull ArrayConstructorExpr aExpr)
+    ArrayConstructorNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull ArrayConstructorExpr aExpr)
     {
       super (aExpr);
-      m_aItems = _compileAll (aExpr.items ());
+      m_aItems = aC.compileAll (aExpr.items ());
       m_bCurly = aExpr.curly ();
     }
 
@@ -2729,11 +2741,11 @@ public final class XPathEvaluator
     // Null for a wildcard
     private final CompiledExpr m_aKey;
 
-    LookupNode (final IExpr.@NonNull LookupExpr aExpr)
+    LookupNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull LookupExpr aExpr)
     {
       super (aExpr);
-      m_aBase = aExpr.base () == null ? null : compile (aExpr.base ());
-      m_aKey = aExpr.key () == null ? null : compile (aExpr.key ());
+      m_aBase = aExpr.base () == null ? null : aC.compile (aExpr.base ());
+      m_aKey = aExpr.key () == null ? null : aC.compile (aExpr.key ());
     }
 
     /**
@@ -2784,59 +2796,199 @@ public final class XPathEvaluator
     }
   }
 
-  @NonNull
-  private static CompiledExpr [] _compileAll (@NonNull final List <IExpr> aExprs)
+  /**
+   * A variable reference to a variable the host binds by slot (see
+   * {@link StaticContext#declareFrameVariable(VariableSlot)}): the value is read from the frame of
+   * the dynamic context, without a lookup by name.
+   */
+  @Immutable
+  private static final class FrameVarRefNode extends CompiledExpr
   {
-    if (aExprs.isEmpty ())
-      return NO_EXPRS;
-    final CompiledExpr [] ret = new CompiledExpr [aExprs.size ()];
-    for (int i = 0; i < ret.length; ++i)
-      ret[i] = compile (aExprs.get (i));
-    return ret;
+    private final VariableSlot m_aSlot;
+
+    FrameVarRefNode (final IExpr.@NonNull VarRefExpr aExpr, @NonNull final VariableSlot aSlot)
+    {
+      super (aExpr);
+      m_aSlot = aSlot;
+    }
+
+    /**
+     * @throws XPathException
+     *         XPDY0002 if the context has no frame of the layout of the slot (the variable is not
+     *         bound)
+     */
+    @Override
+    @NonNull
+    XdmSequence evaluate (@NonNull final DynamicContext aCtx)
+    {
+      final VariableFrame aFrame = aCtx.getFrame ();
+      if (aFrame == null || aFrame.getLayout () != m_aSlot.layout ())
+        throw XPathException.noContext ("No value is bound to the variable $" + m_aSlot.name ().getEQName ());
+      return aFrame.get (m_aSlot.index ());
+    }
+  }
+
+  /**
+   * The state of one compilation: the static context whose frame variables the references read by
+   * slot (if any), and the names the expression itself binds around the part being compiled
+   * (<code>for</code>, <code>let</code>, quantifiers, inline function parameters), which shadow
+   * them.
+   */
+  @NotThreadSafe
+  private static final class ExprCompiler
+  {
+    private final StaticContext m_aStatic;
+    // The names bound by the expression around the current position, innermost last
+    private final ICommonsList <XdmQName> m_aBound = new CommonsArrayList <> ();
+
+    ExprCompiler (@Nullable final StaticContext aStatic)
+    {
+      m_aStatic = aStatic;
+    }
+
+    void bind (@NonNull final XdmQName aName)
+    {
+      m_aBound.add (aName);
+    }
+
+    void unbind (final int nCount)
+    {
+      for (int i = 0; i < nCount; ++i)
+        m_aBound.removeLast ();
+    }
+
+    /**
+     * @return The slot a reference to the name reads at the current position, or <code>null</code>
+     *         if the expression binds the name itself or the static context has no slot for it.
+     */
+    @Nullable
+    VariableSlot getFrameVariable (@NonNull final XdmQName aName)
+    {
+      if (m_aStatic == null || m_aBound.contains (aName))
+        return null;
+      return m_aStatic.getFrameVariable (aName);
+    }
+
+    @NonNull
+    CompiledExpr [] compileAll (@NonNull final List <IExpr> aExprs)
+    {
+      if (aExprs.isEmpty ())
+        return NO_EXPRS;
+      final CompiledExpr [] ret = new CompiledExpr [aExprs.size ()];
+      for (int i = 0; i < ret.length; ++i)
+        ret[i] = compile (aExprs.get (i));
+      return ret;
+    }
+
+    /**
+     * Compile the bindings of a <code>for</code>, <code>let</code> or quantified expression, each
+     * seeing the ones before it. The names stay bound for the body; the caller unbinds them
+     * afterwards.
+     */
+    @NonNull
+    CompiledBinding [] compileBindings (@NonNull final List <IExpr.Binding> aBindings)
+    {
+      final CompiledBinding [] ret = new CompiledBinding [aBindings.size ()];
+      for (int i = 0; i < ret.length; ++i)
+      {
+        final IExpr.Binding aBinding = aBindings.get (i);
+        ret[i] = new CompiledBinding (aBinding.name (), aBinding.type (), compile (aBinding.expr ()));
+        bind (aBinding.name ());
+      }
+      return ret;
+    }
+
+    @NonNull
+    CompiledExpr compile (@NonNull final IExpr aExpr)
+    {
+      return switch (aExpr)
+      {
+        case final IExpr.LiteralExpr e -> new LiteralNode (e);
+        case final IExpr.VarRefExpr e ->
+        {
+          final VariableSlot aSlot = getFrameVariable (e.name ());
+          yield aSlot != null ? new FrameVarRefNode (e, aSlot) : new VarRefNode (e);
+        }
+        case final IExpr.ContextItemExpr e -> new ContextItemNode (e);
+        case final IExpr.FunctionCallExpr e -> new FunctionCallNode (this, e);
+        case final IExpr.PlaceholderExpr e -> new PlaceholderNode (e);
+        case final IExpr.NamedFunctionRefExpr e -> new NamedFunctionRefNode (e);
+        case final IExpr.InlineFunctionExpr e -> new InlineFunctionNode (this, e);
+        case final IExpr.DynamicCallExpr e -> new DynamicCallNode (this, e);
+        case final IExpr.SequenceExpr e -> new SequenceNode (this, e);
+        case final IExpr.BinaryExpr e -> new BinaryNode (this, e);
+        case final IExpr.UnaryExpr e -> new UnaryNode (this, e);
+        case final IExpr.ComparisonExpr e -> new ComparisonNode (this, e);
+        case final IExpr.SetExpr e -> new SetNode (this, e);
+        case final IExpr.RangeExpr e -> new RangeNode (this, e);
+        case final IExpr.StringConcatExpr e -> new StringConcatNode (this, e);
+        case final IExpr.IfExpr e -> new IfNode (this, e);
+        case final IExpr.ForExpr e -> new ForNode (this, e);
+        case final IExpr.LetExpr e -> new LetNode (this, e);
+        case final IExpr.QuantifiedExpr e -> new QuantifiedNode (this, e);
+        case final IExpr.SimpleMapExpr e -> new SimpleMapNode (this, e);
+        case final IExpr.PathExpr e -> new PathNode (this, e);
+        case final IExpr.FilterExpr e -> new FilterNode (this, e);
+        case final IExpr.InstanceOfExpr e -> new InstanceOfNode (this, e);
+        case final IExpr.TreatExpr e -> new TreatNode (this, e);
+        case final IExpr.CastExpr e -> new CastNode (this, e);
+        case final IExpr.MapConstructorExpr e -> new MapConstructorNode (this, e);
+        case final IExpr.ArrayConstructorExpr e -> new ArrayConstructorNode (this, e);
+        case final IExpr.LookupExpr e -> new LookupNode (this, e);
+      };
+    }
+  }
+
+  /**
+   * Compile with the recursion of the expression nesting; a nesting the Java stack of the calling
+   * thread cannot take is XPDY0130, as in the evaluation.
+   */
+  @NonNull
+  private static CompiledExpr _compile (@NonNull final ExprCompiler aCompiler, @NonNull final IExpr aExpr)
+  {
+    try
+    {
+      return aCompiler.compile (aExpr);
+    }
+    catch (final StackOverflowError ex)
+    {
+      throw new XPathException ("XPDY0130", "The expression is nested too deeply", ex);
+    }
   }
 
   /**
    * Compile an expression into a tree of evaluation nodes, one per expression node. The result
    * keeps no state of a run: compile once and evaluate as often as needed, also concurrently.
+   * Variable references are looked up by name.
    *
    * @param aExpr
    *        Parsed expression.
    * @return The compiled expression. Never <code>null</code>.
+   * @throws XPathException
+   *         XPDY0130 if the expression is nested too deeply for the stack of the calling thread
    */
   @NonNull
   public static CompiledExpr compile (@NonNull final IExpr aExpr)
   {
-    return switch (aExpr)
-    {
-      case final IExpr.LiteralExpr e -> new LiteralNode (e);
-      case final IExpr.VarRefExpr e -> new VarRefNode (e);
-      case final IExpr.ContextItemExpr e -> new ContextItemNode (e);
-      case final IExpr.FunctionCallExpr e -> new FunctionCallNode (e);
-      case final IExpr.PlaceholderExpr e -> new PlaceholderNode (e);
-      case final IExpr.NamedFunctionRefExpr e -> new NamedFunctionRefNode (e);
-      case final IExpr.InlineFunctionExpr e -> new InlineFunctionNode (e);
-      case final IExpr.DynamicCallExpr e -> new DynamicCallNode (e);
-      case final IExpr.SequenceExpr e -> new SequenceNode (e);
-      case final IExpr.BinaryExpr e -> new BinaryNode (e);
-      case final IExpr.UnaryExpr e -> new UnaryNode (e);
-      case final IExpr.ComparisonExpr e -> new ComparisonNode (e);
-      case final IExpr.SetExpr e -> new SetNode (e);
-      case final IExpr.RangeExpr e -> new RangeNode (e);
-      case final IExpr.StringConcatExpr e -> new StringConcatNode (e);
-      case final IExpr.IfExpr e -> new IfNode (e);
-      case final IExpr.ForExpr e -> new ForNode (e);
-      case final IExpr.LetExpr e -> new LetNode (e);
-      case final IExpr.QuantifiedExpr e -> new QuantifiedNode (e);
-      case final IExpr.SimpleMapExpr e -> new SimpleMapNode (e);
-      case final IExpr.PathExpr e -> new PathNode (e);
-      case final IExpr.FilterExpr e -> new FilterNode (e);
-      case final IExpr.InstanceOfExpr e -> new InstanceOfNode (e);
-      case final IExpr.TreatExpr e -> new TreatNode (e);
-      case final IExpr.CastExpr e -> new CastNode (e);
-      case final IExpr.MapConstructorExpr e -> new MapConstructorNode (e);
-      case final IExpr.ArrayConstructorExpr e -> new ArrayConstructorNode (e);
-      case final IExpr.LookupExpr e -> new LookupNode (e);
-    };
+    return _compile (new ExprCompiler (null), aExpr);
+  }
+
+  /**
+   * Compile an expression as {@link #compile(IExpr)} does, reading the variables that the static
+   * context declares with a slot ({@link StaticContext#declareFrameVariable(VariableSlot)}) from
+   * the {@link VariableFrame} of the dynamic context, unless the expression binds the name itself.
+   * The static context must be the one the expression was parsed with.
+   *
+   * @param aExpr
+   *        Parsed expression.
+   * @param aStatic
+   *        The static context of the expression.
+   * @return The compiled expression. Never <code>null</code>.
+   */
+  @NonNull
+  public static CompiledExpr compile (@NonNull final IExpr aExpr, @NonNull final StaticContext aStatic)
+  {
+    return _compile (new ExprCompiler (aStatic), aExpr);
   }
 
   /**

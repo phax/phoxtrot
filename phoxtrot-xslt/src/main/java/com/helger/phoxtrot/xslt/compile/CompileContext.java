@@ -31,6 +31,8 @@ import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.context.VariableFrameLayout;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.fn.FunctionLibrary;
 import com.helger.phoxtrot.xpath.parser.XPathParser;
 import com.helger.phoxtrot.xpath.pattern.XsltPattern;
@@ -61,10 +63,12 @@ public final class CompileContext
 {
   /**
    * One local variable binding in a singly linked list of the local variables
-   * in scope, innermost first. Shared between contexts, never changed.
+   * in scope, innermost first, with the slot of the declaration in the frame
+   * layout of the body (all bindings of one list share one layout). Shared
+   * between contexts, never changed.
    */
   @Immutable
-  private record Scope (@NonNull XdmQName name, @Nullable Scope next)
+  private record Scope (@NonNull XdmQName name, @NonNull VariableSlot slot, @Nullable Scope next)
   {}
 
   private final StylesheetCompiler m_aCompiler;
@@ -128,6 +132,11 @@ public final class CompileContext
   }
 
   /**
+   * Bring a local variable into scope. It gets its own slot in the frame
+   * layout of the body (a new layout for the first local variable of a body),
+   * which the run-time binding must use (see {@link #getVariableSlot(XdmQName)}
+   * and {@link com.helger.phoxtrot.xslt.runtime.XsltContext#withSlotValue}).
+   *
    * @param aName
    *        Variable name.
    * @return A context in which the variable is in scope as well.
@@ -135,7 +144,39 @@ public final class CompileContext
   @NonNull
   public CompileContext withVariable (@NonNull final XdmQName aName)
   {
-    return new CompileContext (m_aCompiler, new Scope (aName, m_aScope), m_aHiddenGlobal);
+    final VariableFrameLayout aLayout = m_aScope == null ? new VariableFrameLayout () : m_aScope.slot ().layout ();
+    return new CompileContext (m_aCompiler, new Scope (aName, aLayout.allocateSlot (aName), m_aScope), m_aHiddenGlobal);
+  }
+
+  /**
+   * @param aName
+   *        Variable name.
+   * @return The slot of the innermost local variable of that name in scope,
+   *         or <code>null</code> if there is none.
+   */
+  @Nullable
+  public VariableSlot getVariableSlot (@NonNull final XdmQName aName)
+  {
+    for (Scope aCur = m_aScope; aCur != null; aCur = aCur.next ())
+      if (aCur.name ().equals (aName))
+        return aCur.slot ();
+    return null;
+  }
+
+  /**
+   * @param aName
+   *        Variable name.
+   * @return The slot of the innermost local variable of that name in scope.
+   * @throws IllegalStateException
+   *         if there is none
+   */
+  @NonNull
+  public VariableSlot getVariableSlotOrThrow (@NonNull final XdmQName aName)
+  {
+    final VariableSlot ret = getVariableSlot (aName);
+    if (ret == null)
+      throw new IllegalStateException ("The variable $" + aName.getEQName () + " is not in scope");
+    return ret;
   }
 
   /** @return A context with only the global variables in scope. */
@@ -226,6 +267,10 @@ public final class CompileContext
                                    m_aCompiler.getDecimalFormats (aEl));
       ret.declareSharedVariables (m_aCompiler.getGlobalVariableNameSnapshot (), m_aHiddenGlobal);
     }
+    // The locals are bound by slot; innermost first, so that a shadowing one
+    // wins
+    for (Scope aCur = m_aScope; aCur != null; aCur = aCur.next ())
+      ret.declareFrameVariable (aCur.slot ());
     ret.setSchemaSet (m_aCompiler.getStylesheet ().getSchemaSet ());
     if (isXslt10Behaviour (aEl))
       ret.setXPath10Compatibility (true).setUnknownFunctionErrorCode ("XTDE1425");

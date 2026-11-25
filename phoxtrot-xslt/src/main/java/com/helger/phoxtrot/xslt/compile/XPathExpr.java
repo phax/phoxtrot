@@ -53,7 +53,7 @@ public final class XPathExpr
   {
     m_sSource = sSource;
     m_aExpr = aExpr;
-    m_aCompiled = XPathEvaluator.compile (aExpr);
+    m_aCompiled = XPathEvaluator.compile (aExpr, aStaticContext);
     m_aStaticContext = aStaticContext;
     m_aElement = aElement;
   }

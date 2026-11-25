@@ -151,8 +151,8 @@ public final class CoreInstructions
       if (aEl.isXsl ("variable") || aEl.isXsl ("param"))
       {
         final VariableDef aDef = aCur.compileVariable (aEl, VariableDef.EKind.LOCAL_VARIABLE);
-        aInstrs.add (new LocalVariable (aDef));
         aCur = aCur.withVariable (aDef.getName ());
+        aInstrs.add (new LocalVariable (aDef, aCur.getVariableSlotOrThrow (aDef.getName ())));
         continue;
       }
       if (aEl.isXsl ("fallback"))

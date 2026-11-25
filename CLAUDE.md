@@ -99,7 +99,8 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `com.helger.phoxtrot.xpath/package-info.java`): `XPathCompiler`, `CompiledXPath`, `XPathException`, `EThreading`,
   `LargeStackRunner`, `XPathStreamabilityAnalyzer` (with `XPathStreamabilityResult`, `XPathStreamabilityReason`,
   `XPathStreamabilityBinding`, `EStreamabilityVerdict`, `EStreamabilityConstruct`, `EStreamContextMode`),
-  `StaticContext`, `DynamicContext`, `IResourceResolver`, `ResourceUri`, `FunctionLibrary`, `IXPathFunction`,
+  `StaticContext`, `DynamicContext`, `IResourceResolver`, `ResourceUri`, `VariableFrame`, `VariableFrameLayout`,
+  `VariableSlot`, `FunctionLibrary`, `IXPathFunction`,
   `SeqType`, `ItemType`, `EOccurrence`, `EPosture`, `ESweep`, `PostureSweep`, `EStreamFunctionCategory`, the `value`
   types and `XPathOperators`. A change to one of them goes into the release notes; keep both lists in sync when the set
   changes.
@@ -331,6 +332,21 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   and evaluates it with `XPathEvaluator.evaluate (CompiledExpr, ...)`/`evaluateEffectiveBooleanValue`;
   `evaluate (IExpr, ...)` compiles each time and is only for one-off evaluations. Compiled nodes keep no run state.
   Early exit is `CompiledExpr.tryEarlyEbv`/`exists`, overridden by the path, filter and sequence nodes.
+- XSLT local variables and parameters are bound by slot (closure compilation C4): `CompileContext.withVariable` gives
+  every declaration its own slot in the `VariableFrameLayout` of its body (a new layout where the scope starts empty),
+  `createStaticContext` declares the locals with `StaticContext.declareFrameVariable`, and
+  `XPathEvaluator.compile (IExpr, StaticContext)` turns a reference to one into a slot read (unless a `for`/`let`/
+  quantifier/inline function parameter of the expression binds the name). At run time the binding writes the slot of
+  the `VariableFrame` of the dynamic context in place (`XsltContext.withSlotValue`/`withLazySlotValue`; a new frame
+  only for the first binding of a body in an activation, `withoutFocusAndVariables` drops it). Rules: every name that
+  `CompileContext.withVariable` brings into scope must be bound by slot at run time (the seven sites: sequence
+  constructor variables, template, function and `xsl:iterate` parameters, `xsl:original`, `err:*`, accumulator
+  `$value`), never with `DynamicContext.withVariable` (a slot reference does not see it, and a name lookup does not
+  see frames); an expression or pattern that can see locals is compiled with its static context
+  (`XPathExpr`, `StreamRecordPath`, `CompiledXsltPattern`/`PatternMatcher`); whatever keeps a context beyond the scope
+  of its variables takes `VariableFrame.getSnapshot ()` (`InlineFunctionItem`); a lazy value is evaluated with the
+  frame it is read from (`VariableFrame.AbstractLazyValue.compute (holder)`); `CallMemo` takes the tokens of frame
+  variables from their slots. `LocalVariableSlotTest` covers shadowing, loops, escaping closures and the memo.
 - Static calls resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr` (cached per library instance
   and `FunctionLibrary.getModificationStamp`, the sum of the change counters of the parent chain). Every new
   `FunctionLibrary` method that changes what `getFunction` returns must call `_checkWritable` and increment

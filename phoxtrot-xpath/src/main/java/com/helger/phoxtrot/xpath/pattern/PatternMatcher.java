@@ -44,6 +44,7 @@ import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.IExpr.StepExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.eval.AxisNavigator;
 import com.helger.phoxtrot.xpath.eval.CompiledExpr;
 import com.helger.phoxtrot.xpath.eval.NodeTestMatcher;
@@ -91,6 +92,7 @@ final class PatternMatcher
   private final IXdmNode m_aCandidate;
   private final Set <IExpr> m_aPositionalPredicates;
   private final Map <IExpr, CompiledExpr> m_aCompiled;
+  private final StaticContext m_aStaticCtx;
 
   /**
    * @param aCtx
@@ -104,12 +106,17 @@ final class PatternMatcher
    *        The compiled forms of the expressions of the pattern that the
    *        matcher evaluates, by identity; an expression without one is
    *        compiled when it is evaluated.
+   * @param aStaticCtx
+   *        The static context of the pattern, for compiling such an
+   *        expression. May be <code>null</code>.
    */
   PatternMatcher (@NonNull final DynamicContext aCtx,
                   @NonNull final IXdmNode aCandidate,
                   @NonNull final Set <IExpr> aPositionalPredicates,
-                  @NonNull final Map <IExpr, CompiledExpr> aCompiled)
+                  @NonNull final Map <IExpr, CompiledExpr> aCompiled,
+                  @Nullable final StaticContext aStaticCtx)
   {
+    m_aStaticCtx = aStaticCtx;
     m_aCtx = aCtx;
     m_aCandidate = aCandidate;
     m_aPositionalPredicates = aPositionalPredicates;
@@ -125,7 +132,23 @@ final class PatternMatcher
   private XdmSequence _evaluate (@NonNull final IExpr aExpr, @NonNull final DynamicContext aCtx)
   {
     final CompiledExpr aCompiled = m_aCompiled.get (aExpr);
-    return XPathEvaluator.evaluate (aCompiled != null ? aCompiled : XPathEvaluator.compile (aExpr), aCtx);
+    return XPathEvaluator.evaluate (aCompiled != null ? aCompiled : compile (aExpr, m_aStaticCtx), aCtx);
+  }
+
+  /**
+   * Compile an expression of a pattern, reading the variables its static
+   * context binds by slot from the frame.
+   *
+   * @param aExpr
+   *        The expression.
+   * @param aStaticCtx
+   *        The static context of the pattern, <code>null</code> if unknown.
+   * @return The compiled expression.
+   */
+  @NonNull
+  static CompiledExpr compile (@NonNull final IExpr aExpr, @Nullable final StaticContext aStaticCtx)
+  {
+    return aStaticCtx == null ? XPathEvaluator.compile (aExpr) : XPathEvaluator.compile (aExpr, aStaticCtx);
   }
 
   /**
@@ -535,7 +558,7 @@ final class PatternMatcher
     // The compiled predicates per step
     private final CompiledExpr [] [] m_aPredicates;
 
-    DirectPath (final boolean bAbsolute, @NonNull final List <StepExpr> aSteps)
+    DirectPath (final boolean bAbsolute, @NonNull final List <StepExpr> aSteps, @Nullable final StaticContext aStaticCtx)
     {
       m_bAbsolute = bAbsolute;
       m_aSteps = aSteps;
@@ -550,7 +573,7 @@ final class PatternMatcher
           bHasPredicates = true;
         m_aPredicates[i] = new CompiledExpr [aPreds.size ()];
         for (int j = 0; j < aPreds.size (); ++j)
-          m_aPredicates[i][j] = XPathEvaluator.compile (aPreds.get (j));
+          m_aPredicates[i][j] = compile (aPreds.get (j), aStaticCtx);
       }
       m_bHasPredicates = bHasPredicates;
     }
@@ -626,7 +649,7 @@ final class PatternMatcher
    * @return The direct matcher, or <code>null</code> if the path needs the general search.
    */
   @Nullable
-  static DirectPath getDirectPath (final IExpr.@NonNull PathExpr aPath)
+  static DirectPath getDirectPath (final IExpr.@NonNull PathExpr aPath, @Nullable final StaticContext aStaticCtx)
   {
     final List <StepExpr> aSteps = aPath.steps ();
     if (aPath.start () != null || aSteps.isEmpty ())
@@ -643,7 +666,7 @@ final class PatternMatcher
         if (ExprWalker.containsFunction (aPred, PatternMatcher::_isPositionFunction))
           return null;
     }
-    return new DirectPath (aPath.absolute (), aSteps);
+    return new DirectPath (aPath.absolute (), aSteps, aStaticCtx);
   }
 
   /** The search of one path for one candidate. */

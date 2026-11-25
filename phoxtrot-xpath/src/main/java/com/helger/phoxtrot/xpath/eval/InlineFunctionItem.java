@@ -28,6 +28,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.VariableFrame;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
@@ -64,7 +65,11 @@ public final class InlineFunctionItem extends AbstractFunctionItem
     for (final IExpr.Param aParam : aExpr.params ())
       m_aParamTypes.add (aParam.type () != null ? aParam.type () : SeqType.ANY);
     m_aReturnType = aExpr.returnType () != null ? aExpr.returnType () : SeqType.ANY;
-    m_aClosure = aCtx.withFocus (null, 0, 0);
+    // The frame of the host variables is changed in place while their scope runs; the function
+    // keeps the bindings of its creation, also beyond that scope
+    final VariableFrame aFrame = aCtx.getFrame ();
+    final DynamicContext aWithoutFocus = aCtx.withFocus (null, 0, 0);
+    m_aClosure = aFrame == null ? aWithoutFocus : aWithoutFocus.withFrame (aFrame.getSnapshot ());
   }
 
   @Nullable

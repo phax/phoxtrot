@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xslt.ext.trycatch;
 
 import java.util.ArrayDeque;
+import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -28,6 +29,7 @@ import com.helger.collection.commons.ICommonsList;
 import com.helger.collection.commons.ICommonsSet;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.XPathException;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.value.XdmAtomic;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 import com.helger.phoxtrot.xslt.XsltException;
@@ -67,6 +69,14 @@ public final class TryCatchExtension implements IXsltExtension
   private static final XdmQName VAR_LINE_NUMBER = new XdmQName (NS_ERR, "line-number", "err");
   private static final XdmQName VAR_COLUMN_NUMBER = new XdmQName (NS_ERR, "column-number", "err");
   private static final XdmQName VAR_ADDITIONAL = new XdmQName (NS_ERR, "additional", "err");
+  /** The err:* variables in the order of their slots in a compiled xsl:catch */
+  private static final List <XdmQName> ERROR_VARIABLES = List.of (VAR_CODE,
+                                                                  VAR_DESCRIPTION,
+                                                                  VAR_VALUE,
+                                                                  VAR_MODULE,
+                                                                  VAR_LINE_NUMBER,
+                                                                  VAR_COLUMN_NUMBER,
+                                                                  VAR_ADDITIONAL);
 
   /** Extension data: the locations inside global variable declarations. */
   private static final Object KEY_GLOBAL_LOCATIONS = new Object ();
@@ -86,13 +96,15 @@ public final class TryCatchExtension implements IXsltExtension
   }
 
   /**
-   * One compiled xsl:catch: the name tests of its errors attribute and either
-   * its select expression or its content (never both).
+   * One compiled xsl:catch: the name tests of its errors attribute, either
+   * its select expression or its content (never both), and the slots of the
+   * err:* variables in the order of {@link #ERROR_VARIABLES}.
    */
   @Immutable
   private record Catch (@NonNull ICommonsList <NameTest> tests,
                         @Nullable XPathExpr select,
-                        @Nullable SequenceConstructor body)
+                        @Nullable SequenceConstructor body,
+                        @NonNull VariableSlot [] slots)
   {
     boolean matches (@NonNull final XdmQName aCode)
     {
@@ -188,16 +200,16 @@ public final class TryCatchExtension implements IXsltExtension
     else
       for (final String sToken : XsltNames.tokenize (sErrors))
         aTests.add (_parseNameTest (aEl, sToken));
-    final CompileContext aCatchCtx = aCtx.withVariable (VAR_CODE)
-                                         .withVariable (VAR_DESCRIPTION)
-                                         .withVariable (VAR_VALUE)
-                                         .withVariable (VAR_MODULE)
-                                         .withVariable (VAR_LINE_NUMBER)
-                                         .withVariable (VAR_COLUMN_NUMBER)
-                                         .withVariable (VAR_ADDITIONAL);
+    CompileContext aCatchCtx = aCtx;
+    final VariableSlot [] aSlots = new VariableSlot [ERROR_VARIABLES.size ()];
+    for (int i = 0; i < aSlots.length; ++i)
+    {
+      aCatchCtx = aCatchCtx.withVariable (ERROR_VARIABLES.get (i));
+      aSlots[i] = aCatchCtx.getVariableSlotOrThrow (ERROR_VARIABLES.get (i));
+    }
     final XPathExpr aSelect = aCatchCtx.compileOptionalExpression (aEl, "select");
     final SequenceConstructor aBody = aSelect == null ? aCatchCtx.compileContent (aEl) : null;
-    return new Catch (aTests, aSelect, aBody);
+    return new Catch (aTests, aSelect, aBody, aSlots);
   }
 
   /**
@@ -211,6 +223,9 @@ public final class TryCatchExtension implements IXsltExtension
    *
    * @param aCtx
    *        The context of the xsl:try instruction.
+   * @param aSlots
+   *        The slots of the variables, in the order of
+   *        {@link #ERROR_VARIABLES}.
    * @param aEx
    *        The caught error.
    * @param aTryEl
@@ -220,6 +235,7 @@ public final class TryCatchExtension implements IXsltExtension
    */
   @NonNull
   private static XsltContext _bindErrorVariables (@NonNull final XsltContext aCtx,
+                                                  @NonNull final VariableSlot [] aSlots,
                                                   @NonNull final XPathException aEx,
                                                   @NonNull final XslElement aTryEl)
   {
@@ -240,14 +256,15 @@ public final class TryCatchExtension implements IXsltExtension
       nLine = aTryEl.getLine ();
       nColumn = aTryEl.getColumn ();
     }
-    return aCtx.withVariable (VAR_CODE, XdmSequence.of (XdmAtomic.qname (aEx.getCodeName ())))
-               .withVariable (VAR_DESCRIPTION,
-                              sDescription == null ? XdmSequence.EMPTY : XdmSequence.of (XdmAtomic.string (sDescription)))
-               .withVariable (VAR_VALUE, aValue == null ? XdmSequence.EMPTY : aValue)
-               .withVariable (VAR_MODULE, sModule == null ? XdmSequence.EMPTY : XdmSequence.of (XdmAtomic.string (sModule)))
-               .withVariable (VAR_LINE_NUMBER, nLine > 0 ? XdmSequence.of (XdmAtomic.integer (nLine)) : XdmSequence.EMPTY)
-               .withVariable (VAR_COLUMN_NUMBER, nColumn > 0 ? XdmSequence.of (XdmAtomic.integer (nColumn)) : XdmSequence.EMPTY)
-               .withVariable (VAR_ADDITIONAL, XdmSequence.EMPTY);
+    // In the order of ERROR_VARIABLES
+    return aCtx.withSlotValue (aSlots[0], XdmSequence.of (XdmAtomic.qname (aEx.getCodeName ())))
+               .withSlotValue (aSlots[1],
+                               sDescription == null ? XdmSequence.EMPTY : XdmSequence.of (XdmAtomic.string (sDescription)))
+               .withSlotValue (aSlots[2], aValue == null ? XdmSequence.EMPTY : aValue)
+               .withSlotValue (aSlots[3], sModule == null ? XdmSequence.EMPTY : XdmSequence.of (XdmAtomic.string (sModule)))
+               .withSlotValue (aSlots[4], nLine > 0 ? XdmSequence.of (XdmAtomic.integer (nLine)) : XdmSequence.EMPTY)
+               .withSlotValue (aSlots[5], nColumn > 0 ? XdmSequence.of (XdmAtomic.integer (nColumn)) : XdmSequence.EMPTY)
+               .withSlotValue (aSlots[6], XdmSequence.EMPTY);
   }
 
   /**
@@ -373,7 +390,7 @@ public final class TryCatchExtension implements IXsltExtension
         for (final Catch aCatch : aCatches)
           if (aCatch.matches (ex.getCodeName ()))
           {
-            final XsltContext aCatchCtx = _bindErrorVariables (aRtCtx, ex, aEl);
+            final XsltContext aCatchCtx = _bindErrorVariables (aRtCtx, aCatch.slots (), ex, aEl);
             if (aCatch.select () != null)
               aRtOut.appendAll (aCatch.select ().evaluate (aCatchCtx));
             else

@@ -427,7 +427,7 @@ public final class Engine
     }
     final VariableDef aOriginal = m_aSheet.originalVariables ().get (aDef);
     if (aOriginal != null)
-      aCtx = aCtx.withVariable (StylesheetCompiler.XSL_ORIGINAL, _getOriginalValue (aOriginal));
+      aCtx = aCtx.withSlotValue (m_aSheet.originalVariableSlots ().get (aDef), _getOriginalValue (aOriginal));
     XdmSequence aValue = null;
     if (aDef.getKind () == VariableDef.EKind.GLOBAL_PARAM)
     {
@@ -840,7 +840,7 @@ public final class Engine
       {
         throw XsltException.locate (ex, aParam.getElement ());
       }
-      aCtx = aCtx.withVariable (aParam.getName (), aValue);
+      aCtx = aCtx.withSlotValue (aParam.getSlotOrThrow (), aValue);
     }
     enterDepth ();
     try

@@ -110,7 +110,7 @@ public final class IterateInstruction
   {
     XsltContext ret = aCtx;
     for (int i = 0; i < aValues.length; ++i)
-      ret = ret.withVariable (m_aParams.get (i).getName (), aValues[i]);
+      ret = ret.withSlotValue (m_aParams.get (i).getSlotOrThrow (), aValues[i]);
     return ret;
   }
 
@@ -126,7 +126,7 @@ public final class IterateInstruction
       if (aParam.isRequired ())
         throw new XPathException ("XTDE0700", "The parameter $" + aParam.getName ().getEQName () + " of xsl:iterate has no value");
       ret[i] = aParam.evaluate (aInit);
-      aInit = aInit.withVariable (aParam.getName (), ret[i]);
+      aInit = aInit.withSlotValue (aParam.getSlotOrThrow (), ret[i]);
     }
     return ret;
   }
@@ -295,6 +295,7 @@ public final class IterateInstruction
         final VariableDef aParam = aScope.compileVariable (aChild, VariableDef.EKind.OTHER_PARAM);
         aParams.add (aParam);
         aScope = aScope.withVariable (aParam.getName ());
+        aParam.setSlot (aScope.getVariableSlotOrThrow (aParam.getName ()));
         continue;
       }
       if (aNode instanceof final XslElement aChild && aChild.isXsl ("on-completion"))

@@ -108,7 +108,7 @@ Boolean aValid = LargeStackRunner.run (() -> Boolean.valueOf (aXPath.evaluateEff
 * Source compatible within 0.x (changes only with a note in "News and noteworthy"): in `com.helger.phoxtrot.xpath`
   `XPathCompiler`, `CompiledXPath`, `XPathException`, `EThreading`, `LargeStackRunner`,
   `XPathStreamabilityAnalyzer`, `XPathStreamabilityResult`, `XPathStreamabilityReason`, `XPathStreamabilityBinding`,
-  `EStreamabilityVerdict`, `EStreamabilityConstruct` and `EStreamContextMode`; `StaticContext`, `DynamicContext`, `IResourceResolver` and `ResourceUri` (`context`);
+  `EStreamabilityVerdict`, `EStreamabilityConstruct` and `EStreamContextMode`; `StaticContext`, `DynamicContext`, `IResourceResolver`, `ResourceUri`, `VariableFrame`, `VariableFrameLayout` and `VariableSlot` (`context`);
   `FunctionLibrary` and `IXPathFunction` (`fn`); `SeqType`, `ItemType` and `EOccurrence` (`ast`); `EPosture`, `ESweep`,
   `PostureSweep` and `EStreamFunctionCategory` (`stream`); the value types of `value`, `XPathOperators` (`eval`) and the node model
   of `phoxtrot-xdm`. Everything else in `ast` (expression nodes), `eval`, `parser`, `ops`, `pattern` and `stream` is
@@ -343,6 +343,12 @@ v0.4.0 - 2026-11-26
 * `XdmDomView`: `isDefaultNamespace (null)` follows DOM Level 3 Core appendix B.3 (false for a node without an
   element that is unprefixed or declares the default namespace, for example a comment outside the document element)
 * New benchmark workload `rounding` (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
+* XPath expressions are compiled once into a tree of evaluation nodes instead of being interpreted per evaluation
+  (`XPathEvaluator.compile (IExpr)`, `compile (IExpr, StaticContext)`, new class `CompiledExpr`); `CompiledXPath`,
+  stylesheet expressions and patterns keep the compiled form
+* XSLT local variables and parameters are bound by slot in a variable frame per template or function call instead of
+  by name along a chain of contexts (new public classes `VariableFrame`, `VariableFrameLayout`, `VariableSlot`;
+  `DynamicContext.getFrame`/`withFrame`, `StaticContext.declareFrameVariable`/`getFrameVariable`)
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`

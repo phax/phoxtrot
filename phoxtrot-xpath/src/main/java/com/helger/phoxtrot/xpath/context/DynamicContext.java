@@ -99,6 +99,8 @@ public final class DynamicContext
   private final Object m_aHostState;
   // Persistent linked list of bindings, innermost first
   private final VarBinding m_aVars;
+  // The variables of the host body bound by slot; null for none
+  private final VariableFrame m_aFrame;
 
   /**
    * A variable bound to a value or, if <code>lazy</code> is not
@@ -172,7 +174,8 @@ public final class DynamicContext
                           final int nPosition,
                           final int nSize,
                           @Nullable final Object aHostState,
-                          @Nullable final VarBinding aVars)
+                          @Nullable final VarBinding aVars,
+                          @Nullable final VariableFrame aFrame)
   {
     m_aStatic = aStatic;
     m_aRun = aRun;
@@ -182,6 +185,7 @@ public final class DynamicContext
     m_nSize = nSize;
     m_aHostState = aHostState;
     m_aVars = aVars;
+    m_aFrame = aFrame;
   }
 
   /**
@@ -192,7 +196,7 @@ public final class DynamicContext
    */
   public DynamicContext (@NonNull final StaticContext aStatic)
   {
-    this (ValueEnforcer.notNull (aStatic, "Static"), new RunState (), null, null, 0, 0, null, null);
+    this (ValueEnforcer.notNull (aStatic, "Static"), new RunState (), null, null, 0, 0, null, null, null);
   }
 
   @NonNull
@@ -234,7 +238,7 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withFocus (@Nullable final IXdmItem aItem, final int nPosition, final int nSize)
   {
-    return new DynamicContext (m_aStatic, m_aRun, aItem, m_aCurrentItem, nPosition, nSize, m_aHostState, m_aVars);
+    return new DynamicContext (m_aStatic, m_aRun, aItem, m_aCurrentItem, nPosition, nSize, m_aHostState, m_aVars, m_aFrame);
   }
 
   /**
@@ -256,7 +260,8 @@ public final class DynamicContext
                                m_nPosition,
                                m_nSize,
                                m_aHostState,
-                               new VarBinding (aName, aValue, null, m_aVars));
+                               new VarBinding (aName, aValue, null, m_aVars),
+                               m_aFrame);
   }
 
   /**
@@ -286,7 +291,8 @@ public final class DynamicContext
                                m_nPosition,
                                m_nSize,
                                m_aHostState,
-                               new VarBinding (aName, null, new LazyValue (aSupplier), m_aVars));
+                               new VarBinding (aName, null, new LazyValue (aSupplier), m_aVars),
+                               m_aFrame);
   }
 
   /**
@@ -296,7 +302,29 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withoutFocusAndVariables ()
   {
-    return new DynamicContext (m_aStatic, m_aRun, null, null, 0, 0, m_aHostState, null);
+    return new DynamicContext (m_aStatic, m_aRun, null, null, 0, 0, m_aHostState, null, null);
+  }
+
+  /**
+   * @return The frame of the variables the host binds by slot (see {@link VariableFrame}), or
+   *         <code>null</code> if there is none. Every derived context keeps it, except
+   *         {@link #withoutFocusAndVariables()}.
+   */
+  @Nullable
+  public VariableFrame getFrame ()
+  {
+    return m_aFrame;
+  }
+
+  /**
+   * @param aFrame
+   *        The frame of the variables bound by slot, <code>null</code> for none.
+   * @return A derived context with that frame; everything else is kept.
+   */
+  @NonNull
+  public DynamicContext withFrame (@Nullable final VariableFrame aFrame)
+  {
+    return new DynamicContext (m_aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, aFrame);
   }
 
   /**
@@ -312,7 +340,7 @@ public final class DynamicContext
   public DynamicContext withStaticContext (@NonNull final StaticContext aStatic)
   {
     ValueEnforcer.notNull (aStatic, "Static");
-    return new DynamicContext (aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars);
+    return new DynamicContext (aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, m_aFrame);
   }
 
   /**
@@ -335,7 +363,7 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withCurrentItem (@Nullable final IXdmItem aCurrentItem)
   {
-    return new DynamicContext (m_aStatic, m_aRun, m_aItem, aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars);
+    return new DynamicContext (m_aStatic, m_aRun, m_aItem, aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, m_aFrame);
   }
 
   /**
@@ -359,7 +387,7 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withHostState (@Nullable final Object aHostState)
   {
-    return new DynamicContext (m_aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, aHostState, m_aVars);
+    return new DynamicContext (m_aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, aHostState, m_aVars, m_aFrame);
   }
 
   /**

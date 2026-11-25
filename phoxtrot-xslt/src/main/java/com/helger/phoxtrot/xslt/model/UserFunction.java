@@ -246,7 +246,7 @@ public final class UserFunction implements IXPathFunction
   {
     XsltContext aCtx = aCaller.withoutFocusAndVariables ().withState (aCaller.getState ().forFunctionCall ());
     for (int i = 0; i < m_aParams.size (); ++i)
-      aCtx = aCtx.withVariable (m_aParams.get (i).getName (), aArgs.get (i));
+      aCtx = aCtx.withSlotValue (m_aParams.get (i).getSlotOrThrow (), aArgs.get (i));
     final SequenceOutput aOut = new SequenceOutput ();
     final IXsltTraceListener aTrace = aCtx.getEngine ().getTraceListener ();
     aCtx.getEngine ().enterDepth ();

@@ -1285,6 +1285,7 @@ public final class StylesheetCompiler
       final VariableDef aParam = aCtx.compileVariable (aParamEl, VariableDef.EKind.TEMPLATE_PARAM);
       aTemplate.addParam (aParam);
       aCtx = aCtx.withVariable (aParam.getName ());
+      aParam.setSlot (aCtx.getVariableSlotOrThrow (aParam.getName ()));
     }
     if (aName != null && PackageModel.isOverride (aEl))
     {
@@ -1486,7 +1487,10 @@ public final class StylesheetCompiler
       aCtx = aCtx.withVariable (XSL_ORIGINAL);
     final VariableDef aVar = aCtx.compileVariable (aEl, bParam ? VariableDef.EKind.GLOBAL_PARAM : VariableDef.EKind.GLOBAL_VARIABLE);
     if (aOriginal != null)
+    {
       m_aStylesheet.originalVariables ().put (aVar, aOriginal);
+      m_aStylesheet.originalVariableSlots ().put (aVar, aCtx.getVariableSlotOrThrow (XSL_ORIGINAL));
+    }
     m_aLastGlobals.put (aOwnName, aVar);
     m_aAllGlobals.add (aVar);
     final Integer aWinner = m_aGlobalPrecedences.get (aVar.getName ());
@@ -1880,7 +1884,10 @@ public final class StylesheetCompiler
         final UserFunction aFunc = m_aFunctionsByElement.get (aEl);
         CompileContext aCtx = createGlobalContext ();
         for (final VariableDef aParam : aFunc.getParams ())
+        {
           aCtx = aCtx.withVariable (aParam.getName ());
+          aParam.setSlot (aCtx.getVariableSlotOrThrow (aParam.getName ()));
+        }
         aFunc.setBody (aCtx.compileContent (aEl));
         m_aStylesheet.functions ().add (aFunc);
       }

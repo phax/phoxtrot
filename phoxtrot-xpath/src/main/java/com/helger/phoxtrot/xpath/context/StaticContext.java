@@ -71,6 +71,8 @@ public final class StaticContext
   private FormatDecimalFormat m_aDefaultDecimalFormat = FormatDecimalFormat.DEFAULT;
   private final ICommonsMap <XdmQName, FormatDecimalFormat> m_aDecimalFormats = new CommonsHashMap <> ();
   private final ICommonsSet <XdmQName> m_aDeclaredVariables = new CommonsHashSet <> ();
+  // The declared variables bound by slot (declareFrameVariable); null for none
+  private ICommonsMap <XdmQName, VariableSlot> m_aFrameVariables;
   // Further declared variables in a set shared with other static contexts
   // (declareSharedVariables), never changed while in use; null for none
   private Set <XdmQName> m_aSharedVariables;
@@ -461,6 +463,38 @@ public final class StaticContext
     m_aSharedVariables = aNames;
     m_aSharedVariableExcluded = aExcluded;
     return this;
+  }
+
+  /**
+   * Declare an in-scope variable whose value the host binds in a slot of the {@link VariableFrame}
+   * of the dynamic context instead of by name, so that the compiled references read the slot. The
+   * first declaration of a name wins: declare the innermost variable of a name first.
+   *
+   * @param aSlot
+   *        The slot, with the variable name.
+   * @return this for chaining
+   */
+  @NonNull
+  public StaticContext declareFrameVariable (@NonNull final VariableSlot aSlot)
+  {
+    ValueEnforcer.notNull (aSlot, "Slot");
+    declareVariable (aSlot.name ());
+    if (m_aFrameVariables == null)
+      m_aFrameVariables = new CommonsHashMap <> ();
+    m_aFrameVariables.putIfAbsent (aSlot.name (), aSlot);
+    return this;
+  }
+
+  /**
+   * @param aName
+   *        Variable name.
+   * @return The slot of a variable declared with {@link #declareFrameVariable(VariableSlot)}, or
+   *         <code>null</code> if the variable is bound by name or not declared.
+   */
+  @Nullable
+  public VariableSlot getFrameVariable (@Nullable final XdmQName aName)
+  {
+    return m_aFrameVariables == null || aName == null ? null : m_aFrameVariables.get (aName);
   }
 
   /**

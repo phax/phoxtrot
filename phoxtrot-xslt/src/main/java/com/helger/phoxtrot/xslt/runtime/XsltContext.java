@@ -16,8 +16,6 @@
  */
 package com.helger.phoxtrot.xslt.runtime;
 
-import java.util.function.Supplier;
-
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -25,6 +23,8 @@ import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.VariableFrame;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
@@ -118,26 +118,68 @@ public final class XsltContext
     return new XsltContext (m_aEngine, m_aDyn.withFocus (aItem, nPosition, nSize).withCurrentItem (aItem));
   }
 
+  /**
+   * @return A context whose frame has the layout of the slot: this context if
+   *         it has one, otherwise a derived context with a new frame (the first
+   *         binding of the body in this activation).
+   */
   @NonNull
-  public XsltContext withVariable (@NonNull final XdmQName aName, @NonNull final XdmSequence aValue)
+  private XsltContext _withFrameFor (@NonNull final VariableSlot aSlot)
   {
-    return new XsltContext (m_aEngine, m_aDyn.withVariable (aName, aValue));
+    final VariableFrame aFrame = m_aDyn.getFrame ();
+    if (aFrame != null && aFrame.getLayout () == aSlot.layout ())
+      return this;
+    return new XsltContext (m_aEngine, m_aDyn.withFrame (new VariableFrame (aSlot.layout ())));
   }
 
   /**
-   * Bind a variable that is evaluated on first use (see
-   * {@link DynamicContext#withLazyVariable(XdmQName, Supplier)}).
+   * Bind a local variable by its slot (see
+   * {@link com.helger.phoxtrot.xslt.compile.CompileContext#withVariable(XdmQName)}).
+   * The frame of the body is changed in place, so the result is this context
+   * unless it is the first binding of the body.
    *
-   * @param aName
-   *        Variable name.
-   * @param aSupplier
-   *        Computes the value in the context the variable is declared in.
-   * @return The derived context.
+   * @param aSlot
+   *        The slot of the declaration.
+   * @param aValue
+   *        The value.
+   * @return The context for the scope of the variable.
    */
   @NonNull
-  public XsltContext withLazyVariable (@NonNull final XdmQName aName, @NonNull final Supplier <XdmSequence> aSupplier)
+  public XsltContext withSlotValue (@NonNull final VariableSlot aSlot, @NonNull final XdmSequence aValue)
   {
-    return new XsltContext (m_aEngine, m_aDyn.withLazyVariable (aName, aSupplier));
+    final XsltContext ret = _withFrameFor (aSlot);
+    ret.m_aDyn.getFrame ().set (aSlot, aValue);
+    return ret;
+  }
+
+  /**
+   * Bind a local variable by its slot to a value computed on first use, see
+   * {@link #withSlotValue(VariableSlot, XdmSequence)}.
+   *
+   * @param aSlot
+   *        The slot of the declaration.
+   * @param aValue
+   *        The lazy value.
+   * @return The context for the scope of the variable.
+   */
+  @NonNull
+  public XsltContext withLazySlotValue (@NonNull final VariableSlot aSlot, final VariableFrame.@NonNull AbstractLazyValue aValue)
+  {
+    final XsltContext ret = _withFrameFor (aSlot);
+    ret.m_aDyn.getFrame ().setLazy (aSlot, aValue);
+    return ret;
+  }
+
+  /**
+   * @param aFrame
+   *        The frame of the variables bound by slot.
+   * @return This context if it has that frame, otherwise a derived context
+   *         with it.
+   */
+  @NonNull
+  public XsltContext withFrame (@NonNull final VariableFrame aFrame)
+  {
+    return m_aDyn.getFrame () == aFrame ? this : new XsltContext (m_aEngine, m_aDyn.withFrame (aFrame));
   }
 
   @NonNull

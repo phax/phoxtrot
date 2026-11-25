@@ -37,6 +37,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.fn.FormatDecimalFormat;
 import com.helger.phoxtrot.xpath.fn.FunctionLibrary;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
@@ -107,6 +108,7 @@ public final class CompiledStylesheet implements XsltExecutable
   private final ICommonsSet <XdmQName> m_aExposedModes = new CommonsHashSet <> ();
   private PackageModel m_aPackages;
   private final ICommonsMap <VariableDef, VariableDef> m_aOriginalVariables = new CommonsHashMap <> ();
+  private final ICommonsMap <VariableDef, VariableSlot> m_aOriginalVariableSlots = new CommonsHashMap <> ();
   private final ICommonsMap <PackageUnit, ICommonsMap <XdmQName, VariableDef>> m_aPackageGlobals = new CommonsHashMap <> ();
   private HostScope m_aHostScope;
   private StreamVerdicts m_aStreamVerdicts;
@@ -236,6 +238,16 @@ public final class CompiledStylesheet implements XsltExecutable
   public ICommonsMap <VariableDef, VariableDef> originalVariables ()
   {
     return m_aOriginalVariables;
+  }
+
+  /**
+   * @return The slot $xsl:original is bound in, for every key of
+   *         {@link #originalVariables()}.
+   */
+  @NonNull
+  public ICommonsMap <VariableDef, VariableSlot> originalVariableSlots ()
+  {
+    return m_aOriginalVariableSlots;
   }
 
   /**
