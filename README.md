@@ -342,10 +342,7 @@ v0.4.0 - 2026-11-26
   the BMP is no longer split into its surrogates
 * `XdmDomView`: `isDefaultNamespace (null)` follows DOM Level 3 Core appendix B.3 (false for a node without an
   element that is unprefixed or declares the default namespace, for example a comment outside the document element)
-* Temporary trees that hold only text (the value of an `xsl:variable` with content) are numbered and finished
-  without the general tree walks, `fn:substring` on a string without surrogate pairs skips the code point walks, and
-  the static base URI of a stylesheet element is resolved once; new benchmark workload `rounding`
-  (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
+* New benchmark workload `rounding` (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`

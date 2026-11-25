@@ -626,7 +626,8 @@ the QT3 cases expect; refined in ST3 to function coercion); inferred types keep 
 
 ## Interpreter speed on template-heavy stylesheets (2026-11-25)
 
-Status: option 1 first pass done (about 4 % on template-heavy code); options 2 and 3 in the backlog.
+Status: option 1 done without a measurable gain (changes reverted); option 2 in progress on branch
+`closure-compilation`; option 3 in the backlog.
 
 The rounding stylesheets of the property tests (`phoxtrot-xslt/src/test/resources/rounding`) gave a first comparison
 (quick measurement, 10,000 roundings in one transformation, JDK 21, median of 21 runs):
@@ -642,7 +643,7 @@ The rounding stylesheets of the property tests (`phoxtrot-xslt/src/test/resource
 The JMH workload is `rounding` of `phoxtrot-xslt-benchmark` (`RoundingBenchmark`, with the JDK processor as an
 engine-independent reference case).
 
-1. **Profile and remove interpreter overhead** (first pass done). Profile the `rounding` workload and fix what
+1. **Profile and remove interpreter overhead** (done, no gain). Profile the `rounding` workload and fix what
    dominates, without a second implementation of any semantics. Gate: the QT3, XSLT30 and `-Dxslt30.writeTo=true`
    fail lists unchanged by name, the benchmark before/after with `compare.sh`.
 
@@ -653,19 +654,20 @@ engine-independent reference case).
    10.5 %), and every `xsl:variable` binding creates about five objects (context, binding, lazy value, closure, XSLT
    context). Several small methods that the CPU samples pointed at (`XsltState.get` from `LocalVariable.bind`, the
    static base URI of a temporary tree, `substring` on BMP strings) were fixed and made no measurable difference;
-   the JIT inlines them and the samples were misattributed. The flat temporary tree fast paths (numbering and
-   namespace fixup without stacks) gave about 4 % on the templates, nothing on the functions.
+   the JIT inlines them and the samples were misattributed. Fast paths for flat temporary trees (numbering and
+   namespace fixup without stacks) seemed to give about 4 % on the templates, but `compare.sh` in both orders
+   (alternating the commits cancels the drift of the machine, which the JDK reference case shows at 9 to 12 %)
+   showed no effect beyond the noise, so all these changes were reverted.
 
    Conclusion: the remaining cost is structural (one context object per evaluation and per binding, variables found
    by name), which is what option 2 removes. Further local fixes would not change the picture.
-2. **Closure compilation of XPath** (backlog). Compile the `IExpr` tree once into a tree of Java lambdas instead of
+2. **Closure compilation of XPath** (in progress). Compile the `IExpr` tree once into a tree of Java lambdas instead of
    the `switch` of `XPathEvaluator` per evaluation. The operators keep going through `XPathOperators`, functions
    through their `FunctionDef`, so the semantics stay in one place; what moves is the dispatch, the variable lookup
    (slots instead of names) and the focus handling. Needs every optimised path of `XPathEvaluator` (early exit, name
    index, step unions, focus-independent and name predicates, loop-invariant calls) in the compiled form too, or a
    fallback to the interpreter for them, and the differential property tests run on both. Estimate: weeks; expected
-   1.5 to 3 times on expression-heavy stylesheets (not measured). Decide after option 1 from a profile that shows the
-   dispatch itself as the cost.
+   1.5 to 3 times on expression-heavy stylesheets (not measured).
 3. **Byte code generation** (backlog), as XSLTC does for XSLT 1.0. A code generator for every construct of XSLT 3.0
    and XPath 3.1, with the same behaviour as the interpreter, and the W3C suites passing on both paths. On the JDK 21
    baseline it needs a byte code library (ASM; `java.lang.classfile` is final only from JDK 24). Compiling simple

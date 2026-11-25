@@ -213,15 +213,6 @@ public final class NamespaceFixup
     _fixElement (aElement);
   }
 
-  private static boolean _hasElementChild (@NonNull final IXdmNode aNode)
-  {
-    final int nChildren = aNode.getChildCount ();
-    for (int i = 0; i < nChildren; ++i)
-      if (aNode.getChildAtIndex (i).isElement ())
-        return true;
-    return false;
-  }
-
   /**
    * Fix the namespaces of every element of a tree without numbering it.
    *
@@ -230,10 +221,6 @@ public final class NamespaceFixup
    */
   static void fixNamespaces (@NonNull final IXdmNode aRoot)
   {
-    // Optimisation: a document without element children (the temporary tree of a variable holding text) has no
-    // namespaces to fix
-    if (aRoot.isDocument () && !_hasElementChild (aRoot))
-      return;
     if (aRoot.isElement () || aRoot.isDocument ())
     {
       final ArrayDeque <IXdmNode> aStack = new ArrayDeque <> ();

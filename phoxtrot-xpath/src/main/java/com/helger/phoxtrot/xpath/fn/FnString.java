@@ -372,10 +372,6 @@ public final class FnString
       return EMPTY_STRING_SEQ;
     final int nFirst = (int) dFirst - 1;
     final int nLast = (int) dLast - 1;
-    // Optimisation: without surrogate pairs the code point positions are the char positions, so the two walks over
-    // the string are not needed
-    if (nLen == s.length ())
-      return _str (s.substring (nFirst, nLast));
     final int nBegin = s.offsetByCodePoints (0, nFirst);
     final int nFinish = s.offsetByCodePoints (nBegin, nLast - nFirst);
     return _str (s.substring (nBegin, nFinish));

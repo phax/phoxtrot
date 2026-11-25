@@ -69,6 +69,7 @@ public final class LocalVariable implements IBindingInstruction
   @NonNull
   public XsltContext bind (@NonNull final XsltContext aCtx)
   {
+    final TryScope aScope = aCtx.get (TryScope.KEY);
     return aCtx.withLazyVariable (m_aDef.getName (), () -> {
       try
       {
@@ -76,9 +77,7 @@ public final class LocalVariable implements IBindingInstruction
       }
       catch (final XPathException ex)
       {
-        // Optimisation: the xsl:try scope of the binding is only needed for an error; it is read from the same
-        // (immutable) context, so it is the scope at the binding, as before
-        throw LazyVariableException.of (ex, m_aDef.getElement (), aCtx.get (TryScope.KEY));
+        throw LazyVariableException.of (ex, m_aDef.getElement (), aScope);
       }
     });
   }
