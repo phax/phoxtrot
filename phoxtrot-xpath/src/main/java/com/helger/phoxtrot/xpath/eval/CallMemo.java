@@ -179,7 +179,10 @@ final class CallMemo
     final VariableSlot aSlot = aFrameVariables == null ? null : aFrameVariables.get (aName);
     if (aSlot != null)
     {
-      final VariableFrame aFrame = aCtx.getFrame ();
+      // A slot of the host frame or of the frame of the expression's own variables
+      VariableFrame aFrame = aCtx.getFrame ();
+      if (aFrame == null || aFrame.getLayout () != aSlot.layout ())
+        aFrame = aCtx.getLocalFrame ();
       if (aFrame != null && aFrame.getLayout () == aSlot.layout ())
       {
         final Object aToken = aFrame.getToken (aSlot.index ());

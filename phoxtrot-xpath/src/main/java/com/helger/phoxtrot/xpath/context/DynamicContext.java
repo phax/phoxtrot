@@ -99,7 +99,9 @@ public final class DynamicContext
   private final Object m_aHostState;
   // Persistent linked list of bindings, innermost first
   private final VarBinding m_aVars;
-  // The variables of the host body bound by slot; null for none
+  // The variables of the host body bound by slot, or the frame of the variables the expression
+  // itself binds, which links to the host frame (one field, to keep the context small); null for
+  // none
   private final VariableFrame m_aFrame;
 
   /**
@@ -313,18 +315,56 @@ public final class DynamicContext
   @Nullable
   public VariableFrame getFrame ()
   {
-    return m_aFrame;
+    final VariableFrame aFrame = m_aFrame;
+    return aFrame != null && aFrame.isLocal () ? aFrame.getHostFrame () : aFrame;
   }
 
   /**
    * @param aFrame
-   *        The frame of the variables bound by slot, <code>null</code> for none.
-   * @return A derived context with that frame; everything else is kept.
+   *        The frame of the variables bound by slot, <code>null</code> for none. Must be no frame
+   *        of an expression's own variables.
+   * @return A derived context with that frame and without a frame of the expression's own
+   *         variables ({@link #getLocalFrame()}); everything else is kept.
    */
   @NonNull
   public DynamicContext withFrame (@Nullable final VariableFrame aFrame)
   {
+    ValueEnforcer.isFalse (aFrame != null && aFrame.isLocal (), "A frame of an expression's own variables");
     return new DynamicContext (m_aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, aFrame);
+  }
+
+  /**
+   * @return The frame of the variables the expression being evaluated binds itself
+   *         (<code>for</code>, <code>let</code>, quantifiers, inline function parameters), see
+   *         {@link com.helger.phoxtrot.xpath.eval.XPathEvaluator#compile(com.helger.phoxtrot.xpath.ast.IExpr)},
+   *         or <code>null</code> if there is none. Every derived context keeps it, except
+   *         {@link #withoutFocusAndVariables()} and {@link #withFrame(VariableFrame)}.
+   */
+  @Nullable
+  public VariableFrame getLocalFrame ()
+  {
+    final VariableFrame aFrame = m_aFrame;
+    return aFrame != null && aFrame.isLocal () ? aFrame : null;
+  }
+
+  /**
+   * @param aLayout
+   *        The layout of the variables an expression (or inline function body) binds itself.
+   * @return A derived context with a new frame of that layout as {@link #getLocalFrame()}
+   *         (replacing one it had), and the frame of the host variables kept.
+   */
+  @NonNull
+  public DynamicContext withNewLocalFrame (@NonNull final VariableFrameLayout aLayout)
+  {
+    return new DynamicContext (m_aStatic,
+                               m_aRun,
+                               m_aItem,
+                               m_aCurrentItem,
+                               m_nPosition,
+                               m_nSize,
+                               m_aHostState,
+                               m_aVars,
+                               VariableFrame.createLocal (aLayout, getFrame ()));
   }
 
   /**

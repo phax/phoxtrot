@@ -122,20 +122,62 @@ public final class VariableFrame
   private final VariableFrameLayout m_aLayout;
   // XdmSequence or AbstractLazyValue; null for a slot not bound yet
   private final Object [] m_aValues;
+  // true for a frame of the variables an expression binds itself
+  private final boolean m_bLocal;
+  // For a local frame: the frame of the host variables around it; null for none
+  private final VariableFrame m_aHostFrame;
 
-  private VariableFrame (@NonNull final VariableFrameLayout aLayout, @NonNull final Object [] aValues)
+  private VariableFrame (@NonNull final VariableFrameLayout aLayout,
+                         @NonNull final Object [] aValues,
+                         final boolean bLocal,
+                         @Nullable final VariableFrame aHostFrame)
   {
     m_aLayout = aLayout;
     m_aValues = aValues;
+    m_bLocal = bLocal;
+    m_aHostFrame = aHostFrame;
   }
 
   /**
+   * Create a frame of host variables.
+   *
    * @param aLayout
    *        The layout of the body. Its size must be final.
    */
   public VariableFrame (@NonNull final VariableFrameLayout aLayout)
   {
-    this (aLayout, new Object [aLayout.getSize ()]);
+    this (aLayout, new Object [aLayout.getSize ()], false, null);
+  }
+
+  /**
+   * @param aLayout
+   *        The layout of the expression's own variables.
+   * @param aHostFrame
+   *        The frame of the host variables of the context. May be <code>null</code>.
+   * @return A frame of the variables an expression binds itself (see
+   *         {@link DynamicContext#getLocalFrame()}), which keeps the host frame, so that a
+   *         context holds both in one field.
+   */
+  @NonNull
+  static VariableFrame createLocal (@NonNull final VariableFrameLayout aLayout, @Nullable final VariableFrame aHostFrame)
+  {
+    return new VariableFrame (aLayout, new Object [aLayout.getSize ()], true, aHostFrame);
+  }
+
+  /**
+   * @return <code>true</code> for a frame of the variables an expression binds itself,
+   *         <code>false</code> for a frame of host variables.
+   */
+  public boolean isLocal ()
+  {
+    return m_bLocal;
+  }
+
+  /** @return For a local frame the frame of the host variables around it, otherwise <code>null</code>. */
+  @Nullable
+  VariableFrame getHostFrame ()
+  {
+    return m_aHostFrame;
   }
 
   @NonNull
@@ -208,7 +250,7 @@ public final class VariableFrame
   @NonNull
   public VariableFrame getSnapshot ()
   {
-    return new VariableFrame (m_aLayout, m_aValues.clone ());
+    return new VariableFrame (m_aLayout, m_aValues.clone (), m_bLocal, m_aHostFrame);
   }
 
   @Override

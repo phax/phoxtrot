@@ -347,6 +347,20 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   of its variables takes `VariableFrame.getSnapshot ()` (`InlineFunctionItem`); a lazy value is evaluated with the
   frame it is read from (`VariableFrame.AbstractLazyValue.compute (holder)`); `CallMemo` takes the tokens of frame
   variables from their slots. `LocalVariableSlotTest` covers shadowing, loops, escaping closures and the memo.
+- XPath-local variables by slot (closure compilation C3): `XPathEvaluator.ExprCompiler` gives every `for`, `let`,
+  quantifier and inline function parameter binding its own slot (`bindLocal`); the nodes write the slot of the frame
+  of the expression (`DynamicContext.getLocalFrame`) in place and the references read it (`LocalVarRefNode`). The
+  context keeps one frame field: a local frame links to the host frame (`VariableFrame.createLocal`), `getFrame`
+  follows the link and `withFrame` drops the local frame (a second field made every context 8 bytes larger and the
+  XSLT workloads allocate 2 to 6 % more). The root of a compiled expression that binds variables is a
+  `LocalFrameNode`, which creates a new frame per evaluation (so a re-entrant evaluation never shares one; keep it
+  so even though the paths through stylesheet functions drop frames anyway); an inline function body has its own
+  layout and a new frame per call (`InlineFunctionItem.Body`), and the variables of the enclosing scope it
+  references are copied into its closure by name when the item is created (`FunctionBoundary` captures; a reference
+  across a function boundary compiles to a name lookup). An expression that binds the name shadows a host slot
+  variable (`_isBoundByExpression`). `CallMemo` tokens of such variables come from their slot (`getTokenSlot`).
+  Tests: `LocalVariableSlotTest` in `phoxtrot-xpath` (closures, recursion through function items, memo) and in
+  `phoxtrot-xslt` (an expression re-entered by a recursive stylesheet function).
 - Static context reuse (closure compilation C2): every XSLT expression and pattern has its own `StaticContext`,
   but most differ only in their declared variables, which evaluation never reads. `CompileContext.createStaticContext`
   interns each one (`StaticContext.internRunTimeIdentity`, one map per compilation,

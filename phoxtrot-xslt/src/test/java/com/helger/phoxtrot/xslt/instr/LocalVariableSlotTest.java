@@ -223,4 +223,22 @@ public final class LocalVariableSlotTest
                         "</xsl:for-each-group></xsl:template>",
                         "<r><h/><p/><p/><h/><p/></r>"));
   }
+
+  @Test
+  public void testExpressionReenteredByRecursion ()
+  {
+    // The same expression is evaluated again by the recursive call while its loop runs: every
+    // evaluation has its own frame for $i
+    assertEquals ("21",
+                  transform (SHEET_F +
+                             "<xsl:function name='f:s' as='xs:integer'><xsl:param name='n' as='xs:integer'/>" +
+                             "<xsl:sequence select='sum (for $i in 1 to 2 return if ($n = 0) then 0 else f:s($n - 1) + $i)'/>" +
+                             "</xsl:function>" +
+                             IT +
+                             "<xsl:value-of select='f:s(3)'/>" +
+                             TE +
+                             END,
+                             null,
+                             null));
+  }
 }

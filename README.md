@@ -353,6 +353,9 @@ v0.4.0 - 2026-11-26
   from the previous one only in the declared variables (new `StaticContext.internRunTimeIdentity` and
   `isRunTimeEquivalent`; `DynamicContext.withStaticContext` returns the context itself for an equivalent static
   context)
+* The variables an XPath expression binds itself (`for`, `let`, `some`/`every`, inline function parameters) are
+  bound by slot in a frame per evaluation instead of a new dynamic context per binding (new
+  `DynamicContext.getLocalFrame`/`withNewLocalFrame`, `VariableFrame.isLocal`)
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`

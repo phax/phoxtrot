@@ -23,6 +23,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.IdentityHashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
@@ -55,6 +56,7 @@ import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.context.VariableFrame;
+import com.helger.phoxtrot.xpath.context.VariableFrameLayout;
 import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.fn.FnAccessor;
 import com.helger.phoxtrot.xpath.fn.FnBoolean;
@@ -1613,7 +1615,8 @@ public final class XPathEvaluator
     // Kept, so that the memo creates no function objects per evaluation
     private final Function <FunctionLibrary, Object> m_aPlanCreator;
     private final Function <DynamicContext, XdmSequence> m_aDirect;
-    // The variables of the call bound by slot, for the tokens of the memo; null for none
+    // The variables of the call bound by slot (host or expression frame), for the tokens of the
+    // memo; null for none
     private final Map <XdmQName, VariableSlot> m_aFrameVariables;
 
     FunctionCallNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull FunctionCallExpr aCall)
@@ -1626,7 +1629,7 @@ public final class XPathEvaluator
       Map <XdmQName, VariableSlot> aFrameVariables = null;
       for (final XdmQName aName : ExprWalker.getAllVariableReferences (aCall))
       {
-        final VariableSlot aSlot = aC.getFrameVariable (aName);
+        final VariableSlot aSlot = aC.getTokenSlot (aName);
         if (aSlot != null)
         {
           if (aFrameVariables == null)
@@ -1782,16 +1785,24 @@ public final class XPathEvaluator
   private static final class InlineFunctionNode extends CompiledExpr
   {
     private final IExpr.InlineFunctionExpr m_aFunction;
-    private final CompiledExpr m_aBody;
+    private final InlineFunctionItem.Body m_aBody;
 
     InlineFunctionNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull InlineFunctionExpr aExpr)
     {
       super (aExpr);
       m_aFunction = aExpr;
-      for (final IExpr.Param aParam : aExpr.params ())
-        aC.bind (aParam.name ());
-      m_aBody = aC.compile (aExpr.body ());
-      aC.unbind (aExpr.params ().size ());
+      // The body has its own frame per call; the parameters are its first slots
+      final FunctionBoundary aBoundary = aC.enterFunction ();
+      final List <IExpr.Param> aParams = aExpr.params ();
+      final VariableSlot [] aParamSlots = new VariableSlot [aParams.size ()];
+      for (int i = 0; i < aParamSlots.length; ++i)
+        aParamSlots[i] = aC.bindLocal (aParams.get (i).name ());
+      final CompiledExpr aBody = aC.compile (aExpr.body ());
+      aC.exitFunction (aBoundary);
+      final int nCaptures = aBoundary.m_aCaptures.size ();
+      final XdmQName [] aCaptureNames = aBoundary.m_aCaptures.keySet ().toArray (new XdmQName [nCaptures]);
+      final VariableSlot [] aCaptureSlots = aBoundary.m_aCaptures.values ().toArray (new VariableSlot [nCaptures]);
+      m_aBody = new InlineFunctionItem.Body (aBody, aBoundary.m_aLayout, aParamSlots, aCaptureNames, aCaptureSlots);
     }
 
     @Override
@@ -2317,10 +2328,31 @@ public final class XPathEvaluator
    *        The declared type, <code>null</code> if none.
    * @param expr
    *        The compiled binding expression.
+   * @param slot
+   *        The slot of the variable in the frame of the expression.
    */
   @Immutable
-  private record CompiledBinding (@NonNull XdmQName name, @Nullable SeqType type, @NonNull CompiledExpr expr)
+  private record CompiledBinding (@NonNull XdmQName name,
+                                  @Nullable SeqType type,
+                                  @NonNull CompiledExpr expr,
+                                  @NonNull VariableSlot slot)
   {}
+
+  /**
+   * @return The frame of the expression's own variables in the context; the frame of the layout of
+   *         the slot.
+   * @throws IllegalStateException
+   *         if the context has no frame of that layout (the evaluation did not start at the root of
+   *         the compiled expression)
+   */
+  @NonNull
+  private static VariableFrame _getLocalFrame (@NonNull final DynamicContext aCtx, @NonNull final VariableSlot aSlot)
+  {
+    final VariableFrame ret = aCtx.getLocalFrame ();
+    if (ret == null || ret.getLayout () != aSlot.layout ())
+      throw new IllegalStateException ("No frame for the variable $" + aSlot.name ().getEQName ());
+    return ret;
+  }
 
   /**
    * @return The value to bind to a variable: unchanged without a declared type, otherwise
@@ -2374,11 +2406,13 @@ public final class XPathEvaluator
       }
       final CompiledBinding aBinding = m_aBindings[nIndex];
       final XdmSequence aSeq = aBinding.expr ().evaluate (aCtx);
+      final VariableFrame aFrame = _getLocalFrame (aCtx, aBinding.slot ());
       for (final IXdmItem aItem : aSeq)
       {
         aCtx.checkInterrupt ();
-        final XdmSequence aValue = _bindingValue (aBinding, XdmSequence.of (aItem), aCtx);
-        _evalFrom (nIndex + 1, aCtx.withVariable (aBinding.name (), aValue), aOut);
+        // The slot is written in place: no context per iteration
+        aFrame.set (aBinding.slot (), _bindingValue (aBinding, XdmSequence.of (aItem), aCtx));
+        _evalFrom (nIndex + 1, aCtx, aOut);
       }
     }
 
@@ -2424,10 +2458,12 @@ public final class XPathEvaluator
     @NonNull
     XdmSequence evaluate (@NonNull final DynamicContext aCtx)
     {
-      DynamicContext aCur = aCtx;
       for (final CompiledBinding aBinding : m_aBindings)
-        aCur = aCur.withVariable (aBinding.name (), _bindingValue (aBinding, aBinding.expr ().evaluate (aCur), aCur));
-      return m_aBody.evaluate (aCur);
+      {
+        final XdmSequence aValue = _bindingValue (aBinding, aBinding.expr ().evaluate (aCtx), aCtx);
+        _getLocalFrame (aCtx, aBinding.slot ()).set (aBinding.slot (), aValue);
+      }
+      return m_aBody.evaluate (aCtx);
     }
   }
 
@@ -2465,11 +2501,14 @@ public final class XPathEvaluator
         return m_aSatisfies.getEbv (aCtx);
       final CompiledBinding aBinding = m_aBindings[nIndex];
       final boolean bEvery = m_bEvery;
-      for (final IXdmItem aItem : aBinding.expr ().evaluate (aCtx))
+      final XdmSequence aSeq = aBinding.expr ().evaluate (aCtx);
+      final VariableFrame aFrame = _getLocalFrame (aCtx, aBinding.slot ());
+      for (final IXdmItem aItem : aSeq)
       {
         aCtx.checkInterrupt ();
-        final XdmSequence aValue = _bindingValue (aBinding, XdmSequence.of (aItem), aCtx);
-        final boolean b = _evalFrom (nIndex + 1, aCtx.withVariable (aBinding.name (), aValue));
+        // The slot is written in place: no context per combination
+        aFrame.set (aBinding.slot (), _bindingValue (aBinding, XdmSequence.of (aItem), aCtx));
+        final boolean b = _evalFrom (nIndex + 1, aCtx);
         if (bEvery && !b)
           return false;
         if (!bEvery && b)
@@ -2829,44 +2868,239 @@ public final class XPathEvaluator
   }
 
   /**
+   * A variable reference to a variable the expression binds itself (<code>for</code>,
+   * <code>let</code>, quantifiers, inline function parameters): the value is read from the frame of
+   * the expression (see {@link DynamicContext#getLocalFrame()}), without a lookup by name.
+   */
+  @Immutable
+  private static final class LocalVarRefNode extends CompiledExpr
+  {
+    private final VariableSlot m_aSlot;
+
+    LocalVarRefNode (final IExpr.@NonNull VarRefExpr aExpr, @NonNull final VariableSlot aSlot)
+    {
+      super (aExpr);
+      m_aSlot = aSlot;
+    }
+
+    @Override
+    @NonNull
+    XdmSequence evaluate (@NonNull final DynamicContext aCtx)
+    {
+      return _getLocalFrame (aCtx, m_aSlot).get (m_aSlot.index ());
+    }
+  }
+
+  /**
+   * The root of a compiled expression that binds variables itself: every evaluation gets a new
+   * frame for them, so that an evaluation that starts again before the first one ended (a
+   * recursive function call that evaluates the same expression) does not see or change its
+   * bindings.
+   */
+  @Immutable
+  private static final class LocalFrameNode extends CompiledExpr
+  {
+    private final CompiledExpr m_aRoot;
+    private final VariableFrameLayout m_aLayout;
+
+    LocalFrameNode (@NonNull final CompiledExpr aRoot, @NonNull final VariableFrameLayout aLayout)
+    {
+      super (aRoot.getExpression ());
+      m_aRoot = aRoot;
+      m_aLayout = aLayout;
+    }
+
+    @NonNull
+    private DynamicContext _withFrame (@NonNull final DynamicContext aCtx)
+    {
+      return aCtx.withNewLocalFrame (m_aLayout);
+    }
+
+    @Override
+    @NonNull
+    XdmSequence evaluate (@NonNull final DynamicContext aCtx)
+    {
+      return m_aRoot.evaluate (_withFrame (aCtx));
+    }
+
+    @Override
+    @Nullable
+    Boolean tryEarlyEbv (@NonNull final DynamicContext aCtx, final boolean bPredicate)
+    {
+      final DynamicContext aFrameCtx = _withFrame (aCtx);
+      final Boolean ret = m_aRoot.tryEarlyEbv (aFrameCtx, bPredicate);
+      if (ret != null || bPredicate)
+        return ret;
+      // The complete evaluation with the same frame, instead of a second one from getEbv
+      return Boolean.valueOf (Atomizer.getEffectiveBooleanValue (m_aRoot.evaluate (aFrameCtx)));
+    }
+
+    @Override
+    boolean exists (@NonNull final DynamicContext aCtx)
+    {
+      return m_aRoot.exists (_withFrame (aCtx));
+    }
+  }
+
+  /** A variable the expression binds itself, in the scope of the compilation. */
+  @Immutable
+  private record LocalBinding (@NonNull XdmQName name, @NonNull VariableSlot slot)
+  {}
+
+  /**
+   * The start of the body of an inline function in the scope of the compilation: the body has its
+   * own layout, and the variables of the enclosing expression it references are captured by name
+   * when the function item is created.
+   */
+  @NotThreadSafe
+  private static final class FunctionBoundary
+  {
+    // The layout of the enclosing scope, restored at the end of the body; null if none yet
+    private final VariableFrameLayout m_aOuterLayout;
+    private final VariableFrameLayout m_aLayout = new VariableFrameLayout ();
+    // The variables of the directly enclosing scope that the body references, by name
+    private final Map <XdmQName, VariableSlot> m_aCaptures = new LinkedHashMap <> ();
+
+    FunctionBoundary (@Nullable final VariableFrameLayout aOuterLayout)
+    {
+      m_aOuterLayout = aOuterLayout;
+    }
+  }
+
+  /**
    * The state of one compilation: the static context whose frame variables the references read by
-   * slot (if any), and the names the expression itself binds around the part being compiled
-   * (<code>for</code>, <code>let</code>, quantifiers, inline function parameters), which shadow
-   * them.
+   * slot (if any), and the variables the expression itself binds around the part being compiled
+   * (<code>for</code>, <code>let</code>, quantifiers, inline function parameters), each with its
+   * slot in the frame of the expression or of the inline function body around it. They shadow the
+   * variables of the static context.
    */
   @NotThreadSafe
   private static final class ExprCompiler
   {
     private final StaticContext m_aStatic;
-    // The names bound by the expression around the current position, innermost last
-    private final ICommonsList <XdmQName> m_aBound = new CommonsArrayList <> ();
+    // LocalBinding and FunctionBoundary entries around the current position, innermost last
+    private final ICommonsList <Object> m_aScope = new CommonsArrayList <> ();
+    // The layout of the current scope (expression or inline function body); null until the first
+    // binding of the expression
+    private VariableFrameLayout m_aLayout;
 
     ExprCompiler (@Nullable final StaticContext aStatic)
     {
       m_aStatic = aStatic;
     }
 
-    void bind (@NonNull final XdmQName aName)
+    /** @return The layout of the expression's own variables, <code>null</code> for none. */
+    @Nullable
+    VariableFrameLayout getRootLayout ()
     {
-      m_aBound.add (aName);
+      return m_aLayout;
+    }
+
+    /**
+     * Bring a variable the expression binds into scope.
+     *
+     * @return Its slot in the frame of the current scope.
+     */
+    @NonNull
+    VariableSlot bindLocal (@NonNull final XdmQName aName)
+    {
+      if (m_aLayout == null)
+        m_aLayout = new VariableFrameLayout ();
+      final VariableSlot ret = m_aLayout.allocateSlot (aName);
+      m_aScope.add (new LocalBinding (aName, ret));
+      return ret;
     }
 
     void unbind (final int nCount)
     {
       for (int i = 0; i < nCount; ++i)
-        m_aBound.removeLast ();
+        m_aScope.removeLast ();
+    }
+
+    @NonNull
+    FunctionBoundary enterFunction ()
+    {
+      final FunctionBoundary ret = new FunctionBoundary (m_aLayout);
+      m_aScope.add (ret);
+      m_aLayout = ret.m_aLayout;
+      return ret;
+    }
+
+    void exitFunction (@NonNull final FunctionBoundary aBoundary)
+    {
+      // Removes the bindings of the body (the parameters) and the boundary itself
+      Object aRemoved;
+      do
+      {
+        aRemoved = m_aScope.removeLast ();
+      } while (aRemoved != aBoundary);
+      m_aLayout = aBoundary.m_aOuterLayout;
     }
 
     /**
-     * @return The slot a reference to the name reads at the current position, or <code>null</code>
-     *         if the expression binds the name itself or the static context has no slot for it.
+     * Resolve a reference against the variables the expression binds.
+     *
+     * @param bCapture
+     *        <code>true</code> to record a variable of an enclosing scope that an inline function
+     *        body references as a capture of the outermost body crossed
+     * @return The slot to read from the frame of the current scope, <code>null</code> if the name
+     *         is not bound by the expression (or only outside an inline function body around the
+     *         position, where it is captured by name)
+     */
+    @Nullable
+    private VariableSlot _resolveLocal (@NonNull final XdmQName aName, final boolean bCapture)
+    {
+      FunctionBoundary aCrossed = null;
+      for (int i = m_aScope.size () - 1; i >= 0; --i)
+      {
+        final Object aEntry = m_aScope.get (i);
+        if (aEntry instanceof final FunctionBoundary aBoundary)
+          aCrossed = aBoundary;
+        else
+          if (aEntry instanceof final LocalBinding aBinding && aBinding.name ().equals (aName))
+          {
+            if (aCrossed == null)
+              return aBinding.slot ();
+            if (bCapture)
+              aCrossed.m_aCaptures.putIfAbsent (aName, aBinding.slot ());
+            return null;
+          }
+      }
+      return null;
+    }
+
+    private boolean _isBoundByExpression (@NonNull final XdmQName aName)
+    {
+      for (final Object aEntry : m_aScope)
+        if (aEntry instanceof final LocalBinding aBinding && aBinding.name ().equals (aName))
+          return true;
+      return false;
+    }
+
+    /**
+     * @return The slot a reference to the name reads from the frame of the host at the current
+     *         position, or <code>null</code> if the expression binds the name itself or the static
+     *         context has no slot for it.
      */
     @Nullable
     VariableSlot getFrameVariable (@NonNull final XdmQName aName)
     {
-      if (m_aStatic == null || m_aBound.contains (aName))
+      if (m_aStatic == null || _isBoundByExpression (aName))
         return null;
       return m_aStatic.getFrameVariable (aName);
+    }
+
+    /**
+     * @return The slot whose binding identifies the value of the name at the current position for
+     *         the memo ({@link CallMemo}): of the expression's frame or of the host frame;
+     *         <code>null</code> if the name is bound by name.
+     */
+    @Nullable
+    VariableSlot getTokenSlot (@NonNull final XdmQName aName)
+    {
+      if (_isBoundByExpression (aName))
+        return _resolveLocal (aName, false);
+      return getFrameVariable (aName);
     }
 
     @NonNull
@@ -2882,8 +3116,8 @@ public final class XPathEvaluator
 
     /**
      * Compile the bindings of a <code>for</code>, <code>let</code> or quantified expression, each
-     * seeing the ones before it. The names stay bound for the body; the caller unbinds them
-     * afterwards.
+     * seeing the ones before it and getting its own slot. The names stay bound for the body; the
+     * caller unbinds them afterwards.
      */
     @NonNull
     CompiledBinding [] compileBindings (@NonNull final List <IExpr.Binding> aBindings)
@@ -2892,10 +3126,24 @@ public final class XPathEvaluator
       for (int i = 0; i < ret.length; ++i)
       {
         final IExpr.Binding aBinding = aBindings.get (i);
-        ret[i] = new CompiledBinding (aBinding.name (), aBinding.type (), compile (aBinding.expr ()));
-        bind (aBinding.name ());
+        final CompiledExpr aExpr = compile (aBinding.expr ());
+        ret[i] = new CompiledBinding (aBinding.name (), aBinding.type (), aExpr, bindLocal (aBinding.name ()));
       }
       return ret;
+    }
+
+    @NonNull
+    private CompiledExpr _compileVarRef (final IExpr.@NonNull VarRefExpr aExpr)
+    {
+      final XdmQName aName = aExpr.name ();
+      if (_isBoundByExpression (aName))
+      {
+        final VariableSlot aLocal = _resolveLocal (aName, true);
+        // Captured by an inline function body: bound by name in its closure
+        return aLocal != null ? new LocalVarRefNode (aExpr, aLocal) : new VarRefNode (aExpr);
+      }
+      final VariableSlot aSlot = getFrameVariable (aName);
+      return aSlot != null ? new FrameVarRefNode (aExpr, aSlot) : new VarRefNode (aExpr);
     }
 
     @NonNull
@@ -2904,11 +3152,7 @@ public final class XPathEvaluator
       return switch (aExpr)
       {
         case final IExpr.LiteralExpr e -> new LiteralNode (e);
-        case final IExpr.VarRefExpr e ->
-        {
-          final VariableSlot aSlot = getFrameVariable (e.name ());
-          yield aSlot != null ? new FrameVarRefNode (e, aSlot) : new VarRefNode (e);
-        }
+        case final IExpr.VarRefExpr e -> _compileVarRef (e);
         case final IExpr.ContextItemExpr e -> new ContextItemNode (e);
         case final IExpr.FunctionCallExpr e -> new FunctionCallNode (this, e);
         case final IExpr.PlaceholderExpr e -> new PlaceholderNode (e);
@@ -2948,7 +3192,10 @@ public final class XPathEvaluator
   {
     try
     {
-      return aCompiler.compile (aExpr);
+      final CompiledExpr ret = aCompiler.compile (aExpr);
+      final VariableFrameLayout aLayout = aCompiler.getRootLayout ();
+      // Only an expression that binds variables itself needs a frame per evaluation
+      return aLayout != null && aLayout.getSize () > 0 ? new LocalFrameNode (ret, aLayout) : ret;
     }
     catch (final StackOverflowError ex)
     {
@@ -2959,7 +3206,9 @@ public final class XPathEvaluator
   /**
    * Compile an expression into a tree of evaluation nodes, one per expression node. The result
    * keeps no state of a run: compile once and evaluate as often as needed, also concurrently.
-   * Variable references are looked up by name.
+   * The variables the expression binds itself (<code>for</code>, <code>let</code>, quantifiers,
+   * inline function parameters) are read by slot from a frame created per evaluation (inline
+   * function bodies: per call); other variable references are looked up by name.
    *
    * @param aExpr
    *        Parsed expression.
