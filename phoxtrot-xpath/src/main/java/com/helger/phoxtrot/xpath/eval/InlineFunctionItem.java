@@ -41,6 +41,7 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 public final class InlineFunctionItem extends AbstractFunctionItem
 {
   private final IExpr.InlineFunctionExpr m_aExpr;
+  private final CompiledExpr m_aBody;
   private final ICommonsList <SeqType> m_aParamTypes;
   private final SeqType m_aReturnType;
   private final DynamicContext m_aClosure;
@@ -48,12 +49,17 @@ public final class InlineFunctionItem extends AbstractFunctionItem
   /**
    * @param aExpr
    *        The inline function expression.
+   * @param aBody
+   *        The compiled body of the expression.
    * @param aCtx
    *        The context at creation; its variables are captured.
    */
-  public InlineFunctionItem (final IExpr.@NonNull InlineFunctionExpr aExpr, @NonNull final DynamicContext aCtx)
+  InlineFunctionItem (final IExpr.@NonNull InlineFunctionExpr aExpr,
+                      @NonNull final CompiledExpr aBody,
+                      @NonNull final DynamicContext aCtx)
   {
     m_aExpr = aExpr;
+    m_aBody = aBody;
     m_aParamTypes = new CommonsArrayList <> ();
     for (final IExpr.Param aParam : aExpr.params ())
       m_aParamTypes.add (aParam.type () != null ? aParam.type () : SeqType.ANY);
@@ -95,7 +101,7 @@ public final class InlineFunctionItem extends AbstractFunctionItem
     final List <IExpr.Param> aParams = m_aExpr.params ();
     for (int i = 0; i < aParams.size (); ++i)
       aBodyCtx = aBodyCtx.withVariable (aParams.get (i).name (), aArgs.get (i));
-    return XPathEvaluator.evaluateInternal (m_aExpr.body (), aBodyCtx);
+    return m_aBody.evaluate (aBodyCtx);
   }
 
   @Override

@@ -23,6 +23,7 @@ import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.eval.CompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 import com.helger.phoxtrot.xpath.ops.Atomizer;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
@@ -41,6 +42,7 @@ public final class XPathExpr
 {
   private final String m_sSource;
   private final IExpr m_aExpr;
+  private final CompiledExpr m_aCompiled;
   private final StaticContext m_aStaticContext;
   private final XslElement m_aElement;
 
@@ -51,6 +53,7 @@ public final class XPathExpr
   {
     m_sSource = sSource;
     m_aExpr = aExpr;
+    m_aCompiled = XPathEvaluator.compile (aExpr);
     m_aStaticContext = aStaticContext;
     m_aElement = aElement;
   }
@@ -101,7 +104,7 @@ public final class XPathExpr
   @NonNull
   public XdmSequence evaluate (@NonNull final XsltContext aCtx)
   {
-    return XPathEvaluator.evaluate (m_aExpr, aCtx.getDynamicContext ().withStaticContext (m_aStaticContext));
+    return XPathEvaluator.evaluate (m_aCompiled, aCtx.getDynamicContext ().withStaticContext (m_aStaticContext));
   }
 
   /**
@@ -112,7 +115,7 @@ public final class XPathExpr
    */
   public boolean evaluateBoolean (@NonNull final XsltContext aCtx)
   {
-    return XPathEvaluator.evaluateEffectiveBooleanValue (m_aExpr,
+    return XPathEvaluator.evaluateEffectiveBooleanValue (m_aCompiled,
                                                          aCtx.getDynamicContext ().withStaticContext (m_aStaticContext));
   }
 

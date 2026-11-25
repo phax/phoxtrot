@@ -26,6 +26,7 @@ import com.helger.phoxtrot.xpath.ast.ExprWalker;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.eval.CompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
@@ -48,6 +49,7 @@ public final class CompiledXPath
   private final String m_sSource;
   private final StaticContext m_aStaticCtx;
   private final IExpr m_aExpr;
+  private final CompiledExpr m_aCompiled;
   // The free variables, computed on first use
   private volatile ICommonsOrderedSet <XdmQName> m_aFreeVariables;
 
@@ -56,6 +58,7 @@ public final class CompiledXPath
     m_sSource = sSource;
     m_aStaticCtx = aStaticCtx;
     m_aExpr = aExpr;
+    m_aCompiled = XPathEvaluator.compile (aExpr);
   }
 
   @NonNull
@@ -124,7 +127,7 @@ public final class CompiledXPath
   public XdmSequence evaluate (@NonNull final DynamicContext aCtx)
   {
     final DynamicContext aRealCtx = aCtx.getStaticContext () == m_aStaticCtx ? aCtx : aCtx.withStaticContext (m_aStaticCtx);
-    return XPathEvaluator.evaluate (m_aExpr, aRealCtx);
+    return XPathEvaluator.evaluate (m_aCompiled, aRealCtx);
   }
 
   /**
@@ -140,6 +143,6 @@ public final class CompiledXPath
   public boolean evaluateEffectiveBooleanValue (@NonNull final DynamicContext aCtx)
   {
     final DynamicContext aRealCtx = aCtx.getStaticContext () == m_aStaticCtx ? aCtx : aCtx.withStaticContext (m_aStaticCtx);
-    return XPathEvaluator.evaluateEffectiveBooleanValue (m_aExpr, aRealCtx);
+    return XPathEvaluator.evaluateEffectiveBooleanValue (m_aCompiled, aRealCtx);
   }
 }

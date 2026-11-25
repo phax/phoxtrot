@@ -20,6 +20,7 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.util.ArrayDeque;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
@@ -44,6 +45,7 @@ import com.helger.phoxtrot.xpath.ast.IExpr.StepExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.eval.AxisNavigator;
+import com.helger.phoxtrot.xpath.eval.CompiledExpr;
 import com.helger.phoxtrot.xpath.eval.NodeTestMatcher;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 import com.helger.phoxtrot.xpath.ops.Atomizer;
@@ -88,6 +90,7 @@ final class PatternMatcher
   private final DynamicContext m_aCtx;
   private final IXdmNode m_aCandidate;
   private final Set <IExpr> m_aPositionalPredicates;
+  private final Map <IExpr, CompiledExpr> m_aCompiled;
 
   /**
    * @param aCtx
@@ -97,14 +100,32 @@ final class PatternMatcher
    * @param aPositionalPredicates
    *        The predicates that use <code>position()</code> or
    *        <code>last()</code> (identity set).
+   * @param aCompiled
+   *        The compiled forms of the expressions of the pattern that the
+   *        matcher evaluates, by identity; an expression without one is
+   *        compiled when it is evaluated.
    */
   PatternMatcher (@NonNull final DynamicContext aCtx,
                   @NonNull final IXdmNode aCandidate,
-                  @NonNull final Set <IExpr> aPositionalPredicates)
+                  @NonNull final Set <IExpr> aPositionalPredicates,
+                  @NonNull final Map <IExpr, CompiledExpr> aCompiled)
   {
     m_aCtx = aCtx;
     m_aCandidate = aCandidate;
     m_aPositionalPredicates = aPositionalPredicates;
+    m_aCompiled = aCompiled;
+  }
+
+  /**
+   * Evaluate an expression of the pattern through its compiled form from the
+   * pattern, or compiled now if the pattern has none (a filter expression
+   * created while matching).
+   */
+  @NonNull
+  private XdmSequence _evaluate (@NonNull final IExpr aExpr, @NonNull final DynamicContext aCtx)
+  {
+    final CompiledExpr aCompiled = m_aCompiled.get (aExpr);
+    return XPathEvaluator.evaluate (aCompiled != null ? aCompiled : XPathEvaluator.compile (aExpr), aCtx);
   }
 
   /**
@@ -227,7 +248,7 @@ final class PatternMatcher
         bNeedPositions = true;
         break;
       }
-      final XdmSequence aValue = XPathEvaluator.evaluate (aPred, m_aCtx.withFocus (aNode, 1, 1));
+      final XdmSequence aValue = _evaluate (aPred, m_aCtx.withFocus (aNode, 1, 1));
       if (_getNumericSingleton (aValue) != null)
       {
         bNeedPositions = true;
@@ -254,8 +275,8 @@ final class PatternMatcher
       final int nPos = aCands.indexOf (aNode) + 1;
       if (nPos == 0)
         return false;
-      final XdmSequence aValue = XPathEvaluator.evaluate (aPreds.get (0),
-                                                          m_aCtx.withFocus (aNode, nPos, aCands.size ()));
+      final XdmSequence aValue = _evaluate (aPreds.get (0),
+                                             m_aCtx.withFocus (aNode, nPos, aCands.size ()));
       return _isKept (aValue, nPos);
     }
     // Several predicates: filter the whole list predicate by predicate
@@ -268,7 +289,7 @@ final class PatternMatcher
       {
         m_aCtx.checkInterrupt ();
         final IXdmNode aItem = aCur.get (i);
-        final XdmSequence aValue = XPathEvaluator.evaluate (aPred, m_aCtx.withFocus (aItem, i + 1, nSize));
+        final XdmSequence aValue = _evaluate (aPred, m_aCtx.withFocus (aItem, i + 1, nSize));
         if (_isKept (aValue, i + 1))
           aKept.add (aItem);
       }
@@ -295,12 +316,12 @@ final class PatternMatcher
     if (aInnerAnchors.isComplement ())
     {
       // Independent of the context node
-      return _contains (XPathEvaluator.evaluate (aFiltered, m_aCtx.withFocus (aNode, 1, 1)), aNode) ? aInnerAnchors
+      return _contains (_evaluate (aFiltered, m_aCtx.withFocus (aNode, 1, 1)), aNode) ? aInnerAnchors
                                                                                                     : AnchorSet.createEmpty ();
     }
     final AnchorSet ret = AnchorSet.createEmpty ();
     for (final IXdmNode aContext : aInnerAnchors.getNodes ())
-      if (_contains (XPathEvaluator.evaluate (aFiltered, m_aCtx.withFocus (aContext, 1, 1)), aNode))
+      if (_contains (_evaluate (aFiltered, m_aCtx.withFocus (aContext, 1, 1)), aNode))
         ret.add (aContext);
     return ret;
   }
@@ -511,18 +532,25 @@ final class PatternMatcher
     private final List <StepExpr> m_aSteps;
     private final ENodeKind [] m_aPrincipalKinds;
     private final boolean m_bHasPredicates;
+    // The compiled predicates per step
+    private final CompiledExpr [] [] m_aPredicates;
 
     DirectPath (final boolean bAbsolute, @NonNull final List <StepExpr> aSteps)
     {
       m_bAbsolute = bAbsolute;
       m_aSteps = aSteps;
       m_aPrincipalKinds = new ENodeKind [aSteps.size ()];
+      m_aPredicates = new CompiledExpr [aSteps.size ()] [];
       boolean bHasPredicates = false;
       for (int i = 0; i < m_aPrincipalKinds.length; ++i)
       {
         m_aPrincipalKinds[i] = AxisNavigator.getPrincipalNodeKind (aSteps.get (i).axis ());
-        if (!aSteps.get (i).predicates ().isEmpty ())
+        final List <IExpr> aPreds = aSteps.get (i).predicates ();
+        if (!aPreds.isEmpty ())
           bHasPredicates = true;
+        m_aPredicates[i] = new CompiledExpr [aPreds.size ()];
+        for (int j = 0; j < aPreds.size (); ++j)
+          m_aPredicates[i][j] = XPathEvaluator.compile (aPreds.get (j));
       }
       m_bHasPredicates = bHasPredicates;
     }
@@ -571,7 +599,7 @@ final class PatternMatcher
         }
         // Position 1 of 1 is enough: no predicate reads the position, and a number (which would be
         // read as a position) hands the path back to the search
-        for (final IExpr aPred : aStep.predicates ())
+        for (final CompiledExpr aPred : m_aPredicates[i])
         {
           final XdmSequence aValue = XPathEvaluator.evaluate (aPred, aCtx.withFocus (aCur, 1, 1));
           if (_getNumericSingleton (aValue) != null)
@@ -688,7 +716,7 @@ final class PatternMatcher
       if (ret == null)
       {
         ret = new CommonsHashSet <> ();
-        for (final IXdmItem aItem : XPathEvaluator.evaluate (m_aPath.start (), m_aCtx.withFocus (m_aCandidate, 1, 1)))
+        for (final IXdmItem aItem : _evaluate (m_aPath.start (), m_aCtx.withFocus (m_aCandidate, 1, 1)))
           if (aItem instanceof final IXdmNode aNode)
             ret.add (aNode);
         m_aStartNodes = ret;

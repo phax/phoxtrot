@@ -279,7 +279,7 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   stop at the first decisive item; only the last predicate of the last step is short-circuited. Any other shape falls
   back to the complete evaluation. `and`/`or` operands stay left to right. A path whose last child/descendant step
   names an element the document's index does not contain is empty without evaluating its prefix
-  (`XPathEvaluator._isEmptyByNameIndex`, also in the complete evaluation), but only for prefixes that cannot raise an
+  (`XPathEvaluator._isEmptyByNameIndex`, the name decided once per path in `PathNode`, also in the complete evaluation), but only for prefixes that cannot raise an
   error (axis steps without predicates, unions of such paths, a node as context item in a tree with a document root).
 - Focus-independent predicates: a predicate that `ExprWalker.isFocusIndependent` accepts (no context item, no path
   other than `$x/a/@b`, no function items, only the listed built-in functions, each resolving to the implementation of
@@ -290,7 +290,7 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   accepts (all calls inside resolving to the default implementation) and that has an argument with work is kept per
   run (`DynamicContext.getRunMemo`) with the static context and the identity tokens of the bindings of all variables
   it references (`DynamicContext.getVariableToken`); one that reads the focus only at the focus of the innermost
-  `for`/`some`/`every` (`DynamicContext.get/setLoopFocus`, set by `_evalForExpr`/`_evalQuantifiedExpr`). Errors are
+  `for`/`some`/`every` (`DynamicContext.get/setLoopFocus`, set by the `for` and quantified expression nodes of `XPathEvaluator`). Errors are
   not kept. The plan is kept in the `FunctionCallSite` (`getMemoPlan`) like the resolution. Add a function to the
   lists of `ExprWalker` only if it reads nothing that changes within a run.
 - Name predicates: an `and` of `=`/`eq` comparisons of `name()`, `local-name()` or `namespace-uri()` (built-in, context
@@ -322,6 +322,15 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - `XPathOperators` (`phoxtrot-xpath`, package `eval`) is the one place for the semantics of comparisons, arithmetic,
   cast/castable and the static function call with argument conversion; `XPathEvaluator` calls it. Change these
   operators there, never in a copy (it is the public API for generated code such as ph-sch2java's).
+- Evaluation (closure compilation, plan in `docs/PLAN.md`, "Interpreter speed"): `XPathEvaluator.compile` turns an
+  `IExpr` into a tree of `CompiledExpr` nodes (one nested node class per expression kind in `XPathEvaluator`, holding
+  its compiled children; shape analyses that depend only on the expression are done in the node constructors, those
+  that depend on the static context still at run time). There is no interpreter `switch`. Code that evaluates an
+  expression more than once holds its `CompiledExpr` (`CompiledXPath`, the XSLT `XPathExpr`, `CompiledXsltPattern`
+  with an identity map for `PatternMatcher`, `PatternMatcher.DirectPath`, `StreamRecordPath`, `InlineFunctionItem`)
+  and evaluates it with `XPathEvaluator.evaluate (CompiledExpr, ...)`/`evaluateEffectiveBooleanValue`;
+  `evaluate (IExpr, ...)` compiles each time and is only for one-off evaluations. Compiled nodes keep no run state.
+  Early exit is `CompiledExpr.tryEarlyEbv`/`exists`, overridden by the path, filter and sequence nodes.
 - Static calls resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr` (cached per library instance
   and `FunctionLibrary.getModificationStamp`, the sum of the change counters of the parent chain). Every new
   `FunctionLibrary` method that changes what `getFunction` returns must call `_checkWritable` and increment

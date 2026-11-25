@@ -34,6 +34,7 @@ import com.helger.phoxtrot.xpath.ast.EBinaryOp;
 import com.helger.phoxtrot.xpath.ast.ENodeTestKind;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
+import com.helger.phoxtrot.xpath.eval.CompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 import com.helger.phoxtrot.xpath.stream.EPosture;
 import com.helger.phoxtrot.xpath.stream.ESweep;
@@ -77,11 +78,12 @@ public final class StreamRecordPath
 
   private final XPathExpr m_aSelect;
   private final ICommonsList <NodeTest> m_aSteps;
-  private final ICommonsList <List <IExpr>> m_aPredicates;
+  // The compiled predicates per step
+  private final ICommonsList <List <CompiledExpr>> m_aPredicates;
 
   private StreamRecordPath (@NonNull final XPathExpr aSelect,
                             @NonNull final ICommonsList <NodeTest> aSteps,
-                            @NonNull final ICommonsList <List <IExpr>> aPredicates)
+                            @NonNull final ICommonsList <List <CompiledExpr>> aPredicates)
   {
     m_aSelect = aSelect;
     m_aSteps = aSteps;
@@ -144,11 +146,11 @@ public final class StreamRecordPath
                                     @NonNull final IXdmNode aNode,
                                     @NonNull final XsltContext aCtx)
   {
-    final List <IExpr> aPredicates = m_aPredicates.get (nIndex);
+    final List <CompiledExpr> aPredicates = m_aPredicates.get (nIndex);
     if (aPredicates.isEmpty ())
       return true;
     final XsltContext aFocus = aCtx.withFocus (aNode, 1, 1);
-    for (final IExpr aPredicate : aPredicates)
+    for (final CompiledExpr aPredicate : aPredicates)
       if (!XPathEvaluator.evaluateEffectiveBooleanValue (aPredicate, m_aSelect.createDynamicContext (aFocus)))
         return false;
     return true;
@@ -250,7 +252,7 @@ public final class StreamRecordPath
     if (aSteps.isEmpty ())
       return null;
     final ICommonsList <NodeTest> aTests = new CommonsArrayList <> ();
-    final ICommonsList <List <IExpr>> aPredicates = new CommonsArrayList <> ();
+    final ICommonsList <List <CompiledExpr>> aPredicates = new CommonsArrayList <> ();
     for (int i = 0; i < aSteps.size (); ++i)
     {
       final IExpr.StepExpr aStep = aSteps.get (i);
@@ -273,7 +275,10 @@ public final class StreamRecordPath
             (!aTest.anyName () && aTest.name () == null))
           return null;
       aTests.add (aTest);
-      aPredicates.add (aStep.predicates ());
+      final ICommonsList <CompiledExpr> aCompiled = new CommonsArrayList <> (aStep.predicates ().size ());
+      for (final IExpr aPredicate : aStep.predicates ())
+        aCompiled.add (XPathEvaluator.compile (aPredicate));
+      aPredicates.add (aCompiled);
     }
     return new StreamRecordPath (aSelect, aTests, aPredicates);
   }

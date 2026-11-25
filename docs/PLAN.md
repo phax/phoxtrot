@@ -668,6 +668,17 @@ engine-independent reference case).
    index, step unions, focus-independent and name predicates, loop-invariant calls) in the compiled form too, or a
    fallback to the interpreter for them, and the differential property tests run on both. Estimate: weeks; expected
    1.5 to 3 times on expression-heavy stylesheets (not measured).
+
+   Decision: the compiled form replaces the interpreter (one implementation, no switch; the W3C suites are the
+   differential test). Stages, each measured with `compare.sh` in both orders and gated by the QT3, XSLT30 and
+   `-Dxslt30.writeTo=true` fail lists:
+
+   | Stage | Content | Status |
+   |-------|---------|--------|
+   | C1 | `XPathEvaluator.compile` builds a tree of `CompiledExpr` nodes (one class per expression kind, compiled children, shape analyses done once); `CompiledXPath`, `XPathExpr`, patterns (`CompiledXsltPattern`, `PatternMatcher.DirectPath`), streamed record paths and inline functions hold compiled expressions; the interpreter `switch` is gone | in progress |
+   | C2 | No `DynamicContext` per XSLT expression evaluation for the static context (`XPathExpr.evaluate`, `withStaticContext`) | open |
+   | C3 | Frame slots for the XPath-local variables (`for`, `let`, quantifiers, inline function parameters) instead of the lookup by name | open |
+   | C4 | Slots for the XSLT local variables and parameters, assigned at stylesheet compile time | open |
 3. **Byte code generation** (backlog), as XSLTC does for XSLT 1.0. A code generator for every construct of XSLT 3.0
    and XPath 3.1, with the same behaviour as the interpreter, and the W3C suites passing on both paths. On the JDK 21
    baseline it needs a byte code library (ASM; `java.lang.classfile` is final only from JDK 24). Compiling simple

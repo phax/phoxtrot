@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xpath.pattern;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -39,6 +40,7 @@ import com.helger.phoxtrot.xpath.ast.ExprWalker;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.eval.CompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 
 /**
@@ -59,6 +61,8 @@ public final class CompiledXsltPattern implements XsltPattern
   private final double m_dDefaultPriority;
   private final List <CompiledXsltPattern> m_aAlternatives;
   private final Set <IExpr> m_aPositionalPredicates;
+  // The compiled expressions the matcher evaluates, by identity
+  private final Map <IExpr, CompiledExpr> m_aCompiled;
   // The paths of a pattern that is a union of paths, for the quick test of
   // canMatch, with boolean predicates of parenthesised unions distributed
   // over their paths; null for any other pattern
@@ -71,6 +75,42 @@ public final class CompiledXsltPattern implements XsltPattern
   private final PatternMatcher.DirectPath [] m_aDirectPaths;
   // See getFinalNames; null if not every path ends in an exact name test
   private final PatternFinalNames m_aFinalNames;
+
+  /**
+   * Compile the expressions of a pattern that the matcher evaluates (the predicate pattern
+   * <code>.[...]</code>, the start expressions and the predicates of the steps of its paths), by
+   * identity. The pattern tree is walked iteratively through set operators and the postfix
+   * expressions of parenthesised steps.
+   */
+  private static void _compileEvaluated (@NonNull final IExpr aPattern, @NonNull final Map <IExpr, CompiledExpr> aOut)
+  {
+    final ICommonsList <IExpr> aStack = new CommonsArrayList <> (aPattern);
+    while (aStack.isNotEmpty ())
+    {
+      final IExpr aCur = aStack.removeLast ();
+      if (aCur instanceof final IExpr.SetExpr aSet)
+      {
+        aStack.add (aSet.left ());
+        aStack.add (aSet.right ());
+      }
+      else
+        if (aCur instanceof IExpr.FilterExpr)
+          aOut.computeIfAbsent (aCur, XPathEvaluator::compile);
+        else
+          if (aCur instanceof final IExpr.PathExpr aPath)
+          {
+            if (aPath.start () != null)
+              aOut.computeIfAbsent (aPath.start (), XPathEvaluator::compile);
+            for (final IExpr.StepExpr aStep : aPath.steps ())
+            {
+              if (aStep.postfix () != null)
+                aStack.add (aStep.postfix ());
+              for (final IExpr aPred : aStep.predicates ())
+                aOut.computeIfAbsent (aPred, XPathEvaluator::compile);
+            }
+          }
+    }
+  }
 
   /**
    * Create the pattern and collect, once, its positional predicates (see
@@ -119,6 +159,12 @@ public final class CompiledXsltPattern implements XsltPattern
       }
     }
     m_aFinalNames = m_aUnionPaths == null ? null : _getFinalNames (m_aUnionPaths);
+    final Map <IExpr, CompiledExpr> aCompiled = new IdentityHashMap <> ();
+    _compileEvaluated (aExpr, aCompiled);
+    if (m_aUnionPaths != null)
+      for (final IExpr.PathExpr aPath : m_aUnionPaths)
+        _compileEvaluated (aPath, aCompiled);
+    m_aCompiled = Collections.unmodifiableMap (aCompiled);
   }
 
   /**
@@ -430,7 +476,7 @@ public final class CompiledXsltPattern implements XsltPattern
       if (aNodeCtx == null)
         aNodeCtx = aCtx.withCurrentItem (aNode);
       if (aMatcher == null)
-        aMatcher = new PatternMatcher (aNodeCtx, aNode, m_aPositionalPredicates);
+        aMatcher = new PatternMatcher (aNodeCtx, aNode, m_aPositionalPredicates, m_aCompiled);
       if (aMatcher.searchPath (m_aUnionPaths.get (i), aNode))
         return true;
     }
@@ -468,10 +514,10 @@ public final class CompiledXsltPattern implements XsltPattern
       if (m_aExpr instanceof IExpr.ContextItemExpr)
         return true;
       if (m_aExpr instanceof final IExpr.FilterExpr aFilter && aFilter.primary () instanceof IExpr.ContextItemExpr)
-        return !XPathEvaluator.evaluate (aFilter, aRealCtx.withFocus (aItem, 1, 1)).isEmpty ();
+        return !XPathEvaluator.evaluate (m_aCompiled.get (aFilter), aRealCtx.withFocus (aItem, 1, 1)).isEmpty ();
       if (!(aItem instanceof final IXdmNode aNode))
         return false;
-      return new PatternMatcher (aRealCtx, aNode, m_aPositionalPredicates).matchesNode (m_aExpr, aNode);
+      return new PatternMatcher (aRealCtx, aNode, m_aPositionalPredicates, m_aCompiled).matchesNode (m_aExpr, aNode);
     }
     catch (final XPathException ex)
     {
