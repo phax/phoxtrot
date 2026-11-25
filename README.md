@@ -308,6 +308,27 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
+v0.5.0 - work in progress
+* New benchmark workload `rounding` (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
+* XPath expressions are compiled once into a tree of evaluation nodes instead of being interpreted per evaluation
+  (`XPathEvaluator.compile (IExpr)`, `compile (IExpr, StaticContext)`, new class `CompiledExpr`); `CompiledXPath`,
+  stylesheet expressions and patterns keep the compiled form
+* XSLT local variables and parameters are bound by slot in a variable frame per template or function call instead of
+  by name along a chain of contexts (new public classes `VariableFrame`, `VariableFrameLayout`, `VariableSlot`;
+  `DynamicContext.getFrame`/`withFrame`, `StaticContext.declareFrameVariable`/`getFrameVariable`)
+* An XSLT expression or pattern evaluation creates no dynamic context of its own when its static context differs
+  from the previous one only in the declared variables (new `StaticContext.internRunTimeIdentity` and
+  `isRunTimeEquivalent`; `DynamicContext.withStaticContext` returns the context itself for an equivalent static
+  context)
+* The variables an XPath expression binds itself (`for`, `let`, `some`/`every`, inline function parameters) are
+  bound by slot in a frame per evaluation instead of a new dynamic context per binding (new
+  `DynamicContext.getLocalFrame`/`withNewLocalFrame`, `VariableFrame.isLocal`)
+* `XdmParser` works around a bug of the XML 1.1 parser of the JDK (JDK 17 to 27, XML 1.0 is not affected), which drops
+  or repeats characters of a text when a `]` is the last character of its buffer (after the first 64 characters, then
+  every 8 KB; for example `a]a]]&gt;` read as `a]a]a]]>`): a source given as characters (a string, a character
+  stream) is read through a reader that never ends a chunk with `]`. A source of bytes or a URI is decoded by the JDK
+  parser itself and stays affected; a CDATA section ending in `]` (`]]]>`) is still a parse error under XML 1.1
+
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree
   changes and the DOM bridge, the XPath parser, operators, optimised evaluation paths, regex, string and format
@@ -342,20 +363,6 @@ v0.4.0 - 2026-11-26
   the BMP is no longer split into its surrogates
 * `XdmDomView`: `isDefaultNamespace (null)` follows DOM Level 3 Core appendix B.3 (false for a node without an
   element that is unprefixed or declares the default namespace, for example a comment outside the document element)
-* New benchmark workload `rounding` (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
-* XPath expressions are compiled once into a tree of evaluation nodes instead of being interpreted per evaluation
-  (`XPathEvaluator.compile (IExpr)`, `compile (IExpr, StaticContext)`, new class `CompiledExpr`); `CompiledXPath`,
-  stylesheet expressions and patterns keep the compiled form
-* XSLT local variables and parameters are bound by slot in a variable frame per template or function call instead of
-  by name along a chain of contexts (new public classes `VariableFrame`, `VariableFrameLayout`, `VariableSlot`;
-  `DynamicContext.getFrame`/`withFrame`, `StaticContext.declareFrameVariable`/`getFrameVariable`)
-* An XSLT expression or pattern evaluation creates no dynamic context of its own when its static context differs
-  from the previous one only in the declared variables (new `StaticContext.internRunTimeIdentity` and
-  `isRunTimeEquivalent`; `DynamicContext.withStaticContext` returns the context itself for an equivalent static
-  context)
-* The variables an XPath expression binds itself (`for`, `let`, `some`/`every`, inline function parameters) are
-  bound by slot in a frame per evaluation instead of a new dynamic context per binding (new
-  `DynamicContext.getLocalFrame`/`withNewLocalFrame`, `VariableFrame.isLocal`)
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`
@@ -364,11 +371,6 @@ v0.4.0 - 2026-11-26
 * XSD: the xs:base64Binary lexical check uses a lookup table and a tight loop for the leading run of base64
   characters instead of range comparisons, whose branches are mispredicted on base64 data: about 8 times faster,
   which halves the validation time of an e-invoice with a 200 KB attachment
-* `XdmParser` works around a bug of the XML 1.1 parser of the JDK (JDK 17 to 27, XML 1.0 is not affected), which drops
-  or repeats characters of a text when a `]` is the last character of its buffer (after the first 64 characters, then
-  every 8 KB; for example `a]a]]&gt;` read as `a]a]a]]>`): a source given as characters (a string, a character
-  stream) is read through a reader that never ends a chunk with `]`. A source of bytes or a URI is decoded by the JDK
-  parser itself and stays affected; a CDATA section ending in `]` (`]]]>`) is still a parse error under XML 1.1
 * `XdmTreeBuilder` uses a new buffer for each text node that is merged from several character events: a reused
   buffer that once held a non-Latin-1 character stays UTF-16, so all later text was inflated and compressed again
 * XSD: new `XsdSchema.assessText` validates instance text like `validateText` and also reports the governing type
