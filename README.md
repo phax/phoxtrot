@@ -308,7 +308,7 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
-v0.4.0 - work in progress
+v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree
   changes and the DOM bridge, the XPath parser, operators, optimised evaluation paths, regex, string and format
   functions, maps and arrays, serialisation, JSON, date/time arithmetic, sequence functions, collations, binary casts
