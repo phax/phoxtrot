@@ -22,6 +22,7 @@ import java.util.Map;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.collection.commons.CommonsArrayList;
@@ -47,6 +48,16 @@ public final class XslElement extends XslNode
   /** XSLT 2.0 as a version number. */
   public static final BigDecimal VERSION_20 = new BigDecimal ("2.0");
 
+  /**
+   * The cached static base URI, <code>null</code> inside if the element has none.
+   *
+   * @param uri
+   *        The base URI or <code>null</code>.
+   */
+  @Immutable
+  private record StaticBaseUri (@Nullable String uri)
+  {}
+
   private final IXdmNode m_aSource;
   private final XdmQName m_aName;
   private final ICommonsOrderedMap <XdmQName, String> m_aAttrs = new CommonsLinkedHashMap <> ();
@@ -55,6 +66,9 @@ public final class XslElement extends XslNode
   // createStaticContext read it from concurrent transformations of one compiled stylesheet. Two threads may both
   // build it, with the same content.
   private volatile ICommonsOrderedMap <String, String> m_aInScopeNamespaces;
+  // Lazily computed and never changed afterwards, volatile for the same reason; the temporary tree of every variable
+  // evaluation reads it
+  private volatile StaticBaseUri m_aStaticBaseUri;
   // Import precedence and the lowest precedence of the modules imported by the
   // module of this declaration; only set on top-level elements
   private int m_nPrecedence;
@@ -329,7 +343,12 @@ public final class XslElement extends XslNode
   @Nullable
   public String getStaticBaseUri ()
   {
-    return FnAccessor.getBaseUri (m_aSource);
+    // Optimisation: resolving the base URI walks the ancestors and their xml:base attributes; the stylesheet tree
+    // does not change after compilation, so it is resolved once
+    StaticBaseUri ret = m_aStaticBaseUri;
+    if (ret == null)
+      m_aStaticBaseUri = ret = new StaticBaseUri (FnAccessor.getBaseUri (m_aSource));
+    return ret.uri ();
   }
 
   /**

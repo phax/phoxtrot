@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xpath.bench;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -417,6 +418,27 @@ final class BenchExpected
     for (final Line aLine : aLines)
       aTotal = aTotal.add (amount (aLine));
     return aLines.size () + "/" + decimal (aTotal) + "/" + decimal (aLines.getLastOrNull ().price ());
+  }
+
+  /**
+   * @param aData
+   *        The data.
+   * @return What the rounding workload writes: per line the price rounded at every scale of
+   *         {@link RoundingWorkload#SCALES} in every mode of {@link RoundingWorkload#MODES}, each
+   *         followed by a space, and a line end.
+   */
+  @NonNull
+  static String rounding (@NonNull final BenchData aData)
+  {
+    final StringBuilder aSB = new StringBuilder ();
+    for (final Line aLine : aData.getAllLines ())
+    {
+      for (final int nScale : RoundingWorkload.SCALES)
+        for (final RoundingMode eMode : RoundingWorkload.MODES)
+          aSB.append (decimal (aLine.price ().setScale (nScale, eMode))).append (' ');
+      aSB.append ('\n');
+    }
+    return aSB.toString ();
   }
 
   @NonNull

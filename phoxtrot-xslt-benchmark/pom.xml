@@ -67,6 +67,16 @@
     </dependency>
   </dependencies>
   <build>
+    <resources>
+      <resource>
+        <directory>src/main/resources</directory>
+      </resource>
+      <!-- The rounding stylesheets of the property tests, used unchanged by the rounding workload -->
+      <resource>
+        <directory>../phoxtrot-xslt/src/test/resources/rounding</directory>
+        <targetPath>com/helger/phoxtrot/xpath/bench/rounding</targetPath>
+      </resource>
+    </resources>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>

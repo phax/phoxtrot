@@ -46,7 +46,9 @@ public enum EWorkloadGroup implements IHasID <String>
   /** Compiling stylesheets and expressions: {@link CompileWorkload}. */
   COMPILE ("compile"),
   /** Many small transformations in the threading modes: {@link SmallTransformWorkload}. */
-  SMALL ("small");
+  SMALL ("small"),
+  /** The rounding stylesheets: {@link RoundingWorkload}. */
+  ROUNDING ("rounding");
 
   /** The case of the XPath group that runs the rule set. */
   public static final String XPATH_RULES = "rules";
@@ -102,6 +104,10 @@ public enum EWorkloadGroup implements IHasID <String>
         ret.add ("pool");
         ret.add ("calling");
         break;
+      case ROUNDING:
+        for (final String sCase : RoundingWorkload.CASES)
+          ret.add (sCase);
+        break;
     }
     return ret;
   }
@@ -137,6 +143,10 @@ public enum EWorkloadGroup implements IHasID <String>
         return new CompileWorkload (sCase);
       case SMALL:
         return new SmallTransformWorkload (sCase);
+      case ROUNDING:
+        if (RoundingWorkload.getCaseOrNull (sCase) != null)
+          return new RoundingWorkload (sCase, nSize);
+        break;
     }
     throw new IllegalArgumentException ("Unknown case '" + sCase + "' of group '" + m_sID + "'");
   }

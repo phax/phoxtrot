@@ -716,6 +716,28 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
   {
     final AbstractXdmNode aRoot = getRoot ();
     final TreeStamp aTree = internalNewTree ();
+    // Optimisation: a root without attributes whose children are all leaves (the temporary tree of a variable, a
+    // document node with one text node) is numbered in one loop, without the two stacks
+    if (aRoot instanceof final AbstractXdmParentNode aFlatRoot && aRoot.getAttributeCount () == 0)
+    {
+      final int nChildren = aFlatRoot.getChildCount ();
+      boolean bFlat = true;
+      for (int i = 0; i < nChildren && bFlat; ++i)
+        bFlat = !(aFlatRoot.getChildAtIndex (i) instanceof AbstractXdmParentNode);
+      if (bFlat)
+      {
+        aRoot.m_aTree = aTree;
+        aRoot.m_nOrder = 0;
+        for (int i = 0; i < nChildren; ++i)
+        {
+          final AbstractXdmNode aChild = aFlatRoot.getChildAtIndex (i);
+          aChild.m_aTree = aTree;
+          aChild.m_nOrder = i + 1;
+        }
+        aFlatRoot.internalSetEndOrder (nChildren);
+        return;
+      }
+    }
     int nOrder = 0;
     final ArrayDeque <AbstractXdmNode> aStack = new ArrayDeque <> ();
     // The parent nodes whose subtree is not finished yet, innermost first
