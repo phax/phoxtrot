@@ -17,7 +17,7 @@
 package com.helger.phoxtrot.xpath.eval;
 
 import java.util.Map;
-import java.util.function.Supplier;
+import java.util.function.Function;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -84,6 +84,7 @@ final class CallMemo
   {}
 
   private static final XdmQName [] NO_VARIABLES = new XdmQName [0];
+  private static final Object [] NO_TOKENS = new Object [0];
   /** The plan of a call that is never memoised. */
   private static final Plan NO_PLAN = new Plan (false, false, NO_VARIABLES);
 
@@ -125,14 +126,32 @@ final class CallMemo
   /**
    * @param aCall
    *        The call.
+   * @return The function that creates the plan of the call for a function
+   *         library, to be kept with the compiled call.
+   */
+  @NonNull
+  static Function <FunctionLibrary, Object> createPlanCreator (final IExpr.@NonNull FunctionCallExpr aCall)
+  {
+    return x -> _createPlan (aCall, x);
+  }
+
+  /**
+   * @param aCall
+   *        The call.
+   * @param aPlanCreator
+   *        Creates the plan of the call for a function library, from
+   *        {@link #createPlanCreator(IExpr.FunctionCallExpr)}; kept by the
+   *        caller, so that no function object is created per evaluation.
    * @param aCtx
    *        The dynamic context of its evaluation.
    * @return The plan if the call is memoised in this context, else <code>null</code>.
    */
   @Nullable
-  static Plan getApplicablePlan (final IExpr.@NonNull FunctionCallExpr aCall, @NonNull final DynamicContext aCtx)
+  static Plan getApplicablePlan (final IExpr.@NonNull FunctionCallExpr aCall,
+                                 @NonNull final Function <FunctionLibrary, Object> aPlanCreator,
+                                 @NonNull final DynamicContext aCtx)
   {
-    final Plan aPlan = (Plan) aCall.site ().getMemoPlan (aCtx.getStaticContext ().getFunctionLibrary (), x -> _createPlan (aCall, x));
+    final Plan aPlan = (Plan) aCall.site ().getMemoPlan (aCtx.getStaticContext ().getFunctionLibrary (), aPlanCreator);
     if (!aPlan.m_bEligible)
       return null;
     if (aPlan.m_bUsesFocus)
@@ -151,23 +170,25 @@ final class CallMemo
    * which is then kept.
    *
    * @param aPlan
-   *        The plan from {@link #getApplicablePlan(IExpr.FunctionCallExpr, DynamicContext)}.
+   *        The plan from {@link #getApplicablePlan(IExpr.FunctionCallExpr, Function, DynamicContext)}.
    * @param aCall
    *        The call.
    * @param aCtx
    *        The dynamic context.
    * @param aEval
-   *        Evaluates the call.
+   *        Evaluates the call in the given context; kept by the caller, so
+   *        that no function object is created per evaluation.
    * @return The value of the call.
    */
   @NonNull
   static XdmSequence evaluate (@NonNull final Plan aPlan,
                                final IExpr.@NonNull FunctionCallExpr aCall,
                                @NonNull final DynamicContext aCtx,
-                               @NonNull final Supplier <XdmSequence> aEval)
+                               @NonNull final Function <DynamicContext, XdmSequence> aEval)
   {
     final XdmQName [] aVariables = aPlan.m_aVariables;
-    final Object [] aTokens = new Object [aVariables.length];
+    // Optimisation: a call without variables shares one empty token array
+    final Object [] aTokens = aVariables.length == 0 ? NO_TOKENS : new Object [aVariables.length];
     for (int i = 0; i < aVariables.length; ++i)
       aTokens[i] = aCtx.getVariableToken (aVariables[i]);
     final StaticContext aStatic = aCtx.getStaticContext ();
@@ -185,7 +206,7 @@ final class CallMemo
       if (bSame)
         return aEntry.value ();
     }
-    final XdmSequence ret = aEval.get ();
+    final XdmSequence ret = aEval.apply (aCtx);
     aMemo.put (aCall, new Entry (aStatic, aItem, aTokens, ret));
     return ret;
   }

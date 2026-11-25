@@ -26,6 +26,7 @@ import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.Function;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -1605,12 +1606,17 @@ public final class XPathEvaluator
   {
     private final IExpr.FunctionCallExpr m_aCall;
     private final CompiledExpr [] m_aArgs;
+    // Kept, so that the memo creates no function objects per evaluation
+    private final Function <FunctionLibrary, Object> m_aPlanCreator;
+    private final Function <DynamicContext, XdmSequence> m_aDirect;
 
     FunctionCallNode (final IExpr.@NonNull FunctionCallExpr aCall)
     {
       super (aCall);
       m_aCall = aCall;
       m_aArgs = _compileAll (aCall.args ());
+      m_aPlanCreator = CallMemo.createPlanCreator (aCall);
+      m_aDirect = this::_evalDirect;
     }
 
     /**
@@ -1665,10 +1671,10 @@ public final class XPathEvaluator
     @NonNull
     XdmSequence evaluate (@NonNull final DynamicContext aCtx)
     {
-      final CallMemo.Plan aPlan = CallMemo.getApplicablePlan (m_aCall, aCtx);
+      final CallMemo.Plan aPlan = CallMemo.getApplicablePlan (m_aCall, m_aPlanCreator, aCtx);
       if (aPlan == null)
         return _evalDirect (aCtx);
-      return CallMemo.evaluate (aPlan, m_aCall, aCtx, () -> _evalDirect (aCtx));
+      return CallMemo.evaluate (aPlan, m_aCall, aCtx, m_aDirect);
     }
   }
 
