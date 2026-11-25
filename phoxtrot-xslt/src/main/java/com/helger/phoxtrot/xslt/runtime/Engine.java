@@ -128,6 +128,8 @@ public final class Engine
   private final XsltTransformRequest m_aRequest;
   private final DynamicContext m_aRootDyn;
   private final DynamicContext m_aPatternDyn;
+  // The pattern context with the static context of the last pattern matched (getPatternContext (StaticContext))
+  private DynamicContext m_aLastPatternDyn;
   private IXdmItem m_aGlobalContextItem;
   private boolean m_bGlobalVariablesWithoutFocus;
   private final ICommonsMap <XdmQName, XdmSequence> m_aGlobalValues = new CommonsHashMap <> ();
@@ -335,6 +337,27 @@ public final class Engine
   public DynamicContext getPatternContext ()
   {
     return m_aPatternDyn;
+  }
+
+  /**
+   * @param aStatic
+   *        The static context of a pattern.
+   * @return The pattern context ({@link #getPatternContext()}) with that
+   *         static context. The context of the last call is reused if its
+   *         static context is equivalent at run time
+   *         ({@link StaticContext#isRunTimeEquivalent(StaticContext)}).
+   */
+  @NonNull
+  public DynamicContext getPatternContext (@NonNull final StaticContext aStatic)
+  {
+    final DynamicContext aLast = m_aLastPatternDyn;
+    // Optimisation: the patterns of a stylesheet mostly have equivalent static contexts, so a match
+    // creates no context
+    if (aLast != null && aLast.getStaticContext ().isRunTimeEquivalent (aStatic))
+      return aLast;
+    final DynamicContext ret = m_aPatternDyn.withStaticContext (aStatic);
+    m_aLastPatternDyn = ret;
+    return ret;
   }
 
   /**

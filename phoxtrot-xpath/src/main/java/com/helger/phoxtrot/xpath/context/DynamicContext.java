@@ -334,12 +334,18 @@ public final class DynamicContext
    *
    * @param aStatic
    *        The other static context.
-   * @return The derived context.
+   * @return The derived context, or this context if its static context is equivalent at run time
+   *         ({@link StaticContext#isRunTimeEquivalent(StaticContext)}): then
+   *         {@link #getStaticContext()} keeps returning the equivalent one.
    */
   @NonNull
   public DynamicContext withStaticContext (@NonNull final StaticContext aStatic)
   {
     ValueEnforcer.notNull (aStatic, "Static");
+    // Optimisation: no new context for a static context with the same run-time fields (XSLT: the
+    // expressions of a stylesheet differ mostly in their declared variables only)
+    if (m_aStatic.isRunTimeEquivalent (aStatic))
+      return this;
     return new DynamicContext (aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, m_aFrame);
   }
 

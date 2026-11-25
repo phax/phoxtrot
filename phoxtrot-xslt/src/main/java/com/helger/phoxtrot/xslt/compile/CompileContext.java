@@ -274,6 +274,8 @@ public final class CompileContext
     ret.setSchemaSet (m_aCompiler.getStylesheet ().getSchemaSet ());
     if (isXslt10Behaviour (aEl))
       ret.setXPath10Compatibility (true).setUnknownFunctionErrorCode ("XTDE1425");
+    // A later change of a run-time field drops the identity again
+    ret.internRunTimeIdentity (m_aCompiler.getRunTimeIdentities ());
     return ret;
   }
 
@@ -305,7 +307,7 @@ public final class CompileContext
     {
       final StaticContext aSC = createStaticContext (aEl);
       if (bTextValueTemplate)
-        aSC.setXPath10Compatibility (false).setUnknownFunctionErrorCode (null);
+        aSC.setXPath10Compatibility (false).setUnknownFunctionErrorCode (null).internRunTimeIdentity (m_aCompiler.getRunTimeIdentities ());
       final IExpr aExpr = XPathParser.parse (sExpr, aSC);
       final StreamabilityIndex aIndex = m_aCompiler.getStreamabilityIndex ();
       if (aIndex != null)

@@ -18,11 +18,14 @@ package com.helger.phoxtrot.xpath.context;
 
 import java.net.URI;
 import java.net.URISyntaxException;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Set;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsHashMap;
@@ -55,6 +58,31 @@ public final class StaticContext
   /** The XSD version used unless set otherwise. */
   public static final EXsdVersion DEFAULT_XSD_VERSION = EXsdVersion.V10;
 
+  /**
+   * The fields of a static context that evaluation can read (everything except the declared
+   * variables, which only the compilation reads), compared by value; function library, decimal
+   * formats and schema set by identity.
+   */
+  @Immutable
+  private record RunTimeKey (Map <String, String> namespaces,
+                             String defaultElementNamespace,
+                             String inScopeDefaultNamespace,
+                             String defaultFunctionNamespace,
+                             String baseUri,
+                             FunctionLibrary functions,
+                             boolean xpath10Compatibility,
+                             String unknownFunctionErrorCode,
+                             boolean staticTyping,
+                             ItemType contextItemStaticType,
+                             String defaultCollation,
+                             FormatDecimalFormat defaultDecimalFormat,
+                             Map <XdmQName, FormatDecimalFormat> decimalFormats,
+                             EXmlVersion xmlVersion,
+                             EXsdVersion xsdVersion,
+                             boolean xsdVersionSet,
+                             IXdmSchemaSet schemaSet)
+  {}
+
   private final ICommonsMap <String, String> m_aNamespaces = new CommonsHashMap <> ();
   private String m_sDefaultElementNamespace = "";
   private String m_sInScopeDefaultNamespace = "";
@@ -84,6 +112,9 @@ public final class StaticContext
   private IXdmSchemaSet m_aSchemaSet;
   // The default collation as resolved by getResolvedDefaultCollation; null until the first successful resolution
   private volatile ICollation m_aResolvedDefaultCollation;
+  // The shared key of all static contexts with the same run-time fields (internRunTimeIdentity); null
+  // if not interned or changed since
+  private Object m_aRunTimeIdentity;
 
   /**
    * Create a static context with the prefixes <code>xml</code>,
@@ -117,6 +148,8 @@ public final class StaticContext
   @NonNull
   public StaticContext declareNamespace (@NonNull final String sPrefix, @NonNull final String sNamespaceUri)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     ValueEnforcer.notEmpty (sPrefix, "Prefix");
     ValueEnforcer.notNull (sNamespaceUri, "NamespaceUri");
     m_aNamespaces.put (sPrefix, sNamespaceUri);
@@ -133,6 +166,8 @@ public final class StaticContext
   @NonNull
   public StaticContext removeAllNamespacesExceptXml ()
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_aNamespaces.entrySet ().removeIf (e -> !"xml".equals (e.getKey ()));
     return this;
   }
@@ -162,6 +197,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setDefaultElementNamespace (@NonNull final String sNamespaceUri)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_sDefaultElementNamespace = ValueEnforcer.notNull (sNamespaceUri, "NamespaceUri");
     return this;
   }
@@ -186,6 +223,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setInScopeDefaultNamespace (@NonNull final String sNamespaceUri)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     ValueEnforcer.notNull (sNamespaceUri, "NamespaceUri");
     m_sInScopeDefaultNamespace = sNamespaceUri;
     return this;
@@ -204,6 +243,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setDefaultFunctionNamespace (@NonNull final String sNamespaceUri)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_sDefaultFunctionNamespace = ValueEnforcer.notNull (sNamespaceUri, "NamespaceUri");
     return this;
   }
@@ -221,6 +262,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setBaseUri (@Nullable final String sBaseUri)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_sBaseUri = sBaseUri;
     m_aResolvedDefaultCollation = null;
     return this;
@@ -235,6 +278,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setFunctionLibrary (@NonNull final FunctionLibrary aFunctions)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_aFunctions = ValueEnforcer.notNull (aFunctions, "Functions");
     return this;
   }
@@ -253,6 +298,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setXPath10Compatibility (final boolean bXPath10Compatibility)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_bXPath10Compatibility = bXPath10Compatibility;
     return this;
   }
@@ -287,6 +334,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setUnknownFunctionErrorCode (@Nullable final String sUnknownFunctionErrorCode)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_sUnknownFunctionErrorCode = sUnknownFunctionErrorCode;
     return this;
   }
@@ -315,6 +364,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setStaticTyping (final boolean bStaticTyping)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_bStaticTyping = bStaticTyping;
     return this;
   }
@@ -347,6 +398,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setContextItemStaticType (@Nullable final ItemType aType)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_aContextItemStaticType = aType;
     return this;
   }
@@ -375,6 +428,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setSchemaSet (@Nullable final IXdmSchemaSet aSchemaSet)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_aSchemaSet = aSchemaSet;
     return this;
   }
@@ -524,6 +579,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setDefaultCollation (@NonNull final String sCollationUri)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_sDefaultCollation = ValueEnforcer.notEmpty (sCollationUri, "CollationUri");
     m_aResolvedDefaultCollation = null;
     return this;
@@ -602,6 +659,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setDefaultDecimalFormat (@NonNull final FormatDecimalFormat aFormat)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_aDefaultDecimalFormat = ValueEnforcer.notNull (aFormat, "Format");
     return this;
   }
@@ -630,6 +689,8 @@ public final class StaticContext
   @NonNull
   public StaticContext addDecimalFormat (@NonNull final XdmQName aName, @NonNull final FormatDecimalFormat aFormat)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     ValueEnforcer.notNull (aName, "Name");
     ValueEnforcer.notNull (aFormat, "Format");
     m_aDecimalFormats.put (aName, aFormat);
@@ -649,6 +710,8 @@ public final class StaticContext
   @NonNull
   public StaticContext setXmlVersion (@NonNull final EXmlVersion eXmlVersion)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_eXmlVersion = ValueEnforcer.notNull (eXmlVersion, "XmlVersion");
     return this;
   }
@@ -675,8 +738,65 @@ public final class StaticContext
   @NonNull
   public StaticContext setXsdVersion (@NonNull final EXsdVersion eXsdVersion)
   {
+    // Any change of a run-time field ends the run-time equivalence with other contexts
+    m_aRunTimeIdentity = null;
     m_eXsdVersion = ValueEnforcer.notNull (eXsdVersion, "XsdVersion");
     m_bXsdVersionSet = true;
     return this;
+  }
+
+  /**
+   * Give this context the run-time identity that all contexts with the same run-time fields
+   * interned in the same map share (see {@link #isRunTimeEquivalent(StaticContext)}). Call it when
+   * the context is filled; any later change of a run-time field drops the identity again, so a
+   * changed context is only equivalent to itself.
+   *
+   * @param aIdentities
+   *        The map the host keeps for one compilation (key to identity). Filled by this method.
+   * @return this for chaining
+   */
+  @NonNull
+  public StaticContext internRunTimeIdentity (@NonNull final Map <Object, Object> aIdentities)
+  {
+    ValueEnforcer.notNull (aIdentities, "Identities");
+    // Copies of the maps, so that a later change of this context cannot change the shared key
+    final RunTimeKey aKey = new RunTimeKey (new HashMap <> (m_aNamespaces),
+                                            m_sDefaultElementNamespace,
+                                            m_sInScopeDefaultNamespace,
+                                            m_sDefaultFunctionNamespace,
+                                            m_sBaseUri,
+                                            m_aFunctions,
+                                            m_bXPath10Compatibility,
+                                            m_sUnknownFunctionErrorCode,
+                                            m_bStaticTyping,
+                                            m_aContextItemStaticType,
+                                            m_sDefaultCollation,
+                                            m_aDefaultDecimalFormat,
+                                            new HashMap <> (m_aDecimalFormats),
+                                            m_eXmlVersion,
+                                            m_eXsdVersion,
+                                            m_bXsdVersionSet,
+                                            m_aSchemaSet);
+    m_aRunTimeIdentity = aIdentities.computeIfAbsent (aKey, k -> k);
+    return this;
+  }
+
+  /**
+   * Two static contexts are equivalent at run time if they are the same or were interned into the
+   * same map with the same run-time fields and not changed since (see
+   * {@link #internRunTimeIdentity(Map)}). Evaluation gives the same results with either of them, as
+   * evaluation reads no declared variables from the static context, so a dynamic context can keep
+   * its static context for an expression compiled with an equivalent one
+   * ({@link DynamicContext#withStaticContext(StaticContext)}).
+   *
+   * @param aOther
+   *        The other context. May be <code>null</code>.
+   * @return <code>true</code> if they are equivalent at run time.
+   */
+  public boolean isRunTimeEquivalent (@Nullable final StaticContext aOther)
+  {
+    if (aOther == this)
+      return true;
+    return aOther != null && m_aRunTimeIdentity != null && m_aRunTimeIdentity == aOther.m_aRunTimeIdentity;
   }
 }

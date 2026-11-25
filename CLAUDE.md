@@ -347,6 +347,17 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   of its variables takes `VariableFrame.getSnapshot ()` (`InlineFunctionItem`); a lazy value is evaluated with the
   frame it is read from (`VariableFrame.AbstractLazyValue.compute (holder)`); `CallMemo` takes the tokens of frame
   variables from their slots. `LocalVariableSlotTest` covers shadowing, loops, escaping closures and the memo.
+- Static context reuse (closure compilation C2): every XSLT expression and pattern has its own `StaticContext`,
+  but most differ only in their declared variables, which evaluation never reads. `CompileContext.createStaticContext`
+  interns each one (`StaticContext.internRunTimeIdentity`, one map per compilation,
+  `StylesheetCompiler.getRunTimeIdentities`); every setter of a run-time field drops the identity again (a new
+  run-time field must be added to `RunTimeKey` and reset it). `isRunTimeEquivalent` contexts give the same results,
+  so `DynamicContext.withStaticContext` returns the same context for one, `XsltContext.getDynamicContextFor` keeps
+  the context of the last expression evaluated in it and `Engine.getPatternContext (StaticContext)` that of the last
+  pattern. Never change the static context of the root context of a run to make it equivalent: instructions read it
+  directly (declared type conversions must not run in XPath 1.0 mode). `StaticContextReuseTest` uses constructs that
+  read the static context at run time (casts to `xs:QName`, collations, `static-base-uri`, 1.0 comparisons);
+  names in steps are resolved at compile time and test nothing here.
 - Static calls resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr` (cached per library instance
   and `FunctionLibrary.getModificationStamp`, the sum of the change counters of the parent chain). Every new
   `FunctionLibrary` method that changes what `getFunction` returns must call `_checkWritable` and increment

@@ -230,6 +230,8 @@ public final class StylesheetCompiler
   private PackageModel m_aPackages;
   private final ICommonsMap <UserFunction, FunctionSignature> m_aFunctionSignatures = new CommonsHashMap <> ();
   private final ICommonsMap <XslElement, UserFunction> m_aOriginalFunctions = new CommonsHashMap <> ();
+  // The run-time identities of the static contexts of this compilation (StaticContext.internRunTimeIdentity)
+  private final ICommonsMap <Object, Object> m_aRunTimeIdentities = new CommonsHashMap <> ();
   private final ICommonsMap <PackageUnit, FunctionLibrary> m_aUnitLibraries = new CommonsHashMap <> ();
   private final ICommonsMap <XslElement, FunctionLibrary> m_aDeclLibraries = new CommonsHashMap <> ();
   private final ICommonsMap <XslElement, XdmQName> m_aOriginalNames = new CommonsHashMap <> ();
@@ -306,6 +308,18 @@ public final class StylesheetCompiler
    *         {@link XsltCompileOptions#isEnforceStreamability()} nor
    *         {@link XsltCompileOptions#isStreamingClaim()}).
    */
+  /**
+   * @return The map the static contexts of this compilation are interned into
+   *         ({@link StaticContext#internRunTimeIdentity(java.util.Map)}), so that
+   *         evaluation can keep the dynamic context between expressions with
+   *         equivalent static contexts.
+   */
+  @NonNull
+  public ICommonsMap <Object, Object> getRunTimeIdentities ()
+  {
+    return m_aRunTimeIdentities;
+  }
+
   @Nullable
   public StreamabilityIndex getStreamabilityIndex ()
   {

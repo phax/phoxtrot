@@ -349,6 +349,10 @@ v0.4.0 - 2026-11-26
 * XSLT local variables and parameters are bound by slot in a variable frame per template or function call instead of
   by name along a chain of contexts (new public classes `VariableFrame`, `VariableFrameLayout`, `VariableSlot`;
   `DynamicContext.getFrame`/`withFrame`, `StaticContext.declareFrameVariable`/`getFrameVariable`)
+* An XSLT expression or pattern evaluation creates no dynamic context of its own when its static context differs
+  from the previous one only in the declared variables (new `StaticContext.internRunTimeIdentity` and
+  `isRunTimeEquivalent`; `DynamicContext.withStaticContext` returns the context itself for an equivalent static
+  context)
 * New module `phoxtrot-cli`: a command line client (executable JAR) with `xslt check` (static errors, `--streamable`),
   `xslt run`, `xpath check` (static errors, static typing), `xpath streamability`, `xpath eval`, `xsd check` and
   `xsd validate`. It reads only local files from the folders named on the command line unless `--allow-file-access`

@@ -19,10 +19,11 @@ package com.helger.phoxtrot.xslt.runtime;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
-import com.helger.annotation.concurrent.Immutable;
+import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.context.VariableFrame;
 import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
@@ -30,16 +31,20 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 /**
  * The run-time context of an instruction: the XPath dynamic context (focus,
  * current item, variables, run-wide settings) whose host state is the
- * {@link XsltState}, plus the {@link Engine} of the transformation. Immutable;
- * every change creates a derived context.
+ * {@link XsltState}, plus the {@link Engine} of the transformation. Every
+ * change creates a derived context; the only mutable field is a cache of the
+ * dynamic context derived for expressions ({@link #getDynamicContextFor(StaticContext)}).
  *
  * @author Philip Helger
  */
-@Immutable
+@NotThreadSafe
 public final class XsltContext
 {
   private final Engine m_aEngine;
   private final DynamicContext m_aDyn;
+  // The dynamic context of the last expression evaluated in this context (getDynamicContextFor);
+  // only a cache: a context is used by one thread, and a lost update only costs a new context
+  private DynamicContext m_aLastExprDyn;
 
   public XsltContext (@NonNull final Engine aEngine, @NonNull final DynamicContext aDyn)
   {
@@ -74,6 +79,31 @@ public final class XsltContext
   public DynamicContext getDynamicContext ()
   {
     return m_aDyn;
+  }
+
+  /**
+   * Get the dynamic context to evaluate an expression compiled with the given
+   * static context: this context's dynamic context with that static context
+   * ({@link DynamicContext#withStaticContext(StaticContext)}). The context
+   * derived for the last expression is reused if its static context is
+   * equivalent at run time
+   * ({@link StaticContext#isRunTimeEquivalent(StaticContext)}).
+   *
+   * @param aStatic
+   *        The static context of the expression.
+   * @return The dynamic context. Never <code>null</code>.
+   */
+  @NonNull
+  public DynamicContext getDynamicContextFor (@NonNull final StaticContext aStatic)
+  {
+    final DynamicContext aLast = m_aLastExprDyn;
+    // Optimisation: the expressions evaluated in one context (a template body, an iteration) mostly
+    // have equivalent static contexts, so only the first creates a context
+    if (aLast != null && aLast.getStaticContext ().isRunTimeEquivalent (aStatic))
+      return aLast;
+    final DynamicContext ret = m_aDyn.withStaticContext (aStatic);
+    m_aLastExprDyn = ret;
+    return ret;
   }
 
   /** @return The XSLT state, never <code>null</code>. */

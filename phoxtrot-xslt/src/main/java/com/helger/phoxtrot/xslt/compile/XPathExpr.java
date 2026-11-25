@@ -90,7 +90,7 @@ public final class XPathExpr
   @NonNull
   public DynamicContext createDynamicContext (@NonNull final XsltContext aCtx)
   {
-    return aCtx.getDynamicContext ().withStaticContext (m_aStaticContext);
+    return aCtx.getDynamicContextFor (m_aStaticContext);
   }
 
   /**
@@ -104,7 +104,7 @@ public final class XPathExpr
   @NonNull
   public XdmSequence evaluate (@NonNull final XsltContext aCtx)
   {
-    return XPathEvaluator.evaluate (m_aCompiled, aCtx.getDynamicContext ().withStaticContext (m_aStaticContext));
+    return XPathEvaluator.evaluate (m_aCompiled, aCtx.getDynamicContextFor (m_aStaticContext));
   }
 
   /**
@@ -116,7 +116,7 @@ public final class XPathExpr
   public boolean evaluateBoolean (@NonNull final XsltContext aCtx)
   {
     return XPathEvaluator.evaluateEffectiveBooleanValue (m_aCompiled,
-                                                         aCtx.getDynamicContext ().withStaticContext (m_aStaticContext));
+                                                         aCtx.getDynamicContextFor (m_aStaticContext));
   }
 
   /**

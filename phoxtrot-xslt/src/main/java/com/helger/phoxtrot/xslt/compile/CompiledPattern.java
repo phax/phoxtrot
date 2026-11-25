@@ -57,6 +57,6 @@ public record CompiledPattern (@NonNull XsltPattern pattern, @NonNull StaticCont
       aCtx.getEngine ().getPatternContext ().checkInterrupt ();
       return false;
     }
-    return pattern.matches (aItem, aCtx.getEngine ().getPatternContext ().withStaticContext (staticContext));
+    return pattern.matches (aItem, aCtx.getEngine ().getPatternContext (staticContext));
   }
 }
