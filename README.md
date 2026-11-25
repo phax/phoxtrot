@@ -364,6 +364,11 @@ v0.4.0 - 2026-11-26
 * XSD: the xs:base64Binary lexical check uses a lookup table and a tight loop for the leading run of base64
   characters instead of range comparisons, whose branches are mispredicted on base64 data: about 8 times faster,
   which halves the validation time of an e-invoice with a 200 KB attachment
+* `XdmParser` works around a bug of the XML 1.1 parser of the JDK (JDK 17 to 27, XML 1.0 is not affected), which drops
+  or repeats characters of a text when a `]` is the last character of its buffer (after the first 64 characters, then
+  every 8 KB; for example `a]a]]&gt;` read as `a]a]a]]>`): a source given as characters (a string, a character
+  stream) is read through a reader that never ends a chunk with `]`. A source of bytes or a URI is decoded by the JDK
+  parser itself and stays affected; a CDATA section ending in `]` (`]]]>`) is still a parse error under XML 1.1
 * `XdmTreeBuilder` uses a new buffer for each text node that is merged from several character events: a reused
   buffer that once held a non-Latin-1 character stays UTF-16, so all later text was inflated and compressed again
 * XSD: new `XsdSchema.assessText` validates instance text like `validateText` and also reports the governing type

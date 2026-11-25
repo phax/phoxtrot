@@ -403,6 +403,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   in use (a nested parse on the same thread creates its own) and reset with its handlers cleared afterwards, so the
   cache holds no tree. Every per-parse setting must stay in `_parse` (set on each parse), the factory settings in
   `_createSAXParser`.
+  A source with a character stream is read through `BracketHoldBackReader` (never ends a chunk with `]`): the XML 1.1
+  scanner of the JDK drops or repeats text characters when a `]` ends its buffer. Keep it for every character source;
+  byte sources are decoded by the JDK and stay affected. `XdmStreamReader` refuses XML 1.1, so it needs no wrapper.
 - Streamability (XSLT 3.0 section 19): `com.helger.phoxtrot.xpath.stream.XPathStreamability` classifies expressions and
   patterns; the XSLT layer supplies its knowledge through `StreamContext`. It fails closed: an unknown construct is
   roaming/free-ranging, never "streamable". `XPathStreamabilityAnalyzer` is its public facade (no AST in its API); its

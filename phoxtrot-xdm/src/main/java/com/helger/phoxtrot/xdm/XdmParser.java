@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xdm;
 
 import java.io.IOException;
+import java.io.Reader;
 import java.io.StringReader;
 import java.net.URI;
 import java.net.URISyntaxException;
@@ -623,6 +624,29 @@ public class XdmParser
   }
 
   /**
+   * Get the source the JDK parser reads: a source with a character stream is read through a
+   * {@link BracketHoldBackReader}, which keeps the XML 1.1 scanner of the JDK from misreading a
+   * <code>]</code> at the end of its buffer. A source of bytes or a system ID is decoded by the
+   * parser itself and is passed on unchanged. The given source is not changed.
+   *
+   * @param aSource
+   *        The source to read.
+   * @return The source to pass to the parser.
+   */
+  @NonNull
+  private static InputSource _getWithBracketHoldBack (@NonNull final InputSource aSource)
+  {
+    final Reader aCharStream = aSource.getCharacterStream ();
+    if (aCharStream == null)
+      return aSource;
+    final InputSource ret = new InputSource (new BracketHoldBackReader (aCharStream));
+    ret.setPublicId (aSource.getPublicId ());
+    ret.setSystemId (aSource.getSystemId ());
+    ret.setEncoding (aSource.getEncoding ());
+    return ret;
+  }
+
+  /**
    * Read a source with the JDK SAX parser into a tree built by {@link XdmTreeBuilder}: namespace
    * aware, not DTD validating, secure processing on, external entities and the external DTD subset
    * only with {@link #setLoadExternalEntities(boolean)} (then through the
@@ -681,7 +705,7 @@ public class XdmParser
         aReader.setProperty ("http://www.oracle.com/xml/jaxp/properties/" + aLimit[0], aLimit[1]);
       aReader.setProperty ("http://www.oracle.com/xml/jaxp/properties/maxElementDepth",
                            Integer.toString (m_nMaxElementDepth));
-      aReader.parse (aSource);
+      aReader.parse (_getWithBracketHoldBack (aSource));
       final IXdmNode aDocument = aBuilder.getDocument ();
       if (m_aSchemaSet != null)
         m_aSchemaSet.validateDocument (aDocument);
