@@ -41,7 +41,7 @@ import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
-import com.helger.phoxtrot.xpath.eval.CompiledExpr;
+import com.helger.phoxtrot.xpath.eval.AbstractCompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 
 /**
@@ -66,7 +66,7 @@ public final class CompiledXsltPattern implements XsltPattern
   // slot; null if unknown
   private final StaticContext m_aStaticCtx;
   // The compiled expressions the matcher evaluates, by identity
-  private final Map <IExpr, CompiledExpr> m_aCompiled;
+  private final Map <IExpr, AbstractCompiledExpr> m_aCompiled;
   // The paths of a pattern that is a union of paths, for the quick test of
   // canMatch, with boolean predicates of parenthesised unions distributed
   // over their paths; null for any other pattern
@@ -88,7 +88,7 @@ public final class CompiledXsltPattern implements XsltPattern
    */
   private static void _compileEvaluated (@NonNull final IExpr aPattern,
                                          @Nullable final StaticContext aStaticCtx,
-                                         @NonNull final Map <IExpr, CompiledExpr> aOut)
+                                         @NonNull final Map <IExpr, AbstractCompiledExpr> aOut)
   {
     final ICommonsList <IExpr> aStack = new CommonsArrayList <> (aPattern);
     while (aStack.isNotEmpty ())
@@ -170,7 +170,7 @@ public final class CompiledXsltPattern implements XsltPattern
       }
     }
     m_aFinalNames = m_aUnionPaths == null ? null : _getFinalNames (m_aUnionPaths);
-    final Map <IExpr, CompiledExpr> aCompiled = new IdentityHashMap <> ();
+    final Map <IExpr, AbstractCompiledExpr> aCompiled = new IdentityHashMap <> ();
     _compileEvaluated (aExpr, aStaticCtx, aCompiled);
     if (m_aUnionPaths != null)
       for (final IExpr.PathExpr aPath : m_aUnionPaths)

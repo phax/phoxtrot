@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.phoxtrot.xslt.runtime.IXsltOutput;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
-import com.helger.phoxtrot.xslt.tree.XslNode;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 
 /**
  * A compiled instruction of a sequence constructor. Implementations are
@@ -47,5 +47,5 @@ public interface IInstruction
 
   /** @return The stylesheet node for error locations, or <code>null</code>. */
   @Nullable
-  XslNode getLocation ();
+  AbstractXslNode getLocation ();
 }

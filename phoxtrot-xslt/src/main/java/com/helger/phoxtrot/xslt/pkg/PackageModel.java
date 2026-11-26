@@ -28,9 +28,9 @@ import com.helger.collection.commons.ICommonsMap;
 import com.helger.collection.commons.ICommonsSet;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xslt.XsltException;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
 import com.helger.phoxtrot.xslt.tree.XslModule;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
 /**
@@ -84,7 +84,7 @@ public final class PackageModel
   /**
    * Add a module to a package and remember which package it belongs to. A
    * module of a library package gets the index of its unit as package
-   * qualifier (see {@link #qualify(XslNode, XdmQName)}); modules of the
+   * qualifier (see {@link #qualify(AbstractXslNode, XdmQName)}); modules of the
    * principal package keep the empty qualifier.
    *
    * @param aUnit
@@ -155,13 +155,13 @@ public final class PackageModel
    * @return The qualified name, the name itself in the principal package.
    */
   @NonNull
-  public static XdmQName qualify (@NonNull final XslNode aNode, @NonNull final XdmQName aName)
+  public static XdmQName qualify (@NonNull final AbstractXslNode aNode, @NonNull final XdmQName aName)
   {
     return _qualify (aNode.getModule ().getPackageQualifier (), aName);
   }
 
   /**
-   * Like {@link #qualify(XslNode, XdmQName)} for a name used at run time by an
+   * Like {@link #qualify(AbstractXslNode, XdmQName)} for a name used at run time by an
    * expression.
    *
    * @param aScope
@@ -203,7 +203,7 @@ public final class PackageModel
    * @return The package it is written in.
    */
   @NonNull
-  public PackageUnit getUnit (@NonNull final XslNode aNode)
+  public PackageUnit getUnit (@NonNull final AbstractXslNode aNode)
   {
     final PackageUnit ret = m_aByModule.get (aNode.getModule ());
     return ret != null ? ret : getPrincipal ();
@@ -214,7 +214,7 @@ public final class PackageModel
    *        A stylesheet node.
    * @return <code>true</code> if it is written in the principal package.
    */
-  public boolean isInPrincipal (@NonNull final XslNode aNode)
+  public boolean isInPrincipal (@NonNull final AbstractXslNode aNode)
   {
     return getUnit (aNode).isPrincipal ();
   }
@@ -227,7 +227,7 @@ public final class PackageModel
    * @return <code>true</code> if the code at the node cannot see that
    *         component because a used package keeps it to itself.
    */
-  public boolean isHidden (@NonNull final XslNode aNode, @NonNull final String sSymbolicName)
+  public boolean isHidden (@NonNull final AbstractXslNode aNode, @NonNull final String sSymbolicName)
   {
     return isMultiPackage () && getUnit (aNode).hidden ().contains (sSymbolicName);
   }

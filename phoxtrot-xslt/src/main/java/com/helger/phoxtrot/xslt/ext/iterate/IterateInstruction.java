@@ -38,8 +38,8 @@ import com.helger.phoxtrot.xslt.runtime.IXsltOutput;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
 import com.helger.phoxtrot.xslt.stream.IStreamRecordHandler;
 import com.helger.phoxtrot.xslt.stream.StreamConsumer;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 
 /**
  * xsl:iterate with its parameters and xsl:on-completion, plus xsl:break and
@@ -287,8 +287,8 @@ public final class IterateInstruction
     final ICommonsList <VariableDef> aParams = new CommonsArrayList <> ();
     CompileContext aScope = aCtx;
     XslElement aCompletion = null;
-    final ICommonsList <XslNode> aBodyNodes = new CommonsArrayList <> ();
-    for (final XslNode aNode : aEl.getChildren ())
+    final ICommonsList <AbstractXslNode> aBodyNodes = new CommonsArrayList <> ();
+    for (final AbstractXslNode aNode : aEl.getChildren ())
     {
       if (aNode instanceof final XslElement aChild && aChild.isXsl ("param"))
       {

@@ -37,8 +37,8 @@ import com.helger.phoxtrot.xdm.XmlNames;
 import com.helger.phoxtrot.xslt.XsltException;
 import com.helger.phoxtrot.xslt.compile.StylesheetCompiler;
 import com.helger.phoxtrot.xslt.model.Mode;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
 /**
@@ -1220,7 +1220,7 @@ public final class PackageChecks
    * @return The outermost element of its module.
    */
   @NonNull
-  public static XslElement getModuleRoot (@NonNull final XslNode aNode)
+  public static XslElement getModuleRoot (@NonNull final AbstractXslNode aNode)
   {
     XslElement ret = aNode instanceof final XslElement aEl ? aEl : aNode.getParent ();
     while (ret.getParent () != null)

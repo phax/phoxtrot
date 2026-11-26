@@ -23,7 +23,7 @@ import com.helger.phoxtrot.xdm.IXdmItem;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
-import com.helger.phoxtrot.xpath.eval.CompiledExpr;
+import com.helger.phoxtrot.xpath.eval.AbstractCompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 import com.helger.phoxtrot.xpath.ops.Atomizer;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
@@ -42,7 +42,7 @@ public final class XPathExpr
 {
   private final String m_sSource;
   private final IExpr m_aExpr;
-  private final CompiledExpr m_aCompiled;
+  private final AbstractCompiledExpr m_aCompiled;
   private final StaticContext m_aStaticContext;
   private final XslElement m_aElement;
 

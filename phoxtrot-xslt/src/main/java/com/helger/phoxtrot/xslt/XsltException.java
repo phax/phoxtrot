@@ -27,7 +27,7 @@ import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.XPathException;
-import com.helger.phoxtrot.xslt.tree.XslNode;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 
 /**
  * A static or dynamic XSLT error with its W3C error code (e.g. XTSE0010,
@@ -139,7 +139,7 @@ public class XsltException extends XPathException
    * @return The new exception.
    */
   @NonNull
-  public static XsltException at (@Nullable final XslNode aNode,
+  public static XsltException at (@Nullable final AbstractXslNode aNode,
                                   @NonNull final String sCode,
                                   @NonNull final String sMessage)
   {
@@ -161,7 +161,7 @@ public class XsltException extends XPathException
    * @return The located error (possibly the same object).
    */
   @NonNull
-  public static XPathException locate (@NonNull final XPathException aEx, @Nullable final XslNode aNode)
+  public static XPathException locate (@NonNull final XPathException aEx, @Nullable final AbstractXslNode aNode)
   {
     if (aNode == null || (aEx instanceof final XsltException aXEx && aXEx.isLocated ()))
       return aEx;

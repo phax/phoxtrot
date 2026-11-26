@@ -48,8 +48,8 @@ import com.helger.phoxtrot.xslt.model.VariableDef;
 import com.helger.phoxtrot.xslt.runtime.ContentOutput;
 import com.helger.phoxtrot.xslt.runtime.NamespaceFixup;
 import com.helger.phoxtrot.xslt.schema.ValidationRequest;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -97,7 +97,7 @@ public final class CoreInstructions
         default:
           break;
       }
-    final ICommonsList <XslNode> aSiblings = aParent.getChildren ();
+    final ICommonsList <AbstractXslNode> aSiblings = aParent.getChildren ();
     final int nIndex = aSiblings.indexOf (aText);
     if (nIndex + 1 < aSiblings.size () && aSiblings.get (nIndex + 1) instanceof final XslElement aNext && aNext.isXsl ())
     {
@@ -123,14 +123,14 @@ public final class CoreInstructions
   @NonNull
   public static SequenceConstructor compileSequenceConstructor (@NonNull final CompileContext aCtx,
                                                                 @NonNull final XslElement aParent,
-                                                                @NonNull final List <XslNode> aChildren)
+                                                                @NonNull final List <AbstractXslNode> aChildren)
   {
     final ICommonsList <IInstruction> aInstrs = new CommonsArrayList <> ();
     CompileContext aCur = aCtx;
     boolean bHasMarker = false;
     for (int nIndex = 0; nIndex < aChildren.size (); ++nIndex)
     {
-      final XslNode aNode = aChildren.get (nIndex);
+      final AbstractXslNode aNode = aChildren.get (nIndex);
       if (aNode instanceof final XslText aText)
       {
         if (aText.isWhitespaceOnly () && (!aText.isXmlSpacePreserve () || _isStrippedDespitePreserve (aText)))
@@ -508,7 +508,7 @@ public final class CoreInstructions
    */
   private static boolean _hasContent (@NonNull final XslElement aEl)
   {
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof XslElement || !((XslText) aNode).isWhitespaceOnly () ||
           (((XslText) aNode).isXmlSpacePreserve () && !((XslText) aNode).getValue ().isEmpty ()))
         return true;

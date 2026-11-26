@@ -28,7 +28,7 @@ import com.helger.phoxtrot.xdm.XdmConstants;
  * @author Philip Helger
  */
 @NotThreadSafe
-public final class XslText extends XslNode
+public final class XslText extends AbstractXslNode
 {
   private final String m_sValue;
   private final int m_nLine;

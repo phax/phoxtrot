@@ -40,7 +40,7 @@ import com.helger.phoxtrot.xpath.fn.FnAccessor;
  * @author Philip Helger
  */
 @NotThreadSafe
-public final class XslElement extends XslNode
+public final class XslElement extends AbstractXslNode
 {
   /** XSLT 3.0 as a version number. */
   public static final BigDecimal VERSION_30 = new BigDecimal ("3.0");
@@ -50,7 +50,7 @@ public final class XslElement extends XslNode
   private final IXdmNode m_aSource;
   private final XdmQName m_aName;
   private final ICommonsOrderedMap <XdmQName, String> m_aAttrs = new CommonsLinkedHashMap <> ();
-  private final ICommonsList <XslNode> m_aChildren = new CommonsArrayList <> ();
+  private final ICommonsList <AbstractXslNode> m_aChildren = new CommonsArrayList <> ();
   // Lazily built and never changed afterwards (callers get a copy); volatile because xsl:evaluate and
   // createStaticContext read it from concurrent transformations of one compiled stylesheet. Two threads may both
   // build it, with the same content.
@@ -238,7 +238,7 @@ public final class XslElement extends XslNode
    * @param aChild
    *        The element or text node to append.
    */
-  public void appendChild (@NonNull final XslNode aChild)
+  public void appendChild (@NonNull final AbstractXslNode aChild)
   {
     aChild.setParent (this);
     m_aChildren.add (aChild);
@@ -250,14 +250,14 @@ public final class XslElement extends XslNode
    */
   public void removeLastChild ()
   {
-    final XslNode aChild = m_aChildren.removeLast ();
+    final AbstractXslNode aChild = m_aChildren.removeLast ();
     aChild.setParent (null);
   }
 
   /** @return The children (elements and merged text). */
   @NonNull
   @ReturnsMutableCopy
-  public ICommonsList <XslNode> getChildren ()
+  public ICommonsList <AbstractXslNode> getChildren ()
   {
     return m_aChildren.getClone ();
   }
@@ -273,7 +273,7 @@ public final class XslElement extends XslNode
   public ICommonsList <XslElement> getElementChildren ()
   {
     final ICommonsList <XslElement> ret = new CommonsArrayList <> ();
-    for (final XslNode aChild : m_aChildren)
+    for (final AbstractXslNode aChild : m_aChildren)
       if (aChild instanceof final XslElement aEl)
         ret.add (aEl);
     return ret;
@@ -289,7 +289,7 @@ public final class XslElement extends XslNode
   public ICommonsList <XslElement> getXslChildren (@NonNull final String sLocalName)
   {
     final ICommonsList <XslElement> ret = new CommonsArrayList <> ();
-    for (final XslNode aChild : m_aChildren)
+    for (final AbstractXslNode aChild : m_aChildren)
       if (aChild instanceof final XslElement aEl && aEl.isXsl (sLocalName))
         ret.add (aEl);
     return ret;

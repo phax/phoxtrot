@@ -29,12 +29,12 @@ import com.helger.annotation.concurrent.NotThreadSafe;
  * @author Philip Helger
  */
 @NotThreadSafe
-public abstract class XslNode
+public abstract class AbstractXslNode
 {
   private final XslModule m_aModule;
   private XslElement m_aParent;
 
-  protected XslNode (@NonNull final XslModule aModule)
+  protected AbstractXslNode (@NonNull final XslModule aModule)
   {
     m_aModule = aModule;
   }

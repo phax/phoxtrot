@@ -59,7 +59,7 @@ public final class InlineFunctionItem extends AbstractFunctionItem
    *        Their slots in the frame of the enclosing expression (or inline function body).
    */
   @Immutable
-  record Body (@NonNull CompiledExpr expr,
+  record Body (@NonNull AbstractCompiledExpr expr,
                @NonNull VariableFrameLayout layout,
                @NonNull VariableSlot [] paramSlots,
                @NonNull XdmQName [] captureNames,

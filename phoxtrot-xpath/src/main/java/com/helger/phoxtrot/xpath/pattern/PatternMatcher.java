@@ -45,8 +45,8 @@ import com.helger.phoxtrot.xpath.ast.IExpr.StepExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.eval.AbstractCompiledExpr;
 import com.helger.phoxtrot.xpath.eval.AxisNavigator;
-import com.helger.phoxtrot.xpath.eval.CompiledExpr;
 import com.helger.phoxtrot.xpath.eval.NodeTestMatcher;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 import com.helger.phoxtrot.xpath.ops.Atomizer;
@@ -91,7 +91,7 @@ final class PatternMatcher
   private final DynamicContext m_aCtx;
   private final IXdmNode m_aCandidate;
   private final Set <IExpr> m_aPositionalPredicates;
-  private final Map <IExpr, CompiledExpr> m_aCompiled;
+  private final Map <IExpr, AbstractCompiledExpr> m_aCompiled;
   private final StaticContext m_aStaticCtx;
 
   /**
@@ -113,7 +113,7 @@ final class PatternMatcher
   PatternMatcher (@NonNull final DynamicContext aCtx,
                   @NonNull final IXdmNode aCandidate,
                   @NonNull final Set <IExpr> aPositionalPredicates,
-                  @NonNull final Map <IExpr, CompiledExpr> aCompiled,
+                  @NonNull final Map <IExpr, AbstractCompiledExpr> aCompiled,
                   @Nullable final StaticContext aStaticCtx)
   {
     m_aStaticCtx = aStaticCtx;
@@ -131,7 +131,7 @@ final class PatternMatcher
   @NonNull
   private XdmSequence _evaluate (@NonNull final IExpr aExpr, @NonNull final DynamicContext aCtx)
   {
-    final CompiledExpr aCompiled = m_aCompiled.get (aExpr);
+    final AbstractCompiledExpr aCompiled = m_aCompiled.get (aExpr);
     return XPathEvaluator.evaluate (aCompiled != null ? aCompiled : compile (aExpr, m_aStaticCtx), aCtx);
   }
 
@@ -146,7 +146,7 @@ final class PatternMatcher
    * @return The compiled expression.
    */
   @NonNull
-  static CompiledExpr compile (@NonNull final IExpr aExpr, @Nullable final StaticContext aStaticCtx)
+  static AbstractCompiledExpr compile (@NonNull final IExpr aExpr, @Nullable final StaticContext aStaticCtx)
   {
     return aStaticCtx == null ? XPathEvaluator.compile (aExpr) : XPathEvaluator.compile (aExpr, aStaticCtx);
   }
@@ -556,14 +556,14 @@ final class PatternMatcher
     private final ENodeKind [] m_aPrincipalKinds;
     private final boolean m_bHasPredicates;
     // The compiled predicates per step
-    private final CompiledExpr [] [] m_aPredicates;
+    private final AbstractCompiledExpr [] [] m_aPredicates;
 
     DirectPath (final boolean bAbsolute, @NonNull final List <StepExpr> aSteps, @Nullable final StaticContext aStaticCtx)
     {
       m_bAbsolute = bAbsolute;
       m_aSteps = aSteps;
       m_aPrincipalKinds = new ENodeKind [aSteps.size ()];
-      m_aPredicates = new CompiledExpr [aSteps.size ()] [];
+      m_aPredicates = new AbstractCompiledExpr [aSteps.size ()] [];
       boolean bHasPredicates = false;
       for (int i = 0; i < m_aPrincipalKinds.length; ++i)
       {
@@ -571,7 +571,7 @@ final class PatternMatcher
         final List <IExpr> aPreds = aSteps.get (i).predicates ();
         if (!aPreds.isEmpty ())
           bHasPredicates = true;
-        m_aPredicates[i] = new CompiledExpr [aPreds.size ()];
+        m_aPredicates[i] = new AbstractCompiledExpr [aPreds.size ()];
         for (int j = 0; j < aPreds.size (); ++j)
           m_aPredicates[i][j] = compile (aPreds.get (j), aStaticCtx);
       }
@@ -622,7 +622,7 @@ final class PatternMatcher
         }
         // Position 1 of 1 is enough: no predicate reads the position, and a number (which would be
         // read as a position) hands the path back to the search
-        for (final CompiledExpr aPred : m_aPredicates[i])
+        for (final AbstractCompiledExpr aPred : m_aPredicates[i])
         {
           final XdmSequence aValue = XPathEvaluator.evaluate (aPred, aCtx.withFocus (aCur, 1, 1));
           if (_getNumericSingleton (aValue) != null)

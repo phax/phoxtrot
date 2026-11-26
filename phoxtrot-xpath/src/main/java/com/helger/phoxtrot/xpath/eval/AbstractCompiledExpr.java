@@ -31,18 +31,18 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
  * dispatches by a virtual call per node instead of a type switch over the expression tree. The
  * semantics are those of the expression; the static context still comes from the dynamic context
  * of each evaluation. Compiled expressions keep no state of a run and can be shared by concurrent
- * evaluations. Evaluate them through {@link XPathEvaluator#evaluate(CompiledExpr, DynamicContext)}
- * and {@link XPathEvaluator#evaluateEffectiveBooleanValue(CompiledExpr, DynamicContext)}, which
+ * evaluations. Evaluate them through {@link XPathEvaluator#evaluate(AbstractCompiledExpr, DynamicContext)}
+ * and {@link XPathEvaluator#evaluateEffectiveBooleanValue(AbstractCompiledExpr, DynamicContext)}, which
  * map a too deep Java stack to XPDY0130.
  *
  * @author Philip Helger
  */
 @Immutable
-public abstract class CompiledExpr
+public abstract class AbstractCompiledExpr
 {
   private final IExpr m_aExpr;
 
-  CompiledExpr (@NonNull final IExpr aExpr)
+  AbstractCompiledExpr (@NonNull final IExpr aExpr)
   {
     m_aExpr = aExpr;
   }

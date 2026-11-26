@@ -78,7 +78,7 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
  * Evaluator for {@link IExpr} (a port of go-xslt's <code>eval.go</code> and <code>axes.go</code>):
- * an expression is compiled once into a tree of {@link CompiledExpr} nodes
+ * an expression is compiled once into a tree of {@link AbstractCompiledExpr} nodes
  * ({@link #compile(IExpr)}), one node class per expression kind holding its compiled children, and
  * evaluated through them. Owner: evaluator workstream.
  *
@@ -102,7 +102,7 @@ public final class XPathEvaluator
   private static final Set <String> NAME_ACCESSORS = Set.of ("name", "local-name", "namespace-uri");
   /** The maximum nesting of <code>and</code> in a name predicate */
   private static final int MAX_NAME_COMPARISONS = 8;
-  private static final CompiledExpr [] NO_EXPRS = new CompiledExpr [0];
+  private static final AbstractCompiledExpr [] NO_EXPRS = new AbstractCompiledExpr [0];
 
   @PresentForCodeCoverage
   private static final XPathEvaluator INSTANCE = new XPathEvaluator ();
@@ -188,9 +188,9 @@ public final class XPathEvaluator
   /**
    * Evaluate a predicate for one item: a single number is compared with the context position,
    * anything else gives its effective boolean value. A predicate that can only be a node
-   * sequence is evaluated with early exit ({@link CompiledExpr#tryEarlyEbv(DynamicContext, boolean)}).
+   * sequence is evaluated with early exit ({@link AbstractCompiledExpr#tryEarlyEbv(DynamicContext, boolean)}).
    */
-  private static boolean _isPredicateTrue (@NonNull final CompiledExpr aPredicate,
+  private static boolean _isPredicateTrue (@NonNull final AbstractCompiledExpr aPredicate,
                                            @NonNull final IXdmItem aItem,
                                            final int nPosition,
                                            final int nSize,
@@ -245,7 +245,7 @@ public final class XPathEvaluator
    * registered under a built-in name is never assumed to be focus-free. A literal is left to the
    * literal shortcut of the callers.
    */
-  private static boolean _isFocusIndependentPredicate (@NonNull final CompiledExpr aPredicate,
+  private static boolean _isFocusIndependentPredicate (@NonNull final AbstractCompiledExpr aPredicate,
                                                        @NonNull final DynamicContext aCtx)
   {
     final IExpr aExpr = aPredicate.getExpression ();
@@ -256,17 +256,17 @@ public final class XPathEvaluator
 
   /**
    * One comparison of a name predicate (see
-   * {@link #_getNameComparisons(CompiledExpr, DynamicContext)}): a name accessor of the candidate
+   * {@link #_getNameComparisons(AbstractCompiledExpr, DynamicContext)}): a name accessor of the candidate
    * compared for equality with an expression that has the same value for every candidate. The
    * strings of that value are computed on first use, so within one predicate application.
    */
   @NotThreadSafe
   private static final class NameComparison
   {
-    private final CompiledExpr m_aComparison;
+    private final AbstractCompiledExpr m_aComparison;
     // Local name of fn:name, fn:local-name or fn:namespace-uri
     private final String m_sAccessor;
-    private final CompiledExpr m_aValue;
+    private final AbstractCompiledExpr m_aValue;
     private final boolean m_bValueComparison;
     private boolean m_bEvaluated;
     // Null if the value needs the generic comparison
@@ -274,7 +274,7 @@ public final class XPathEvaluator
 
     NameComparison (@NonNull final ComparisonNode aComparison,
                     @NonNull final String sAccessor,
-                    @NonNull final CompiledExpr aValue)
+                    @NonNull final AbstractCompiledExpr aValue)
     {
       m_aComparison = aComparison;
       m_sAccessor = sAccessor;
@@ -330,7 +330,7 @@ public final class XPathEvaluator
    *
    * @return <code>false</code> if the expression has another shape.
    */
-  private static boolean _collectNameComparisons (@NonNull final CompiledExpr aExpr,
+  private static boolean _collectNameComparisons (@NonNull final AbstractCompiledExpr aExpr,
                                                   @NonNull final DynamicContext aCtx,
                                                   final int nDepth,
                                                   @NonNull final ICommonsList <NameComparison> aTarget)
@@ -343,7 +343,7 @@ public final class XPathEvaluator
         (aComp.m_eOp != EComparisonOp.GENERAL_EQ && aComp.m_eOp != EComparisonOp.VALUE_EQ))
       return false;
     String sAccessor = _getNameAccessor (aComp.m_aLeft.getExpression (), aCtx);
-    CompiledExpr aValue = aComp.m_aRight;
+    AbstractCompiledExpr aValue = aComp.m_aRight;
     if (sAccessor == null)
     {
       sAccessor = _getNameAccessor (aComp.m_aRight.getExpression (), aCtx);
@@ -368,7 +368,7 @@ public final class XPathEvaluator
    *         predicate.
    */
   @Nullable
-  private static ICommonsList <NameComparison> _getNameComparisons (@NonNull final CompiledExpr aPredicate,
+  private static ICommonsList <NameComparison> _getNameComparisons (@NonNull final AbstractCompiledExpr aPredicate,
                                                                    @NonNull final DynamicContext aCtx)
   {
     if (!(aPredicate instanceof ComparisonNode) && !(aPredicate instanceof BinaryNode))
@@ -404,7 +404,7 @@ public final class XPathEvaluator
   }
 
   /**
-   * Test a name predicate (see {@link #_getNameComparisons(CompiledExpr, DynamicContext)}) for one
+   * Test a name predicate (see {@link #_getNameComparisons(AbstractCompiledExpr, DynamicContext)}) for one
    * candidate, as the generic evaluation would: the comparisons left to right, each stopping the
    * test when false. The compared value of a comparison is evaluated once, when the first
    * candidate reaches it; the name of the candidate is then compared directly. A candidate that is
@@ -451,16 +451,16 @@ public final class XPathEvaluator
 
   /**
    * Evaluate a focus-independent predicate (see
-   * {@link #_isFocusIndependentPredicate(CompiledExpr, DynamicContext)}) once, with the focus of
+   * {@link #_isFocusIndependentPredicate(AbstractCompiledExpr, DynamicContext)}) once, with the focus of
    * the given candidate, exactly as
-   * {@link #_isPredicateTrue(CompiledExpr, IXdmItem, int, int, DynamicContext)} evaluates it, and
+   * {@link #_isPredicateTrue(AbstractCompiledExpr, IXdmItem, int, int, DynamicContext)} evaluates it, and
    * say which candidates it keeps: a single number selects the one position it equals, anything
    * else all candidates or none by its effective boolean value.
    *
    * @return The 1-based position the predicate selects, {@link #SELECT_ALL} or
    *         {@link #SELECT_NONE}.
    */
-  private static int _evalFocusIndependentPredicate (@NonNull final CompiledExpr aPredicate,
+  private static int _evalFocusIndependentPredicate (@NonNull final AbstractCompiledExpr aPredicate,
                                                      @NonNull final IXdmItem aItem,
                                                      final int nPosition,
                                                      final int nSize,
@@ -485,7 +485,7 @@ public final class XPathEvaluator
    *         numeric literal.
    */
   @Nullable
-  private static XdmAtomic _getNumericLiteral (@NonNull final CompiledExpr aPredicate)
+  private static XdmAtomic _getNumericLiteral (@NonNull final AbstractCompiledExpr aPredicate)
   {
     if (aPredicate.getExpression () instanceof final IExpr.LiteralExpr aLiteral && aLiteral.value ().isNumeric ())
       return aLiteral.value ();
@@ -501,7 +501,7 @@ public final class XPathEvaluator
    * @return The 0-based index of the item, or -1 if no item from <code>nFrom</code> on passes.
    */
   private static int _findPassing (@NonNull final XdmSequence aSeq,
-                                   @NonNull final CompiledExpr aPredicate,
+                                   @NonNull final AbstractCompiledExpr aPredicate,
                                    final int nFrom,
                                    @NonNull final DynamicContext aCtx)
   {
@@ -546,7 +546,7 @@ public final class XPathEvaluator
    */
   @NonNull
   private static XdmSequence _applyPredicate (@NonNull final XdmSequence aSeq,
-                                              @NonNull final CompiledExpr aPredicate,
+                                              @NonNull final AbstractCompiledExpr aPredicate,
                                               @NonNull final DynamicContext aCtx)
   {
     final int nSize = aSeq.size ();
@@ -602,11 +602,11 @@ public final class XPathEvaluator
    */
   @NonNull
   private static XdmSequence _applyPredicates (@NonNull final XdmSequence aSeq,
-                                               @NonNull final CompiledExpr [] aPredicates,
+                                               @NonNull final AbstractCompiledExpr [] aPredicates,
                                                @NonNull final DynamicContext aCtx)
   {
     XdmSequence ret = aSeq;
-    for (final CompiledExpr aPredicate : aPredicates)
+    for (final AbstractCompiledExpr aPredicate : aPredicates)
       ret = _applyPredicate (ret, aPredicate, aCtx);
     return ret;
   }
@@ -617,7 +617,7 @@ public final class XPathEvaluator
    */
   @NonNull
   private static XdmSequence _applyPredicatesButLast (@NonNull final XdmSequence aSeq,
-                                                      @NonNull final CompiledExpr [] aPredicates,
+                                                      @NonNull final AbstractCompiledExpr [] aPredicates,
                                                       @NonNull final DynamicContext aCtx)
   {
     XdmSequence ret = aSeq;
@@ -631,7 +631,7 @@ public final class XPathEvaluator
    * item that passes.
    */
   private static boolean _hasPassingItem (@NonNull final XdmSequence aSeq,
-                                          @NonNull final CompiledExpr [] aPredicates,
+                                          @NonNull final AbstractCompiledExpr [] aPredicates,
                                           @NonNull final DynamicContext aCtx)
   {
     if (aPredicates.length == 0)
@@ -679,9 +679,9 @@ public final class XPathEvaluator
   private static final class CompiledStep
   {
     private final IExpr.StepExpr m_aStep;
-    private final CompiledExpr [] m_aPredicates;
+    private final AbstractCompiledExpr [] m_aPredicates;
     // Null for an axis step
-    private final CompiledExpr m_aPostfix;
+    private final AbstractCompiledExpr m_aPostfix;
     // Null if there is none
     private final CompiledStep m_aFused;
     // The exact name of a descendant(-or-self) step, null otherwise
@@ -1163,11 +1163,11 @@ public final class XPathEvaluator
    * <code>//@name</code> path.
    */
   @Immutable
-  private static final class PathNode extends CompiledExpr
+  private static final class PathNode extends AbstractCompiledExpr
   {
     private final IExpr.PathExpr m_aPath;
     // Null for a pure location path
-    private final CompiledExpr m_aStart;
+    private final AbstractCompiledExpr m_aStart;
     private final CompiledStep [] m_aSteps;
     // Null for a path without steps
     private final CompiledStep m_aLast;
@@ -1337,13 +1337,13 @@ public final class XPathEvaluator
      * @return <code>true</code> if the node passes all the predicates, which are boolean and read
      *         neither the context position nor the size (see {@link #_isFilteredLazily(CompiledStep)}).
      */
-    private static boolean _passesFocusFreePredicates (@NonNull final CompiledExpr [] aPredicates,
+    private static boolean _passesFocusFreePredicates (@NonNull final AbstractCompiledExpr [] aPredicates,
                                                        @NonNull final IXdmNode aNode,
                                                        final int nPosition,
                                                        final int nSize,
                                                        @NonNull final DynamicContext aCtx)
     {
-      for (final CompiledExpr aPredicate : aPredicates)
+      for (final AbstractCompiledExpr aPredicate : aPredicates)
         if (!_isPredicateTrue (aPredicate, aNode, nPosition, nSize, aCtx))
           return false;
       return true;
@@ -1476,10 +1476,10 @@ public final class XPathEvaluator
 
   /** A primary expression followed by predicates (XPath 3.1 section 3.2.1). */
   @Immutable
-  private static final class FilterNode extends CompiledExpr
+  private static final class FilterNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aPrimary;
-    private final CompiledExpr [] m_aPredicates;
+    private final AbstractCompiledExpr m_aPrimary;
+    private final AbstractCompiledExpr [] m_aPredicates;
 
     FilterNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull FilterExpr aExpr)
     {
@@ -1511,7 +1511,7 @@ public final class XPathEvaluator
       if (m_aPredicates.length == 0)
         return Boolean.valueOf (_ebv (aPrimary));
       final XdmSequence aCandidates = _applyPredicatesButLast (aPrimary, m_aPredicates, aCtx);
-      final CompiledExpr aLast = m_aPredicates[m_aPredicates.length - 1];
+      final AbstractCompiledExpr aLast = m_aPredicates[m_aPredicates.length - 1];
       final int nFirst = _findPassing (aCandidates, aLast, 0, aCtx);
       if (nFirst < 0)
         return Boolean.FALSE;
@@ -1537,9 +1537,9 @@ public final class XPathEvaluator
    * early exit.
    */
   @Immutable
-  private static final class SequenceNode extends CompiledExpr
+  private static final class SequenceNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr [] m_aItems;
+    private final AbstractCompiledExpr [] m_aItems;
 
     SequenceNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull SequenceExpr aExpr)
     {
@@ -1554,7 +1554,7 @@ public final class XPathEvaluator
       if (m_aItems.length == 1)
         return m_aItems[0].evaluate (aCtx);
       final XdmSequence.Builder aBuilder = new XdmSequence.Builder ();
-      for (final CompiledExpr aItem : m_aItems)
+      for (final AbstractCompiledExpr aItem : m_aItems)
         aBuilder.addAll (aItem.evaluate (aCtx));
       return aBuilder.build ();
     }
@@ -1577,7 +1577,7 @@ public final class XPathEvaluator
 
   /** A literal (XPath 3.1 section 3.1.1): its sequence, built once by the parser. */
   @Immutable
-  private static final class LiteralNode extends CompiledExpr
+  private static final class LiteralNode extends AbstractCompiledExpr
   {
     private final XdmSequence m_aValue;
 
@@ -1597,7 +1597,7 @@ public final class XPathEvaluator
 
   /** A variable reference (XPath 3.1 section 3.1.2): the value bound in the dynamic context. */
   @Immutable
-  private static final class VarRefNode extends CompiledExpr
+  private static final class VarRefNode extends AbstractCompiledExpr
   {
     private final XdmQName m_aName;
 
@@ -1624,7 +1624,7 @@ public final class XPathEvaluator
 
   /** The context item expression <code>.</code> (XPath 3.1 section 3.1.4). */
   @Immutable
-  private static final class ContextItemNode extends CompiledExpr
+  private static final class ContextItemNode extends AbstractCompiledExpr
   {
     ContextItemNode (final IExpr.@NonNull ContextItemExpr aExpr)
     {
@@ -1641,7 +1641,7 @@ public final class XPathEvaluator
 
   /** An argument placeholder outside a function call, which is an error when evaluated. */
   @Immutable
-  private static final class PlaceholderNode extends CompiledExpr
+  private static final class PlaceholderNode extends AbstractCompiledExpr
   {
     PlaceholderNode (final IExpr.@NonNull PlaceholderExpr aExpr)
     {
@@ -1661,9 +1661,9 @@ public final class XPathEvaluator
    *         (<code>?</code>), which makes the call a partial function application (XPath 3.1
    *         section 3.1.5.1).
    */
-  private static boolean _hasPlaceholder (@NonNull final CompiledExpr [] aArgs)
+  private static boolean _hasPlaceholder (@NonNull final AbstractCompiledExpr [] aArgs)
   {
-    for (final CompiledExpr aArg : aArgs)
+    for (final AbstractCompiledExpr aArg : aArgs)
       if (aArg instanceof PlaceholderNode)
         return true;
     return false;
@@ -1674,14 +1674,14 @@ public final class XPathEvaluator
    */
   @NonNull
   private static XdmSequence _partialApply (@NonNull final IXdmFunction aFunc,
-                                            @NonNull final CompiledExpr [] aArgs,
+                                            @NonNull final AbstractCompiledExpr [] aArgs,
                                             @NonNull final DynamicContext aCtx)
   {
     final List <SeqType> aParamTypes = aFunc.getParamTypes ();
     final XdmSequence [] aBound = new XdmSequence [aArgs.length];
     for (int i = 0; i < aBound.length; ++i)
     {
-      final CompiledExpr aArg = aArgs[i];
+      final AbstractCompiledExpr aArg = aArgs[i];
       if (!(aArg instanceof PlaceholderNode))
         aBound[i] = XPathOperators.convertArgument (aArg.evaluate (aCtx), aParamTypes.get (i), aCtx, aFunc.getName (), i);
     }
@@ -1698,7 +1698,7 @@ public final class XPathEvaluator
    */
   @Nullable
   private static XdmSequence _tryExistenceCall (@NonNull final FunctionDef aDef,
-                                                @NonNull final CompiledExpr aArg,
+                                                @NonNull final AbstractCompiledExpr aArg,
                                                 @NonNull final DynamicContext aCtx)
   {
     final IXPathFunction aImpl = aDef.getImpl ();
@@ -1779,10 +1779,10 @@ public final class XPathEvaluator
    * value is determined by the context item and its variables (loop-invariant hoisting).
    */
   @Immutable
-  private static final class FunctionCallNode extends CompiledExpr
+  private static final class FunctionCallNode extends AbstractCompiledExpr
   {
     private final IExpr.FunctionCallExpr m_aCall;
-    private final CompiledExpr [] m_aArgs;
+    private final AbstractCompiledExpr [] m_aArgs;
     // Kept, so that the memo creates no function objects per evaluation
     private final Function <FunctionLibrary, Object> m_aPlanCreator;
     private final Function <DynamicContext, XdmSequence> m_aDirect;
@@ -1829,7 +1829,7 @@ public final class XPathEvaluator
     @NonNull
     private XdmSequence _evalDirect (@NonNull final DynamicContext aCtx)
     {
-      final CompiledExpr [] aArgExprs = m_aArgs;
+      final AbstractCompiledExpr [] aArgExprs = m_aArgs;
       final FunctionDef aDef = XPathOperators.getFunctionDef (aCtx, m_aCall.site (), m_aCall.name (), aArgExprs.length);
       if (m_aCall.site ().hasPlaceholder (m_aCall.args ()))
         return _partialApply (new BuiltInFunctionItem (aDef, aCtx), aArgExprs, aCtx);
@@ -1878,10 +1878,10 @@ public final class XPathEvaluator
    * {@link XPathEvaluator#callFunction(DynamicContext, IXdmItem, List)}, which converts them.
    */
   @Immutable
-  private static final class DynamicCallNode extends CompiledExpr
+  private static final class DynamicCallNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aBase;
-    private final CompiledExpr [] m_aArgs;
+    private final AbstractCompiledExpr m_aBase;
+    private final AbstractCompiledExpr [] m_aArgs;
 
     DynamicCallNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull DynamicCallExpr aExpr)
     {
@@ -1913,7 +1913,7 @@ public final class XPathEvaluator
         return _partialApply (asFunction (aFuncItem), m_aArgs, aCtx);
 
       final ICommonsList <XdmSequence> aArgs = new CommonsArrayList <> (m_aArgs.length);
-      for (final CompiledExpr aArgExpr : m_aArgs)
+      for (final AbstractCompiledExpr aArgExpr : m_aArgs)
         aArgs.add (aArgExpr.evaluate (aCtx));
       return callFunction (aCtx, aFuncItem, aArgs);
     }
@@ -1931,7 +1931,7 @@ public final class XPathEvaluator
    * identity, so every evaluation may return the same one.
    */
   @ThreadSafe
-  private static final class NamedFunctionRefNode extends CompiledExpr
+  private static final class NamedFunctionRefNode extends AbstractCompiledExpr
   {
     private final XdmQName m_aName;
     private final int m_nArity;
@@ -1997,7 +1997,7 @@ public final class XPathEvaluator
 
   /** An inline function expression (XPath 3.1 section 3.1.7) with its compiled body. */
   @Immutable
-  private static final class InlineFunctionNode extends CompiledExpr
+  private static final class InlineFunctionNode extends AbstractCompiledExpr
   {
     private final IExpr.InlineFunctionExpr m_aFunction;
     private final InlineFunctionItem.Body m_aBody;
@@ -2012,7 +2012,7 @@ public final class XPathEvaluator
       final VariableSlot [] aParamSlots = new VariableSlot [aParams.size ()];
       for (int i = 0; i < aParamSlots.length; ++i)
         aParamSlots[i] = aC.bindLocal (aParams.get (i).name ());
-      final CompiledExpr aBody = aC.compile (aExpr.body ());
+      final AbstractCompiledExpr aBody = aC.compile (aExpr.body ());
       aC.exitFunction (aBoundary);
       final int nCaptures = aBoundary.m_aCaptures.size ();
       final XdmQName [] aCaptureNames = aBoundary.m_aCaptures.keySet ().toArray (new XdmQName [nCaptures]);
@@ -2061,10 +2061,10 @@ public final class XPathEvaluator
    * <code>a &gt; b</code> gives the empty sequence. Interrupts are checked every 4096 items.
    */
   @Immutable
-  private static final class RangeNode extends CompiledExpr
+  private static final class RangeNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aFrom;
-    private final CompiledExpr m_aTo;
+    private final AbstractCompiledExpr m_aFrom;
+    private final AbstractCompiledExpr m_aTo;
 
     RangeNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull RangeExpr aExpr)
     {
@@ -2247,11 +2247,11 @@ public final class XPathEvaluator
    * left operand is evaluated before the right one.
    */
   @Immutable
-  private static final class ComparisonNode extends CompiledExpr
+  private static final class ComparisonNode extends AbstractCompiledExpr
   {
     private final EComparisonOp m_eOp;
-    private final CompiledExpr m_aLeft;
-    private final CompiledExpr m_aRight;
+    private final AbstractCompiledExpr m_aLeft;
+    private final AbstractCompiledExpr m_aRight;
 
     ComparisonNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull ComparisonExpr aExpr)
     {
@@ -2299,11 +2299,11 @@ public final class XPathEvaluator
    * {@link XPathOperators#arithmetic(EBinaryOp, XdmSequence, XdmSequence, DynamicContext)}.
    */
   @Immutable
-  private static final class BinaryNode extends CompiledExpr
+  private static final class BinaryNode extends AbstractCompiledExpr
   {
     private final EBinaryOp m_eOp;
-    private final CompiledExpr m_aLeft;
-    private final CompiledExpr m_aRight;
+    private final AbstractCompiledExpr m_aLeft;
+    private final AbstractCompiledExpr m_aRight;
 
     BinaryNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull BinaryExpr aExpr)
     {
@@ -2331,10 +2331,10 @@ public final class XPathEvaluator
 
   /** The unary arithmetic operators (XPath 3.1 section 3.5). */
   @Immutable
-  private static final class UnaryNode extends CompiledExpr
+  private static final class UnaryNode extends AbstractCompiledExpr
   {
     private final boolean m_bNegate;
-    private final CompiledExpr m_aOperand;
+    private final AbstractCompiledExpr m_aOperand;
 
     UnaryNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull UnaryExpr aExpr)
     {
@@ -2356,9 +2356,9 @@ public final class XPathEvaluator
    * atomised, an empty operand counts as the zero-length string, and the string values are joined.
    */
   @Immutable
-  private static final class StringConcatNode extends CompiledExpr
+  private static final class StringConcatNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr [] m_aParts;
+    private final AbstractCompiledExpr [] m_aParts;
 
     StringConcatNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull StringConcatExpr aExpr)
     {
@@ -2377,7 +2377,7 @@ public final class XPathEvaluator
     XdmSequence evaluate (@NonNull final DynamicContext aCtx)
     {
       final StringBuilder aSB = new StringBuilder ();
-      for (final CompiledExpr aPart : m_aParts)
+      for (final AbstractCompiledExpr aPart : m_aParts)
       {
         final XdmAtomic aValue = XPathOperators.atomizeOptional (aPart.evaluate (aCtx), "operand of '||'");
         if (aValue != null)
@@ -2463,11 +2463,11 @@ public final class XPathEvaluator
    * without duplicates.
    */
   @Immutable
-  private static final class SetNode extends CompiledExpr
+  private static final class SetNode extends AbstractCompiledExpr
   {
     private final IExpr.SetExpr.ESetOp m_eOp;
-    private final CompiledExpr m_aLeft;
-    private final CompiledExpr m_aRight;
+    private final AbstractCompiledExpr m_aLeft;
+    private final AbstractCompiledExpr m_aRight;
     // Null if the set expression is no union of single steps
     private final IExpr.StepUnion m_aStepUnion;
 
@@ -2511,11 +2511,11 @@ public final class XPathEvaluator
 
   /** The conditional expression (XPath 3.1 section 3.12). */
   @Immutable
-  private static final class IfNode extends CompiledExpr
+  private static final class IfNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aCondition;
-    private final CompiledExpr m_aThen;
-    private final CompiledExpr m_aElse;
+    private final AbstractCompiledExpr m_aCondition;
+    private final AbstractCompiledExpr m_aThen;
+    private final AbstractCompiledExpr m_aElse;
 
     IfNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull IfExpr aExpr)
     {
@@ -2549,7 +2549,7 @@ public final class XPathEvaluator
   @Immutable
   private record CompiledBinding (@NonNull XdmQName name,
                                   @Nullable SeqType type,
-                                  @NonNull CompiledExpr expr,
+                                  @NonNull AbstractCompiledExpr expr,
                                   @NonNull VariableSlot slot)
   {}
 
@@ -2587,10 +2587,10 @@ public final class XPathEvaluator
 
   /** The <code>for</code> expression (XPath 3.1 section 3.9). */
   @Immutable
-  private static final class ForNode extends CompiledExpr
+  private static final class ForNode extends AbstractCompiledExpr
   {
     private final CompiledBinding [] m_aBindings;
-    private final CompiledExpr m_aBody;
+    private final AbstractCompiledExpr m_aBody;
 
     ForNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull ForExpr aExpr)
     {
@@ -2656,10 +2656,10 @@ public final class XPathEvaluator
    * with all of them.
    */
   @Immutable
-  private static final class LetNode extends CompiledExpr
+  private static final class LetNode extends AbstractCompiledExpr
   {
     private final CompiledBinding [] m_aBindings;
-    private final CompiledExpr m_aBody;
+    private final AbstractCompiledExpr m_aBody;
 
     LetNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull LetExpr aExpr)
     {
@@ -2687,11 +2687,11 @@ public final class XPathEvaluator
    * all combinations of the binding items in order.
    */
   @Immutable
-  private static final class QuantifiedNode extends CompiledExpr
+  private static final class QuantifiedNode extends AbstractCompiledExpr
   {
     private final boolean m_bEvery;
     private final CompiledBinding [] m_aBindings;
-    private final CompiledExpr m_aSatisfies;
+    private final AbstractCompiledExpr m_aSatisfies;
 
     QuantifiedNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull QuantifiedExpr aExpr)
     {
@@ -2756,9 +2756,9 @@ public final class XPathEvaluator
    * deduplicated and atomic values are allowed.
    */
   @Immutable
-  private static final class SimpleMapNode extends CompiledExpr
+  private static final class SimpleMapNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr [] m_aSteps;
+    private final AbstractCompiledExpr [] m_aSteps;
 
     SimpleMapNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull SimpleMapExpr aExpr)
     {
@@ -2773,7 +2773,7 @@ public final class XPathEvaluator
       XdmSequence aCur = m_aSteps[0].evaluate (aCtx);
       for (int nStep = 1; nStep < m_aSteps.length; ++nStep)
       {
-        final CompiledExpr aStep = m_aSteps[nStep];
+        final AbstractCompiledExpr aStep = m_aSteps[nStep];
         final int nSize = aCur.size ();
         final XdmSequence.Builder aBuilder = new XdmSequence.Builder ();
         for (int i = 0; i < nSize; ++i)
@@ -2789,9 +2789,9 @@ public final class XPathEvaluator
 
   /** <code>instance of</code> (XPath 3.1 section 3.14.1). */
   @Immutable
-  private static final class InstanceOfNode extends CompiledExpr
+  private static final class InstanceOfNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aOperand;
+    private final AbstractCompiledExpr m_aOperand;
     private final SeqType m_aType;
 
     InstanceOfNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull InstanceOfExpr aExpr)
@@ -2814,9 +2814,9 @@ public final class XPathEvaluator
    * matches the sequence type, without any conversion.
    */
   @Immutable
-  private static final class TreatNode extends CompiledExpr
+  private static final class TreatNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aOperand;
+    private final AbstractCompiledExpr m_aOperand;
     private final SeqType m_aType;
 
     TreatNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull TreatExpr aExpr)
@@ -2847,9 +2847,9 @@ public final class XPathEvaluator
    * boolean.
    */
   @Immutable
-  private static final class CastNode extends CompiledExpr
+  private static final class CastNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aOperand;
+    private final AbstractCompiledExpr m_aOperand;
     private final SeqType m_aType;
     private final boolean m_bCastable;
 
@@ -2883,15 +2883,15 @@ public final class XPathEvaluator
    * function or a failed construction keeps nothing.
    */
   @ThreadSafe
-  private static final class MapConstructorNode extends CompiledExpr
+  private static final class MapConstructorNode extends AbstractCompiledExpr
   {
     /** A built map with the definitions its function references resolved to, in value order. */
     @Immutable
     private record ConstantMap (@NonNull FunctionDef [] defs, @NonNull XdmSequence map)
     {}
 
-    private final CompiledExpr [] m_aKeys;
-    private final CompiledExpr [] m_aValues;
+    private final AbstractCompiledExpr [] m_aKeys;
+    private final AbstractCompiledExpr [] m_aValues;
     // The function references among the values, in value order; null if the map is not built only from literals
     // and function references
     private final NamedFunctionRefNode [] m_aConstantRefs;
@@ -2910,14 +2910,14 @@ public final class XPathEvaluator
      *         literal or a named function reference, otherwise <code>null</code>.
      */
     @Nullable
-    private static NamedFunctionRefNode [] _getConstantRefs (@NonNull final CompiledExpr [] aKeys,
-                                                             @NonNull final CompiledExpr [] aValues)
+    private static NamedFunctionRefNode [] _getConstantRefs (@NonNull final AbstractCompiledExpr [] aKeys,
+                                                             @NonNull final AbstractCompiledExpr [] aValues)
     {
-      for (final CompiledExpr aKey : aKeys)
+      for (final AbstractCompiledExpr aKey : aKeys)
         if (!(aKey instanceof LiteralNode))
           return null;
       final List <NamedFunctionRefNode> aRefs = new ArrayList <> ();
-      for (final CompiledExpr aValue : aValues)
+      for (final AbstractCompiledExpr aValue : aValues)
       {
         if (aValue instanceof final NamedFunctionRefNode aRef)
           aRefs.add (aRef);
@@ -3017,9 +3017,9 @@ public final class XPathEvaluator
    * item of the concatenated values one member.
    */
   @Immutable
-  private static final class ArrayConstructorNode extends CompiledExpr
+  private static final class ArrayConstructorNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr [] m_aItems;
+    private final AbstractCompiledExpr [] m_aItems;
     private final boolean m_bCurly;
 
     ArrayConstructorNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull ArrayConstructorExpr aExpr)
@@ -3034,7 +3034,7 @@ public final class XPathEvaluator
     XdmSequence evaluate (@NonNull final DynamicContext aCtx)
     {
       final ICommonsList <XdmSequence> aMembers = new CommonsArrayList <> ();
-      for (final CompiledExpr aItemExpr : m_aItems)
+      for (final AbstractCompiledExpr aItemExpr : m_aItems)
       {
         final XdmSequence aValue = aItemExpr.evaluate (aCtx);
         if (m_bCurly)
@@ -3085,12 +3085,12 @@ public final class XPathEvaluator
    * concatenated.
    */
   @Immutable
-  private static final class LookupNode extends CompiledExpr
+  private static final class LookupNode extends AbstractCompiledExpr
   {
     // Null for a unary lookup
-    private final CompiledExpr m_aBase;
+    private final AbstractCompiledExpr m_aBase;
     // Null for a wildcard
-    private final CompiledExpr m_aKey;
+    private final AbstractCompiledExpr m_aKey;
 
     LookupNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull LookupExpr aExpr)
     {
@@ -3153,7 +3153,7 @@ public final class XPathEvaluator
    * the dynamic context, without a lookup by name.
    */
   @Immutable
-  private static final class FrameVarRefNode extends CompiledExpr
+  private static final class FrameVarRefNode extends AbstractCompiledExpr
   {
     private final VariableSlot m_aSlot;
 
@@ -3185,7 +3185,7 @@ public final class XPathEvaluator
    * the expression (see {@link DynamicContext#getLocalFrame()}), without a lookup by name.
    */
   @Immutable
-  private static final class LocalVarRefNode extends CompiledExpr
+  private static final class LocalVarRefNode extends AbstractCompiledExpr
   {
     private final VariableSlot m_aSlot;
 
@@ -3210,12 +3210,12 @@ public final class XPathEvaluator
    * bindings.
    */
   @Immutable
-  private static final class LocalFrameNode extends CompiledExpr
+  private static final class LocalFrameNode extends AbstractCompiledExpr
   {
-    private final CompiledExpr m_aRoot;
+    private final AbstractCompiledExpr m_aRoot;
     private final VariableFrameLayout m_aLayout;
 
-    LocalFrameNode (@NonNull final CompiledExpr aRoot, @NonNull final VariableFrameLayout aLayout)
+    LocalFrameNode (@NonNull final AbstractCompiledExpr aRoot, @NonNull final VariableFrameLayout aLayout)
     {
       super (aRoot.getExpression ());
       m_aRoot = aRoot;
@@ -3416,11 +3416,11 @@ public final class XPathEvaluator
     }
 
     @NonNull
-    CompiledExpr [] compileAll (@NonNull final List <IExpr> aExprs)
+    AbstractCompiledExpr [] compileAll (@NonNull final List <IExpr> aExprs)
     {
       if (aExprs.isEmpty ())
         return NO_EXPRS;
-      final CompiledExpr [] ret = new CompiledExpr [aExprs.size ()];
+      final AbstractCompiledExpr [] ret = new AbstractCompiledExpr [aExprs.size ()];
       for (int i = 0; i < ret.length; ++i)
         ret[i] = compile (aExprs.get (i));
       return ret;
@@ -3438,14 +3438,14 @@ public final class XPathEvaluator
       for (int i = 0; i < ret.length; ++i)
       {
         final IExpr.Binding aBinding = aBindings.get (i);
-        final CompiledExpr aExpr = compile (aBinding.expr ());
+        final AbstractCompiledExpr aExpr = compile (aBinding.expr ());
         ret[i] = new CompiledBinding (aBinding.name (), aBinding.type (), aExpr, bindLocal (aBinding.name ()));
       }
       return ret;
     }
 
     @NonNull
-    private CompiledExpr _compileVarRef (final IExpr.@NonNull VarRefExpr aExpr)
+    private AbstractCompiledExpr _compileVarRef (final IExpr.@NonNull VarRefExpr aExpr)
     {
       final XdmQName aName = aExpr.name ();
       if (_isBoundByExpression (aName))
@@ -3459,7 +3459,7 @@ public final class XPathEvaluator
     }
 
     @NonNull
-    CompiledExpr compile (@NonNull final IExpr aExpr)
+    AbstractCompiledExpr compile (@NonNull final IExpr aExpr)
     {
       return switch (aExpr)
       {
@@ -3500,11 +3500,11 @@ public final class XPathEvaluator
    * thread cannot take is XPDY0130, as in the evaluation.
    */
   @NonNull
-  private static CompiledExpr _compile (@NonNull final ExprCompiler aCompiler, @NonNull final IExpr aExpr)
+  private static AbstractCompiledExpr _compile (@NonNull final ExprCompiler aCompiler, @NonNull final IExpr aExpr)
   {
     try
     {
-      final CompiledExpr ret = aCompiler.compile (aExpr);
+      final AbstractCompiledExpr ret = aCompiler.compile (aExpr);
       final VariableFrameLayout aLayout = aCompiler.getRootLayout ();
       // Only an expression that binds variables itself needs a frame per evaluation
       return aLayout != null && aLayout.getSize () > 0 ? new LocalFrameNode (ret, aLayout) : ret;
@@ -3529,7 +3529,7 @@ public final class XPathEvaluator
    *         XPDY0130 if the expression is nested too deeply for the stack of the calling thread
    */
   @NonNull
-  public static CompiledExpr compile (@NonNull final IExpr aExpr)
+  public static AbstractCompiledExpr compile (@NonNull final IExpr aExpr)
   {
     return _compile (new ExprCompiler (null), aExpr);
   }
@@ -3547,7 +3547,7 @@ public final class XPathEvaluator
    * @return The compiled expression. Never <code>null</code>.
    */
   @NonNull
-  public static CompiledExpr compile (@NonNull final IExpr aExpr, @NonNull final StaticContext aStatic)
+  public static AbstractCompiledExpr compile (@NonNull final IExpr aExpr, @NonNull final StaticContext aStatic)
   {
     return _compile (new ExprCompiler (aStatic), aExpr);
   }
@@ -3563,7 +3563,7 @@ public final class XPathEvaluator
    *         for dynamic and type errors.
    */
   @NonNull
-  public static XdmSequence evaluate (@NonNull final CompiledExpr aExpr, @NonNull final DynamicContext aCtx)
+  public static XdmSequence evaluate (@NonNull final AbstractCompiledExpr aExpr, @NonNull final DynamicContext aCtx)
   {
     try
     {
@@ -3589,7 +3589,7 @@ public final class XPathEvaluator
    * @throws com.helger.phoxtrot.xpath.XPathException
    *         for dynamic and type errors, FORG0006 if the effective boolean value is not defined.
    */
-  public static boolean evaluateEffectiveBooleanValue (@NonNull final CompiledExpr aExpr, @NonNull final DynamicContext aCtx)
+  public static boolean evaluateEffectiveBooleanValue (@NonNull final AbstractCompiledExpr aExpr, @NonNull final DynamicContext aCtx)
   {
     try
     {
@@ -3604,7 +3604,7 @@ public final class XPathEvaluator
   /**
    * Compile and evaluate an expression once. Callers that evaluate an expression more than once
    * compile it with {@link #compile(IExpr)} and use
-   * {@link #evaluate(CompiledExpr, DynamicContext)}.
+   * {@link #evaluate(AbstractCompiledExpr, DynamicContext)}.
    *
    * @param aExpr
    *        Parsed expression.
@@ -3622,7 +3622,7 @@ public final class XPathEvaluator
 
   /**
    * Compile an expression and take its effective boolean value once (see
-   * {@link #evaluateEffectiveBooleanValue(CompiledExpr, DynamicContext)}).
+   * {@link #evaluateEffectiveBooleanValue(AbstractCompiledExpr, DynamicContext)}).
    *
    * @param aExpr
    *        Parsed expression.

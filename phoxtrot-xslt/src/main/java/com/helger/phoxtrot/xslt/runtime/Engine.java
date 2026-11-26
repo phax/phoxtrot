@@ -82,9 +82,9 @@ import com.helger.phoxtrot.xslt.model.TemplateRule;
 import com.helger.phoxtrot.xslt.model.VariableDef;
 import com.helger.phoxtrot.xslt.pkg.PackageModel;
 import com.helger.phoxtrot.xslt.pkg.PackageUnit;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
 import com.helger.phoxtrot.xslt.tree.XslModule;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
 /**
@@ -1982,7 +1982,7 @@ public final class Engine
                           @NonNull final String sText,
                           @NonNull final XdmSequence aContent,
                           @Nullable final XdmQName aErrorCode,
-                          @Nullable final XslNode aNode)
+                          @Nullable final AbstractXslNode aNode)
   {
     final XsltMessage aMessage = new XsltMessage (eKind,
                                                   sText,
@@ -2017,7 +2017,7 @@ public final class Engine
    * @param sText
    *        The text of the warning.
    */
-  public void addWarning (@Nullable final XslNode aNode, @NonNull final String sText)
+  public void addWarning (@Nullable final AbstractXslNode aNode, @NonNull final String sText)
   {
     final IXsltMessageListener aListener = m_aRequest.getMessageListener ();
     if (aListener != null)

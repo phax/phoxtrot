@@ -29,7 +29,7 @@ import com.helger.phoxtrot.xslt.model.VariableDef;
 import com.helger.phoxtrot.xslt.runtime.LazyVariableException;
 import com.helger.phoxtrot.xslt.runtime.TryScope;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
-import com.helger.phoxtrot.xslt.tree.XslNode;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 
 /**
  * A local xsl:variable: binds its value for the following siblings. The value
@@ -129,7 +129,7 @@ public final class LocalVariable implements IBindingInstruction
   }
 
   @Nullable
-  public XslNode getLocation ()
+  public AbstractXslNode getLocation ()
   {
     return m_aDef.getElement ();
   }

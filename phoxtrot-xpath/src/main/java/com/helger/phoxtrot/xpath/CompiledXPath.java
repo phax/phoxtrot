@@ -26,7 +26,7 @@ import com.helger.phoxtrot.xpath.ast.ExprWalker;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
-import com.helger.phoxtrot.xpath.eval.CompiledExpr;
+import com.helger.phoxtrot.xpath.eval.AbstractCompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
@@ -51,7 +51,7 @@ public final class CompiledXPath
   private final IExpr m_aExpr;
   // Compiled on the first evaluation, on the thread of the evaluation (whose
   // stack takes the nesting the parser accepted); never changed afterwards
-  private volatile CompiledExpr m_aCompiled;
+  private volatile AbstractCompiledExpr m_aCompiled;
   // The free variables, computed on first use
   private volatile ICommonsOrderedSet <XdmQName> m_aFreeVariables;
 
@@ -118,9 +118,9 @@ public final class CompiledXPath
    *         compile it, with the same result.
    */
   @NonNull
-  private CompiledExpr _getCompiled ()
+  private AbstractCompiledExpr _getCompiled ()
   {
-    CompiledExpr ret = m_aCompiled;
+    AbstractCompiledExpr ret = m_aCompiled;
     if (ret == null)
       m_aCompiled = ret = XPathEvaluator.compile (m_aExpr, m_aStaticCtx);
     return ret;

@@ -70,8 +70,8 @@ import com.helger.phoxtrot.xslt.runtime.XsltState;
 import com.helger.phoxtrot.xslt.schema.ValidationRequest;
 import com.helger.phoxtrot.xslt.stream.IStreamAccumulators;
 import com.helger.phoxtrot.xslt.stream.StreamVerdicts;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -212,7 +212,7 @@ public final class AccumulatorExtension implements IXsltExtension
    */
   private static boolean _hasContent (@NonNull final XslElement aEl)
   {
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof XslElement || !((XslText) aNode).isWhitespaceOnly ())
         return true;
     return false;

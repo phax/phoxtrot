@@ -29,8 +29,8 @@ import com.helger.phoxtrot.xslt.XsltTraceInstruction;
 import com.helger.phoxtrot.xslt.runtime.Engine;
 import com.helger.phoxtrot.xslt.runtime.IXsltOutput;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 
 /**
  * A compiled sequence constructor: instructions executed in order. A binding
@@ -46,22 +46,22 @@ public final class SequenceConstructor implements IInstruction
   /** The empty sequence constructor. */
   public static final SequenceConstructor EMPTY = new SequenceConstructor (null, new IInstruction [0]);
 
-  private final XslNode m_aLocation;
+  private final AbstractXslNode m_aLocation;
   private final IInstruction [] m_aInstructions;
 
-  public SequenceConstructor (@Nullable final XslNode aLocation, @NonNull final List <IInstruction> aInstructions)
+  public SequenceConstructor (@Nullable final AbstractXslNode aLocation, @NonNull final List <IInstruction> aInstructions)
   {
     this (aLocation, aInstructions.toArray (new IInstruction [0]));
   }
 
-  private SequenceConstructor (@Nullable final XslNode aLocation, @NonNull final IInstruction [] aInstructions)
+  private SequenceConstructor (@Nullable final AbstractXslNode aLocation, @NonNull final IInstruction [] aInstructions)
   {
     m_aLocation = aLocation;
     m_aInstructions = aInstructions;
   }
 
   @Nullable
-  public XslNode getLocation ()
+  public AbstractXslNode getLocation ()
   {
     return m_aLocation;
   }
@@ -104,7 +104,7 @@ public final class SequenceConstructor implements IInstruction
    *         xsl:on-empty), which is no element of its own.
    */
   @Nullable
-  static XsltTraceInstruction getTraceInstruction (@NonNull final IInstruction aInstr, @Nullable final XslNode aOwner)
+  static XsltTraceInstruction getTraceInstruction (@NonNull final IInstruction aInstr, @Nullable final AbstractXslNode aOwner)
   {
     if (aInstr.getLocation () instanceof final XslElement aEl && aEl != aOwner)
       return new XsltTraceInstruction (aEl.getName (), aEl.getModule ().getUri (), aEl.getLine (), aEl.getColumn ());
@@ -114,7 +114,7 @@ public final class SequenceConstructor implements IInstruction
   /**
    * {@link #execute(XsltContext, IXsltOutput)} with a trace listener for
    * instructions: each traced instruction (see
-   * {@link #getTraceInstruction(IInstruction, XslNode)}) is enclosed in its
+   * {@link #getTraceInstruction(IInstruction, AbstractXslNode)}) is enclosed in its
    * enter and leave calls, after its step was counted; the leave call also
    * happens when the instruction raises an error.
    *

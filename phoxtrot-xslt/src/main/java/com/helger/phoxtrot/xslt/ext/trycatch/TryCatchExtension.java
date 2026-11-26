@@ -44,8 +44,8 @@ import com.helger.phoxtrot.xslt.model.VariableDef;
 import com.helger.phoxtrot.xslt.runtime.BufferedOutput;
 import com.helger.phoxtrot.xslt.runtime.TryScope;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
 /**
@@ -357,9 +357,9 @@ public final class TryCatchExtension implements IXsltExtension
     final XPathExpr aSelect = aCtx.compileOptionalExpression (aEl, "select");
     final String sRollback = aEl.getAttr ("rollback-output");
     final boolean bRollback = sRollback == null || XsltNames.isXsltTrue (sRollback);
-    final ICommonsList <XslNode> aBodyNodes = new CommonsArrayList <> ();
+    final ICommonsList <AbstractXslNode> aBodyNodes = new CommonsArrayList <> ();
     final ICommonsList <Catch> aCatches = new CommonsArrayList <> ();
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof final XslElement aChild && aChild.isXsl ("catch"))
         aCatches.add (_compileCatch (aCtx, aChild));
       else

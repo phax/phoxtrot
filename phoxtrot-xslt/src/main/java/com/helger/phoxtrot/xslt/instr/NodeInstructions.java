@@ -42,8 +42,8 @@ import com.helger.phoxtrot.xslt.runtime.XsltContext;
 import com.helger.phoxtrot.xslt.schema.ValidationRequest;
 import com.helger.phoxtrot.xslt.stream.IStreamHandlerFactory;
 import com.helger.phoxtrot.xslt.stream.StreamConsumer;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -132,7 +132,7 @@ public final class NodeInstructions
   private static IInstruction _compileText (@NonNull final CompileContext aCtx, @NonNull final XslElement aEl)
   {
     final StringBuilder aSB = new StringBuilder ();
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof final XslText aText)
         aSB.append (aText.getValue ());
     final String sText = aSB.toString ();

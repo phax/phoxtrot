@@ -45,8 +45,8 @@ import com.helger.phoxtrot.xslt.instr.SortKeyDef;
 import com.helger.phoxtrot.xslt.model.CompiledStylesheet;
 import com.helger.phoxtrot.xslt.model.VariableDef;
 import com.helger.phoxtrot.xslt.stream.StreamabilityIndex;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
 /**
@@ -579,7 +579,7 @@ public final class CompileContext
    * @return <code>true</code> if text value templates are enabled for it
    *         ([xsl:]expand-text of the nearest ancestor that has one).
    */
-  public static boolean isExpandText (@NonNull final XslNode aNode)
+  public static boolean isExpandText (@NonNull final AbstractXslNode aNode)
   {
     final XslElement aStart = aNode instanceof final XslElement aEl ? aEl : aNode.getParent ();
     if (aStart == null)
@@ -599,7 +599,7 @@ public final class CompileContext
    */
   @NonNull
   public SequenceConstructor compileSequenceConstructor (@NonNull final XslElement aParent,
-                                                         @NonNull final List <XslNode> aChildren)
+                                                         @NonNull final List <AbstractXslNode> aChildren)
   {
     return CoreInstructions.compileSequenceConstructor (this, aParent, aChildren);
   }
@@ -617,8 +617,8 @@ public final class CompileContext
   @NonNull
   public SequenceConstructor compileContent (@NonNull final XslElement aEl)
   {
-    final ICommonsList <XslNode> aChildren = new CommonsArrayList <> ();
-    for (final XslNode aNode : aEl.getChildren ())
+    final ICommonsList <AbstractXslNode> aChildren = new CommonsArrayList <> ();
+    for (final AbstractXslNode aNode : aEl.getChildren ())
     {
       if (aNode instanceof final XslElement aChild && aChild.isXsl ())
       {
