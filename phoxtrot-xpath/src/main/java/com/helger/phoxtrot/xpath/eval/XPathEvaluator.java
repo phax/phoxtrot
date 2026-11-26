@@ -35,6 +35,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
+import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
@@ -1753,18 +1754,63 @@ public final class XPathEvaluator
    * {@link BuiltInFunctionItem} for the function of that name and arity. A focus-dependent
    * function (such as <code>fn:name#0</code>) captures the current dynamic context, so that it is
    * evaluated later with the focus of the reference.
+   * <p>
+   * The function is resolved through the resolution cache of the call site of the expression (see
+   * {@link FunctionCallSite}), and the item of a function that is not focus-dependent is kept for
+   * its definition: such an item captures nothing of the evaluation, and function items have no
+   * identity, so every evaluation may return the same one.
    */
-  @Immutable
+  @ThreadSafe
   private static final class NamedFunctionRefNode extends CompiledExpr
   {
     private final XdmQName m_aName;
     private final int m_nArity;
+    private final FunctionCallSite m_aSite;
+    // The sequence of the item of the last resolved definition that is not focus-dependent; an immutable value
+    // published through the volatile field, concurrent evaluations may each store one
+    private volatile XdmSequence m_aItem;
 
     NamedFunctionRefNode (final IExpr.@NonNull NamedFunctionRefExpr aExpr)
     {
       super (aExpr);
       m_aName = aExpr.name ();
       m_nArity = aExpr.arity ();
+      m_aSite = aExpr.site ();
+    }
+
+    /**
+     * @param aCtx
+     *        The dynamic context.
+     * @return The function definition the reference resolves to in the function library of the
+     *         static context.
+     * @throws XPathException
+     *         XPST0017 if no function of that name and arity exists
+     */
+    @NonNull
+    FunctionDef getFunctionDef (@NonNull final DynamicContext aCtx)
+    {
+      return XPathOperators.getFunctionDef (aCtx, m_aSite, m_aName, m_nArity);
+    }
+
+    /**
+     * @param aDef
+     *        The resolved definition, from {@link #getFunctionDef(DynamicContext)}.
+     * @param aCtx
+     *        The dynamic context, captured for a focus-dependent function.
+     * @return The single function item of the definition.
+     */
+    @NonNull
+    XdmSequence getFunctionItem (@NonNull final FunctionDef aDef, @NonNull final DynamicContext aCtx)
+    {
+      if (aDef.isFocusDependent ())
+        return XdmSequence.of (new BuiltInFunctionItem (aDef, aCtx));
+      final XdmSequence aKept = m_aItem;
+      // Optimisation: the item of the same definition captures nothing, so it is reused
+      if (aKept != null && ((BuiltInFunctionItem) aKept.getFirst ()).getFunctionDef () == aDef)
+        return aKept;
+      final XdmSequence ret = XdmSequence.of (new BuiltInFunctionItem (aDef, null));
+      m_aItem = ret;
+      return ret;
     }
 
     /**
@@ -1775,8 +1821,7 @@ public final class XPathEvaluator
     @NonNull
     XdmSequence evaluate (@NonNull final DynamicContext aCtx)
     {
-      final FunctionDef aDef = XPathOperators.getFunctionDef (aCtx, m_aName, m_nArity);
-      return XdmSequence.of (new BuiltInFunctionItem (aDef, aDef.isFocusDependent () ? aCtx : null));
+      return getFunctionItem (getFunctionDef (aCtx), aCtx);
     }
   }
 
@@ -2660,29 +2705,102 @@ public final class XPathEvaluator
   /**
    * The map constructor <code>map { k : v, ... }</code> (XPath 3.1 section 3.11.1.1): the entries
    * are evaluated in order, each key atomised to exactly one atomic value.
+   * <p>
+   * A map whose keys are literals and whose values are literals or named function references
+   * (<code>map { 'UP' : rm:up#2, ... }</code>, a dispatch table) has the same value for the same
+   * resolved functions, so its last value is kept with the definitions the references resolved to
+   * and returned while every reference resolves to the same definition again. A focus-dependent
+   * function or a failed construction keeps nothing.
    */
-  @Immutable
+  @ThreadSafe
   private static final class MapConstructorNode extends CompiledExpr
   {
+    /** A built map with the definitions its function references resolved to, in value order. */
+    @Immutable
+    private record ConstantMap (@NonNull FunctionDef [] defs, @NonNull XdmSequence map)
+    {}
+
     private final CompiledExpr [] m_aKeys;
     private final CompiledExpr [] m_aValues;
+    // The function references among the values, in value order; null if the map is not built only from literals
+    // and function references
+    private final NamedFunctionRefNode [] m_aConstantRefs;
+    private volatile ConstantMap m_aConstant;
 
     MapConstructorNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull MapConstructorExpr aExpr)
     {
       super (aExpr);
       m_aKeys = aC.compileAll (aExpr.keys ());
       m_aValues = aC.compileAll (aExpr.values ());
+      m_aConstantRefs = _getConstantRefs (m_aKeys, m_aValues);
     }
 
     /**
-     * @return A single map.
-     * @throws XPathException
-     *         XPTY0004 if a key is not exactly one atomic value after atomisation; XQDY0137 if two
-     *         keys are the same key (<code>op:same-key</code>)
+     * @return The function references among the values if every key is a literal and every value a
+     *         literal or a named function reference, otherwise <code>null</code>.
      */
-    @Override
+    @Nullable
+    private static NamedFunctionRefNode [] _getConstantRefs (@NonNull final CompiledExpr [] aKeys,
+                                                             @NonNull final CompiledExpr [] aValues)
+    {
+      for (final CompiledExpr aKey : aKeys)
+        if (!(aKey instanceof LiteralNode))
+          return null;
+      final List <NamedFunctionRefNode> aRefs = new ArrayList <> ();
+      for (final CompiledExpr aValue : aValues)
+      {
+        if (aValue instanceof final NamedFunctionRefNode aRef)
+          aRefs.add (aRef);
+        else
+          if (!(aValue instanceof LiteralNode))
+            return null;
+      }
+      return aRefs.toArray (new NamedFunctionRefNode [0]);
+    }
+
+    /**
+     * @return The definitions the function references resolve to now, or <code>null</code> if one of
+     *         them is focus-dependent (its item captures the context).
+     * @throws XPathException
+     *         XPST0017 if a reference names no function
+     */
+    @Nullable
+    private FunctionDef [] _resolveConstantRefs (@NonNull final DynamicContext aCtx)
+    {
+      final FunctionDef [] ret = new FunctionDef [m_aConstantRefs.length];
+      for (int i = 0; i < ret.length; ++i)
+      {
+        final FunctionDef aDef = m_aConstantRefs[i].getFunctionDef (aCtx);
+        if (aDef.isFocusDependent ())
+          return null;
+        ret[i] = aDef;
+      }
+      return ret;
+    }
+
+    /**
+     * @return <code>true</code> if every function reference resolves to the definition it resolved
+     *         to when the kept map was built (by identity; none of those is focus-dependent).
+     * @throws XPathException
+     *         XPST0017 if a reference names no function
+     */
+    private boolean _isKeptFor (@NonNull final ConstantMap aKept, @NonNull final DynamicContext aCtx)
+    {
+      final FunctionDef [] aKeptDefs = aKept.defs ();
+      for (int i = 0; i < aKeptDefs.length; ++i)
+        if (m_aConstantRefs[i].getFunctionDef (aCtx) != aKeptDefs[i])
+          return false;
+      return true;
+    }
+
+    /**
+     * Build the map: the entries in order, each key atomised to exactly one atomic value.
+     *
+     * @throws XPathException
+     *         XPTY0004 for a key that is not exactly one atomic value; XQDY0137 for a duplicate key
+     */
     @NonNull
-    XdmSequence evaluate (@NonNull final DynamicContext aCtx)
+    private XdmSequence _build (@NonNull final DynamicContext aCtx)
     {
       final XdmMap.Builder aMap = new XdmMap.Builder (m_aKeys.length);
       for (int i = 0; i < m_aKeys.length; ++i)
@@ -2696,6 +2814,30 @@ public final class XPathEvaluator
           throw XPathException.of ("XQDY0137", "Duplicate key in a map constructor");
       }
       return XdmSequence.of (aMap.build ());
+    }
+
+    /**
+     * @return A single map.
+     * @throws XPathException
+     *         XPTY0004 if a key is not exactly one atomic value after atomisation; XQDY0137 if two
+     *         keys are the same key (<code>op:same-key</code>); XPST0017 if a function reference
+     *         names no function
+     */
+    @Override
+    @NonNull
+    XdmSequence evaluate (@NonNull final DynamicContext aCtx)
+    {
+      if (m_aConstantRefs == null)
+        return _build (aCtx);
+      // Optimisation: the map of the same resolved functions is the same value, so it is not built again
+      final ConstantMap aKept = m_aConstant;
+      if (aKept != null && _isKeptFor (aKept, aCtx))
+        return aKept.map ();
+      final FunctionDef [] aDefs = _resolveConstantRefs (aCtx);
+      final XdmSequence ret = _build (aCtx);
+      if (aDefs != null)
+        m_aConstant = new ConstantMap (aDefs, ret);
+      return ret;
     }
   }
 

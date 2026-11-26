@@ -284,6 +284,21 @@ public final class SequenceTypeConvertTest
     assertEquals ("[xs:string(1)]",
                   _convert (_s (XdmAtomic.integer (1), XdmAtomic.integer (2)), _t1 (EAtomicType.STRING), aCtx));
     assertEquals ("same [xs:double(1)]", _convert (_s (XdmAtomic.dbl (1)), _t1 (EAtomicType.DOUBLE), aCtx));
+    // A value that already matches comes back unchanged without the conversions: subtypes, several items, nodes
+    assertEquals ("same [xs:integer(1)]", _convert (_s (XdmAtomic.integer (1)), _t1 (EAtomicType.DECIMAL), aCtx));
+    assertEquals ("same [xs:untypedAtomic(a)]",
+                  _convert (_s (XdmAtomic.untyped ("a")), _t1 (EAtomicType.ANY_ATOMIC_TYPE), aCtx));
+    assertEquals ("same [xs:string(a) xs:string(b)]",
+                  _convert (_s (XdmAtomic.string ("a"), XdmAtomic.string ("b")),
+                            _t (EAtomicType.STRING, EOccurrence.ONE_OR_MORE),
+                            aCtx));
+    final IXdmNode aElement = parse ("<a>1</a>").getChildAtIndex (0);
+    assertEquals ("same [ELEMENT]",
+                  _convert (_s (aElement),
+                            SeqType.of (ItemType.node (NodeTest.ofKind (ENodeTestKind.ELEMENT)), EOccurrence.ZERO_OR_ONE),
+                            aCtx));
+    // A node that does not match is converted (atomised, cast)
+    assertEquals ("[xs:double(1)]", _convert (_s (aElement), _t1 (EAtomicType.DOUBLE), aCtx));
     // A type that allows several items keeps all of them (the xs:string* of
     // fn:id, xpath-compat-0501)
     assertEquals ("[xs:string(a) xs:string(b)]",

@@ -328,6 +328,13 @@ v0.5.0 - work in progress
   every 8 KB; for example `a]a]]&gt;` read as `a]a]a]]>`): a source given as characters (a string, a character
   stream) is read through a reader that never ends a chunk with `]`. A source of bytes or a URI is decoded by the JDK
   parser itself and stays affected; a CDATA section ending in `]` (`]]]>`) is still a parse error under XML 1.1
+* The function conversion of arguments checks a single item without an iterator, keeps unchanged function items
+  without a sequence builder and, in XPath 1.0 compatibility mode, checks a value that already matches only once
+* A named function reference (`f#2`) keeps the resolution of its name in the function library (new component `site`
+  of `IExpr.NamedFunctionRefExpr`, as for static calls) and returns the same function item while it resolves to the
+  same function, unless the function is focus-dependent; a map constructor with literal keys whose values are
+  literals or named function references (a dispatch table) keeps its map while every reference resolves to the same
+  function
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

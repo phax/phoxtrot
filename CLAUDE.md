@@ -330,7 +330,11 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   expression more than once holds its `CompiledExpr` (`CompiledXPath`, the XSLT `XPathExpr`, `CompiledXsltPattern`
   with an identity map for `PatternMatcher`, `PatternMatcher.DirectPath`, `StreamRecordPath`, `InlineFunctionItem`)
   and evaluates it with `XPathEvaluator.evaluate (CompiledExpr, ...)`/`evaluateEffectiveBooleanValue`;
-  `evaluate (IExpr, ...)` compiles each time and is only for one-off evaluations. Compiled nodes keep no run state.
+  `evaluate (IExpr, ...)` compiles each time and is only for one-off evaluations. Compiled nodes keep no run state;
+  the only values they keep are immutable ones fixed by the resolved functions, in volatile fields: the function item
+  of a named function reference that is not focus-dependent (`NamedFunctionRefNode`) and a map built only from
+  literal keys and literal or function reference values (`MapConstructorNode`), both kept for the definitions (by
+  identity) the references resolve to again on every evaluation.
   Early exit is `CompiledExpr.tryEarlyEbv`/`exists`, overridden by the path, filter and sequence nodes.
 - XSLT local variables and parameters are bound by slot (closure compilation C4): `CompileContext.withVariable` gives
   every declaration its own slot in the `VariableFrameLayout` of its body (a new layout where the scope starts empty),
@@ -372,7 +376,8 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   directly (declared type conversions must not run in XPath 1.0 mode). `StaticContextReuseTest` uses constructs that
   read the static context at run time (casts to `xs:QName`, collations, `static-base-uri`, 1.0 comparisons);
   names in steps are resolved at compile time and test nothing here.
-- Static calls resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr` (cached per library instance
+- Static calls and named function references resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr`/
+  `IExpr.NamedFunctionRefExpr` (cached per library instance
   and `FunctionLibrary.getModificationStamp`, the sum of the change counters of the parent chain). Every new
   `FunctionLibrary` method that changes what `getFunction` returns must call `_checkWritable` and increment
   `m_nModCount` inside the write lock (so a change cannot race with `freeze`). A call site reuses an entry for a

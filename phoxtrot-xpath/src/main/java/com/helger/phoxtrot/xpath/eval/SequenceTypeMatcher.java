@@ -356,8 +356,13 @@ public final class SequenceTypeMatcher
     final ItemType aItemType = aType.itemType ();
     if (aItemType.kind () == ItemType.Kind.ITEM)
       return true;
-    for (final IXdmItem aItem : aSeq)
-      if (!matchesItem (aItem, aItemType))
+    // Optimisation for the most frequent value, one item (an argument or a typed variable): no loop
+    if (aSeq.isSingleton ())
+      return matchesItem (aSeq.getFirst (), aItemType);
+    // An index loop, as every argument check runs here: the iterator was an allocation per check
+    final int nSize = aSeq.size ();
+    for (int i = 0; i < nSize; ++i)
+      if (!matchesItem (aSeq.get (i), aItemType))
         return false;
     return true;
   }
@@ -788,16 +793,19 @@ public final class SequenceTypeMatcher
     final ItemType aExpected = aType.itemType ();
     final boolean bTyped = !aExpected.wildcard () && aExpected.returnType () != null;
     final int nExpectedArity = aExpected.paramTypes () == null ? 0 : aExpected.paramTypes ().size ();
-    final XdmSequence.Builder aBuilder = new XdmSequence.Builder ();
-    boolean bChanged = false;
-    for (final IXdmItem aItem : aSeq)
+    // Optimisation: the builder is only created at the first coerced item; until then the items stay as they are
+    XdmSequence.Builder aBuilder = null;
+    final int nSize = aSeq.size ();
+    for (int i = 0; i < nSize; ++i)
     {
+      final IXdmItem aItem = aSeq.get (i);
       if (!isFunctionItem (aItem))
         throw XPathException.of (sErrorCode,
                                  "Required type is " + getAsString (aType) + ", but supplied was " + _describeItem (aItem));
       if (!bTyped || matchesItem (aItem, aExpected))
       {
-        aBuilder.add (aItem);
+        if (aBuilder != null)
+          aBuilder.add (aItem);
         continue;
       }
       // Function coercion (section 3.1.5.3): same arity required, the type
@@ -810,14 +818,23 @@ public final class SequenceTypeMatcher
                                              ", but supplied was a function of arity " +
                                              nArity);
       if (isItemSubtype (_getFunctionItemType (aItem), aExpected))
-        aBuilder.add (aItem);
+      {
+        if (aBuilder != null)
+          aBuilder.add (aItem);
+      }
       else
       {
+        if (aBuilder == null)
+        {
+          // The first coerced item: the items before it are kept unchanged
+          aBuilder = new XdmSequence.Builder ();
+          for (int j = 0; j < i; ++j)
+            aBuilder.add (aSeq.get (j));
+        }
         aBuilder.add (new CoercedFunctionItem (aItem, aExpected));
-        bChanged = true;
       }
     }
-    return bChanged ? aBuilder.build () : aSeq;
+    return aBuilder != null ? aBuilder.build () : aSeq;
   }
 
   /**
@@ -1158,8 +1175,15 @@ public final class SequenceTypeMatcher
     }
     // XPath 3.1 section 3.1.5.2: in XPath 1.0 compatibility mode the extra
     // conversions come first, for every value not of the expected type
-    if (aCtx.getStaticContext ().isXPath10Compatibility () && !matches (aSeq, aType))
+    if (aCtx.getStaticContext ().isXPath10Compatibility ())
+    {
+      // Optimisation: a value that already matches is what the conversions without the compatibility rules return
+      // unchanged (every atomic value of the target type or a subtype stays, a matching function item is not coerced,
+      // other item types are only checked), so it is not checked a second time
+      if (matches (aSeq, aType))
+        return aSeq;
       return _convertNoCompat (_applyXPath10Conversions (aSeq, aType), aType, aCtx, sErrorCode);
+    }
     return _convertNoCompat (aSeq, aType, aCtx, sErrorCode);
   }
 }
