@@ -1112,6 +1112,51 @@ public final class XPathEvaluator
   }
 
   /**
+   * The steps before the last one of a path whose existence can be answered depth-first (see
+   * <code>PathNode._existsDepthFirst</code>): a path without start expression, without a filter
+   * expression as step and without an unfused <code>descendant-or-self::node()</code> (which keeps
+   * the shortcut through the attribute index), whose steps after the first one take the child,
+   * attribute or self axis. Those axes give distinct nodes for distinct context nodes, so the walk
+   * visits every node of the full evaluation once; the first step has one context node.
+   *
+   * @param aSteps
+   *        The compiled steps of the path.
+   * @param nPrefix
+   *        The number of steps before the last one (a fused pair counted as two).
+   * @return The steps to walk, a fused pair replaced by its fused step, or <code>null</code> if the
+   *         path does not qualify.
+   */
+  @Nullable
+  private static CompiledStep [] _getDepthFirstSteps (@NonNull final CompiledStep [] aSteps, final int nPrefix)
+  {
+    if (nPrefix == 0)
+      return null;
+    final List <CompiledStep> ret = new ArrayList <> (nPrefix);
+    for (int i = 0; i < nPrefix; ++i)
+    {
+      CompiledStep aStep = aSteps[i];
+      if (aStep.m_aPostfix != null)
+        return null;
+      if (aStep.m_aFused != null)
+      {
+        aStep = aStep.m_aFused;
+        i++;
+      }
+      else
+        if (_isDescendantOrSelfNode (aStep.m_aStep))
+          return null;
+      if (!ret.isEmpty ())
+      {
+        final EAxis eAxis = aStep.m_aStep.axis ();
+        if (eAxis != EAxis.CHILD && eAxis != EAxis.ATTRIBUTE && eAxis != EAxis.SELF)
+          return null;
+      }
+      ret.add (aStep);
+    }
+    return ret.toArray (new CompiledStep [0]);
+  }
+
+  /**
    * A path expression (XPath 3.1 section 3.3) with its compiled start expression and steps, and
    * what its shape decides once: the last step (the fused step for <code>//name</code>), the
    * element name whose absence from the document makes the path empty, and whether it is a
@@ -1132,6 +1177,8 @@ public final class XPathEvaluator
     private final XdmQName m_aEmptyByIndexName;
     // "//@name": the full evaluation answers it from the attribute index
     private final boolean m_bSubtreeAttributes;
+    // The steps before the last one if the existence is answered depth-first, null otherwise
+    private final CompiledStep [] m_aDepthFirstSteps;
 
     PathNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull PathExpr aPath)
     {
@@ -1149,6 +1196,7 @@ public final class XPathEvaluator
         m_nPrefix = 0;
         m_aEmptyByIndexName = null;
         m_bSubtreeAttributes = false;
+        m_aDepthFirstSteps = null;
       }
       else
       {
@@ -1162,6 +1210,7 @@ public final class XPathEvaluator
                                _isDescendantOrSelfNode (aSteps.get (nSteps - 2)) &&
                                m_aLast.m_aStep.axis () == EAxis.ATTRIBUTE &&
                                _getExactName (m_aLast.m_aStep.test ()) != null;
+        m_aDepthFirstSteps = m_aStart == null && m_aLast.m_aPostfix == null ? _getDepthFirstSteps (m_aSteps, m_nPrefix) : null;
       }
     }
 
@@ -1244,13 +1293,83 @@ public final class XPathEvaluator
 
     /**
      * Early exit for a path whose last step is an axis step: its value is a node sequence, so its
-     * effective boolean value and its existence are the same question. All steps before the last
-     * one are evaluated completely, unless the element index of the document shows that the last
-     * step selects nothing.
+     * effective boolean value and its existence are the same question. The steps before the last
+     * one are walked depth-first for a path of {@link #m_aDepthFirstSteps}, and evaluated
+     * completely otherwise, unless the element index of the document shows that the last step
+     * selects nothing.
      *
      * @return <code>null</code> if the last step is not an axis step (the caller then evaluates
      *         the path completely).
      */
+    /**
+     * The start node of a path without start expression: the root of the context node for an
+     * absolute path, the context node otherwise, with the errors of {@link #_evalPrefix(DynamicContext, int)}.
+     */
+    @NonNull
+    private IXdmNode _getStartNode (@NonNull final DynamicContext aCtx)
+    {
+      final IXdmItem aItem = _getContextItem (aCtx);
+      if (m_aPath.absolute ())
+      {
+        if (!(aItem instanceof final IXdmNode aNode))
+          throw XPathException.of ("XPTY0020", "The context item for '/' is not a node");
+        final IXdmNode aRoot = aNode.getRoot ();
+        if (!aRoot.isDocument ())
+          throw XPathException.of ("XPDY0050", "The root of the tree containing the context item is not a document node");
+        return aRoot;
+      }
+      if (!(aItem instanceof final IXdmNode aNode))
+        throw XPathException.of ("XPTY0020", "The context item for an axis step is not a node");
+      return aNode;
+    }
+
+    /**
+     * Early exit for a path of {@link #m_aDepthFirstSteps}: the steps are walked depth-first from
+     * the start node, each step from one context node at a time (with its predicates, positions
+     * counted per context node as in the full evaluation), and the last step is tested for every
+     * node of the step before it until one selects a node. The intermediate results are neither
+     * sorted nor deduplicated, which the steps allowed here do not need. An error that a later
+     * context node would raise is not raised once a node is found (XPath 3.1 section 2.3.4). The
+     * walk is iterative, with one level per step of the expression.
+     *
+     * @return <code>true</code> if the path selects at least one node.
+     */
+    private boolean _existsDepthFirst (@NonNull final DynamicContext aCtx)
+    {
+      final CompiledStep [] aSteps = m_aDepthFirstSteps;
+      final int nLevels = aSteps.length;
+      final XdmSequence [] aLevelNodes = new XdmSequence [nLevels];
+      final int [] aLevelPos = new int [nLevels];
+      aLevelNodes[0] = _evalAxisStep (aSteps[0], _getStartNode (aCtx), aCtx);
+      int nLevel = 0;
+      while (nLevel >= 0)
+      {
+        final XdmSequence aNodes = aLevelNodes[nLevel];
+        final int nPos = aLevelPos[nLevel];
+        if (nPos >= aNodes.size ())
+        {
+          // This level is done: continue with the next node of the level above
+          nLevel--;
+          continue;
+        }
+        aLevelPos[nLevel] = nPos + 1;
+        final IXdmNode aNode = (IXdmNode) aNodes.get (nPos);
+        aCtx.checkInterrupt ();
+        if (nLevel == nLevels - 1)
+        {
+          if (_hasPassingItem (_collectAxisCandidates (m_aLast, aNode, aCtx), m_aLast.m_aPredicates, aCtx))
+            return true;
+        }
+        else
+        {
+          nLevel++;
+          aLevelNodes[nLevel] = _evalAxisStep (aSteps[nLevel], aNode, aCtx);
+          aLevelPos[nLevel] = 0;
+        }
+      }
+      return false;
+    }
+
     @Nullable
     private Boolean _existsInPath (@NonNull final DynamicContext aCtx)
     {
@@ -1263,6 +1382,10 @@ public final class XPathEvaluator
       // which is cheaper than visiting every node of the subtrees here
       if (m_bSubtreeAttributes)
         return null;
+      // Optimisation: a path of child steps (as /a/b/c/@d in a per-line assertion) stops at the
+      // first node of the last step instead of evaluating all steps before it completely
+      if (m_aDepthFirstSteps != null)
+        return Boolean.valueOf (_existsDepthFirst (aCtx));
       final XdmSequence aCurrent = _evalPrefix (aCtx, m_nPrefix);
       final boolean bFromContextItem = m_aStart == null && !m_aPath.absolute () && m_nPrefix == 0;
       return Boolean.valueOf (_existsInStep (m_aLast, aCurrent, aCtx, bFromContextItem ? "XPTY0020" : "XPTY0019"));

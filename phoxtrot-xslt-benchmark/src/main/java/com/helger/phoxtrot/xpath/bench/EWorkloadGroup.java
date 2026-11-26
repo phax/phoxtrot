@@ -52,6 +52,8 @@ public enum EWorkloadGroup implements IHasID <String>
 
   /** The case of the XPath group that runs the rule set. */
   public static final String XPATH_RULES = "rules";
+  /** The case of the XPath group that runs the rule set with absolute paths. */
+  public static final String XPATH_ABSOLUTE_RULES = "rules-absolute";
 
   private final String m_sID;
 
@@ -82,6 +84,7 @@ public enum EWorkloadGroup implements IHasID <String>
         for (final EXPathCase eCase : EXPathCase.values ())
           ret.add (eCase.getID ());
         ret.add (XPATH_RULES);
+        ret.add (XPATH_ABSOLUTE_RULES);
         break;
       case XSLT:
         for (final EXsltCase eCase : EXsltCase.values ())
@@ -122,8 +125,8 @@ public enum EWorkloadGroup implements IHasID <String>
           return new ParseWorkload (nSize, "parse".equals (sCase));
         break;
       case XPATH:
-        if (XPATH_RULES.equals (sCase))
-          return new XPathRulesWorkload (nSize);
+        if (XPATH_RULES.equals (sCase) || XPATH_ABSOLUTE_RULES.equals (sCase))
+          return new XPathRulesWorkload (nSize, XPATH_ABSOLUTE_RULES.equals (sCase));
         final EXPathCase eXPathCase = EXPathCase.getFromIDOrNull (sCase);
         if (eXPathCase != null)
           return new XPathWorkload (eXPathCase, nSize);

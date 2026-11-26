@@ -21,6 +21,8 @@ import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
+import java.util.concurrent.atomic.AtomicInteger;
+
 import org.jspecify.annotations.NonNull;
 import org.junit.Test;
 
@@ -174,6 +176,67 @@ public final class EarlyExitTest
     // The line with the duplicate comes first: the error is raised before a match
     final IXdmNode aDupFirst = _mls (LINE_DUP + LINE_BV);
     _assertError ("XPTY0004", MLS_TEST, aDupFirst);
+  }
+
+  /**
+   * The existence of a path of child steps is answered depth-first: the first match ends the walk,
+   * and the results are those of the full evaluation for early, late and absent matches.
+   */
+  @Test
+  public void testDepthFirst ()
+  {
+    final IXdmNode aEarly = _parse ("<r><s><x a='1'/></s><s><x/></s><s><x/></s></r>");
+    final IXdmNode aLate = _parse ("<r><s><x/></s><s><x/></s><s><x/><x a='3'/></s></r>");
+    final IXdmNode aAbsent = _parse ("<r><s><x/></s><s><x/></s><s/></r>");
+    for (final String sPath : new String [] { "/r/s/x/@a", "r/s/x/@a", "//s/x/@a", "/r/s[last()]/x[@a]", "/r/s[2]/x/@a" })
+      for (final IXdmNode aDoc : new IXdmNode [] { aEarly, aLate, aAbsent })
+      {
+        final String sExpected = _eval ("count(" + sPath + ") gt 0", aDoc);
+        assertEquals (sPath, sExpected, _eval ("exists(" + sPath + ")", aDoc));
+        assertEquals (sPath, Boolean.valueOf ("true".equals (sExpected)), Boolean.valueOf (_ebv (sPath, aDoc)));
+      }
+    assertEquals ("true", _eval ("exists(/r/s/x/@a)", aLate.getChildAtIndex (0).getChildAtIndex (1)));
+    assertEquals ("true", _eval ("exists(/r/s[last()]/x[@a])", aLate));
+    assertEquals ("false", _eval ("exists(/r/s[2]/x/@a)", aLate));
+
+    // A later context node whose predicate raises an error is not looked at after the first match;
+    // the full evaluation raises it
+    final IXdmNode aError = _parse ("<r><s><x a='1'/></s><s><x a='z'/></s></r>");
+    assertEquals ("true", _eval ("exists(/r/s/x[xs:integer(@a) gt 0])", aError));
+    _assertError ("FORG0001", "count(/r/s/x[xs:integer(@a) gt 0])", aError);
+    // Before the first match it is raised
+    final IXdmNode aErrorFirst = _parse ("<r><s><x a='z'/></s><s><x a='1'/></s></r>");
+    _assertError ("FORG0001", "exists(/r/s/x[xs:integer(@a) gt 0])", aErrorFirst);
+    // XPDY0050 for an absolute path in a tree without document root
+    final IXdmNode aParentless = IXdmNode.createElement (new XdmQName ("r"));
+    final IXdmNode aS = IXdmNode.createElement (new XdmQName ("s"));
+    aS.appendChild (IXdmNode.createElement (new XdmQName ("x")));
+    aParentless.appendChild (aS);
+    _assertError ("XPDY0050", "exists(/r/s/x)", aParentless);
+  }
+
+  /** A long depth-first walk without a match stops when the evaluation is cancelled. */
+  @Test
+  public void testDepthFirstInterrupt ()
+  {
+    final StringBuilder aSB = new StringBuilder ("<r>");
+    for (int i = 0; i < 1000; ++i)
+      aSB.append ("<s><x/></s>");
+    final IXdmNode aDoc = _parse (aSB.append ("</r>").toString ());
+    final CompiledXPath aCompiled = XPathCompiler.compile ("exists(/r/s/x/@a)", _createStaticContext ());
+    final DynamicContext aCtx = aCompiled.createDynamicContext ().withFocus (aDoc, 1, 1);
+    // Cancelled within the walk, after the first context nodes were tried
+    final AtomicInteger aCalls = new AtomicInteger ();
+    aCtx.setInterrupt ( () -> aCalls.incrementAndGet () > 500);
+    try
+    {
+      aCompiled.evaluate (aCtx);
+      fail ("Not cancelled");
+    }
+    catch (final XPathException ex)
+    {
+      assertEquals ("FOER0000", ex.getCode ());
+    }
   }
 
   @Test

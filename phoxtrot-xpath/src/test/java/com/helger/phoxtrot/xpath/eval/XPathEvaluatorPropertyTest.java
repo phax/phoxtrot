@@ -86,7 +86,19 @@ public final class XPathEvaluatorPropertyTest
                                            "//b[a]/c",
                                            "//a[b][2]",
                                            "//zz/a",
-                                           "(//zz | //a)/b" };
+                                           "(//zz | //a)/b",
+                                           // Depth-first existence: child, attribute and self steps after the first
+                                           "/*/a/b",
+                                           "/*/a/b/@x",
+                                           "a/b/c",
+                                           "a/b[2]/c",
+                                           "a/b[last()]/c",
+                                           "*/*[@x]/c",
+                                           "//a/b/c",
+                                           "//a/b[1]/@y",
+                                           "//b/self::*/a[last()]/*",
+                                           "a/@x",
+                                           "ancestor::*/b/a" };
 
   /** Element names as name test and as the QName constructor of the reference */
   private static final String [] [] ELEMENT_NAMES = { { "a", "QName('', 'a')" },

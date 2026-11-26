@@ -305,6 +305,30 @@ final class BenchExpected
   }
 
   @NonNull
+  static String xpathAbsoluteRules (@NonNull final BenchData aData)
+  {
+    boolean bAnyReason = false;
+    boolean bAnyC = false;
+    int nRateZero = 0;
+    int nC = 0;
+    for (final Line aLine : aData.getAllLines ())
+    {
+      if (aLine.reason () != null)
+        bAnyReason = true;
+      if ("0".equals (aLine.taxRate ()))
+        nRateZero++;
+      if ("C".equals (aLine.cat ()))
+      {
+        bAnyC = true;
+        nC++;
+      }
+    }
+    // R1: a line with the rate 0 fails if no line of the document has a reason; R2: a line of
+    // category C fails if no line of category C has a note (every line has one)
+    return (bAnyReason ? 0 : nRateZero) + "," + (bAnyC ? 0 : nC);
+  }
+
+  @NonNull
   static String xsltDispatch (@NonNull final BenchData aData)
   {
     final StringBuilder aSB = new StringBuilder ();
