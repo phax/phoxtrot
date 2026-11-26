@@ -98,7 +98,11 @@ public final class XPathEvaluatorPropertyTest
                                            "//a/b[1]/@y",
                                            "//b/self::*/a[last()]/*",
                                            "a/@x",
-                                           "ancestor::*/b/a" };
+                                           "ancestor::*/b/a",
+                                           // Depth-first with boolean predicates tested on the visited nodes
+                                           "/*/a[@x]/b[c]/@y",
+                                           "//a[@y = '1']/*[not(@x)]",
+                                           "a[b and @x]/b[2]" };
 
   /** Element names as name test and as the QName constructor of the reference */
   private static final String [] [] ELEMENT_NAMES = { { "a", "QName('', 'a')" },

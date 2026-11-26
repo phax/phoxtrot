@@ -188,7 +188,7 @@ public final class EarlyExitTest
     final IXdmNode aEarly = _parse ("<r><s><x a='1'/></s><s><x/></s><s><x/></s></r>");
     final IXdmNode aLate = _parse ("<r><s><x/></s><s><x/></s><s><x/><x a='3'/></s></r>");
     final IXdmNode aAbsent = _parse ("<r><s><x/></s><s><x/></s><s/></r>");
-    for (final String sPath : new String [] { "/r/s/x/@a", "r/s/x/@a", "//s/x/@a", "/r/s[last()]/x[@a]", "/r/s[2]/x/@a" })
+    for (final String sPath : new String [] { "/r/s/x/@a", "r/s/x/@a", "//s/x/@a", "/r/s[last()]/x[@a]", "/r/s[2]/x/@a", "/r/s[x/@a]/x", "/r/s[x[@a = '3']]/x[not(@a)]" })
       for (final IXdmNode aDoc : new IXdmNode [] { aEarly, aLate, aAbsent })
       {
         final String sExpected = _eval ("count(" + sPath + ") gt 0", aDoc);
@@ -204,6 +204,9 @@ public final class EarlyExitTest
     final IXdmNode aError = _parse ("<r><s><x a='1'/></s><s><x a='z'/></s></r>");
     assertEquals ("true", _eval ("exists(/r/s/x[xs:integer(@a) gt 0])", aError));
     _assertError ("FORG0001", "count(/r/s/x[xs:integer(@a) gt 0])", aError);
+    // The same for a boolean predicate of an earlier step, tested on the visited nodes only
+    assertEquals ("true", _eval ("exists(/r/s[xs:integer(x/@a) gt 0]/x)", aError));
+    _assertError ("FORG0001", "count(/r/s[xs:integer(x/@a) gt 0]/x)", aError);
     // Before the first match it is raised
     final IXdmNode aErrorFirst = _parse ("<r><s><x a='z'/></s><s><x a='1'/></s></r>");
     _assertError ("FORG0001", "exists(/r/s/x[xs:integer(@a) gt 0])", aErrorFirst);

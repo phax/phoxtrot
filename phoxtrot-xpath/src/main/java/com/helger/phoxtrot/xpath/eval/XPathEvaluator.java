@@ -1324,11 +1324,55 @@ public final class XPathEvaluator
     }
 
     /**
+     * @return <code>true</code> if the depth-first walk tests the predicates of the step on each
+     *         node when it visits it instead of filtering the whole step result first: predicates
+     *         that are boolean and select the same nodes whatever the context position is.
+     */
+    private static boolean _isFilteredLazily (@NonNull final CompiledStep aStep)
+    {
+      return aStep.m_aPredicates.length > 0 && aStep.m_bFocusFreePredicates;
+    }
+
+    /**
+     * @return <code>true</code> if the node passes all the predicates, which are boolean and read
+     *         neither the context position nor the size (see {@link #_isFilteredLazily(CompiledStep)}).
+     */
+    private static boolean _passesFocusFreePredicates (@NonNull final CompiledExpr [] aPredicates,
+                                                       @NonNull final IXdmNode aNode,
+                                                       final int nPosition,
+                                                       final int nSize,
+                                                       @NonNull final DynamicContext aCtx)
+    {
+      for (final CompiledExpr aPredicate : aPredicates)
+        if (!_isPredicateTrue (aPredicate, aNode, nPosition, nSize, aCtx))
+          return false;
+      return true;
+    }
+
+    /**
+     * @return The nodes of one level of the depth-first walk: the step from the node, its
+     *         predicates applied, or, for a step filtered lazily, its candidates in axis order
+     *         (the order does not matter for the existence).
+     */
+    @NonNull
+    private static XdmSequence _getDepthFirstLevel (@NonNull final CompiledStep aStep,
+                                                    @NonNull final IXdmNode aNode,
+                                                    @NonNull final DynamicContext aCtx)
+    {
+      // Optimisation: a boolean predicate such as [@cat = 'C'] is tested only on the candidates
+      // the walk reaches before it finds a node
+      if (_isFilteredLazily (aStep))
+        return _collectAxisCandidates (aStep, aNode, aCtx);
+      return _evalAxisStep (aStep, aNode, aCtx);
+    }
+
+    /**
      * Early exit for a path of {@link #m_aDepthFirstSteps}: the steps are walked depth-first from
      * the start node, each step from one context node at a time (with its predicates, positions
      * counted per context node as in the full evaluation), and the last step is tested for every
      * node of the step before it until one selects a node. The intermediate results are neither
-     * sorted nor deduplicated, which the steps allowed here do not need. An error that a later
+     * sorted nor deduplicated, which the steps allowed here do not need, and boolean predicates
+     * that do not read the context position are tested on a node when it is visited. An error that a later
      * context node would raise is not raised once a node is found (XPath 3.1 section 2.3.4). The
      * walk is iterative, with one level per step of the expression.
      *
@@ -1340,7 +1384,7 @@ public final class XPathEvaluator
       final int nLevels = aSteps.length;
       final XdmSequence [] aLevelNodes = new XdmSequence [nLevels];
       final int [] aLevelPos = new int [nLevels];
-      aLevelNodes[0] = _evalAxisStep (aSteps[0], _getStartNode (aCtx), aCtx);
+      aLevelNodes[0] = _getDepthFirstLevel (aSteps[0], _getStartNode (aCtx), aCtx);
       int nLevel = 0;
       while (nLevel >= 0)
       {
@@ -1355,6 +1399,9 @@ public final class XPathEvaluator
         aLevelPos[nLevel] = nPos + 1;
         final IXdmNode aNode = (IXdmNode) aNodes.get (nPos);
         aCtx.checkInterrupt ();
+        if (_isFilteredLazily (aSteps[nLevel]) &&
+            !_passesFocusFreePredicates (aSteps[nLevel].m_aPredicates, aNode, nPos + 1, aNodes.size (), aCtx))
+          continue;
         if (nLevel == nLevels - 1)
         {
           if (_hasPassingItem (_collectAxisCandidates (m_aLast, aNode, aCtx), m_aLast.m_aPredicates, aCtx))
@@ -1363,7 +1410,7 @@ public final class XPathEvaluator
         else
         {
           nLevel++;
-          aLevelNodes[nLevel] = _evalAxisStep (aSteps[nLevel], aNode, aCtx);
+          aLevelNodes[nLevel] = _getDepthFirstLevel (aSteps[nLevel], aNode, aCtx);
           aLevelPos[nLevel] = 0;
         }
       }
