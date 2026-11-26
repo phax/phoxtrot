@@ -311,7 +311,7 @@ basis of this project. See [NOTICE](NOTICE).
 v0.5.0 - work in progress
 * New benchmark workload `rounding` (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
 * XPath expressions are compiled once into a tree of evaluation nodes instead of being interpreted per evaluation
-  (`XPathEvaluator.compile (IExpr)`, `compile (IExpr, StaticContext)`, new class `CompiledExpr`); `CompiledXPath`,
+  (`XPathEvaluator.compile (IExpr)`, `compile (IExpr, StaticContext)`, new class `AbstractCompiledExpr`); `CompiledXPath`,
   stylesheet expressions and patterns keep the compiled form
 * XSLT local variables and parameters are bound by slot in a variable frame per template or function call instead of
   by name along a chain of contexts (new public classes `VariableFrame`, `VariableFrameLayout`, `VariableSlot`;
@@ -342,6 +342,13 @@ v0.5.0 - work in progress
 * An XSLT template call, function call or variable body starts with the dynamic context of the caller's last
   expression, so its first expression creates no dynamic context of its own when its static context is equivalent at
   run time (`XsltContext.getDynamicContext` keeps returning the context with the static context of the instructions)
+* The existence or effective boolean value of a path whose steps after the first take the child, attribute or self
+  axis (such as `/a/b/c/@d` in a per-line Schematron assertion) stops at the first node of the last step instead of
+  evaluating all steps before it completely
+* A template rule whose pattern is a union of paths tests the last steps of the paths once per candidate instead of
+  twice (new `XsltPattern.isCanMatchTestedByMatches`)
+* The abstract class `XslNode` of the stylesheet tree is renamed to `AbstractXslNode` (incompatible change for code
+  that names the type, such as callers of `XsltException.at`/`locate`)
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

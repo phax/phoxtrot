@@ -1570,3 +1570,164 @@ and 1.1; with `ref="xml:lang"` or an `##other` wildcard it is valid; on a simple
 `xsi:type`/`xsi:nil` stay accepted everywhere, `xsi:foo` is rejected. Full conformance gate (XSD 1.0 and 1.1) unchanged
 or better. XMLPerm: once fixed, the wiki example of `xml-attributes` can use a schema again and the mutator could derive
 "invalid" for an attribute the schema type does not admit.
+
+## Suggestions from the ph-schematron validation profile on 0.5.0-SNAPSHOT (2026-11-26)
+
+Measured 2026-11-26 with phoxtrot `f29bb2f` (0.5.0-SNAPSHOT), Saxon-HE 13.1, JDK 25, ph-schematron 11.1.0-SNAPSHOT,
+prebuilt XSLTs of phive-rules (`SchematronResourceXSLT`, SVRL read with JAXB). Average of a timed loop after warm-up,
+the second of two windows; the machine was not otherwise quiet, so take differences below 10 % as noise. The larger
+inputs repeat the first line item of the sample invoice (`cac:InvoiceLine` or `ram:IncludedSupplyChainTradeLineItem`).
+
+| Use case | Input | Saxon [ms] | phoxtrot [ms] |
+| -------- | ----- | ---------: | ------------: |
+| Peppol BIS Billing (CEN-EN16931-UBL + PEPPOL-EN16931-UBL 2026.5), DOM | `base-example.xml` | 5.5 | 1.0 |
+| Peppol BIS Billing, DOM | 500 lines | 991 (wrapped DOM) | 53 |
+| Peppol BIS Billing, stream | 500 lines | 114 | 64 |
+| Peppol BIS Billing, stream | 5,000 lines | 1,136 | 700 |
+| EN 16931 CII 1.3.15, DOM | `CII_example9.xml` | 1.07 | 0.36 |
+| EN 16931 CII 1.3.15, stream | 500 lines | 62 | 69 |
+| EN 16931 CII 1.3.15, stream | 5,000 lines | 1,157 | **3,166** |
+| EN 16931 UBL + XRechnung 3.0.2, DOM | `01.01a-INVOICE_ubl.xml` | 3.8 | 0.75 |
+| Compile of the Peppol pair (first use) | - | 600 | 300 |
+| ISO Schematron SCH to XSLT + validation (EN16931-UBL `.sch`, best of 15) | `ubl-tc434-example1.xml` | 149 | 129 |
+| SchXslt2 SCH to XSLT + validation (same) | same | 176 | 78 |
+
+phoxtrot is faster everywhere except for large CII invoices, where it grows quadratically (S53). The Saxon figure for
+the wrapped DOM is not a phoxtrot matter: ph-schematron converts a DOM into a TinyTree only for its own documents and
+for a `SaxonDOMSource`.
+
+### S53 - Existence of a path stops at the first node of the last step
+
+Status: done (2026-11-26, `7864d1b`, `ae1ad30`), as proposed, with two changes: the steps after the first one must take
+the child, attribute or self axis (they give distinct nodes for distinct context nodes; a descendant or ancestor step
+after the first could visit a node many times without the deduplication of the full evaluation), and the walk is
+iterative. Beyond the proposal, boolean predicates that read no position (`ExprWalker.isFocusFreeBoolean`) are tested
+on the nodes the walk visits instead of on the whole step result (`/a/b[@c = 'x']/d`). New benchmark case
+`rules-absolute` (two per-line assertions with an absolute path, 10,000 lines). `compare.sh f29bb2f 132cf84`, JDK 21,
+`-f 2`, both orders:
+
+| Case (10,000 lines) | Before | After |
+| ------------------- | -----: | ----: |
+| `rules-absolute` time | 1,353 / 1,446 ms | 2.4 / 2.5 ms |
+| `rules-absolute` allocation | 6.86 GB | 11.6 MB |
+| `exists` time | 1.09 / 1.11 ms | 0.60 / 0.62 ms |
+| `exists` allocation | 5.79 MB | 2.81 MB |
+
+`child`, `descendant`, `predicate` and `rules` unchanged within their error (the 1 to 5 % more allocation of
+`predicate` is inside the error of the new runs). Without the lazy predicates (`7864d1b` alone), `rules-absolute`
+took 793 ms. The ph-schematron profile was not rerun.
+
+EN 16931 CII 1.3.15 with 5,000 line items takes 3,166 ms on phoxtrot against 1,157 ms on Saxon, and 69 ms for 500
+line items (46 times as long for 10 times the input). JFR: 90 % of the samples are in assert tests, 84 % under
+`PathNode._existsInPath` → `_evalPrefix` → `_applyStep` (the loop over several context nodes) →
+`AxisNavigator.collectNamedChildren`. Timing every assert of the stylesheet on its rule context alone (phoxtrot XPath
+API, 779 tests, 2,763 ms in all) names one test with 2,663 ms:
+
+```
+rule   //ram:*[ends-with(name(), 'Quantity')]
+assert not(@unitCode) or (/rsm:CrossIndustryInvoice/rsm:SupplyChainTradeTransaction/ram:IncludedSupplyChainTradeLineItem/ram:SpecifiedLineTradeDelivery/ram:BilledQuantity/@unitCode)
+```
+
+The right operand of `or` is a path in a boolean context. `_existsInPath` evaluates every step before the last one
+completely ("All steps before the last one are evaluated completely") and then checks the last step: for each of the
+about 5,000 `Quantity` elements all 5,000 line items, their `SpecifiedLineTradeDelivery` and `BilledQuantity`
+children are collected and sorted, although the first line item already has the attribute. Saxon evaluates the path
+lazily and stops at the first item. The pattern "one absolute path in a per-line assert" is common in the EN 16931,
+XRechnung and Peppol rules, so any large CII or UBL invoice with a matching shape is affected.
+
+Proposal: answer the existence (and the effective boolean value) of a path of axis steps depth-first: from the start
+node, take the result of step 1 per context node (with its predicates, as `_evalAxisStep` does: positions are counted
+per context node, so the result per node is the same as in the full evaluation), and for each of its nodes in order
+continue with step 2, down to the last step, which is tested with `_hasPassingItem` as now; return `true` at the first
+node that passes. The sort and deduplication of the intermediate steps are not needed for an existence question.
+XPath 3.1 section 2.3.4 allows the early exit (an error a later context node would raise need not be raised).
+
+Prototype (in a scratch clone, not committed): a flag `m_bDepthFirst` on `PathNode`, set when the path has no start
+expression, a last axis step, at least one step before it, and no postfix step and no unfused
+`descendant-or-self::node()` in the prefix (that one stays with the attribute index shortcut and the full
+evaluation); `_existsInPath` then calls
+
+```java
+private boolean _existsDepthFirstRecursive (@NonNull final IXdmNode aNode, final int nStep, @NonNull final DynamicContext aCtx)
+{
+  if (nStep >= m_nPrefix)
+  {
+    aCtx.checkInterrupt ();
+    return _hasPassingItem (_collectAxisCandidates (m_aLast, aNode, aCtx), m_aLast.m_aPredicates, aCtx);
+  }
+  CompiledStep aStep = m_aSteps[nStep];
+  int nNext = nStep + 1;
+  if (aStep.m_aFused != null)
+  {
+    aStep = aStep.m_aFused;
+    nNext++;
+  }
+  for (final IXdmItem aChild : _evalAxisStep (aStep, aNode, aCtx))
+    if (_existsDepthFirstRecursive ((IXdmNode) aChild, nNext, aCtx))
+      return true;
+  return false;
+}
+```
+
+from the context node, or from its root for an absolute path (XPDY0050 if that is not a document node), after the
+name index check. The recursion depth is the number of steps of the expression, not the input. Measured with the
+prototype (same setup, same SVRL: same number of failed asserts):
+
+| Input | Before [ms] | Prototype [ms] | Saxon [ms] |
+| ----- | ----------: | -------------: | ---------: |
+| EN 16931 CII, 500 lines, stream | 64 | 40 | 62 |
+| EN 16931 CII, 5,000 lines, stream | 4,049 | 459 | 1,157 |
+| Peppol BIS Billing, 500 lines, DOM | 60 | 53 | 991 |
+
+Tests: existence and EBV of `/a/b/c/@x`, `a/b[2]/c`, `a/b[last()]/c` and `//a/b/c` with the first match early, late
+and absent, compared with the full evaluation; a path whose later context node would raise an error (not required to
+raise it); interruption inside a long walk.
+
+A possible further step, not measured: an absolute path without variables and without focus-dependent functions has
+the same value for every context item of one transformation, so `count (...)` or `sum (...)` over such a path in a
+per-line assert (still quadratic after this change) could be computed once per document and transformation, like
+the loop-invariant calls of S30.
+
+### S54 - The rule search tests the last step of a pattern twice
+
+Status: done (2026-11-26, `9854fbd`) with the first variant: `XsltPattern.isCanMatchTestedByMatches` (true for a
+union of paths) lets `CompiledPattern.matches` skip the pre-test. XSLT workloads at 10,000 lines against `f29bb2f`
+(`-f 2`, both orders): `dispatch` 0.91 in time, allocation unchanged; `identity`, `keys`, `grouping` and
+`recursion` unchanged within the noise of the machine. The ph-schematron profile was not rerun.
+
+Peppol BIS Billing with 500 lines (JFR, 3,521 samples): 42.5 % of the samples are under `Engine._findRule`, flat (no
+method above 2.4 % self time). `CompiledXsltPattern._canLastStepSelect` is in 11.6 % of the samples: 5.1 % from the
+pre-test `CompiledPattern.matches` → `CompiledXsltPattern.canMatch` (line 53), which runs it for every path of a
+union, and 6.4 % from `CompiledXsltPattern._matchesUnionPaths` (line 475), which runs it again for every path before
+its direct matcher or search once the pre-test has passed. For a rule taken from the name index
+of the mode the name part of that test is known to pass already.
+
+Proposal: test the last steps once per rule: either let `CompiledPattern.matches` call a variant of `matches` that
+skips the pre-test of the union paths it has just checked (keeping the per-path check only for the paths `canMatch`
+did not decide), or drop the separate `canMatch` call for union patterns and create the pattern context lazily inside
+`_matchesUnionPaths`, which it already does. Expected gain: a few per cent of a validation with the ISO Schematron
+skeleton, where every element is matched against the rules of every pattern mode.
+
+### S55 - Items of go-xslt 0.4.4
+
+Status: proposed. Found 2026-11-26 by reading `v0.4.3..upstream/main` of go-xslt (80 commits, release v0.4.4,
+performance rounds 13 to 15, no conformance change, output byte-identical according to its release notes); nothing
+measured yet. Most commits are Go-specific (scratch and lent arrays, pools, escape analysis, the Go tokenizer and
+readers, which phoxtrot does not have: it reads through the JDK SAX parser and StAX). Not to be ported: Go's
+`dispatchFunc` sends every call with the prefix `xs` to the constructors whatever the prefix is bound to;
+phoxtrot resolves functions by namespace URI.
+
+| go-xslt | Idea | phoxtrot | Value |
+| ------- | ---- | -------- | ----- |
+| `010ff32` | `generate-id(A) = generate-id(B)` (`!=`, `eq`, `ne`, codepoint collation) compares the nodes (two empty arguments are equal) | not there: every call does a run cache lookup, a `WeakHashMap.computeIfAbsent` (one entry per node) and builds an atomic (`FnAccessor._generateId`); a `ComparisonNode` shape for two built-in `generate-id` calls | medium to high for Muenchian grouping (XSLT 1.0, Schematron) |
+| `35d9a3e`, `644742a`, `ab6d5b3`, `dbe4462` | integers and decimals kept compact as a long; `div`, `idiv`, `mod`, `sum`, `avg` stay compact | partly: `_longArithmetic` computes in long but allocates a `BigInteger` result; `divideDecimal` always works on `BigInteger`s; `sum` adds pairwise with an atomic per step (`AtomicArithmetic`, `FnNumeric`) | medium (allocation in invoice rules); a long payload in `XdmAtomic` is a larger change |
+| `82ec44e` | the XSD 1.0 late-hint walk only runs if a schema location hint sits below the root | not there: `XsdInstanceValidator.checkLateHints` walks every instance; the attribute name index can answer it | low to medium (XSD 1.0) |
+| `962eb11`, `4faf6f9` | attribute use presence by position | not there: `AttrUseIndex.isPresent` scans the uses by name, twice per use (`XsdAttributeValidator`) | low to medium |
+| `8529681`, `fdf8153` | an `xsl:iterate` iteration keeps its frame, `xsl:next-iteration` is one allocation | partly: a new frame and context per iteration when the body has no binding before the loop; two lists per `next-iteration`, parameters matched by name (`IterateInstruction`) | low to medium |
+| `ed5c571` | `xsl:number` counts on from the last sibling it numbered | mostly there (name index and binary search); still quadratic for count patterns with predicates and for `level="any"` by walk (`NumberInstruction`) | low to medium (rare shape) |
+| `028403d` | group-by over one plain node finds its group by the string | there (hash buckets); left: allocation per item; `composite="yes"` scans all groups linearly, as in Go (`ForEachGroupInstruction`) | low |
+| `fdf8153` | a map call takes its key without an argument list | `DynamicCallNode` builds a list per call before the map branch | low |
+
+Already there: a literal predicate indexes the sequence (`_applyPredicate`); scopes and frames per loop (C3/C4 slots);
+node lists filled in place (`XdmSequence.ListBuilder`, index lists). Suggested order: `generate-id`, compact
+decimal division and `sum`/`avg`, the two XSD 1.0 items, `xsl:iterate`; the rest only if a profile shows it.

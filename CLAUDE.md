@@ -277,7 +277,13 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - Early exit (XPath 3.1 section 2.3.4): where only existence or the effective boolean value matters (`fn:exists`,
   `fn:empty`, `fn:boolean`, `fn:not` resolved to their built-in implementation, `and`/`or`, `if`, `satisfies`,
   predicates, `XPathEvaluator.evaluateEffectiveBooleanValue`), paths ending in an axis step and filter expressions
-  stop at the first decisive item; only the last predicate of the last step is short-circuited. Any other shape falls
+  stop at the first decisive item; only the last predicate of the last step is short-circuited. A path without start
+  expression whose steps after the first take the child, attribute or self axis (no filter step, no unfused
+  `descendant-or-self::node()`) is walked depth-first (`PathNode._existsDepthFirst`, iterative): these axes give
+  distinct nodes for distinct context nodes, so the walk needs no sort or deduplication; do not admit an axis that can
+  give the same node twice (descendant, ancestor, following, ...), the walk would repeat work. Predicates of a step
+  that `ExprWalker.isFocusFreeBoolean` accepts are tested on each node the walk visits, others on the whole step
+  result per context node. Any other shape falls
   back to the complete evaluation. `and`/`or` operands stay left to right. A path whose last child/descendant step
   names an element the document's index does not contain is empty without evaluating its prefix
   (`XPathEvaluator._isEmptyByNameIndex`, the name decided once per path in `PathNode`, also in the complete evaluation), but only for prefixes that cannot raise an
@@ -324,18 +330,18 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   cast/castable and the static function call with argument conversion; `XPathEvaluator` calls it. Change these
   operators there, never in a copy (it is the public API for generated code such as ph-sch2java's).
 - Evaluation (closure compilation, plan in `docs/PLAN.md`, "Interpreter speed"): `XPathEvaluator.compile` turns an
-  `IExpr` into a tree of `CompiledExpr` nodes (one nested node class per expression kind in `XPathEvaluator`, holding
+  `IExpr` into a tree of `AbstractCompiledExpr` nodes (one nested node class per expression kind in `XPathEvaluator`, holding
   its compiled children; shape analyses that depend only on the expression are done in the node constructors, those
   that depend on the static context still at run time). There is no interpreter `switch`. Code that evaluates an
-  expression more than once holds its `CompiledExpr` (`CompiledXPath`, the XSLT `XPathExpr`, `CompiledXsltPattern`
+  expression more than once holds its `AbstractCompiledExpr` (`CompiledXPath`, the XSLT `XPathExpr`, `CompiledXsltPattern`
   with an identity map for `PatternMatcher`, `PatternMatcher.DirectPath`, `StreamRecordPath`, `InlineFunctionItem`)
-  and evaluates it with `XPathEvaluator.evaluate (CompiledExpr, ...)`/`evaluateEffectiveBooleanValue`;
+  and evaluates it with `XPathEvaluator.evaluate (AbstractCompiledExpr, ...)`/`evaluateEffectiveBooleanValue`;
   `evaluate (IExpr, ...)` compiles each time and is only for one-off evaluations. Compiled nodes keep no run state;
   the only values they keep are immutable ones fixed by the resolved functions, in volatile fields: the function item
   of a named function reference that is not focus-dependent (`NamedFunctionRefNode`) and a map built only from
   literal keys and literal or function reference values (`MapConstructorNode`), both kept for the definitions (by
   identity) the references resolve to again on every evaluation.
-  Early exit is `CompiledExpr.tryEarlyEbv`/`exists`, overridden by the path, filter and sequence nodes.
+  Early exit is `AbstractCompiledExpr.tryEarlyEbv`/`exists`, overridden by the path, filter and sequence nodes.
 - XSLT local variables and parameters are bound by slot (closure compilation C4): `CompileContext.withVariable` gives
   every declaration its own slot in the `VariableFrameLayout` of its body (a new layout where the scope starts empty),
   `createStaticContext` declares the locals with `StaticContext.declareFrameVariable`, and
@@ -395,7 +401,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   and xsl:original libraries at the end of `compile`, and `EvaluateExtension` freezes its library: anything that
   registers functions must do so before (a registration afterwards throws).
 - Patterns: `XsltPattern.canMatch` rejects a node that the last step of no union path can select (it must stay a pure
-  pre-test of what the path search rejects first); `getFinalNames` gives the exact element/attribute names when every
+  pre-test of what the path search rejects first). A union pattern tests it inside its match
+  (`isCanMatchTestedByMatches`), so `CompiledPattern.matches` skips the separate call for it; a pattern whose match
+  can evaluate something before that test must keep returning `false` there. `getFinalNames` gives the exact element/attribute names when every
   alternative ends in one, and `Engine._buildKeyIndex` then tests only those nodes from the document's name index
   instead of walking the tree (`Engine.getKeyIndexFromNamesCount ()` tells tests which path ran).
   `CompiledXsltPattern` opens a parenthesised union whose predicates pass `ExprWalker.isFocusFreeBoolean`
