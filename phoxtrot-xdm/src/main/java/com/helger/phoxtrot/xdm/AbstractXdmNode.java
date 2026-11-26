@@ -705,6 +705,54 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
   }
 
   /**
+   * @param aRoot
+   *        The root of a tree.
+   * @return <code>true</code> if no child of the root is a parent node (element or document), so
+   *         the tree is the root, its attributes and its leaf children.
+   */
+  private static boolean _isFlatTree (@NonNull final AbstractXdmNode aRoot)
+  {
+    if (aRoot instanceof final AbstractXdmParentNode aParent)
+      for (int i = 0; i < aParent.getChildCount (); ++i)
+        if (aParent.getChildAtIndex (i) instanceof AbstractXdmParentNode)
+          return false;
+    return true;
+  }
+
+  /**
+   * Number a tree for which {@link #_isFlatTree(AbstractXdmNode)} holds, with the same numbers as
+   * the general walk of {@link #assignDocumentOrder()}: the root, its attributes, its children in
+   * order, and the end order of the root the last number.
+   *
+   * @param aRoot
+   *        The root of the tree.
+   * @param aTree
+   *        The new tree number.
+   */
+  private static void _assignFlatDocumentOrder (@NonNull final AbstractXdmNode aRoot, @NonNull final TreeStamp aTree)
+  {
+    int nOrder = 0;
+    aRoot.m_aTree = aTree;
+    aRoot.m_nOrder = nOrder++;
+    for (int i = 0; i < aRoot.getAttributeCount (); ++i)
+    {
+      final AbstractXdmNode aAttr = aRoot.getAttributeAtIndex (i);
+      aAttr.m_aTree = aTree;
+      aAttr.m_nOrder = nOrder++;
+    }
+    if (aRoot instanceof final AbstractXdmParentNode aParent)
+    {
+      for (int i = 0; i < aParent.getChildCount (); ++i)
+      {
+        final AbstractXdmNode aChild = aParent.getChildAtIndex (i);
+        aChild.m_aTree = aTree;
+        aChild.m_nOrder = nOrder++;
+      }
+      aParent.internalSetEndOrder (nOrder - 1);
+    }
+  }
+
+  /**
    * Numbers the whole tree under a new tree number, iteratively in pre-order from the root: each
    * node gets the next number, then its attributes, then its children in order. When a node is
    * reached, every open parent node that is not its parent is finished and receives the last number
@@ -716,6 +764,13 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
   {
     final AbstractXdmNode aRoot = getRoot ();
     final TreeStamp aTree = internalNewTree ();
+    // Optimisation: a tree without grandchildren (the temporary tree of an XSLT variable whose
+    // content is text, a parentless leaf) is numbered without the two stacks
+    if (_isFlatTree (aRoot))
+    {
+      _assignFlatDocumentOrder (aRoot, aTree);
+      return;
+    }
     int nOrder = 0;
     final ArrayDeque <AbstractXdmNode> aStack = new ArrayDeque <> ();
     // The parent nodes whose subtree is not finished yet, innermost first

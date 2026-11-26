@@ -337,6 +337,8 @@ v0.5.0 - work in progress
   function
 * A template or stylesheet function call creates one dynamic context for its body, with the frame of its parameters,
   instead of one context per changed property (new `DynamicContext.forHostCall`)
+* A tree without grandchildren (such as the temporary tree of an XSLT variable whose content is text) is numbered in
+  document order and given its namespace fixup without the stacks of the general tree walk
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

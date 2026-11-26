@@ -223,8 +223,27 @@ public final class NamespaceFixup
   {
     if (aRoot.isElement () || aRoot.isDocument ())
     {
+      if (aRoot.isElement ())
+        _fixElement (aRoot);
+      final int nRootChildren = aRoot.getChildCount ();
+      int nFirstElement = -1;
+      for (int i = 0; i < nRootChildren; ++i)
+        if (aRoot.getChildAtIndex (i).isElement ())
+        {
+          nFirstElement = i;
+          break;
+        }
+      // Optimisation: a root without element children (the temporary tree of a variable whose
+      // content is text) needs no stack
+      if (nFirstElement < 0)
+        return;
       final ArrayDeque <IXdmNode> aStack = new ArrayDeque <> ();
-      aStack.push (aRoot);
+      for (int i = nRootChildren - 1; i >= nFirstElement; --i)
+      {
+        final IXdmNode aChild = aRoot.getChildAtIndex (i);
+        if (aChild.isElement ())
+          aStack.push (aChild);
+      }
       while (!aStack.isEmpty ())
       {
         final IXdmNode aCur = aStack.pop ();
