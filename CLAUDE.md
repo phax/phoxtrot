@@ -373,11 +373,15 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `StylesheetCompiler.getRunTimeIdentities`); every setter of a run-time field drops the identity again (a new
   run-time field must be added to `RunTimeKey` and reset it). `isRunTimeEquivalent` contexts give the same results,
   so `DynamicContext.withStaticContext` returns the same context for one, `XsltContext.getDynamicContextFor` keeps
-  the context of the last expression evaluated in it and `Engine.getPatternContext (StaticContext)` that of the last
-  pattern. Never change the static context of the root context of a run to make it equivalent: instructions read it
-  directly (declared type conversions must not run in XPath 1.0 mode). `StaticContextReuseTest` uses constructs that
-  read the static context at run time (casts to `xs:QName`, collations, `static-base-uri`, 1.0 comparisons);
-  names in steps are resolved at compile time and test nothing here.
+  the context of the last expression evaluated in it, and every context derived from it starts from that one
+  (`getDynamicContext ()` gives the context with the static context of the instructions, created once per
+  `XsltContext` when needed; keep the cache in its own field: writing it back into the base field stops the JIT from
+  removing contexts that do not escape, `keys` allocated 9 % more) and `Engine.getPatternContext
+  (StaticContext)` that of the last pattern. Never change the static context of the root context of a run to make it
+  equivalent: instructions read it through `XsltContext.getDynamicContext ()` (declared type conversions must not run
+  in XPath 1.0 mode). `StaticContextReuseTest` uses constructs that read the static context at run time (casts to
+  `xs:QName`, collations, `static-base-uri`, 1.0 comparisons); names in steps are resolved at compile time and test
+  nothing here.
 - Static calls and named function references resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr`/
   `IExpr.NamedFunctionRefExpr` (cached per library instance
   and `FunctionLibrary.getModificationStamp`, the sum of the change counters of the parent chain). Every new

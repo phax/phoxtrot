@@ -33,8 +33,11 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
  * The run-time context of an instruction: the XPath dynamic context (focus,
  * current item, variables, run-wide settings) whose host state is the
  * {@link XsltState}, plus the {@link Engine} of the transformation. Every
- * change creates a derived context; the only mutable field is a cache of the
- * dynamic context derived for expressions ({@link #getDynamicContextFor(StaticContext)}).
+ * change creates a derived context. The dynamic context of the last
+ * expression evaluated in it is kept
+ * ({@link #getDynamicContextFor(StaticContext)}), and derived contexts start
+ * from it; {@link #getDynamicContext()} gives the dynamic context with the
+ * static context of the instructions.
  *
  * @author Philip Helger
  */
@@ -42,15 +45,50 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 public final class XsltContext
 {
   private final Engine m_aEngine;
+  // The dynamic context: the one the context was created with, or for a derived context that of
+  // its parent's last expression with the change applied
   private final DynamicContext m_aDyn;
-  // The dynamic context of the last expression evaluated in this context (getDynamicContextFor);
-  // only a cache: a context is used by one thread, and a lost update only costs a new context
+  // The static context of the instructions (that of the context passed to the public constructor)
+  private final StaticContext m_aInstrStatic;
+  // The dynamic context of the last expression evaluated in this context (getDynamicContextFor),
+  // null while it is m_aDyn itself; only a cache: a context is used by one thread, and a lost
+  // update only costs a new context. Kept apart from m_aDyn, so that the JIT can still remove a
+  // context that does not escape
   private DynamicContext m_aLastExprDyn;
+  // m_aDyn with m_aInstrStatic, created on first use when m_aDyn has another static context
+  private DynamicContext m_aInstrDyn;
 
-  public XsltContext (@NonNull final Engine aEngine, @NonNull final DynamicContext aDyn)
+  private XsltContext (@NonNull final Engine aEngine,
+                       @NonNull final DynamicContext aDyn,
+                       @NonNull final StaticContext aInstrStatic)
   {
     m_aEngine = aEngine;
     m_aDyn = aDyn;
+    m_aInstrStatic = aInstrStatic;
+  }
+
+  /**
+   * @return The dynamic context a derived context starts from: that of the last expression
+   *         evaluated in this context, or the dynamic context of this context. Both differ only in
+   *         the static context.
+   */
+  @NonNull
+  private DynamicContext _getBase ()
+  {
+    final DynamicContext aLast = m_aLastExprDyn;
+    return aLast != null ? aLast : m_aDyn;
+  }
+
+  /**
+   * @param aEngine
+   *        The engine of the transformation.
+   * @param aDyn
+   *        The dynamic context; its static context is the static context of
+   *        the instructions.
+   */
+  public XsltContext (@NonNull final Engine aEngine, @NonNull final DynamicContext aDyn)
+  {
+    this (aEngine, aDyn, aDyn.getStaticContext ());
   }
 
   /**
@@ -76,19 +114,36 @@ public final class XsltContext
     return m_aEngine;
   }
 
+  /**
+   * @return The dynamic context with the static context of the instructions
+   *         (the one the context was created with), for instructions that
+   *         read it (type conversions, collations, the function library).
+   *         Never <code>null</code>.
+   */
   @NonNull
   public DynamicContext getDynamicContext ()
   {
-    return m_aDyn;
+    final DynamicContext aDyn = m_aDyn;
+    if (aDyn.getStaticContext () == m_aInstrStatic)
+      return aDyn;
+    DynamicContext ret = m_aInstrDyn;
+    if (ret == null)
+    {
+      // Every dynamic context this one held differs only in the static context, so the view
+      // created once stays valid
+      ret = aDyn.withStaticContext (m_aInstrStatic);
+      m_aInstrDyn = ret;
+    }
+    return ret;
   }
 
   /**
    * Get the dynamic context to evaluate an expression compiled with the given
    * static context: this context's dynamic context with that static context
-   * ({@link DynamicContext#withStaticContext(StaticContext)}). The context
-   * derived for the last expression is reused if its static context is
-   * equivalent at run time
-   * ({@link StaticContext#isRunTimeEquivalent(StaticContext)}).
+   * ({@link DynamicContext#withStaticContext(StaticContext)}). The result is
+   * kept, so the next expression with an equivalent static context at run
+   * time ({@link StaticContext#isRunTimeEquivalent(StaticContext)}) reuses it,
+   * and every context derived from this one starts from it.
    *
    * @param aStatic
    *        The static context of the expression.
@@ -98,12 +153,14 @@ public final class XsltContext
   public DynamicContext getDynamicContextFor (@NonNull final StaticContext aStatic)
   {
     final DynamicContext aLast = m_aLastExprDyn;
-    // Optimisation: the expressions evaluated in one context (a template body, an iteration) mostly
-    // have equivalent static contexts, so only the first creates a context
+    // Optimisation: the expressions of a stylesheet mostly have equivalent static contexts, and a
+    // derived context (template call, iteration, variable body) starts from the one kept here, so
+    // only a change of the static context creates a dynamic context
     if (aLast != null && aLast.getStaticContext ().isRunTimeEquivalent (aStatic))
       return aLast;
     final DynamicContext ret = m_aDyn.withStaticContext (aStatic);
-    m_aLastExprDyn = ret;
+    if (ret != m_aDyn)
+      m_aLastExprDyn = ret;
     return ret;
   }
 
@@ -146,7 +203,7 @@ public final class XsltContext
   @NonNull
   public XsltContext withFocus (@Nullable final IXdmItem aItem, final int nPosition, final int nSize)
   {
-    return new XsltContext (m_aEngine, m_aDyn.withFocus (aItem, nPosition, nSize).withCurrentItem (aItem));
+    return new XsltContext (m_aEngine, _getBase ().withFocus (aItem, nPosition, nSize).withCurrentItem (aItem), m_aInstrStatic);
   }
 
   /**
@@ -160,7 +217,7 @@ public final class XsltContext
     final VariableFrame aFrame = m_aDyn.getFrame ();
     if (aFrame != null && aFrame.getLayout () == aSlot.layout ())
       return this;
-    return new XsltContext (m_aEngine, m_aDyn.withFrame (new VariableFrame (aSlot.layout ())));
+    return new XsltContext (m_aEngine, _getBase ().withFrame (new VariableFrame (aSlot.layout ())), m_aInstrStatic);
   }
 
   /**
@@ -210,7 +267,7 @@ public final class XsltContext
   @NonNull
   public XsltContext withFrame (@NonNull final VariableFrame aFrame)
   {
-    return m_aDyn.getFrame () == aFrame ? this : new XsltContext (m_aEngine, m_aDyn.withFrame (aFrame));
+    return m_aDyn.getFrame () == aFrame ? this : new XsltContext (m_aEngine, _getBase ().withFrame (aFrame), m_aInstrStatic);
   }
 
   /**
@@ -243,17 +300,18 @@ public final class XsltContext
     // Optimisation: one dynamic context per call instead of one per changed property, and the
     // frame of the parameters created with it
     return new XsltContext (m_aEngine,
-                            m_aDyn.forHostCall (aItem,
+                            _getBase ().forHostCall (aItem,
                                                 nPosition,
                                                 nSize,
                                                 aState,
-                                                aLayout == null ? null : new VariableFrame (aLayout)));
+                                                aLayout == null ? null : new VariableFrame (aLayout)),
+                            m_aInstrStatic);
   }
 
   @NonNull
   public XsltContext withState (@NonNull final XsltState aState)
   {
-    return new XsltContext (m_aEngine, m_aDyn.withHostState (aState));
+    return new XsltContext (m_aEngine, _getBase ().withHostState (aState), m_aInstrStatic);
   }
 
   /**
@@ -263,7 +321,7 @@ public final class XsltContext
   @NonNull
   public XsltContext withoutFocusAndVariables ()
   {
-    return new XsltContext (m_aEngine, m_aDyn.withoutFocusAndVariables ());
+    return new XsltContext (m_aEngine, _getBase ().withoutFocusAndVariables (), m_aInstrStatic);
   }
 
   /**

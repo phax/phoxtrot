@@ -16,6 +16,9 @@
  */
 package com.helger.phoxtrot.xslt.compile;
 
+import static com.helger.phoxtrot.xslt.XsltTestHelper.END;
+import static com.helger.phoxtrot.xslt.XsltTestHelper.SHEET;
+import static com.helger.phoxtrot.xslt.XsltTestHelper.errorCode;
 import static com.helger.phoxtrot.xslt.XsltTestHelper.text;
 import static org.junit.Assert.assertEquals;
 
@@ -138,5 +141,69 @@ public final class StaticContextReuseTest
                         "b' priority='3'>B</xsl:template>" +
                         "<xsl:template match='x'>N</xsl:template>",
                         "<r><x/><x/><x/></r>"));
+  }
+
+  @Test
+  public void testInheritedByCallsAndVariables ()
+  {
+    // The context of a template body, of a function body and of a variable body starts with the
+    // static context of the caller's last expression; their own expressions still resolve the
+    // prefix with their own static context
+    final String sNS = "namespace-uri-from-QName(xs:QName('p:x'))";
+    assertEquals ("urn:a urn:a urn:b urn:c urn:d",
+                  text (IT +
+                        "<xsl:value-of select=\"" +
+                        sNS +
+                        "\" xmlns:p='urn:a'/>" +
+                        SP +
+                        "<xsl:call-template name='t' xmlns:p='urn:a'><xsl:with-param name='v' select=\"" +
+                        sNS +
+                        "\"/></xsl:call-template>" +
+                        TE +
+                        "<xsl:template name='t' xmlns:p='urn:b' xmlns:f='urn:f'><xsl:param name='v'/>" +
+                        "<xsl:value-of select=\"$v || ' ' || " +
+                        sNS +
+                        "\"/>" +
+                        SP +
+                        "<xsl:variable name='w'><xsl:value-of select=\"" +
+                        sNS +
+                        "\" xmlns:p='urn:c'/></xsl:variable><xsl:value-of select='$w'/>" +
+                        SP +
+                        "<xsl:value-of select='f:g()'/></xsl:template>" +
+                        "<xsl:function name='f:g' xmlns:f='urn:f' xmlns:p='urn:d'><xsl:sequence select=\"" +
+                        sNS +
+                        "\"/></xsl:function>",
+                        null));
+  }
+
+  @Test
+  public void testDeclaredTypeAfterBackwardsCompatibleExpression ()
+  {
+    // The parameter value is computed by an expression with XSLT 1.0 behaviour, whose static
+    // context the context of the template body starts with; the declared type is still converted
+    // with the rules of the instructions (no XPath 1.0 conversion of the string to xs:double)
+    final String sCall = "<xsl:call-template name='t'><xsl:with-param name='v' select=\"'5'\" version='1.0'/>" +
+                         "</xsl:call-template>";
+    assertEquals ("XTTE0590",
+                  errorCode (SHEET +
+                             "<xsl:output method='text'/>" +
+                             IT +
+                             sCall +
+                             TE +
+                             "<xsl:template name='t'><xsl:param name='v' as='xs:double'/><xsl:value-of select='$v + 1'/>" +
+                             "</xsl:template>" +
+                             END,
+                             null));
+    // The same value from an expression without XSLT 1.0 behaviour
+    assertEquals ("XTTE0590",
+                  errorCode (SHEET +
+                             "<xsl:output method='text'/>" +
+                             IT +
+                             sCall.replace (" version='1.0'", "") +
+                             TE +
+                             "<xsl:template name='t'><xsl:param name='v' as='xs:double'/><xsl:value-of select='$v + 1'/>" +
+                             "</xsl:template>" +
+                             END,
+                             null));
   }
 }

@@ -339,6 +339,9 @@ v0.5.0 - work in progress
   instead of one context per changed property (new `DynamicContext.forHostCall`)
 * A tree without grandchildren (such as the temporary tree of an XSLT variable whose content is text) is numbered in
   document order and given its namespace fixup without the stacks of the general tree walk
+* An XSLT template call, function call or variable body starts with the dynamic context of the caller's last
+  expression, so its first expression creates no dynamic context of its own when its static context is equivalent at
+  run time (`XsltContext.getDynamicContext` keeps returning the context with the static context of the instructions)
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree
