@@ -696,9 +696,17 @@ engine-independent reference case).
    digit, so the iterator of `matches` that JFR attributed 8 to 12 % of their bytes to is scalar replaced in the
    steady state. Time: -8 to -10 % on the rounding functions in every run; the templates move between -8 and +7 %
    between runs (the JDK reference up to 8 %), so no effect on them can be claimed; the other workloads were measured
-   in one run only, on a machine that was not quiet, and scatter as much. Left from the profile: one context per
-   XSLT call instead of two state changes and a frame (3, about 11 % of the template bytes), temporary trees of
-   variables with content (4), the reused dynamic context missed by `xsl:if`/`xsl:choose` tests (5).
+   in one run only, on a machine that was not quiet, and scatter as much. Point 3, done: a template or stylesheet
+   function call creates the context of its body in one step (`DynamicContext.forHostCall`, `XsltContext.forCall`),
+   with the frame of its parameters, instead of about nine derived contexts and a frame created at the first binding
+   (six for a function). XSLT30 and `-Dxslt30.writeTo=true` unchanged (the same 7 by name). Allocation per operation
+   against the commit before (`compare.sh` in both orders, `-prof gc`, the two orders within 2 % of each other):
+   `dispatch` -18 to -21 %, `recursion` -13 %, the rounding templates -6 to -7 % (the profile had put about 11 % of
+   their bytes on these contexts; the frame and the parameter bindings remain), the rounding functions -3 %,
+   everything else within the noise. Time: the second order ran on a loaded machine (load average about 5) and
+   scatters from 0.31 to 2.16 times, so no time effect can be claimed from this run. Left from the profile:
+   temporary trees of variables with content (4), the reused dynamic context missed by `xsl:if`/`xsl:choose`
+   tests (5).
 
 3. **Byte code generation** (backlog), as XSLTC does for XSLT 1.0. A code generator for every construct of XSLT 3.0
    and XPath 3.1, with the same behaviour as the interpreter, and the W3C suites passing on both paths. On the JDK 21
