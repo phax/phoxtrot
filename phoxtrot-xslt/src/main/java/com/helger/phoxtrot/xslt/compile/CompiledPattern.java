@@ -40,7 +40,8 @@ public record CompiledPattern (@NonNull XsltPattern pattern, @NonNull StaticCont
   /**
    * Match an item with the static context of the pattern and the pattern
    * context of the engine. An item that {@link XsltPattern#canMatch(IXdmItem)}
-   * rejects is answered without creating a context.
+   * rejects is answered without creating a context, unless the match tests that
+   * itself first ({@link XsltPattern#isCanMatchTestedByMatches()}).
    *
    * @param aItem
    *        Candidate item.
@@ -50,7 +51,9 @@ public record CompiledPattern (@NonNull XsltPattern pattern, @NonNull StaticCont
    */
   public boolean matches (@NonNull final IXdmItem aItem, @NonNull final XsltContext aCtx)
   {
-    if (!pattern.canMatch (aItem))
+    // Optimisation: a union of paths tests the last steps in its match anyway, so a pre-test would
+    // test them twice for every item that can match
+    if (!pattern.isCanMatchTestedByMatches () && !pattern.canMatch (aItem))
     {
       // No context is created for an item that cannot match; the
       // cancellation check stays as in the match itself

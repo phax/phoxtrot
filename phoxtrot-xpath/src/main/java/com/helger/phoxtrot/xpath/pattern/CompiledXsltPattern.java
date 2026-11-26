@@ -446,6 +446,17 @@ public final class CompiledXsltPattern implements XsltPattern
     return false;
   }
 
+  /**
+   * @return <code>true</code> for a pattern that is a union of paths: its match tests the last step
+   *         of every path before anything else ({@link #_matchesUnionPaths(IXdmNode, DynamicContext)}),
+   *         which is all that {@link #canMatch(IXdmItem)} tests.
+   */
+  @Override
+  public boolean isCanMatchTestedByMatches ()
+  {
+    return m_aUnionPaths != null;
+  }
+
   @Override
   @Nullable
   public PatternFinalNames getFinalNames ()
