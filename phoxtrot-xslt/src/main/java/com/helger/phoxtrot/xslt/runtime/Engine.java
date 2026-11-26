@@ -51,6 +51,7 @@ import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.IResourceResolver;
 import com.helger.phoxtrot.xpath.context.ResourceUri;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.context.VariableFrameLayout;
 import com.helger.phoxtrot.xpath.eval.NodeSorter;
 import com.helger.phoxtrot.xpath.eval.SequenceTypeMatcher;
 import com.helger.phoxtrot.xpath.fn.FnAccessor;
@@ -804,36 +805,54 @@ public final class Engine
    *
    * @param aTemplate
    *        Template.
-   * @param aBase
-   *        Context with focus and state of the invocation, no variables.
+   * @param aCaller
+   *        Context of the caller. The body gets a context of its own (see
+   *        {@link XsltContext#forCall(IXdmItem, int, int, XsltState, VariableFrameLayout)}).
+   * @param aItem
+   *        Context item of the invocation, <code>null</code> for an absent focus.
+   * @param nPosition
+   *        Context position of the invocation.
+   * @param nSize
+   *        Context size of the invocation.
+   * @param aCallState
+   *        State of the invocation, before the supplied tunnel parameters.
    * @param aParams
    *        Supplied parameters.
    * @param aOut
    *        Output.
    */
   private void _runTemplate (@NonNull final Template aTemplate,
-                             @NonNull final XsltContext aBase,
+                             @NonNull final XsltContext aCaller,
+                             @Nullable final IXdmItem aItem,
+                             final int nPosition,
+                             final int nSize,
+                             @NonNull final XsltState aCallState,
                              @NonNull final List <ParamValue> aParams,
                              @NonNull final IXsltOutput aOut)
   {
-    XsltState aState = aBase.getState ();
+    XsltState aState = aCallState;
     for (final ParamValue aParam : aParams)
       if (aParam.tunnel ())
         aState = aState.withTunnelParam (aParam.name (), aParam.value ());
-    XsltContext aCtx = aBase.withState (aState);
     final Template.ContextItemDecl aCI = aTemplate.getContextItem ();
+    boolean bAbsentFocus = false;
     if (aCI != null)
     {
-      final IXdmItem aItem = aCtx.getContextItem ();
       if ("required".equals (aCI.use ()) && aItem == null)
         throw XsltException.at (aTemplate.getElement (), "XTTE3090", "The template requires a context item");
       if ("absent".equals (aCI.use ()))
-        aCtx = aCtx.withFocus (null, 0, 0);
+        bAbsentFocus = true;
       else
         if (aItem != null && aCI.as () != null &&
             !SequenceTypeMatcher.matches (XdmSequence.of (aItem), aCI.as ()))
           throw XsltException.at (aTemplate.getElement (), "XTTE0590", "The context item does not match the declared type");
     }
+    final ICommonsList <VariableDef> aDeclared = aTemplate.params ();
+    // Optimisation: the context of the body is created once, with the frame of the parameters
+    // (they share the layout of the body), so binding them changes the frame in place
+    final VariableFrameLayout aLayout = aDeclared.isEmpty () ? null : aDeclared.getFirstOrNull ().getSlotOrThrow ().layout ();
+    XsltContext aCtx = bAbsentFocus ? aCaller.forCall (null, 0, 0, aState, aLayout)
+                                    : aCaller.forCall (aItem, nPosition, nSize, aState, aLayout);
     for (final VariableDef aParam : aTemplate.params ())
     {
       XdmSequence aValue = null;
@@ -942,19 +961,17 @@ public final class Engine
                             @NonNull final List <ParamValue> aParams,
                             @NonNull final IXsltOutput aOut)
   {
-    final XsltContext aBase = aCaller.withoutFocusAndVariables ()
-                                     .withFocus (aItem, nPosition, nSize)
-                                     .withState (aCaller.getState ().forTemplateCall ().withCurrentRule (aRule, aMode));
+    final XsltState aState = aCaller.getState ().forTemplateCall ().withCurrentRule (aRule, aMode);
     final IXsltTraceListener aTrace = m_aTraceListener;
     if (aTrace == null)
-      _runTemplate (aRule.getTemplate (), aBase, aParams, aOut);
+      _runTemplate (aRule.getTemplate (), aCaller, aItem, nPosition, nSize, aState, aParams, aOut);
     else
     {
       final XsltTraceTemplate aInfo = _createTraceTemplate (aRule.getTemplate (), aRule, aMode);
       aTrace.onTemplateRuleEnter (aInfo, aItem);
       try
       {
-        _runTemplate (aRule.getTemplate (), aBase, aParams, aOut);
+        _runTemplate (aRule.getTemplate (), aCaller, aItem, nPosition, nSize, aState, aParams, aOut);
       }
       finally
       {
@@ -1339,12 +1356,10 @@ public final class Engine
     final String sVisibility = aTemplate.getElement ().getAttr ("visibility");
     if (sVisibility != null && "abstract".equals (sVisibility.trim ()))
       throw new XPathException ("XTDE3052", "The abstract template " + aTemplate.getName ().getEQName () + " was not overridden");
-    final XsltContext aBase = aCaller.withoutFocusAndVariables ()
-                                     .withFocus (aCaller.getContextItem (), aCaller.getPosition (), aCaller.getSize ())
-                                     .withState (aCaller.getState ().forTemplateCall ());
+    final XsltState aState = aCaller.getState ().forTemplateCall ();
     final IXsltTraceListener aTrace = m_aTraceListener;
     if (aTrace == null)
-      _runTemplate (aTemplate, aBase, aParams, aOut);
+      _runTemplate (aTemplate, aCaller, aCaller.getContextItem (), aCaller.getPosition (), aCaller.getSize (), aState, aParams, aOut);
     else
     {
       final XsltTraceTemplate aInfo = _createTraceTemplate (aTemplate, null, null);
@@ -1352,7 +1367,7 @@ public final class Engine
       aTrace.onNamedTemplateEnter (aInfo, aItem);
       try
       {
-        _runTemplate (aTemplate, aBase, aParams, aOut);
+        _runTemplate (aTemplate, aCaller, aItem, aCaller.getPosition (), aCaller.getSize (), aState, aParams, aOut);
       }
       finally
       {

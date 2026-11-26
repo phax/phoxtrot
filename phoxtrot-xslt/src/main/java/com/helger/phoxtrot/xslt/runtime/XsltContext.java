@@ -25,6 +25,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.context.VariableFrame;
+import com.helger.phoxtrot.xpath.context.VariableFrameLayout;
 import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
@@ -210,6 +211,43 @@ public final class XsltContext
   public XsltContext withFrame (@NonNull final VariableFrame aFrame)
   {
     return m_aDyn.getFrame () == aFrame ? this : new XsltContext (m_aEngine, m_aDyn.withFrame (aFrame));
+  }
+
+  /**
+   * Create the context of a template or stylesheet function body in one step: the focus of the
+   * body (its context item also the current item), no local variables (global variables stay
+   * visible), the given state and, if the body binds variables by slot, a new frame for them.
+   * It replaces a chain of {@link #withoutFocusAndVariables()}, {@link #withFocus(IXdmItem, int, int)},
+   * {@link #withState(XsltState)} and the frame created at the first binding.
+   *
+   * @param aItem
+   *        The context item of the body, <code>null</code> for an absent focus.
+   * @param nPosition
+   *        1-based position, 0 with an absent focus.
+   * @param nSize
+   *        Size, 0 with an absent focus.
+   * @param aState
+   *        The state of the body.
+   * @param aLayout
+   *        The layout of the variables the body binds by slot, <code>null</code> to create the
+   *        frame at the first binding (see {@link #withSlotValue(VariableSlot, XdmSequence)}).
+   * @return The new context.
+   */
+  @NonNull
+  public XsltContext forCall (@Nullable final IXdmItem aItem,
+                              final int nPosition,
+                              final int nSize,
+                              @NonNull final XsltState aState,
+                              @Nullable final VariableFrameLayout aLayout)
+  {
+    // Optimisation: one dynamic context per call instead of one per changed property, and the
+    // frame of the parameters created with it
+    return new XsltContext (m_aEngine,
+                            m_aDyn.forHostCall (aItem,
+                                                nPosition,
+                                                nSize,
+                                                aState,
+                                                aLayout == null ? null : new VariableFrame (aLayout)));
   }
 
   @NonNull

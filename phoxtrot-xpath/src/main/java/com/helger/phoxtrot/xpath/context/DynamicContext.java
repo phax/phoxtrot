@@ -437,6 +437,38 @@ public final class DynamicContext
   }
 
   /**
+   * Derive the context of the body of a call made by the host (XSLT: a template or a stylesheet
+   * function) in one step. It equals
+   * <code>withoutFocusAndVariables ().withFocus (aItem, nPosition, nSize).withCurrentItem (aItem).withHostState (aHostState).withFrame (aFrame)</code>
+   * without the four intermediate contexts.
+   *
+   * @param aItem
+   *        The context item of the body, also its current item; <code>null</code> for an absent
+   *        focus.
+   * @param nPosition
+   *        The 1-based context position, 0 with an absent focus.
+   * @param nSize
+   *        The context size, 0 with an absent focus.
+   * @param aHostState
+   *        The host state of the body. May be <code>null</code>.
+   * @param aFrame
+   *        The frame of the variables the host binds by slot in the body, <code>null</code> for
+   *        none. Must be no frame of an expression's own variables.
+   * @return A derived context with the same static context and run state, that focus, host state
+   *         and frame, and no variables bound by name.
+   */
+  @NonNull
+  public DynamicContext forHostCall (@Nullable final IXdmItem aItem,
+                                     final int nPosition,
+                                     final int nSize,
+                                     @Nullable final Object aHostState,
+                                     @Nullable final VariableFrame aFrame)
+  {
+    ValueEnforcer.isFalse (aFrame != null && aFrame.isLocal (), "A frame of an expression's own variables");
+    return new DynamicContext (m_aStatic, m_aRun, aItem, aItem, nPosition, nSize, aHostState, null, aFrame);
+  }
+
+  /**
    * @return The run-wide host object (the XSLT engine of the current
    *         transformation), or <code>null</code> for plain XPath. Host
    *         functions use it to reach their runtime state.

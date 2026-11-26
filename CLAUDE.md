@@ -342,7 +342,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `XPathEvaluator.compile (IExpr, StaticContext)` turns a reference to one into a slot read (unless a `for`/`let`/
   quantifier/inline function parameter of the expression binds the name). At run time the binding writes the slot of
   the `VariableFrame` of the dynamic context in place (`XsltContext.withSlotValue`/`withLazySlotValue`; a new frame
-  only for the first binding of a body in an activation, `withoutFocusAndVariables` drops it). Rules: every name that
+  only for the first binding of a body in an activation, `withoutFocusAndVariables` drops it). A template or function
+  call creates the context of its body in one step (`XsltContext.forCall`, `DynamicContext.forHostCall`), with the
+  frame already there if the body has parameters (their layout is that of the body). Rules: every name that
   `CompileContext.withVariable` brings into scope must be bound by slot at run time (the seven sites: sequence
   constructor variables, template, function and `xsl:iterate` parameters, `xsl:original`, `err:*`, accumulator
   `$value`), never with `DynamicContext.withVariable` (a slot reference does not see it, and a name lookup does not

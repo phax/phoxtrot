@@ -335,6 +335,8 @@ v0.5.0 - work in progress
   same function, unless the function is focus-dependent; a map constructor with literal keys whose values are
   literals or named function references (a dispatch table) keeps its map while every reference resolves to the same
   function
+* A template or stylesheet function call creates one dynamic context for its body, with the frame of its parameters,
+  instead of one context per changed property (new `DynamicContext.forHostCall`)
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

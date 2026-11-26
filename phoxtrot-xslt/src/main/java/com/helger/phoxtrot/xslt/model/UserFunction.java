@@ -244,7 +244,13 @@ public final class UserFunction implements IXPathFunction
   @NonNull
   private XdmSequence _invoke (@NonNull final XsltContext aCaller, @NonNull final List <XdmSequence> aArgs)
   {
-    XsltContext aCtx = aCaller.withoutFocusAndVariables ().withState (aCaller.getState ().forFunctionCall ());
+    // Optimisation: the context of the body is created once, with the frame of the parameters
+    // (they share the layout of the body), so binding them changes the frame in place
+    XsltContext aCtx = aCaller.forCall (null,
+                                        0,
+                                        0,
+                                        aCaller.getState ().forFunctionCall (),
+                                        m_aParams.isEmpty () ? null : m_aParams.getFirstOrNull ().getSlotOrThrow ().layout ());
     for (int i = 0; i < m_aParams.size (); ++i)
       aCtx = aCtx.withSlotValue (m_aParams.get (i).getSlotOrThrow (), aArgs.get (i));
     final SequenceOutput aOut = new SequenceOutput ();
