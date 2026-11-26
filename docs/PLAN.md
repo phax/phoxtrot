@@ -704,9 +704,21 @@ engine-independent reference case).
    `dispatch` -18 to -21 %, `recursion` -13 %, the rounding templates -6 to -7 % (the profile had put about 11 % of
    their bytes on these contexts; the frame and the parameter bindings remain), the rounding functions -3 %,
    everything else within the noise. Time: the second order ran on a loaded machine (load average about 5) and
-   scatters from 0.31 to 2.16 times, so no time effect can be claimed from this run. Left from the profile:
-   temporary trees of variables with content (4), the reused dynamic context missed by `xsl:if`/`xsl:choose`
-   tests (5).
+   scatters from 0.31 to 2.16 times, so no time effect can be claimed from this run. Point 4, done: a tree
+   without grandchildren (the temporary tree of a variable whose content is text, every variable of the rounding
+   templates) is numbered and given its namespace fixup without the stacks of the general walk
+   (`XdmFlatTreeNumberingPropertyTest` against the same tree with a nested element). Point 5, done: counting showed
+   no alternation of static contexts (all expressions of the rounding stylesheet share one run-time identity); the
+   misses were the first expression of every new `XsltContext` (template calls and variable bodies, half each),
+   which started from the static context of the instructions. A derived context now starts from the dynamic
+   context of its parent's last expression; `getDynamicContext ()` keeps the instructions' static context
+   (`StaticContextReuseTest`: a declared type after an XSLT 1.0 expression). A first version wrote the expression
+   context back into the base field of the context, which stopped the JIT from removing a context that does not
+   escape: `keys` allocated 9 % more (one `DynamicContext` per indexed node); the cache in its own field fixed it.
+   Gates unchanged (QT3 no fail, XSLT30 and `-Dxslt30.writeTo=true` the same 7 by name). Allocation per operation
+   (one fork, against the figures of the commit before): rounding templates -18 % (point 4 alone -14 %), the
+   rounding functions and the JDK reference unchanged, `identity` -1 %, `keys` +0.5 % (the context is 8 bytes
+   larger), everything else within the noise; no time measured (battery). The profile list is done.
 
 3. **Byte code generation** (backlog), as XSLTC does for XSLT 1.0. A code generator for every construct of XSLT 3.0
    and XPath 3.1, with the same behaviour as the interpreter, and the W3C suites passing on both paths. On the JDK 21
