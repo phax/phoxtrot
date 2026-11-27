@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xpath.bench;
 
 import java.math.BigDecimal;
+import java.math.RoundingMode;
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
@@ -304,6 +305,30 @@ final class BenchExpected
   }
 
   @NonNull
+  static String xpathAbsoluteRules (@NonNull final BenchData aData)
+  {
+    boolean bAnyReason = false;
+    boolean bAnyC = false;
+    int nRateZero = 0;
+    int nC = 0;
+    for (final Line aLine : aData.getAllLines ())
+    {
+      if (aLine.reason () != null)
+        bAnyReason = true;
+      if ("0".equals (aLine.taxRate ()))
+        nRateZero++;
+      if ("C".equals (aLine.cat ()))
+      {
+        bAnyC = true;
+        nC++;
+      }
+    }
+    // R1: a line with the rate 0 fails if no line of the document has a reason; R2: a line of
+    // category C fails if no line of category C has a note (every line has one)
+    return (bAnyReason ? 0 : nRateZero) + "," + (bAnyC ? 0 : nC);
+  }
+
+  @NonNull
   static String xsltDispatch (@NonNull final BenchData aData)
   {
     final StringBuilder aSB = new StringBuilder ();
@@ -349,6 +374,22 @@ final class BenchExpected
     for (final Line aLine : aLines)
       nSkuSum += aBySku.get (aLine.sku ()).intValue ();
     return "A=" + aCats[0] + ",B=" + aCats[1] + ",C=" + aCats[2] + ";" + nSkuSum + ";" + nRate0;
+  }
+
+  /**
+   * @return The result of <code>muenchian.xsl</code>: every category with its number of lines,
+   *         sorted by category, each followed by a comma.
+   */
+  @NonNull
+  static String xsltMuenchian (@NonNull final BenchData aData)
+  {
+    final Map <String, int []> aByCat = new TreeMap <> ();
+    for (final Line aLine : aData.getAllLines ())
+      aByCat.computeIfAbsent (aLine.cat (), sKey -> new int [1])[0]++;
+    final StringBuilder aSB = new StringBuilder ();
+    for (final Map.Entry <String, int []> aEntry : aByCat.entrySet ())
+      aSB.append (aEntry.getKey ()).append ('=').append (aEntry.getValue ()[0]).append (',');
+    return aSB.toString ();
   }
 
   @NonNull
@@ -417,6 +458,27 @@ final class BenchExpected
     for (final Line aLine : aLines)
       aTotal = aTotal.add (amount (aLine));
     return aLines.size () + "/" + decimal (aTotal) + "/" + decimal (aLines.getLastOrNull ().price ());
+  }
+
+  /**
+   * @param aData
+   *        The data.
+   * @return What the rounding workload writes: per line the price rounded at every scale of
+   *         {@link RoundingWorkload#SCALES} in every mode of {@link RoundingWorkload#MODES}, each
+   *         followed by a space, and a line end.
+   */
+  @NonNull
+  static String rounding (@NonNull final BenchData aData)
+  {
+    final StringBuilder aSB = new StringBuilder ();
+    for (final Line aLine : aData.getAllLines ())
+    {
+      for (final int nScale : RoundingWorkload.SCALES)
+        for (final RoundingMode eMode : RoundingWorkload.MODES)
+          aSB.append (decimal (aLine.price ().setScale (nScale, eMode))).append (' ');
+      aSB.append ('\n');
+    }
+    return aSB.toString ();
   }
 
   @NonNull

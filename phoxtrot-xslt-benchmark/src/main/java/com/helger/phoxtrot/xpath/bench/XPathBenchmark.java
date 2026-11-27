@@ -44,7 +44,7 @@ import org.openjdk.jmh.annotations.Warmup;
 @Fork (value = 1, jvmArgsAppend = { "-Xmx3g", "-Xss8m" })
 public class XPathBenchmark
 {
-  @Param ({ "child", "descendant", "positional", "predicate", "exists", "strings", "regex", "tokenize", "format-date", "arithmetic", "flwor", "maps", "rules" })
+  @Param ({ "child", "descendant", "positional", "predicate", "exists", "strings", "regex", "tokenize", "format-date", "arithmetic", "flwor", "maps", "rules", "rules-absolute" })
   public String m_sCase;
 
   /** The number of invoice lines (about ten elements each). */

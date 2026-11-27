@@ -40,10 +40,9 @@ import com.helger.unittest.property.IGenerator;
 import com.helger.unittest.property.PropertyChecker;
 
 /**
- * Property based tests for the operators of {@link XPathOperators}
- * (arithmetic, value and general comparisons, cast and castable), evaluated
- * through expressions over the variables <code>$v</code> and <code>$w</code>.
- * {@link BigInteger}, {@link BigDecimal} and the IEEE arithmetic of Java serve
+ * Property based tests for the operators of {@link XPathOperators} (arithmetic, value and general
+ * comparisons, cast and castable), evaluated through expressions over the variables <code>$v</code>
+ * and <code>$w</code>. {@link BigInteger}, {@link BigDecimal} and the IEEE arithmetic of Java serve
  * as the reference (F&amp;O 3.1 section 4.2).
  *
  * @author Philip Helger
@@ -72,18 +71,19 @@ public final class XPathOperatorsPropertyTest
 
   /** Decimals with up to 12 digit unscaled values and up to 6 fraction digits */
   private static final IGenerator <BigDecimal> DECIMALS = Generators.lists (Generators.longs (-999_999_999_999L,
-                                                                                              999_999_999_999L),
-                                                                            2,
-                                                                            2)
-                                                                    .map (x -> BigDecimal.valueOf (x.get (0).longValue (),
-                                                                                                   (int) Math.floorMod (x.get (1)
-                                                                                                                         .longValue (),
-                                                                                                                        7)));
+                                                                                              999_999_999_999L), 2, 2)
+                                                                    .map (x -> BigDecimal.valueOf (x.get (0)
+                                                                                                    .longValue (),
+                                                                                                   Math.floorMod (x.get (1)
+                                                                                                                   .longValue (),
+                                                                                                                  7)));
 
   /** Doubles from random bit patterns, small integers and special values */
   private static final IGenerator <Double> DOUBLES = Generators.oneOf (Generators.longs ()
                                                                                  .map (x -> Double.valueOf (Double.longBitsToDouble (x.longValue ()))),
-                                                                       Generators.ints (-20, 20).map (x -> Double.valueOf (x.intValue () / 4.0)),
+                                                                       Generators.ints (-20, 20)
+                                                                                 .map (x -> Double.valueOf (x.intValue () /
+                                                                                                            4.0)),
                                                                        Generators.of (Double.valueOf (0.0),
                                                                                       Double.valueOf (-0.0),
                                                                                       Double.valueOf (Double.NaN),
@@ -100,7 +100,9 @@ public final class XPathOperatorsPropertyTest
 
   private static final IGenerator <Float> FLOATS = Generators.oneOf (Generators.ints ()
                                                                                .map (x -> Float.valueOf (Float.intBitsToFloat (x.intValue ()))),
-                                                                     Generators.ints (-20, 20).map (x -> Float.valueOf (x.intValue () / 4.0f)),
+                                                                     Generators.ints (-20, 20)
+                                                                               .map (x -> Float.valueOf (x.intValue () /
+                                                                                                         4.0f)),
                                                                      Generators.of (Float.valueOf (0f),
                                                                                     Float.valueOf (-0f),
                                                                                     Float.valueOf (Float.NaN),
@@ -209,12 +211,17 @@ public final class XPathOperatorsPropertyTest
                                                   "%",
                                                   "1_000" };
 
-  private static final IGenerator <XdmAtomic> CAST_VALUES = Generators.oneOf (Generators.of (CAST_SOURCES).map (XdmAtomic::string),
-                                                                              Generators.of (CAST_SOURCES).map (XdmAtomic::untyped),
-                                                                              Generators.strings ("0123456789+-.eEINFaTZPYMDHS:/ _xq", 0, 12)
+  private static final IGenerator <XdmAtomic> CAST_VALUES = Generators.oneOf (Generators.of (CAST_SOURCES)
+                                                                                        .map (XdmAtomic::string),
+                                                                              Generators.of (CAST_SOURCES)
+                                                                                        .map (XdmAtomic::untyped),
+                                                                              Generators.strings ("0123456789+-.eEINFaTZPYMDHS:/ _xq",
+                                                                                                  0,
+                                                                                                  12)
                                                                                         .map (XdmAtomic::string),
                                                                               NUMERICS,
-                                                                              Generators.of (XdmAtomic.bool (true), XdmAtomic.bool (false)));
+                                                                              Generators.of (XdmAtomic.bool (true),
+                                                                                             XdmAtomic.bool (false)));
 
   private final XPathPropertyTestHelper m_aHelper = new XPathPropertyTestHelper ();
 
@@ -250,9 +257,8 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * @return The canonical lexical form of an xs:decimal (F&amp;O 3.1 section
-   *         19.1.2.2): no exponent, no trailing fraction zeros, no decimal
-   *         point for an integral value.
+   * @return The canonical lexical form of an xs:decimal (F&amp;O 3.1 section 19.1.2.2): no
+   *         exponent, no trailing fraction zeros, no decimal point for an integral value.
    */
   @NonNull
   private static String _getCanonicalDecimal (@NonNull final BigDecimal aValue)
@@ -280,11 +286,10 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * Integer <code>+</code>, <code>-</code>, <code>*</code>,
-   * <code>idiv</code> (truncating) and <code>mod</code> (sign of the
-   * dividend) are exact at any magnitude, also across the boundary of the
-   * long fast path; <code>div</code> is exact where the quotient terminates;
-   * division by zero is FOAR0001.
+   * Integer <code>+</code>, <code>-</code>, <code>*</code>, <code>idiv</code> (truncating) and
+   * <code>mod</code> (sign of the dividend) are exact at any magnitude, also across the boundary of
+   * the long fast path; <code>div</code> is exact where the quotient terminates; division by zero
+   * is FOAR0001.
    */
   @Test
   public void testIntegerArithmetic ()
@@ -325,39 +330,44 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * Decimal <code>+</code>, <code>-</code>, <code>*</code>,
-   * <code>idiv</code> and <code>mod</code> are exact and their results are
-   * in canonical form; mixed integer and decimal operands are promoted to
-   * xs:decimal.
+   * Decimal <code>+</code>, <code>-</code>, <code>*</code>, <code>idiv</code> and <code>mod</code>
+   * are exact and their results are in canonical form; mixed integer and decimal operands are
+   * promoted to xs:decimal.
    */
   @Test
   public void testDecimalArithmetic ()
   {
-    new PropertyChecker ().setTries (2000).forAll (DECIMALS, DECIMALS, Generators.booleans (), (aA, aB, aIntegerRight) -> {
-      final XdmAtomic aV = XdmAtomic.decimal (aA);
-      final BigDecimal aRight = aIntegerRight.booleanValue () ? new BigDecimal (aB.toBigInteger ()) : aB;
-      final XdmAtomic aW = aIntegerRight.booleanValue () ? XdmAtomic.integer (aB.toBigInteger ()) : XdmAtomic.decimal (aB);
-      final String sMsg = aA + " op " + aRight;
-      _assertDecimal (sMsg + " +", aA.add (aRight), _eval ("$v + $w", aV, aW));
-      _assertDecimal (sMsg + " -", aA.subtract (aRight), _eval ("$v - $w", aV, aW));
-      _assertDecimal (sMsg + " *", aA.multiply (aRight), _eval ("$v * $w", aV, aW));
-      if (aRight.signum () == 0)
-        assertEquals ("FOAR0001", _getErrorCode ("$v mod $w", aV, aW));
-      else
-      {
-        _assertInteger (sMsg + " idiv", aA.divideToIntegralValue (aRight).toBigInteger (), _eval ("$v idiv $w", aV, aW));
-        _assertDecimal (sMsg + " mod", aA.remainder (aRight), _eval ("$v mod $w", aV, aW));
-      }
-      // The string of a decimal is its canonical form, and casts back to the same value
-      assertEquals (_getCanonicalDecimal (aA), _eval ("string($v)", aV).getString ());
-      assertTrue (_eval ("xs:decimal(string($v)) eq $v", aV).getBoolean ());
-    });
+    new PropertyChecker ().setTries (2000)
+                          .forAll (DECIMALS, DECIMALS, Generators.booleans (), (aA, aB, aIntegerRight) -> {
+                            final XdmAtomic aV = XdmAtomic.decimal (aA);
+                            final BigDecimal aRight = aIntegerRight.booleanValue () ? new BigDecimal (aB.toBigInteger ())
+                                                                                    : aB;
+                            final XdmAtomic aW = aIntegerRight.booleanValue () ? XdmAtomic.integer (aB.toBigInteger ())
+                                                                               : XdmAtomic.decimal (aB);
+                            final String sMsg = aA + " op " + aRight;
+                            _assertDecimal (sMsg + " +", aA.add (aRight), _eval ("$v + $w", aV, aW));
+                            _assertDecimal (sMsg + " -", aA.subtract (aRight), _eval ("$v - $w", aV, aW));
+                            _assertDecimal (sMsg + " *", aA.multiply (aRight), _eval ("$v * $w", aV, aW));
+                            if (aRight.signum () == 0)
+                              assertEquals ("FOAR0001", _getErrorCode ("$v mod $w", aV, aW));
+                            else
+                            {
+                              _assertInteger (sMsg + " idiv",
+                                              aA.divideToIntegralValue (aRight).toBigInteger (),
+                                              _eval ("$v idiv $w", aV, aW));
+                              _assertDecimal (sMsg + " mod", aA.remainder (aRight), _eval ("$v mod $w", aV, aW));
+                            }
+                            // The string of a decimal is its canonical form, and casts back to the
+                            // same value
+                            assertEquals (_getCanonicalDecimal (aA), _eval ("string($v)", aV).getString ());
+                            assertTrue (_eval ("xs:decimal(string($v)) eq $v", aV).getBoolean ());
+                          });
   }
 
   /**
-   * xs:double and xs:float <code>+</code>, <code>-</code>, <code>*</code>,
-   * <code>div</code> and <code>mod</code> give the IEEE 754 results of the
-   * type (including signed zeros, infinities and NaN).
+   * xs:double and xs:float <code>+</code>, <code>-</code>, <code>*</code>, <code>div</code> and
+   * <code>mod</code> give the IEEE 754 results of the type (including signed zeros, infinities and
+   * NaN).
    */
   @Test
   public void testFloatingPointArithmetic ()
@@ -401,10 +411,9 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * @return The expected result of <code>compare</code> as in F&amp;O 3.1
-   *         section 4.3 with numeric type promotion, or <code>null</code> if
-   *         an operand is NaN or the comparison involves xs:float (where the
-   *         decimal to float conversion is not modelled here).
+   * @return The expected result of <code>compare</code> as in F&amp;O 3.1 section 4.3 with numeric
+   *         type promotion, or <code>null</code> if an operand is NaN or the comparison involves
+   *         xs:float (where the decimal to float conversion is not modelled here).
    */
   @Nullable
   private static Integer _getExpectedComparison (@NonNull final XdmAtomic aA, @NonNull final XdmAtomic aB)
@@ -434,12 +443,11 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * The value comparisons of two numeric values are consistent: exactly one of
-   * <code>lt</code>, <code>eq</code> and <code>gt</code> holds unless an
-   * operand is NaN (then none does and <code>ne</code> holds),
-   * <code>le</code>/<code>ge</code>/<code>ne</code> follow from them, swapping
-   * the operands swaps the result, the general comparisons agree for single
-   * values, and the result matches the promoted comparison of the operands.
+   * The value comparisons of two numeric values are consistent: exactly one of <code>lt</code>,
+   * <code>eq</code> and <code>gt</code> holds unless an operand is NaN (then none does and
+   * <code>ne</code> holds), <code>le</code>/<code>ge</code>/<code>ne</code> follow from them,
+   * swapping the operands swaps the result, the general comparisons agree for single values, and
+   * the result matches the promoted comparison of the operands.
    */
   @Test
   public void testNumericComparison ()
@@ -477,13 +485,12 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * @return <code>true</code> if the exact value of a finite, positive double
-   *         lies outside the range from 0.000001 (inclusive) to 1000000
-   *         (exclusive), so that its string uses an exponent. The double
-   *         and the float nearest to 1.0E-6 are both below 0.000001; whether
-   *         they count as "greater than or equal to 0.000001" depends on the
-   *         reading of F&amp;O 3.1 section 19.1.2.2 (exact value or XPath
-   *         comparison with type promotion), so the callers leave them out.
+   * @return <code>true</code> if the exact value of a finite, positive double lies outside the
+   *         range from 0.000001 (inclusive) to 1000000 (exclusive), so that its string uses an
+   *         exponent. The double and the float nearest to 1.0E-6 are both below 0.000001; whether
+   *         they count as "greater than or equal to 0.000001" depends on the reading of F&amp;O 3.1
+   *         section 19.1.2.2 (exact value or XPath comparison with type promotion), so the callers
+   *         leave them out.
    */
   private static boolean _isExponentRange (final double dAbs)
   {
@@ -492,10 +499,9 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * Casting xs:double and xs:float values to xs:string and back gives the
-   * same value (also for signed zeros, infinities and NaN), and the string
-   * uses an exponent exactly if the value lies outside the range 0.000001 to
-   * 1000000 (F&amp;O 3.1 section 19.1.2.2).
+   * Casting xs:double and xs:float values to xs:string and back gives the same value (also for
+   * signed zeros, infinities and NaN), and the string uses an exponent exactly if the value lies
+   * outside the range 0.000001 to 1000000 (F&amp;O 3.1 section 19.1.2.2).
    */
   @Test
   public void testFloatingPointStringRoundTrip ()
@@ -506,7 +512,7 @@ public final class XPathOperatorsPropertyTest
       final String sString = _eval ("string($v)", aV).getString ();
       final XdmAtomic aBack = _eval ("xs:double(string($v))", aV);
       assertEquals (sString, aA, Double.valueOf (aBack.getAsDouble ()));
-        final double dAbs = Math.abs (d);
+      final double dAbs = Math.abs (d);
       if (Double.isNaN (d) || Double.isInfinite (d))
         assertTrue (sString, sString.equals ("NaN") || sString.equals ("INF") || sString.equals ("-INF"));
       else
@@ -529,8 +535,8 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * Integers cast to xs:string and back are unchanged, and integers within
-   * +/-2^53 survive a round trip through xs:double.
+   * Integers cast to xs:string and back are unchanged, and integers within +/-2^53 survive a round
+   * trip through xs:double.
    */
   @Test
   public void testIntegerCastRoundTrip ()
@@ -551,10 +557,9 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * A dateTime written with any fraction digits, timezone offset and the hour
-   * 24 casts to the canonical form (fraction without trailing zeros, Z for a
-   * zero offset, 24:00:00 as midnight of the next day), which casts back to
-   * an equal value.
+   * A dateTime written with any fraction digits, timezone offset and the hour 24 casts to the
+   * canonical form (fraction without trailing zeros, Z for a zero offset, 24:00:00 as midnight of
+   * the next day), which casts back to an equal value.
    */
   @Test
   public void testDateTimeCanonicalForm ()
@@ -568,15 +573,18 @@ public final class XPathOperatorsPropertyTest
     new PropertyChecker ().setTries (2000).forAll (aParts, aP -> {
       final int nYear = 1 + aP[0] % 9999;
       final int nMonth = 1 + aP[1] % 12;
-      final LocalDate aDate = LocalDate.of (nYear, nMonth, 1 + aP[2] % LocalDate.of (nYear, nMonth, 1).lengthOfMonth ());
+      final LocalDate aDate = LocalDate.of (nYear,
+                                            nMonth,
+                                            1 + aP[2] % LocalDate.of (nYear, nMonth, 1).lengthOfMonth ());
       final boolean bMidnight24 = aP[3] % 8 == 0;
       final int nHour = bMidnight24 ? 24 : aP[3] % 24;
       final int nMinute = bMidnight24 ? 0 : aP[4] % 60;
       final int nSecond = bMidnight24 ? 0 : aP[5] % 60;
       final int nFractionDigits = aP[6] % 5;
-      final String sFraction = nFractionDigits == 0 ? "" : bMidnight24 ? "0".repeat (nFractionDigits)
-                                                                       : _pad (aP[7] % (int) Math.pow (10, nFractionDigits),
-                                                                               nFractionDigits);
+      final String sFraction = nFractionDigits == 0 ? ""
+                                                    : bMidnight24 ? "0".repeat (nFractionDigits)
+                                                                  : _pad (aP[7] % (int) Math.pow (10, nFractionDigits),
+                                                                          nFractionDigits);
       // Timezone: none, or an offset in minutes from -14:00 to +14:00
       final int nTzChoice = aP[8] % 4;
       final int nTzMinutes = nTzChoice == 0 ? 0 : (aP[8] / 4) % (14 * 60 * 2 + 1) - 14 * 60;
@@ -594,7 +602,11 @@ public final class XPathOperatorsPropertyTest
         sTz = nTzChoice == 1 && nTzMinutes == 0 ? "Z" : (nTzMinutes < 0 ? "-" : "+") + sOffset;
         sCanonicalTz = nTzMinutes == 0 ? "Z" : (nTzMinutes < 0 ? "-" : "+") + sOffset;
       }
-      final String sDatePart = _pad (aDate.getYear (), 4) + "-" + _pad (aDate.getMonthValue (), 2) + "-" + _pad (aDate.getDayOfMonth (), 2);
+      final String sDatePart = _pad (aDate.getYear (), 4) +
+                               "-" +
+                               _pad (aDate.getMonthValue (), 2) +
+                               "-" +
+                               _pad (aDate.getDayOfMonth (), 2);
       final String sLexical = sDatePart +
                               "T" +
                               _pad (nHour, 2) +
@@ -627,15 +639,15 @@ public final class XPathOperatorsPropertyTest
       assertTrue (sLexical, _eval ("xs:dateTime(string(xs:dateTime($v))) eq xs:dateTime($v)", aV).getBoolean ());
       // The date and time components agree with the dateTime
       assertTrue (sLexical,
-                  _eval ("let $d := xs:dateTime($v) return dateTime(xs:date($d), xs:time($d)) eq $d", aV).getBoolean ());
+                  _eval ("let $d := xs:dateTime($v) return dateTime(xs:date($d), xs:time($d)) eq $d", aV)
+                                                                                                         .getBoolean ());
     });
   }
 
   /**
-   * @return The canonical xs:dayTimeDuration for a number of seconds (XSD 1.1
-   *         section 3.3.27.2 with the F&amp;O normalisation): days, hours
-   *         below 24, minutes and seconds below 60, zero components left out,
-   *         <code>PT0S</code> for zero.
+   * @return The canonical xs:dayTimeDuration for a number of seconds (XSD 1.1 section 3.3.27.2 with
+   *         the F&amp;O normalisation): days, hours below 24, minutes and seconds below 60, zero
+   *         components left out, <code>PT0S</code> for zero.
    */
   @NonNull
   private static String _getCanonicalDayTime (@NonNull final BigDecimal aSeconds)
@@ -670,14 +682,15 @@ public final class XPathOperatorsPropertyTest
   }
 
   /**
-   * A dayTimeDuration and a yearMonthDuration written with components of any
-   * size cast to xs:string in canonical form, computed from the total seconds
-   * and months, and cast back to an equal value.
+   * A dayTimeDuration and a yearMonthDuration written with components of any size cast to xs:string
+   * in canonical form, computed from the total seconds and months, and cast back to an equal value.
    */
   @Test
   public void testDurationCanonicalForm ()
   {
-    final IGenerator <Integer> aComponent = Generators.oneOf (Generators.ints (-1, 3), Generators.ints (-1, 100), Generators.ints (-1, 100_000));
+    final IGenerator <Integer> aComponent = Generators.oneOf (Generators.ints (-1, 3),
+                                                              Generators.ints (-1, 100),
+                                                              Generators.ints (-1, 100_000));
     new PropertyChecker ().setTries (2000)
                           .forAll (Generators.lists (aComponent, 4, 4),
                                    Generators.ints (0, 999),
@@ -712,7 +725,9 @@ public final class XPathOperatorsPropertyTest
                                          aSB.append (nM).append ('M');
                                          aTotal = aTotal.add (BigDecimal.valueOf (60L * nM));
                                        }
-                                       final BigDecimal aSecs = BigDecimal.valueOf (Math.max (nS, 0)).add (BigDecimal.valueOf (aMillis.intValue (), 3));
+                                       final BigDecimal aSecs = BigDecimal.valueOf (Math.max (nS, 0))
+                                                                          .add (BigDecimal.valueOf (aMillis.intValue (),
+                                                                                                    3));
                                        if (nS >= 0 || (nH < 0 && nM < 0))
                                        {
                                          aSB.append (aSecs.toPlainString ()).append ('S');
@@ -733,7 +748,12 @@ public final class XPathOperatorsPropertyTest
                                      // Years and months from the first two components
                                      final int nYears = Math.max (nD, 0);
                                      final int nMonths = Math.max (nH, 0);
-                                     final String sYM = (aNegative.booleanValue () ? "-" : "") + "P" + nYears + "Y" + nMonths + "M";
+                                     final String sYM = (aNegative.booleanValue () ? "-" : "") +
+                                                        "P" +
+                                                        nYears +
+                                                        "Y" +
+                                                        nMonths +
+                                                        "M";
                                      final int nTotalMonths = nYears * 12 + nMonths;
                                      final StringBuilder aExpected = new StringBuilder ();
                                      if (nTotalMonths == 0)
@@ -750,18 +770,15 @@ public final class XPathOperatorsPropertyTest
                                      }
                                      assertEquals (sYM,
                                                    aExpected.toString (),
-                                                   _eval ("string(xs:yearMonthDuration($v))", XdmAtomic.string (sYM)).getString ());
+                                                   _eval ("string(xs:yearMonthDuration($v))", XdmAtomic.string (sYM))
+                                                                                                                     .getString ());
                                    });
   }
-
-
-
 
   /**
    * <code>$v castable as T</code> is true exactly when <code>$v cast as
    * T</code> raises no error (XPath 3.1 section 3.14.3), every failure is an
-   * {@link XPathException}, and the string of a cast result casts to the
-   * same value again.
+   * {@link XPathException}, and the string of a cast result casts to the same value again.
    */
   @Test
   public void testCastableMatchesCast ()

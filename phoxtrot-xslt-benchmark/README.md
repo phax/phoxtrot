@@ -33,9 +33,11 @@ it do less. `MainProfile verify` runs these checks for every case.
 | | `flwor` | | `for`, `let`, `some`/`every`, `distinct-values`, `sort`, date subtraction |
 | | `maps` | | `map:merge` with combine, `array:join`, `fold-left` and `array:fold-left` with inline functions |
 | | `rules` | | Schematron-like: select the lines, then 10 assertions per line as effective boolean value |
+| | `rules-absolute` | | `rules` plus two assertions per line with an absolute path over all lines (stops at the first match) |
 | `xslt` (`XsltBenchmark`) | `identity` | 1,000, 10,000 | `on-no-match="shallow-copy"`, serialised as XML (the output equals the input) |
 | | `dispatch` | | `apply-templates` over four modes, value and structure predicates, priorities |
 | | `keys` | | three `xsl:key`s, `key()` per category, per line and through a parent step |
+| | `muenchian` | | XSLT 1.0 Muenchian grouping: the first line per key, by comparing two `generate-id` calls
 | | `grouping` | | `xsl:for-each-group` with `group-by` (sorted), `group-adjacent` and a computed key |
 | | `sort` | | `xsl:sort` of all lines by a decimal key descending, then a string key |
 | | `iterate` | | `xsl:iterate` with an `array(xs:decimal)` parameter that grows by one member per line |
@@ -46,8 +48,9 @@ it do less. `MainProfile verify` runs these checks for every case.
 | `xslt` (`XsltNumberBenchmark`) | `number` | 500, 1,000, 2,000 | `xsl:number` with `level="single"`, `"multiple"` and `"any"` per line; smaller sizes because the time grows with the square of the lines |
 | `xsd` (`XsdBenchmark`) | `1.0`, `1.1` | 1,000, 10,000 | `XsdSchema.validateText` (parse plus assessment) against the invoice schema; 1.1 adds an assertion per line, an assertion facet per price and a type alternative per tax element. The preparation also checks the error count for a document with faults |
 | `streaming` (`StreamingBenchmark`) | `streamed`, `buffered` | 10,000, 100,000 | `xsl:source-document` with `xsl:iterate` over all lines from bytes in memory; streamed with the streaming claim and enforced streamability (checked: one streamed run), buffered without |
-| `compile` (`CompileBenchmark`) | `xslt`, `xpath` | - | compiling the 12 stylesheets of the XSLT and streaming workloads; compiling the 21 expressions of the XPath workloads and the rule set |
+| `compile` (`CompileBenchmark`) | `xslt`, `xpath` | - | compiling the 12 stylesheets of the XSLT and streaming workloads; compiling the 23 expressions of the XPath workloads and the rule set |
 | `small` (`SmallTransformBenchmark`) | `new-thread`, `pool`, `calling` | 3 (about 1 KB) | one `identity` transformation per call, from one thread (`single`) and from 8 threads at once (`parallel`, µs per call); the case is the threading mode of the request (`EXsltThreading`, set by reflection: an engine without the option always uses a new thread) |
+| `rounding` (`RoundingBenchmark`) | `functions-3.0`, `templates-1.0`, `templates-1.0-as-3.0`, `templates-1.0-jdk` | 1,000 | every price rounded in the seven `RoundingMode` modes other than `UNNECESSARY` at the scales 1, 0 and -1 (21 roundings per line) with the rounding stylesheets of `phoxtrot-xslt/src/test/resources/rounding` (the POM puts them into the resources): the XSLT 3.0 functions, the XSLT 1.0 templates with 1.0 and with 3.0 behaviour, and the templates on the XSLT 1.0 processor of the JDK as a reference (byte code, parses the document in every run) |
 
 Not measured: generating and parsing the input (except in `parse`, `xsd` and `streaming`), compiling (except in
 `compile`). The XPath and XSLT workloads parse their document once per trial, so the name indexes a document builds on

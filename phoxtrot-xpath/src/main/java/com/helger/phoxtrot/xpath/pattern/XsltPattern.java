@@ -63,6 +63,16 @@ public interface XsltPattern
   }
 
   /**
+   * @return <code>true</code> if {@link #matches(IXdmItem, DynamicContext)} rejects every item that
+   *         {@link #canMatch(IXdmItem)} rejects itself, before it evaluates anything, so that a
+   *         host need not call {@link #canMatch(IXdmItem)} first.
+   */
+  default boolean isCanMatchTestedByMatches ()
+  {
+    return false;
+  }
+
+  /**
    * The names the nodes this pattern matches must have: if every alternative of the pattern (the
    * operands of top-level unions) is a path whose last step tests an exact element or attribute
    * name (no wildcard, no kind test, not the namespace axis), every matching node is an element

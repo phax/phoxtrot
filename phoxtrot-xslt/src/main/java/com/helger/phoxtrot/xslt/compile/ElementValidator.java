@@ -33,8 +33,8 @@ import com.helger.phoxtrot.xdm.XdmConstants;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.collation.CollationRegistry;
 import com.helger.phoxtrot.xslt.XsltException;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -335,7 +335,7 @@ public final class ElementValidator
   private static boolean _isLastInstruction (@NonNull final XslElement aParent, @NonNull final XslElement aChild)
   {
     boolean bSeen = false;
-    for (final XslNode aNode : aParent.getChildren ())
+    for (final AbstractXslNode aNode : aParent.getChildren ())
     {
       if (aNode == aChild)
       {
@@ -619,7 +619,7 @@ public final class ElementValidator
   private static void _checkSortFirst (@NonNull final XslElement aEl, @NonNull final String sFirst, @NonNull final String sCode)
   {
     boolean bSeenBody = false;
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
     {
       if (aNode instanceof final XslText aText)
       {
@@ -648,7 +648,7 @@ public final class ElementValidator
    */
   private static boolean _isEmptyContent (@NonNull final XslElement aEl)
   {
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof XslElement || !((XslText) aNode).isWhitespaceOnly ())
         return false;
     return true;
@@ -932,7 +932,7 @@ public final class ElementValidator
     // Content model
     final ICommonsSet <String> aChildren = aSpec.children ();
     if (aChildren != null)
-      for (final XslNode aNode : aEl.getChildren ())
+      for (final AbstractXslNode aNode : aEl.getChildren ())
       {
         if (aNode instanceof final XslText aText)
         {
@@ -951,7 +951,7 @@ public final class ElementValidator
         }
       }
     if (aSpec.noText ())
-      for (final XslNode aNode : aEl.getChildren ())
+      for (final AbstractXslNode aNode : aEl.getChildren ())
         if (aNode instanceof final XslText aText && !aText.isWhitespaceOnly ())
           throw XsltException.at (aEl, "XTSE0010", "Text is not allowed inside xsl:" + sLocal);
 
@@ -960,7 +960,7 @@ public final class ElementValidator
     {
       @SuppressWarnings ("unchecked")
       final ICommonsSet <String> aAllowed = (ICommonsSet <String>) aExcl[1];
-      for (final XslNode aNode : aEl.getChildren ())
+      for (final AbstractXslNode aNode : aEl.getChildren ())
       {
         final boolean bBad = aNode instanceof final XslText aText ? !aText.isWhitespaceOnly ()
                                                                   : !((XslElement) aNode).isXsl () ||
@@ -1197,7 +1197,7 @@ public final class ElementValidator
     if (bSchemaAware && aEl.isXsl ("import-schema"))
       return;
     final boolean bSheet = _isStylesheetRoot (aEl);
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
     {
       if (aNode instanceof final XslText aText)
       {

@@ -29,7 +29,7 @@ import com.helger.phoxtrot.xslt.XsltCompiler;
  * The compile-only cost, without any input document. <code>xslt</code> compiles all stylesheets of
  * the XSLT and streaming workloads (12 stylesheets, about 200 lines together without the licence
  * headers, with patterns, functions, keys, grouping, iterate and a streamable construct);
- * <code>xpath</code> compiles all expressions of the XPath workloads and the rule set (21
+ * <code>xpath</code> compiles all expressions of the XPath workloads and the rule set (23
  * expressions). Measured: parsing the stylesheet text or expression and compiling it; each run
  * compiles the whole set.
  *
@@ -87,7 +87,7 @@ public final class CompileWorkload implements IWorkload
   {
     final ICommonsList <?> aCompiled = (ICommonsList <?>) aResult;
     BenchAssert.assertEquals ("compiled", Integer.valueOf (m_aSources.size ()), Integer.valueOf (aCompiled.size ()));
-    BenchAssert.assertEquals ("sources", Integer.valueOf (m_bXslt ? 12 : 21), Integer.valueOf (m_aSources.size ()));
+    BenchAssert.assertEquals ("sources", Integer.valueOf (m_bXslt ? 12 : 23), Integer.valueOf (m_aSources.size ()));
     for (final Object aItem : aCompiled)
       BenchAssert.assertTrue ("compiled item", aItem != null);
   }

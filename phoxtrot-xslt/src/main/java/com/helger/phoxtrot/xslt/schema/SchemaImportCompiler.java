@@ -55,8 +55,8 @@ import com.helger.phoxtrot.xslt.XsltException;
 import com.helger.phoxtrot.xslt.pkg.PackageModel;
 import com.helger.phoxtrot.xslt.pkg.PackageUnit;
 import com.helger.phoxtrot.xslt.runtime.NodeCopier;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 
 /**
  * xsl:import-schema (XSLT 3.0 section 3.15), the static half of
@@ -295,7 +295,7 @@ public final class SchemaImportCompiler
     if (sNs != null && sNs.trim ().isEmpty ())
       throw XsltException.at (aEl, "XTSE0020", "The namespace attribute of xsl:import-schema must not be a zero-length string");
     XslElement aInline = null;
-    for (final XslNode aChild : aEl.getChildren ())
+    for (final AbstractXslNode aChild : aEl.getChildren ())
       if (aChild instanceof final XslElement aChildEl)
       {
         if (!aChildEl.getName ().isSameName (XdmConstants.NS_XS, "schema") || aInline != null)

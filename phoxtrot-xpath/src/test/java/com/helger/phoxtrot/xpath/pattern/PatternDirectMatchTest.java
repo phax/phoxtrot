@@ -163,8 +163,8 @@ public final class PatternDirectMatchTest
   public void testDirectPathShapes ()
   {
     for (final String s : new String [] { "a", "a/b[@x]", "/r/a/@x", "@x", "a/b[1]", "a/b[$n]", "a/text()", "child::a/attribute::x" })
-      assertNotNull (s, PatternMatcher.getDirectPath (_path (s)));
+      assertNotNull (s, PatternMatcher.getDirectPath (_path (s), null));
     for (final String s : new String [] { "/", "a//b", "//a", "descendant::a", "self::a", "a/b[position() = 1]", "a[last()]", "a[function-lookup(xs:QName('fn:true'), 0)()]", "a/(b)", "(a)", "$n/a", "document-node()", "document-node()/a" })
-      assertNull (s, PatternMatcher.getDirectPath (_path (s)));
+      assertNull (s, PatternMatcher.getDirectPath (_path (s), null));
   }
 }

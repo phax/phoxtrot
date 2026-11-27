@@ -36,7 +36,7 @@ import com.helger.phoxtrot.xslt.XsltTraceInstruction;
 import com.helger.phoxtrot.xslt.runtime.BufferedOutput;
 import com.helger.phoxtrot.xslt.runtime.IXsltOutput;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
-import com.helger.phoxtrot.xslt.tree.XslNode;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 
 /**
  * A sequence constructor containing xsl:on-empty / xsl:on-non-empty (XSLT 3.0
@@ -50,7 +50,7 @@ import com.helger.phoxtrot.xslt.tree.XslNode;
 @Immutable
 public final class ConditionalContent implements IInstruction
 {
-  private final XslNode m_aLocation;
+  private final AbstractXslNode m_aLocation;
   private final IInstruction [] m_aParts;
 
   /**
@@ -61,7 +61,7 @@ public final class ConditionalContent implements IInstruction
    *        All instructions of the sequence constructor in order, the
    *        {@link OnEmptyInstruction}s and the binding instructions included.
    */
-  public ConditionalContent (@Nullable final XslNode aLocation, @NonNull final List <IInstruction> aParts)
+  public ConditionalContent (@Nullable final AbstractXslNode aLocation, @NonNull final List <IInstruction> aParts)
   {
     m_aLocation = aLocation;
     m_aParts = aParts.toArray (new IInstruction [0]);
@@ -194,7 +194,7 @@ public final class ConditionalContent implements IInstruction
   }
 
   @Nullable
-  public XslNode getLocation ()
+  public AbstractXslNode getLocation ()
   {
     return m_aLocation;
   }

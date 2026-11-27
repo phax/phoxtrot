@@ -63,9 +63,9 @@ import com.helger.phoxtrot.xslt.model.Mode;
 import com.helger.phoxtrot.xslt.model.Template;
 import com.helger.phoxtrot.xslt.model.UserFunction;
 import com.helger.phoxtrot.xslt.model.VariableDef;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
 import com.helger.phoxtrot.xslt.tree.XslModule;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -162,7 +162,7 @@ public final class XsltStreamability
 
   /** The first construct found non-streamable in one walk. */
   @Immutable
-  private record Failure (@Nullable XslNode location, @NonNull String reason)
+  private record Failure (@Nullable AbstractXslNode location, @NonNull String reason)
   {}
 
   /** The outcome of classifying one sequence constructor. */
@@ -495,10 +495,10 @@ public final class XsltStreamability
    * {@link CompileContext#compileContent(XslElement)}).
    */
   @NonNull
-  private static ICommonsList <XslNode> _getContent (@NonNull final XslElement aEl)
+  private static ICommonsList <AbstractXslNode> _getContent (@NonNull final XslElement aEl)
   {
-    final ICommonsList <XslNode> ret = new CommonsArrayList <> ();
-    for (final XslNode aNode : aEl.getChildren ())
+    final ICommonsList <AbstractXslNode> ret = new CommonsArrayList <> ();
+    for (final AbstractXslNode aNode : aEl.getChildren ())
     {
       if (aNode instanceof final XslElement aChild && aChild.isXsl ())
         switch (aChild.getLocalName ())
@@ -588,7 +588,7 @@ public final class XsltStreamability
    *         directly.
    */
   @NonNull
-  private PostureSweep _reject (@Nullable final XslNode aLocation, @NonNull final String sReason)
+  private PostureSweep _reject (@Nullable final AbstractXslNode aLocation, @NonNull final String sReason)
   {
     if (m_aFailure == null)
       m_aFailure = new Failure (aLocation, sReason);
@@ -596,7 +596,7 @@ public final class XsltStreamability
   }
 
   /**
-   * {@link #_reject(XslNode, String)} for a verdict the Recommendation states
+   * {@link #_reject(AbstractXslNode, String)} for a verdict the Recommendation states
    * unconditionally - a numbered rule of the instruction whose premises are
    * facts about the stylesheet - rather than one this analysis reached by
    * failing to prove something. Only those justify XTSE3430 for an
@@ -604,7 +604,7 @@ public final class XsltStreamability
    */
   @NonNull
   private PostureSweep _rejectRec (@NonNull final StreamContext aCtx,
-                                   @NonNull final XslNode aLocation,
+                                   @NonNull final AbstractXslNode aLocation,
                                    @NonNull final String sReason)
   {
     aCtx.markDefinite ();
@@ -821,11 +821,11 @@ public final class XsltStreamability
    * instruction is a transmission operand, and the general rules decide.
    */
   @NonNull
-  private PostureSweep _body (@NonNull final List <XslNode> aChildren, @NonNull final StreamContext aCtx)
+  private PostureSweep _body (@NonNull final List <AbstractXslNode> aChildren, @NonNull final StreamContext aCtx)
   {
     final ICommonsList <StreamOperand> aOps = new CommonsArrayList <> ();
     StreamContext aCur = aCtx;
-    for (final XslNode aNode : aChildren)
+    for (final AbstractXslNode aNode : aChildren)
     {
       final PostureSweep aPS;
       if (aNode instanceof final XslText aText)
@@ -878,7 +878,7 @@ public final class XsltStreamability
    *        The choice operand group, 0 for none.
    */
   private void _addBody (@NonNull final ICommonsList <StreamOperand> aOps,
-                         @NonNull final List <XslNode> aChildren,
+                         @NonNull final List <AbstractXslNode> aChildren,
                          @NonNull final StreamContext aCtx,
                          @NonNull final EStreamUsage eUsage,
                          final boolean bHigherOrder,
@@ -895,7 +895,7 @@ public final class XsltStreamability
    * for an operand that is not higher-order and in no choice group.
    */
   private void _addBody (@NonNull final ICommonsList <StreamOperand> aOps,
-                         @NonNull final List <XslNode> aChildren,
+                         @NonNull final List <AbstractXslNode> aChildren,
                          @NonNull final StreamContext aCtx,
                          @NonNull final EStreamUsage eUsage)
   {
@@ -1079,7 +1079,7 @@ public final class XsltStreamability
   @NonNull
   private PostureSweep _fallback (@NonNull final XslElement aEl, @NonNull final StreamContext aCtx)
   {
-    final ICommonsList <XslNode> aChildren = new CommonsArrayList <> ();
+    final ICommonsList <AbstractXslNode> aChildren = new CommonsArrayList <> ();
     for (final XslElement aFallback : aEl.getXslChildren ("fallback"))
       aChildren.addAll (aFallback.getChildren ());
     final ICommonsList <StreamOperand> aOps = new CommonsArrayList <> ();
@@ -1130,7 +1130,7 @@ public final class XsltStreamability
     final IExpr aSelect = _getExpr (aEl, "select");
     final PostureSweep aSel = XPathStreamability.getStreamability (aSelect, aCtx);
     final ICommonsList <XslElement> aSorts = aEl.getXslChildren ("sort");
-    final ICommonsList <XslNode> aContent = _getContent (aEl);
+    final ICommonsList <AbstractXslNode> aContent = _getContent (aEl);
     if (aSel.posture () == EPosture.GROUNDED)
     {
       final ICommonsList <StreamOperand> aOps = new CommonsArrayList <> ();
@@ -1190,7 +1190,7 @@ public final class XsltStreamability
                                                                     : aEl.hasAttr ("group-ending-with") ? "group-ending-with"
                                                                                                          : null;
     final ICommonsList <XslElement> aSorts = aEl.getXslChildren ("sort");
-    final ICommonsList <XslNode> aContent = _getContent (aEl);
+    final ICommonsList <AbstractXslNode> aContent = _getContent (aEl);
     final ICommonsList <StreamOperand> aCollation = new CommonsArrayList <> ();
     _addAvt (aCollation, aEl, "collation", aCtx, ABSORPTION);
 
@@ -1289,8 +1289,8 @@ public final class XsltStreamability
     final ICommonsList <XslElement> aParams = aEl.getXslChildren ("param");
     final ICommonsList <XslElement> aCompletions = aEl.getXslChildren ("on-completion");
     final XslElement aCompletion = aCompletions.isEmpty () ? null : aCompletions.getFirst ();
-    final ICommonsList <XslNode> aContent = new CommonsArrayList <> ();
-    for (final XslNode aNode : _getContent (aEl))
+    final ICommonsList <AbstractXslNode> aContent = new CommonsArrayList <> ();
+    for (final AbstractXslNode aNode : _getContent (aEl))
       if (!(aNode instanceof final XslElement aChild && aChild.isXsl ("on-completion")))
         aContent.add (aNode);
     // xsl:on-completion has no context item: a roaming context posture makes
@@ -1446,10 +1446,10 @@ public final class XsltStreamability
   @NonNull
   private PostureSweep _map (@NonNull final XslElement aEl, @NonNull final StreamContext aCtx)
   {
-    final ICommonsList <XslNode> aContent = _getContent (aEl);
+    final ICommonsList <AbstractXslNode> aContent = _getContent (aEl);
     final ICommonsList <XslElement> aEntries = new CommonsArrayList <> ();
     boolean bAllEntries = true;
-    for (final XslNode aNode : aContent)
+    for (final AbstractXslNode aNode : aContent)
       if (aNode instanceof final XslElement aChild)
       {
         if (aChild.isXsl ("map-entry"))
@@ -1644,8 +1644,8 @@ public final class XsltStreamability
   {
     final ICommonsList <StreamOperand> aOps = new CommonsArrayList <> ();
     _addExpr (aOps, aEl, "select", aCtx, TRANSMISSION);
-    final ICommonsList <XslNode> aBody = new CommonsArrayList <> ();
-    for (final XslNode aNode : _getContent (aEl))
+    final ICommonsList <AbstractXslNode> aBody = new CommonsArrayList <> ();
+    for (final AbstractXslNode aNode : _getContent (aEl))
       if (!(aNode instanceof final XslElement aChild && aChild.isXsl ("catch")))
         aBody.add (aNode);
     _addBody (aOps, aBody, aCtx, TRANSMISSION);
@@ -1758,7 +1758,7 @@ public final class XsltStreamability
           if (CompileContext.isExpandText (aEl))
           {
             final StringBuilder aSB = new StringBuilder ();
-            for (final XslNode aNode : aEl.getChildren ())
+            for (final AbstractXslNode aNode : aEl.getChildren ())
               if (aNode instanceof final XslText aText)
                 aSB.append (aText.getValue ());
             _addAvtText (aOps, aEl, aSB.toString (), aCtx, ABSORPTION);
@@ -1879,8 +1879,8 @@ public final class XsltStreamability
    * the XTSE3430 error naming the construct that defeated the analysis.
    */
   @NonNull
-  private Verdict _classify (@NonNull final List <XslNode> aChildren,
-                             @NonNull final XslNode aLocation,
+  private Verdict _classify (@NonNull final List <AbstractXslNode> aChildren,
+                             @NonNull final AbstractXslNode aLocation,
                              @NonNull final StreamContext aCtx,
                              @NonNull final String sWhat)
   {
@@ -1888,7 +1888,7 @@ public final class XsltStreamability
     final PostureSweep aPS = _body (aChildren, aCtx);
     if (aPS.isStreamable () && m_aFailure == null)
       return new Verdict (aPS, null);
-    XslNode aAt = aLocation;
+    AbstractXslNode aAt = aLocation;
     String sWhy = "it is " + aPS.posture ().getName () + " and " + aPS.sweep ().getName ();
     if (m_aFailure != null)
     {
@@ -2031,7 +2031,7 @@ public final class XsltStreamability
                                                                                                                     getAdjustUsage (aFunc.getAs ()))));
       if (_isFunctionResultAllowed (eCategory, aResult) && m_aFailure == null)
         continue;
-      XslNode aAt = aEl;
+      AbstractXslNode aAt = aEl;
       String sWhy = "its result is " + aResult.posture ().getName () + " and " + aResult.sweep ().getName ();
       if (m_aFailure != null)
       {

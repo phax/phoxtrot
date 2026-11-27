@@ -99,6 +99,10 @@ public final class DynamicContext
   private final Object m_aHostState;
   // Persistent linked list of bindings, innermost first
   private final VarBinding m_aVars;
+  // The variables of the host body bound by slot, or the frame of the variables the expression
+  // itself binds, which links to the host frame (one field, to keep the context small); null for
+  // none
+  private final VariableFrame m_aFrame;
 
   /**
    * A variable bound to a value or, if <code>lazy</code> is not
@@ -172,7 +176,8 @@ public final class DynamicContext
                           final int nPosition,
                           final int nSize,
                           @Nullable final Object aHostState,
-                          @Nullable final VarBinding aVars)
+                          @Nullable final VarBinding aVars,
+                          @Nullable final VariableFrame aFrame)
   {
     m_aStatic = aStatic;
     m_aRun = aRun;
@@ -182,6 +187,7 @@ public final class DynamicContext
     m_nSize = nSize;
     m_aHostState = aHostState;
     m_aVars = aVars;
+    m_aFrame = aFrame;
   }
 
   /**
@@ -192,7 +198,7 @@ public final class DynamicContext
    */
   public DynamicContext (@NonNull final StaticContext aStatic)
   {
-    this (ValueEnforcer.notNull (aStatic, "Static"), new RunState (), null, null, 0, 0, null, null);
+    this (ValueEnforcer.notNull (aStatic, "Static"), new RunState (), null, null, 0, 0, null, null, null);
   }
 
   @NonNull
@@ -234,7 +240,7 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withFocus (@Nullable final IXdmItem aItem, final int nPosition, final int nSize)
   {
-    return new DynamicContext (m_aStatic, m_aRun, aItem, m_aCurrentItem, nPosition, nSize, m_aHostState, m_aVars);
+    return new DynamicContext (m_aStatic, m_aRun, aItem, m_aCurrentItem, nPosition, nSize, m_aHostState, m_aVars, m_aFrame);
   }
 
   /**
@@ -256,7 +262,8 @@ public final class DynamicContext
                                m_nPosition,
                                m_nSize,
                                m_aHostState,
-                               new VarBinding (aName, aValue, null, m_aVars));
+                               new VarBinding (aName, aValue, null, m_aVars),
+                               m_aFrame);
   }
 
   /**
@@ -286,7 +293,8 @@ public final class DynamicContext
                                m_nPosition,
                                m_nSize,
                                m_aHostState,
-                               new VarBinding (aName, null, new LazyValue (aSupplier), m_aVars));
+                               new VarBinding (aName, null, new LazyValue (aSupplier), m_aVars),
+                               m_aFrame);
   }
 
   /**
@@ -296,7 +304,67 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withoutFocusAndVariables ()
   {
-    return new DynamicContext (m_aStatic, m_aRun, null, null, 0, 0, m_aHostState, null);
+    return new DynamicContext (m_aStatic, m_aRun, null, null, 0, 0, m_aHostState, null, null);
+  }
+
+  /**
+   * @return The frame of the variables the host binds by slot (see {@link VariableFrame}), or
+   *         <code>null</code> if there is none. Every derived context keeps it, except
+   *         {@link #withoutFocusAndVariables()}.
+   */
+  @Nullable
+  public VariableFrame getFrame ()
+  {
+    final VariableFrame aFrame = m_aFrame;
+    return aFrame != null && aFrame.isLocal () ? aFrame.getHostFrame () : aFrame;
+  }
+
+  /**
+   * @param aFrame
+   *        The frame of the variables bound by slot, <code>null</code> for none. Must be no frame
+   *        of an expression's own variables.
+   * @return A derived context with that frame and without a frame of the expression's own
+   *         variables ({@link #getLocalFrame()}); everything else is kept.
+   */
+  @NonNull
+  public DynamicContext withFrame (@Nullable final VariableFrame aFrame)
+  {
+    ValueEnforcer.isFalse (aFrame != null && aFrame.isLocal (), "A frame of an expression's own variables");
+    return new DynamicContext (m_aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, aFrame);
+  }
+
+  /**
+   * @return The frame of the variables the expression being evaluated binds itself
+   *         (<code>for</code>, <code>let</code>, quantifiers, inline function parameters), see
+   *         {@link com.helger.phoxtrot.xpath.eval.XPathEvaluator#compile(com.helger.phoxtrot.xpath.ast.IExpr)},
+   *         or <code>null</code> if there is none. Every derived context keeps it, except
+   *         {@link #withoutFocusAndVariables()} and {@link #withFrame(VariableFrame)}.
+   */
+  @Nullable
+  public VariableFrame getLocalFrame ()
+  {
+    final VariableFrame aFrame = m_aFrame;
+    return aFrame != null && aFrame.isLocal () ? aFrame : null;
+  }
+
+  /**
+   * @param aLayout
+   *        The layout of the variables an expression (or inline function body) binds itself.
+   * @return A derived context with a new frame of that layout as {@link #getLocalFrame()}
+   *         (replacing one it had), and the frame of the host variables kept.
+   */
+  @NonNull
+  public DynamicContext withNewLocalFrame (@NonNull final VariableFrameLayout aLayout)
+  {
+    return new DynamicContext (m_aStatic,
+                               m_aRun,
+                               m_aItem,
+                               m_aCurrentItem,
+                               m_nPosition,
+                               m_nSize,
+                               m_aHostState,
+                               m_aVars,
+                               VariableFrame.createLocal (aLayout, getFrame ()));
   }
 
   /**
@@ -306,13 +374,19 @@ public final class DynamicContext
    *
    * @param aStatic
    *        The other static context.
-   * @return The derived context.
+   * @return The derived context, or this context if its static context is equivalent at run time
+   *         ({@link StaticContext#isRunTimeEquivalent(StaticContext)}): then
+   *         {@link #getStaticContext()} keeps returning the equivalent one.
    */
   @NonNull
   public DynamicContext withStaticContext (@NonNull final StaticContext aStatic)
   {
     ValueEnforcer.notNull (aStatic, "Static");
-    return new DynamicContext (aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars);
+    // Optimisation: no new context for a static context with the same run-time fields (XSLT: the
+    // expressions of a stylesheet differ mostly in their declared variables only)
+    if (m_aStatic.isRunTimeEquivalent (aStatic))
+      return this;
+    return new DynamicContext (aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, m_aFrame);
   }
 
   /**
@@ -335,7 +409,7 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withCurrentItem (@Nullable final IXdmItem aCurrentItem)
   {
-    return new DynamicContext (m_aStatic, m_aRun, m_aItem, aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars);
+    return new DynamicContext (m_aStatic, m_aRun, m_aItem, aCurrentItem, m_nPosition, m_nSize, m_aHostState, m_aVars, m_aFrame);
   }
 
   /**
@@ -359,7 +433,39 @@ public final class DynamicContext
   @NonNull
   public DynamicContext withHostState (@Nullable final Object aHostState)
   {
-    return new DynamicContext (m_aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, aHostState, m_aVars);
+    return new DynamicContext (m_aStatic, m_aRun, m_aItem, m_aCurrentItem, m_nPosition, m_nSize, aHostState, m_aVars, m_aFrame);
+  }
+
+  /**
+   * Derive the context of the body of a call made by the host (XSLT: a template or a stylesheet
+   * function) in one step. It equals
+   * <code>withoutFocusAndVariables ().withFocus (aItem, nPosition, nSize).withCurrentItem (aItem).withHostState (aHostState).withFrame (aFrame)</code>
+   * without the four intermediate contexts.
+   *
+   * @param aItem
+   *        The context item of the body, also its current item; <code>null</code> for an absent
+   *        focus.
+   * @param nPosition
+   *        The 1-based context position, 0 with an absent focus.
+   * @param nSize
+   *        The context size, 0 with an absent focus.
+   * @param aHostState
+   *        The host state of the body. May be <code>null</code>.
+   * @param aFrame
+   *        The frame of the variables the host binds by slot in the body, <code>null</code> for
+   *        none. Must be no frame of an expression's own variables.
+   * @return A derived context with the same static context and run state, that focus, host state
+   *         and frame, and no variables bound by name.
+   */
+  @NonNull
+  public DynamicContext forHostCall (@Nullable final IXdmItem aItem,
+                                     final int nPosition,
+                                     final int nSize,
+                                     @Nullable final Object aHostState,
+                                     @Nullable final VariableFrame aFrame)
+  {
+    ValueEnforcer.isFalse (aFrame != null && aFrame.isLocal (), "A frame of an expression's own variables");
+    return new DynamicContext (m_aStatic, m_aRun, aItem, aItem, nPosition, nSize, aHostState, null, aFrame);
   }
 
   /**

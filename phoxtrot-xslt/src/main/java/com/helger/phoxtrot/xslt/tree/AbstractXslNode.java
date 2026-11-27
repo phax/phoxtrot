@@ -25,16 +25,17 @@ import com.helger.annotation.concurrent.NotThreadSafe;
  * A node of a stylesheet module after static processing (use-when, shadow
  * attributes): either an element or a text node. Comments and processing
  * instructions of the stylesheet are not represented, adjacent text is merged.
+ * The class is sealed: every node is an {@link XslElement} or an {@link XslText}.
  *
  * @author Philip Helger
  */
 @NotThreadSafe
-public abstract class XslNode
+public abstract sealed class AbstractXslNode permits XslElement, XslText
 {
   private final XslModule m_aModule;
   private XslElement m_aParent;
 
-  protected XslNode (@NonNull final XslModule aModule)
+  protected AbstractXslNode (@NonNull final XslModule aModule)
   {
     m_aModule = aModule;
   }

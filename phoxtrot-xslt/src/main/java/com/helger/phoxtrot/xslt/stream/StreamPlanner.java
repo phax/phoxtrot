@@ -26,8 +26,8 @@ import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.phoxtrot.xdm.XdmQName;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -149,7 +149,7 @@ public final class StreamPlanner
   private static XslElement _getOnlyChild (@NonNull final XslElement aParent, final boolean bTemplate)
   {
     XslElement ret = null;
-    for (final XslNode aNode : aParent.getChildren ())
+    for (final AbstractXslNode aNode : aParent.getChildren ())
     {
       if (aNode instanceof final XslText aText)
       {

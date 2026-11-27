@@ -36,8 +36,8 @@ import com.helger.phoxtrot.xslt.instr.IInstruction;
 import com.helger.phoxtrot.xslt.instr.SequenceConstructor;
 import com.helger.phoxtrot.xslt.runtime.SequenceOutput;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 
 /**
@@ -60,7 +60,7 @@ public final class MapExtension implements IXsltExtension
    */
   private static boolean _hasContent (@NonNull final XslElement aEl)
   {
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof final XslElement aChild)
       {
         if (!aChild.isXsl ("fallback"))

@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xpath.pattern;
 import java.util.Collections;
 import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.function.Predicate;
 
@@ -39,6 +40,8 @@ import com.helger.phoxtrot.xpath.ast.ExprWalker;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.eval.AbstractCompiledExpr;
 import com.helger.phoxtrot.xpath.eval.XPathEvaluator;
 
 /**
@@ -59,6 +62,11 @@ public final class CompiledXsltPattern implements XsltPattern
   private final double m_dDefaultPriority;
   private final List <CompiledXsltPattern> m_aAlternatives;
   private final Set <IExpr> m_aPositionalPredicates;
+  // The static context the pattern was parsed with, for its variables bound by
+  // slot; null if unknown
+  private final StaticContext m_aStaticCtx;
+  // The compiled expressions the matcher evaluates, by identity
+  private final Map <IExpr, AbstractCompiledExpr> m_aCompiled;
   // The paths of a pattern that is a union of paths, for the quick test of
   // canMatch, with boolean predicates of parenthesised unions distributed
   // over their paths; null for any other pattern
@@ -71,6 +79,44 @@ public final class CompiledXsltPattern implements XsltPattern
   private final PatternMatcher.DirectPath [] m_aDirectPaths;
   // See getFinalNames; null if not every path ends in an exact name test
   private final PatternFinalNames m_aFinalNames;
+
+  /**
+   * Compile the expressions of a pattern that the matcher evaluates (the predicate pattern
+   * <code>.[...]</code>, the start expressions and the predicates of the steps of its paths), by
+   * identity. The pattern tree is walked iteratively through set operators and the postfix
+   * expressions of parenthesised steps.
+   */
+  private static void _compileEvaluated (@NonNull final IExpr aPattern,
+                                         @Nullable final StaticContext aStaticCtx,
+                                         @NonNull final Map <IExpr, AbstractCompiledExpr> aOut)
+  {
+    final ICommonsList <IExpr> aStack = new CommonsArrayList <> (aPattern);
+    while (aStack.isNotEmpty ())
+    {
+      final IExpr aCur = aStack.removeLast ();
+      if (aCur instanceof final IExpr.SetExpr aSet)
+      {
+        aStack.add (aSet.left ());
+        aStack.add (aSet.right ());
+      }
+      else
+        if (aCur instanceof IExpr.FilterExpr)
+          aOut.computeIfAbsent (aCur, x -> PatternMatcher.compile (x, aStaticCtx));
+        else
+          if (aCur instanceof final IExpr.PathExpr aPath)
+          {
+            if (aPath.start () != null)
+              aOut.computeIfAbsent (aPath.start (), x -> PatternMatcher.compile (x, aStaticCtx));
+            for (final IExpr.StepExpr aStep : aPath.steps ())
+            {
+              if (aStep.postfix () != null)
+                aStack.add (aStep.postfix ());
+              for (final IExpr aPred : aStep.predicates ())
+                aOut.computeIfAbsent (aPred, x -> PatternMatcher.compile (x, aStaticCtx));
+            }
+          }
+    }
+  }
 
   /**
    * Create the pattern and collect, once, its positional predicates (see
@@ -86,12 +132,17 @@ public final class CompiledXsltPattern implements XsltPattern
    * @param aAlternatives
    *        The patterns of the top-level union alternatives, empty if there
    *        is no top-level union. Taken over, not copied.
+   * @param aStaticCtx
+   *        The static context the pattern was parsed with; its variables bound
+   *        by slot are read by slot. May be <code>null</code>.
    */
   CompiledXsltPattern (@NonNull final String sSource,
                        @NonNull final IExpr aExpr,
                        final double dDefaultPriority,
-                       @NonNull final List <CompiledXsltPattern> aAlternatives)
+                       @NonNull final List <CompiledXsltPattern> aAlternatives,
+                       @Nullable final StaticContext aStaticCtx)
   {
+    m_aStaticCtx = aStaticCtx;
     m_sSource = sSource;
     m_aExpr = aExpr;
     m_dDefaultPriority = dDefaultPriority;
@@ -115,10 +166,16 @@ public final class CompiledXsltPattern implements XsltPattern
       for (int i = 0; i < m_aLastSteps.length; ++i)
       {
         m_aLastSteps[i] = PatternMatcher.getLastStep (m_aUnionPaths.get (i));
-        m_aDirectPaths[i] = PatternMatcher.getDirectPath (m_aUnionPaths.get (i));
+        m_aDirectPaths[i] = PatternMatcher.getDirectPath (m_aUnionPaths.get (i), aStaticCtx);
       }
     }
     m_aFinalNames = m_aUnionPaths == null ? null : _getFinalNames (m_aUnionPaths);
+    final Map <IExpr, AbstractCompiledExpr> aCompiled = new IdentityHashMap <> ();
+    _compileEvaluated (aExpr, aStaticCtx, aCompiled);
+    if (m_aUnionPaths != null)
+      for (final IExpr.PathExpr aPath : m_aUnionPaths)
+        _compileEvaluated (aPath, aStaticCtx, aCompiled);
+    m_aCompiled = Collections.unmodifiableMap (aCompiled);
   }
 
   /**
@@ -311,6 +368,16 @@ public final class CompiledXsltPattern implements XsltPattern
     }
   }
 
+  /**
+   * @return The static context the pattern was parsed with, or <code>null</code>
+   *         if unknown.
+   */
+  @Nullable
+  public StaticContext getStaticContext ()
+  {
+    return m_aStaticCtx;
+  }
+
   @NonNull
   public String getSource ()
   {
@@ -379,6 +446,17 @@ public final class CompiledXsltPattern implements XsltPattern
     return false;
   }
 
+  /**
+   * @return <code>true</code> for a pattern that is a union of paths: its match tests the last step
+   *         of every path before anything else ({@link #_matchesUnionPaths(IXdmNode, DynamicContext)}),
+   *         which is all that {@link #canMatch(IXdmItem)} tests.
+   */
+  @Override
+  public boolean isCanMatchTestedByMatches ()
+  {
+    return m_aUnionPaths != null;
+  }
+
   @Override
   @Nullable
   public PatternFinalNames getFinalNames ()
@@ -430,7 +508,7 @@ public final class CompiledXsltPattern implements XsltPattern
       if (aNodeCtx == null)
         aNodeCtx = aCtx.withCurrentItem (aNode);
       if (aMatcher == null)
-        aMatcher = new PatternMatcher (aNodeCtx, aNode, m_aPositionalPredicates);
+        aMatcher = new PatternMatcher (aNodeCtx, aNode, m_aPositionalPredicates, m_aCompiled, m_aStaticCtx);
       if (aMatcher.searchPath (m_aUnionPaths.get (i), aNode))
         return true;
     }
@@ -468,10 +546,10 @@ public final class CompiledXsltPattern implements XsltPattern
       if (m_aExpr instanceof IExpr.ContextItemExpr)
         return true;
       if (m_aExpr instanceof final IExpr.FilterExpr aFilter && aFilter.primary () instanceof IExpr.ContextItemExpr)
-        return !XPathEvaluator.evaluate (aFilter, aRealCtx.withFocus (aItem, 1, 1)).isEmpty ();
+        return !XPathEvaluator.evaluate (m_aCompiled.get (aFilter), aRealCtx.withFocus (aItem, 1, 1)).isEmpty ();
       if (!(aItem instanceof final IXdmNode aNode))
         return false;
-      return new PatternMatcher (aRealCtx, aNode, m_aPositionalPredicates).matchesNode (m_aExpr, aNode);
+      return new PatternMatcher (aRealCtx, aNode, m_aPositionalPredicates, m_aCompiled, m_aStaticCtx).matchesNode (m_aExpr, aNode);
     }
     catch (final XPathException ex)
     {

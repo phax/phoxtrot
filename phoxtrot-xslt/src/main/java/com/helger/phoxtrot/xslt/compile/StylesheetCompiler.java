@@ -80,9 +80,9 @@ import com.helger.phoxtrot.xslt.schema.SchemaImportCompiler;
 import com.helger.phoxtrot.xslt.stream.StreamVerdicts;
 import com.helger.phoxtrot.xslt.stream.StreamabilityIndex;
 import com.helger.phoxtrot.xslt.stream.XsltStreamability;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
 import com.helger.phoxtrot.xslt.tree.XslModule;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -230,6 +230,8 @@ public final class StylesheetCompiler
   private PackageModel m_aPackages;
   private final ICommonsMap <UserFunction, FunctionSignature> m_aFunctionSignatures = new CommonsHashMap <> ();
   private final ICommonsMap <XslElement, UserFunction> m_aOriginalFunctions = new CommonsHashMap <> ();
+  // The run-time identities of the static contexts of this compilation (StaticContext.internRunTimeIdentity)
+  private final ICommonsMap <Object, Object> m_aRunTimeIdentities = new CommonsHashMap <> ();
   private final ICommonsMap <PackageUnit, FunctionLibrary> m_aUnitLibraries = new CommonsHashMap <> ();
   private final ICommonsMap <XslElement, FunctionLibrary> m_aDeclLibraries = new CommonsHashMap <> ();
   private final ICommonsMap <XslElement, XdmQName> m_aOriginalNames = new CommonsHashMap <> ();
@@ -306,6 +308,18 @@ public final class StylesheetCompiler
    *         {@link XsltCompileOptions#isEnforceStreamability()} nor
    *         {@link XsltCompileOptions#isStreamingClaim()}).
    */
+  /**
+   * @return The map the static contexts of this compilation are interned into
+   *         ({@link StaticContext#internRunTimeIdentity(java.util.Map)}), so that
+   *         evaluation can keep the dynamic context between expressions with
+   *         equivalent static contexts.
+   */
+  @NonNull
+  public ICommonsMap <Object, Object> getRunTimeIdentities ()
+  {
+    return m_aRunTimeIdentities;
+  }
+
   @Nullable
   public StreamabilityIndex getStreamabilityIndex ()
   {
@@ -749,7 +763,7 @@ public final class StylesheetCompiler
    */
   private static boolean _hasContent (@NonNull final XslElement aEl)
   {
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof XslElement || !((XslText) aNode).isWhitespaceOnly ())
         return true;
     return false;
@@ -1258,8 +1272,8 @@ public final class StylesheetCompiler
     if (aContextItems.isNotEmpty ())
     {
       final XslElement aCI = aContextItems.getFirst ();
-      XslNode aFirst = null;
-      for (final XslNode aNode : aEl.getChildren ())
+      AbstractXslNode aFirst = null;
+      for (final AbstractXslNode aNode : aEl.getChildren ())
         if (aNode instanceof XslElement || !((XslText) aNode).isWhitespaceOnly ())
         {
           aFirst = aNode;
@@ -1285,6 +1299,7 @@ public final class StylesheetCompiler
       final VariableDef aParam = aCtx.compileVariable (aParamEl, VariableDef.EKind.TEMPLATE_PARAM);
       aTemplate.addParam (aParam);
       aCtx = aCtx.withVariable (aParam.getName ());
+      aParam.setSlot (aCtx.getVariableSlotOrThrow (aParam.getName ()));
     }
     if (aName != null && PackageModel.isOverride (aEl))
     {
@@ -1355,7 +1370,7 @@ public final class StylesheetCompiler
       for (final String sValue : aCur.getAllAttributes ().values ())
         if (sValue.contains ("original"))
           return true;
-      for (final XslNode aChild : aCur.getChildren ())
+      for (final AbstractXslNode aChild : aCur.getChildren ())
         if (aChild instanceof final XslElement aChildEl)
           aStack.add (aChildEl);
     }
@@ -1486,7 +1501,10 @@ public final class StylesheetCompiler
       aCtx = aCtx.withVariable (XSL_ORIGINAL);
     final VariableDef aVar = aCtx.compileVariable (aEl, bParam ? VariableDef.EKind.GLOBAL_PARAM : VariableDef.EKind.GLOBAL_VARIABLE);
     if (aOriginal != null)
+    {
       m_aStylesheet.originalVariables ().put (aVar, aOriginal);
+      m_aStylesheet.originalVariableSlots ().put (aVar, aCtx.getVariableSlotOrThrow (XSL_ORIGINAL));
+    }
     m_aLastGlobals.put (aOwnName, aVar);
     m_aAllGlobals.add (aVar);
     final Integer aWinner = m_aGlobalPrecedences.get (aVar.getName ());
@@ -1880,7 +1898,10 @@ public final class StylesheetCompiler
         final UserFunction aFunc = m_aFunctionsByElement.get (aEl);
         CompileContext aCtx = createGlobalContext ();
         for (final VariableDef aParam : aFunc.getParams ())
+        {
           aCtx = aCtx.withVariable (aParam.getName ());
+          aParam.setSlot (aCtx.getVariableSlotOrThrow (aParam.getName ()));
+        }
         aFunc.setBody (aCtx.compileContent (aEl));
         m_aStylesheet.functions ().add (aFunc);
       }

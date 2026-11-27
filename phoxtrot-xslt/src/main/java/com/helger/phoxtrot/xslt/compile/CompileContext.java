@@ -31,6 +31,8 @@ import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.context.VariableFrameLayout;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.fn.FunctionLibrary;
 import com.helger.phoxtrot.xpath.parser.XPathParser;
 import com.helger.phoxtrot.xpath.pattern.XsltPattern;
@@ -43,8 +45,8 @@ import com.helger.phoxtrot.xslt.instr.SortKeyDef;
 import com.helger.phoxtrot.xslt.model.CompiledStylesheet;
 import com.helger.phoxtrot.xslt.model.VariableDef;
 import com.helger.phoxtrot.xslt.stream.StreamabilityIndex;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
 /**
@@ -61,10 +63,12 @@ public final class CompileContext
 {
   /**
    * One local variable binding in a singly linked list of the local variables
-   * in scope, innermost first. Shared between contexts, never changed.
+   * in scope, innermost first, with the slot of the declaration in the frame
+   * layout of the body (all bindings of one list share one layout). Shared
+   * between contexts, never changed.
    */
   @Immutable
-  private record Scope (@NonNull XdmQName name, @Nullable Scope next)
+  private record Scope (@NonNull XdmQName name, @NonNull VariableSlot slot, @Nullable Scope next)
   {}
 
   private final StylesheetCompiler m_aCompiler;
@@ -128,6 +132,11 @@ public final class CompileContext
   }
 
   /**
+   * Bring a local variable into scope. It gets its own slot in the frame
+   * layout of the body (a new layout for the first local variable of a body),
+   * which the run-time binding must use (see {@link #getVariableSlot(XdmQName)}
+   * and {@link com.helger.phoxtrot.xslt.runtime.XsltContext#withSlotValue}).
+   *
    * @param aName
    *        Variable name.
    * @return A context in which the variable is in scope as well.
@@ -135,7 +144,39 @@ public final class CompileContext
   @NonNull
   public CompileContext withVariable (@NonNull final XdmQName aName)
   {
-    return new CompileContext (m_aCompiler, new Scope (aName, m_aScope), m_aHiddenGlobal);
+    final VariableFrameLayout aLayout = m_aScope == null ? new VariableFrameLayout () : m_aScope.slot ().layout ();
+    return new CompileContext (m_aCompiler, new Scope (aName, aLayout.allocateSlot (aName), m_aScope), m_aHiddenGlobal);
+  }
+
+  /**
+   * @param aName
+   *        Variable name.
+   * @return The slot of the innermost local variable of that name in scope,
+   *         or <code>null</code> if there is none.
+   */
+  @Nullable
+  public VariableSlot getVariableSlot (@NonNull final XdmQName aName)
+  {
+    for (Scope aCur = m_aScope; aCur != null; aCur = aCur.next ())
+      if (aCur.name ().equals (aName))
+        return aCur.slot ();
+    return null;
+  }
+
+  /**
+   * @param aName
+   *        Variable name.
+   * @return The slot of the innermost local variable of that name in scope.
+   * @throws IllegalStateException
+   *         if there is none
+   */
+  @NonNull
+  public VariableSlot getVariableSlotOrThrow (@NonNull final XdmQName aName)
+  {
+    final VariableSlot ret = getVariableSlot (aName);
+    if (ret == null)
+      throw new IllegalStateException ("The variable $" + aName.getEQName () + " is not in scope");
+    return ret;
   }
 
   /** @return A context with only the global variables in scope. */
@@ -226,9 +267,15 @@ public final class CompileContext
                                    m_aCompiler.getDecimalFormats (aEl));
       ret.declareSharedVariables (m_aCompiler.getGlobalVariableNameSnapshot (), m_aHiddenGlobal);
     }
+    // The locals are bound by slot; innermost first, so that a shadowing one
+    // wins
+    for (Scope aCur = m_aScope; aCur != null; aCur = aCur.next ())
+      ret.declareFrameVariable (aCur.slot ());
     ret.setSchemaSet (m_aCompiler.getStylesheet ().getSchemaSet ());
     if (isXslt10Behaviour (aEl))
       ret.setXPath10Compatibility (true).setUnknownFunctionErrorCode ("XTDE1425");
+    // A later change of a run-time field drops the identity again
+    ret.internRunTimeIdentity (m_aCompiler.getRunTimeIdentities ());
     return ret;
   }
 
@@ -260,7 +307,7 @@ public final class CompileContext
     {
       final StaticContext aSC = createStaticContext (aEl);
       if (bTextValueTemplate)
-        aSC.setXPath10Compatibility (false).setUnknownFunctionErrorCode (null);
+        aSC.setXPath10Compatibility (false).setUnknownFunctionErrorCode (null).internRunTimeIdentity (m_aCompiler.getRunTimeIdentities ());
       final IExpr aExpr = XPathParser.parse (sExpr, aSC);
       final StreamabilityIndex aIndex = m_aCompiler.getStreamabilityIndex ();
       if (aIndex != null)
@@ -532,7 +579,7 @@ public final class CompileContext
    * @return <code>true</code> if text value templates are enabled for it
    *         ([xsl:]expand-text of the nearest ancestor that has one).
    */
-  public static boolean isExpandText (@NonNull final XslNode aNode)
+  public static boolean isExpandText (@NonNull final AbstractXslNode aNode)
   {
     final XslElement aStart = aNode instanceof final XslElement aEl ? aEl : aNode.getParent ();
     if (aStart == null)
@@ -552,7 +599,7 @@ public final class CompileContext
    */
   @NonNull
   public SequenceConstructor compileSequenceConstructor (@NonNull final XslElement aParent,
-                                                         @NonNull final List <XslNode> aChildren)
+                                                         @NonNull final List <AbstractXslNode> aChildren)
   {
     return CoreInstructions.compileSequenceConstructor (this, aParent, aChildren);
   }
@@ -570,8 +617,8 @@ public final class CompileContext
   @NonNull
   public SequenceConstructor compileContent (@NonNull final XslElement aEl)
   {
-    final ICommonsList <XslNode> aChildren = new CommonsArrayList <> ();
-    for (final XslNode aNode : aEl.getChildren ())
+    final ICommonsList <AbstractXslNode> aChildren = new CommonsArrayList <> ();
+    for (final AbstractXslNode aNode : aEl.getChildren ())
     {
       if (aNode instanceof final XslElement aChild && aChild.isXsl ())
       {

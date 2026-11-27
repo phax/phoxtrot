@@ -42,6 +42,7 @@ import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.eval.SequenceTypeMatcher;
 import com.helger.phoxtrot.xpath.fn.FunctionLibrary;
 import com.helger.phoxtrot.xpath.fn.IXPathFunction;
@@ -69,8 +70,8 @@ import com.helger.phoxtrot.xslt.runtime.XsltState;
 import com.helger.phoxtrot.xslt.schema.ValidationRequest;
 import com.helger.phoxtrot.xslt.stream.IStreamAccumulators;
 import com.helger.phoxtrot.xslt.stream.StreamVerdicts;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
@@ -102,13 +103,14 @@ public final class AccumulatorExtension implements IXsltExtension
    * One compiled xsl:accumulator-rule: the match pattern, whether it fires at
    * the end event (phase="end") instead of the start event, and either the
    * select expression or the contained sequence constructor (exactly one of
-   * the two is non-<code>null</code>).
+   * the two is non-<code>null</code>), and the slot of $value.
    */
   @Immutable
   private record Rule (@NonNull CompiledPattern match,
                        boolean end,
                        @Nullable XPathExpr select,
-                       @Nullable SequenceConstructor body)
+                       @Nullable SequenceConstructor body,
+                       @NonNull VariableSlot valueSlot)
   {}
 
   /**
@@ -210,7 +212,7 @@ public final class AccumulatorExtension implements IXsltExtension
    */
   private static boolean _hasContent (@NonNull final XslElement aEl)
   {
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
       if (aNode instanceof XslElement || !((XslText) aNode).isWhitespaceOnly ())
         return true;
     return false;
@@ -253,7 +255,7 @@ public final class AccumulatorExtension implements IXsltExtension
     if (aSelect != null && _hasContent (aEl))
       throw XsltException.at (aEl, "XTSE0010", "xsl:accumulator-rule has both a select attribute and content");
     final SequenceConstructor aBody = aSelect == null ? aRuleCtx.compileContent (aEl) : null;
-    return new Rule (aMatch, bEnd, aSelect, aBody);
+    return new Rule (aMatch, bEnd, aSelect, aBody, aRuleCtx.getVariableSlotOrThrow (VAR_VALUE));
   }
 
   /**
@@ -574,7 +576,7 @@ public final class AccumulatorExtension implements IXsltExtension
         aChosen = aRule;
     if (aChosen == null)
       return aValue;
-    final XsltContext aRuleCtx = aFocus.withVariable (VAR_VALUE, aValue);
+    final XsltContext aRuleCtx = aFocus.withSlotValue (aChosen.valueSlot (), aValue);
     final XdmSequence aResult;
     if (aChosen.select () != null)
       aResult = aChosen.select ().evaluate (aRuleCtx);

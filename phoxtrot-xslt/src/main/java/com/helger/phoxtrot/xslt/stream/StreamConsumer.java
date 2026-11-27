@@ -31,8 +31,8 @@ import com.helger.phoxtrot.xslt.model.CompiledStylesheet;
 import com.helger.phoxtrot.xslt.runtime.BufferedOutput;
 import com.helger.phoxtrot.xslt.runtime.IXsltOutput;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XslText;
 
 /**
@@ -184,7 +184,7 @@ public final class StreamConsumer
     if (aProng.hasAttr ("select"))
       return null;
     XslElement ret = null;
-    for (final XslNode aNode : aProng.getChildren ())
+    for (final AbstractXslNode aNode : aProng.getChildren ())
     {
       if (aNode instanceof final XslText aText)
       {
@@ -221,7 +221,7 @@ public final class StreamConsumer
     final Map <XslElement, StreamConsumer> aMap = _getMap (aCtx.getStylesheet ());
     final ICommonsList <StreamRecordPath> aPaths = new CommonsArrayList <> ();
     final ICommonsList <IStreamHandlerFactory> aFactories = new CommonsArrayList <> ();
-    for (final XslNode aNode : aEl.getChildren ())
+    for (final AbstractXslNode aNode : aEl.getChildren ())
     {
       if (aNode instanceof final XslText aText)
       {

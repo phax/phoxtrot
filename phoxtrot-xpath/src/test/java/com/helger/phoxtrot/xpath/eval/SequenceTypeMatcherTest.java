@@ -306,6 +306,17 @@ public final class SequenceTypeMatcherTest
     // a function that is already a subtype is passed unchanged
     final XdmSequence aTyped = eval (inlineTyped (var ("x"), STRING, new IExpr.Param (qn ("x"), SeqType.ANY)));
     assertSame (aTyped, SequenceTypeMatcher.convert (aTyped, aExpected, aCtx, "XPTY0004"));
+    // in a sequence, the items before the first coerced one are kept as they are, in order
+    final SeqType aExpectedStar = SeqType.of (funcType (STRING, INTEGER), EOccurrence.ZERO_OR_MORE);
+    final XdmSequence aMixed = XdmSequence.of (aTyped.get (0), aTyped.get (0), aFunc.get (0), aTyped.get (0));
+    final XdmSequence aMixedConv = SequenceTypeMatcher.convert (aMixed, aExpectedStar, aCtx, "XPTY0004");
+    assertEquals (4, aMixedConv.size ());
+    assertSame (aTyped.get (0), aMixedConv.get (0));
+    assertSame (aTyped.get (0), aMixedConv.get (1));
+    assertTrue (aMixedConv.get (2) instanceof CoercedFunctionItem);
+    assertSame (aTyped.get (0), aMixedConv.get (3));
+    final XdmSequence aAllTyped = XdmSequence.of (aTyped.get (0), aTyped.get (0));
+    assertSame (aAllTyped, SequenceTypeMatcher.convert (aAllTyped, aExpectedStar, aCtx, "XPTY0004"));
     // a non-function is no function
     assertError ("XPTY0004",
                  () -> SequenceTypeMatcher.convert (XdmSequence.of (XdmAtomic.integer (1)), aExpected, aCtx, "XPTY0004"));

@@ -39,6 +39,9 @@ public enum EXsltCase implements IHasID <String>
   DISPATCH ("dispatch", (aData, sOut) -> BenchAssert.assertEquals ("dispatch output", BenchExpected.xsltDispatch (aData), sOut)),
   /** Three <code>xsl:key</code> indexes and one lookup per line. */
   KEYS ("keys", (aData, sOut) -> BenchAssert.assertEquals ("keys output", BenchExpected.xsltKeys (aData), sOut)),
+  /** Muenchian grouping of XSLT 1.0: the first line of each key group, found by comparing <code>generate-id</code> calls. */
+  MUENCHIAN ("muenchian",
+             (aData, sOut) -> BenchAssert.assertEquals ("muenchian output", BenchExpected.xsltMuenchian (aData), sOut)),
   /** <code>xsl:for-each-group</code> with <code>group-by</code> and <code>group-adjacent</code>. */
   GROUPING ("grouping",
             (aData, sOut) -> BenchAssert.assertEquals ("grouping output", BenchExpected.xsltGrouping (aData), sOut)),

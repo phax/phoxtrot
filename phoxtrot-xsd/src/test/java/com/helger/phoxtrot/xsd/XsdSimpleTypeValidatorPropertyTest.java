@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xsd;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigInteger;
 import java.time.YearMonth;
@@ -40,11 +41,10 @@ import com.helger.unittest.property.PropertyChecker;
 
 /**
  * Property based tests for the value checks of the built-in simple types in
- * {@link XsdSimpleTypeValidator}: every raw value (with surrounding and inner
- * XML whitespace) is checked against a restriction of the built-in type without
- * facets, and the verdict is compared with a reference derived from XML Schema
- * 1.1 Part 2 (the whiteSpace collapse of section 4.3.6, the lexical spaces of
- * section 3.3 and the value spaces of the integer types of section 3.4).
+ * {@link XsdSimpleTypeValidator}: every raw value (with surrounding and inner XML whitespace) is
+ * checked against a restriction of the built-in type without facets, and the verdict is compared
+ * with a reference derived from XML Schema 1.1 Part 2 (the whiteSpace collapse of section 4.3.6,
+ * the lexical spaces of section 3.3 and the value spaces of the integer types of section 3.4).
  *
  * @author Philip Helger
  */
@@ -100,9 +100,15 @@ public final class XsdSimpleTypeValidatorPropertyTest
                                                 new IntType ("unsignedLong",
                                                              BigInteger.ZERO,
                                                              BigInteger.TWO.pow (64).subtract (BigInteger.ONE)),
-                                                new IntType ("unsignedInt", BigInteger.ZERO, BigInteger.valueOf (4294967295L)),
-                                                new IntType ("unsignedShort", BigInteger.ZERO, BigInteger.valueOf (65535)),
-                                                new IntType ("unsignedByte", BigInteger.ZERO, BigInteger.valueOf (255)) };
+                                                new IntType ("unsignedInt",
+                                                             BigInteger.ZERO,
+                                                             BigInteger.valueOf (4294967295L)),
+                                                new IntType ("unsignedShort",
+                                                             BigInteger.ZERO,
+                                                             BigInteger.valueOf (65535)),
+                                                new IntType ("unsignedByte",
+                                                             BigInteger.ZERO,
+                                                             BigInteger.valueOf (255)) };
 
   private static final ICommonsMap <String, XsdSimpleType> TYPE_CACHE = new CommonsHashMap <> ();
 
@@ -218,12 +224,10 @@ public final class XsdSimpleTypeValidatorPropertyTest
                                        sSign = (nFormat & 1) != 0 ? "+" : "";
                                      final String sRaw = sSpace + sSign + sDigits + sSpace;
                                      final boolean bExpected = aType.isInRange (aValue);
-                                     assertEquals (aType.name () + " '" + sRaw + "'",
-                                                   bExpected,
-                                                   _isValid (aType.name (), EXsdVersion.V11, sRaw));
-                                     assertEquals (aType.name () + " '" + sRaw + "' (1.0)",
-                                                   bExpected,
-                                                   _isValid (aType.name (), EXsdVersion.V10, sRaw));
+                                     assertTrue (aType.name () + " '" + sRaw + "'",
+                                                 bExpected == _isValid (aType.name (), EXsdVersion.V11, sRaw));
+                                     assertTrue (aType.name () + " '" + sRaw + "' (1.0)",
+                                                 bExpected == _isValid (aType.name (), EXsdVersion.V10, sRaw));
                                    });
   }
 
@@ -241,9 +245,8 @@ public final class XsdSimpleTypeValidatorPropertyTest
                                      final String sCollapsed = _collapse (sRaw);
                                      final boolean bExpected = INTEGER_GRAMMAR.matcher (sCollapsed).matches () &&
                                                                aType.isInRange (new BigInteger (sCollapsed));
-                                     assertEquals (aType.name () + " '" + sRaw + "'",
-                                                   bExpected,
-                                                   _isValid (aType.name (), EXsdVersion.V11, sRaw));
+                                     assertTrue (aType.name () + " '" + sRaw + "'",
+                                                 bExpected == _isValid (aType.name (), EXsdVersion.V11, sRaw));
                                    });
   }
 
@@ -254,12 +257,11 @@ public final class XsdSimpleTypeValidatorPropertyTest
   @Test
   public void testDecimal ()
   {
-    new PropertyChecker ().setTries (1500)
-                          .forAll (Generators.strings ("0+-.9 \te", 0, 7), sRaw -> {
-                            final boolean bExpected = DECIMAL_GRAMMAR.matcher (_collapse (sRaw)).matches ();
-                            assertEquals ("'" + sRaw + "'", bExpected, _isValid ("decimal", EXsdVersion.V11, sRaw));
-                            assertEquals ("'" + sRaw + "' (1.0)", bExpected, _isValid ("decimal", EXsdVersion.V10, sRaw));
-                          });
+    new PropertyChecker ().setTries (1500).forAll (Generators.strings ("0+-.9 \te", 0, 7), sRaw -> {
+      final boolean bExpected = DECIMAL_GRAMMAR.matcher (_collapse (sRaw)).matches ();
+      assertTrue ("'" + sRaw + "'", bExpected == _isValid ("decimal", EXsdVersion.V11, sRaw));
+      assertTrue ("'" + sRaw + "' (1.0)", bExpected == _isValid ("decimal", EXsdVersion.V10, sRaw));
+    });
   }
 
   /**
@@ -270,14 +272,14 @@ public final class XsdSimpleTypeValidatorPropertyTest
   public void testBoolean ()
   {
     final IGenerator <String> aValues = Generators.oneOf (_withWhitespace (Generators.of ("true",
-                                                                                         "false",
-                                                                                         "1",
-                                                                                         "0",
-                                                                                         "TRUE",
-                                                                                         "True",
-                                                                                         "01",
-                                                                                         "yes",
-                                                                                         "")),
+                                                                                          "false",
+                                                                                          "1",
+                                                                                          "0",
+                                                                                          "TRUE",
+                                                                                          "True",
+                                                                                          "01",
+                                                                                          "yes",
+                                                                                          "")),
                                                           Generators.strings ("tf01 \t", 0, 3));
     new PropertyChecker ().setTries (500).forAll (aValues, sRaw -> {
       final String sCollapsed = _collapse (sRaw);
@@ -285,14 +287,14 @@ public final class XsdSimpleTypeValidatorPropertyTest
                                 sCollapsed.equals ("false") ||
                                 sCollapsed.equals ("1") ||
                                 sCollapsed.equals ("0");
-      assertEquals ("'" + sRaw + "'", bExpected, _isValid ("boolean", EXsdVersion.V11, sRaw));
-      assertEquals ("'" + sRaw + "' (1.0)", bExpected, _isValid ("boolean", EXsdVersion.V10, sRaw));
+      assertTrue ("'" + sRaw + "'", bExpected == _isValid ("boolean", EXsdVersion.V11, sRaw));
+      assertTrue ("'" + sRaw + "' (1.0)", bExpected == _isValid ("boolean", EXsdVersion.V10, sRaw));
     });
   }
 
   /**
-   * Oracle property for xs:double and xs:float under XSD 1.1: valid exactly when the collapsed value
-   * matches the doubleRep production (finite numerals of any magnitude, <code>INF</code>,
+   * Oracle property for xs:double and xs:float under XSD 1.1: valid exactly when the collapsed
+   * value matches the doubleRep production (finite numerals of any magnitude, <code>INF</code>,
    * <code>+INF</code>, <code>-INF</code> and <code>NaN</code>).
    */
   @Test
@@ -312,8 +314,8 @@ public final class XsdSimpleTypeValidatorPropertyTest
                                                                                           "-1E-400")));
     new PropertyChecker ().setTries (1500).forAll (aValues, sRaw -> {
       final boolean bExpected = DOUBLE_GRAMMAR_11.matcher (_collapse (sRaw)).matches ();
-      assertEquals ("double '" + sRaw + "'", bExpected, _isValid ("double", EXsdVersion.V11, sRaw));
-      assertEquals ("float '" + sRaw + "'", bExpected, _isValid ("float", EXsdVersion.V11, sRaw));
+      assertTrue ("double '" + sRaw + "'", bExpected == _isValid ("double", EXsdVersion.V11, sRaw));
+      assertTrue ("float '" + sRaw + "'", bExpected == _isValid ("float", EXsdVersion.V11, sRaw));
     });
   }
 
@@ -325,11 +327,14 @@ public final class XsdSimpleTypeValidatorPropertyTest
   public void testDoubleAndFloat10 ()
   {
     final IGenerator <String> aValues = Generators.oneOf (Generators.strings ("0.9eE+- \t", 0, 7),
-                                                          _withWhitespace (Generators.of ("INF", "-INF", "+INF", "NaN")));
+                                                          _withWhitespace (Generators.of ("INF",
+                                                                                          "-INF",
+                                                                                          "+INF",
+                                                                                          "NaN")));
     new PropertyChecker ().setTries (1000).forAll (aValues, sRaw -> {
       final boolean bExpected = DOUBLE_GRAMMAR_10.matcher (_collapse (sRaw)).matches ();
-      assertEquals ("double '" + sRaw + "'", bExpected, _isValid ("double", EXsdVersion.V10, sRaw));
-      assertEquals ("float '" + sRaw + "'", bExpected, _isValid ("float", EXsdVersion.V10, sRaw));
+      assertTrue ("double '" + sRaw + "'", bExpected == _isValid ("double", EXsdVersion.V10, sRaw));
+      assertTrue ("float '" + sRaw + "'", bExpected == _isValid ("float", EXsdVersion.V10, sRaw));
     });
   }
 
@@ -340,17 +345,16 @@ public final class XsdSimpleTypeValidatorPropertyTest
   @Test
   public void testLanguage ()
   {
-    new PropertyChecker ().setTries (1500)
-                          .forAll (Generators.strings ("aZ9- \té", 0, 14), sRaw -> {
-                            final boolean bExpected = LANGUAGE_GRAMMAR.matcher (_collapse (sRaw)).matches ();
-                            assertEquals ("'" + sRaw + "'", bExpected, _isValid ("language", EXsdVersion.V11, sRaw));
-                            assertEquals ("'" + sRaw + "' (1.0)", bExpected, _isValid ("language", EXsdVersion.V10, sRaw));
-                          });
+    new PropertyChecker ().setTries (1500).forAll (Generators.strings ("aZ9- \té", 0, 14), sRaw -> {
+      final boolean bExpected = LANGUAGE_GRAMMAR.matcher (_collapse (sRaw)).matches ();
+      assertTrue ("'" + sRaw + "'", bExpected == _isValid ("language", EXsdVersion.V11, sRaw));
+      assertTrue ("'" + sRaw + "' (1.0)", bExpected == _isValid ("language", EXsdVersion.V10, sRaw));
+    });
   }
 
   /**
-   * Model property for xs:date under XSD 1.1 (years 0001 to 9999): valid exactly when the month is 1
-   * to 12, the day exists in that month of the proleptic Gregorian calendar (leap years included)
+   * Model property for xs:date under XSD 1.1 (years 0001 to 9999): valid exactly when the month is
+   * 1 to 12, the day exists in that month of the proleptic Gregorian calendar (leap years included)
    * and the timezone is <code>Z</code> or an offset of at most 14 hours with minutes below 60.
    */
   @Test
@@ -401,14 +405,14 @@ public final class XsdSimpleTypeValidatorPropertyTest
                                                                nMonth <= 12 &&
                                                                nDay >= 1 &&
                                                                YearMonth.of (nYear, nMonth).isValidDay (nDay);
-                                     assertEquals (sRaw, bExpected, _isValid ("date", EXsdVersion.V11, sRaw));
+                                     assertTrue (sRaw, bExpected == _isValid ("date", EXsdVersion.V11, sRaw));
                                    });
   }
 
   /**
    * Model property for xs:time under XSD 1.1: valid exactly when hours, minutes and seconds are in
-   * range (seconds below 60, no leap second) or the value is the end of day
-   * <code>24:00:00</code> with only zero fraction digits, and a fraction has at least one digit.
+   * range (seconds below 60, no leap second) or the value is the end of day <code>24:00:00</code>
+   * with only zero fraction digits, and a fraction has at least one digit.
    */
   @Test
   public void testTime ()
@@ -433,8 +437,11 @@ public final class XsdSimpleTypeValidatorPropertyTest
                                      final boolean bZeroFraction = sFraction.replace ("0", "").length () <= 1;
                                      final boolean bExpected = bFractionValid &&
                                                                ((nHour < 24 && nMinute < 60 && nSecond < 60) ||
-                                                                (nHour == 24 && nMinute == 0 && nSecond == 0 && bZeroFraction));
-                                     assertEquals (sRaw, bExpected, _isValid ("time", EXsdVersion.V11, sRaw));
+                                                                (nHour == 24 &&
+                                                                 nMinute == 0 &&
+                                                                 nSecond == 0 &&
+                                                                 bZeroFraction));
+                                     assertTrue (sRaw, bExpected == _isValid ("time", EXsdVersion.V11, sRaw));
                                    });
   }
 
@@ -478,8 +485,8 @@ public final class XsdSimpleTypeValidatorPropertyTest
         aSB.append (bFraction ? "6.25S" : "6S");
       final String sRaw = aSB.toString ();
       final boolean bExpected = (bYear || bMonth || bDay || bAnyTime) && (bAnyTime || !bForceT);
-      assertEquals (sRaw, bExpected, _isValid ("duration", EXsdVersion.V11, sRaw));
-      assertEquals (sRaw + " (1.0)", bExpected, _isValid ("duration", EXsdVersion.V10, sRaw));
+      assertTrue (sRaw, bExpected == _isValid ("duration", EXsdVersion.V11, sRaw));
+      assertTrue (sRaw + " (1.0)", bExpected == _isValid ("duration", EXsdVersion.V10, sRaw));
     });
   }
 
@@ -504,7 +511,11 @@ public final class XsdSimpleTypeValidatorPropertyTest
                           .forAll (Generators.of (aTypes.toArray (new String [0])),
                                    Generators.strings ("aA1:+-. =_é\t", 0, 6),
                                    (sType, sRaw) -> assertEquals (sType + " '" + sRaw + "'",
-                                                                  Boolean.valueOf (_isValid (sType, EXsdVersion.V10, sRaw)),
-                                                                  Boolean.valueOf (_isValid (sType, EXsdVersion.V11, sRaw))));
+                                                                  Boolean.valueOf (_isValid (sType,
+                                                                                             EXsdVersion.V10,
+                                                                                             sRaw)),
+                                                                  Boolean.valueOf (_isValid (sType,
+                                                                                             EXsdVersion.V11,
+                                                                                             sRaw))));
   }
 }

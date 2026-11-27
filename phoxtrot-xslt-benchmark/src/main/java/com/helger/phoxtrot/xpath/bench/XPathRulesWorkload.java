@@ -29,7 +29,9 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
  * A rule set in the style of a Schematron rule: the lines are selected once, then ten assertions are
  * evaluated for their effective boolean value with each line as context item, as a Schematron
  * executor does. Measured: selecting the lines and evaluating all assertions; the result is the
- * number of failures per assertion.
+ * number of failures per assertion. The second rule set has assertions whose second operand is an
+ * absolute path in a boolean context (a common shape of the EN 16931 rules): its existence has the
+ * same value for every line.
  *
  * @author Philip Helger
  */
@@ -50,27 +52,36 @@ public final class XPathRulesWorkload implements IWorkload
                                           "../../@currency = 'EUR'",
                                           "string-length(note) le 40" };
 
+  /** The assertions with an absolute path, evaluated with a line as context item. */
+  public static final String [] ABSOLUTE_RULES = { "not(tax/@rate = '0') or /invoice/lines/line/tax/@reason",
+                                                   "@cat != 'C' or /invoice/lines/line[@cat = 'C']/note" };
+
   private final BenchData m_aData;
   private final IXdmNode m_aDoc;
   private final CompiledXPath m_aContext;
+  private final boolean m_bAbsolute;
   private final CompiledXPath [] m_aRules;
 
   /**
    * @param nLines
    *        The number of invoice lines of the document.
+   * @param bAbsolute
+   *        <code>true</code> for {@link #ABSOLUTE_RULES}, <code>false</code> for {@link #RULES}.
    * @throws Exception
    *         if parsing fails
    */
-  public XPathRulesWorkload (final int nLines) throws Exception
+  public XPathRulesWorkload (final int nLines, final boolean bAbsolute) throws Exception
   {
+    m_bAbsolute = bAbsolute;
     m_aData = BenchData.create (nLines, true);
     m_aDoc = BenchData.parse (m_aData.getBytes (), "urn:bench:invoice.xml");
     // One static context for all expressions, as a Schematron schema has
     final StaticContext aSC = new StaticContext ();
     m_aContext = XPathCompiler.compile (CONTEXT, aSC);
-    m_aRules = new CompiledXPath [RULES.length];
-    for (int i = 0; i < RULES.length; ++i)
-      m_aRules[i] = XPathCompiler.compile (RULES[i], aSC);
+    final String [] aRules = bAbsolute ? ABSOLUTE_RULES : RULES;
+    m_aRules = new CompiledXPath [aRules.length];
+    for (int i = 0; i < aRules.length; ++i)
+      m_aRules[i] = XPathCompiler.compile (aRules[i], aSC);
   }
 
   @NonNull
@@ -100,6 +111,6 @@ public final class XPathRulesWorkload implements IWorkload
         aSB.append (',');
       aSB.append (nFails);
     }
-    BenchAssert.assertEquals ("Failures per rule", BenchExpected.xpathRules (m_aData), aSB.toString ());
+    BenchAssert.assertEquals ("Failures per rule", m_bAbsolute ? BenchExpected.xpathAbsoluteRules (m_aData) : BenchExpected.xpathRules (m_aData), aSB.toString ());
   }
 }

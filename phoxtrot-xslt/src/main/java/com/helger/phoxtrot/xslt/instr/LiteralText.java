@@ -23,7 +23,7 @@ import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xslt.runtime.IXsltOutput;
 import com.helger.phoxtrot.xslt.runtime.XsltContext;
-import com.helger.phoxtrot.xslt.tree.XslNode;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 
 /**
  * Fixed text of a sequence constructor (literal text or xsl:text): produces a
@@ -34,16 +34,16 @@ import com.helger.phoxtrot.xslt.tree.XslNode;
 @Immutable
 public final class LiteralText implements IInstruction
 {
-  private final XslNode m_aLocation;
+  private final AbstractXslNode m_aLocation;
   private final String m_sText;
   private final boolean m_bDisableOutputEscaping;
 
-  public LiteralText (@Nullable final XslNode aLocation, @NonNull final String sText)
+  public LiteralText (@Nullable final AbstractXslNode aLocation, @NonNull final String sText)
   {
     this (aLocation, sText, false);
   }
 
-  public LiteralText (@Nullable final XslNode aLocation, @NonNull final String sText, final boolean bDisableOutputEscaping)
+  public LiteralText (@Nullable final AbstractXslNode aLocation, @NonNull final String sText, final boolean bDisableOutputEscaping)
   {
     m_aLocation = aLocation;
     m_sText = sText;
@@ -71,7 +71,7 @@ public final class LiteralText implements IInstruction
   }
 
   @Nullable
-  public XslNode getLocation ()
+  public AbstractXslNode getLocation ()
   {
     return m_aLocation;
   }

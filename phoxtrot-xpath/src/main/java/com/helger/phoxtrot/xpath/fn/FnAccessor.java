@@ -56,6 +56,14 @@ public final class FnAccessor
   private static final int MIN_CACHED_CHILDREN = 16;
   private static final String ROOT_CALL = "Q{" + XdmConstants.NS_FN + "}root()";
 
+  /**
+   * The implementation of <code>fn:generate-id</code> with both arities: one identifier per node
+   * for the whole run, the empty string for an empty argument. It is here so that the evaluator can recognise
+   * it by identity: two calls give the same identifier exactly for the same node (or two empty
+   * arguments), so a comparison of two calls can compare the nodes.
+   */
+  public static final IXPathFunction GENERATE_ID = (aCtx, aArgs) -> _string (_generateId (aCtx, _getNode (aCtx, aArgs)));
+
   @PresentForCodeCoverage
   private static final FnAccessor INSTANCE = new FnAccessor ();
 
@@ -616,10 +624,6 @@ public final class FnAccessor
                                                                                    k -> new SiblingPositions ());
       return _string (_getPath (aNode, aPositions));
     });
-    _register01 (aLib,
-                 "generate-id",
-                 "node()?",
-                 "xs:string",
-                 (aCtx, aArgs) -> _string (_generateId (aCtx, _getNode (aCtx, aArgs))));
+    _register01 (aLib, "generate-id", "node()?", "xs:string", GENERATE_ID);
   }
 }

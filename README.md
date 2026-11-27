@@ -108,7 +108,7 @@ Boolean aValid = LargeStackRunner.run (() -> Boolean.valueOf (aXPath.evaluateEff
 * Source compatible within 0.x (changes only with a note in "News and noteworthy"): in `com.helger.phoxtrot.xpath`
   `XPathCompiler`, `CompiledXPath`, `XPathException`, `EThreading`, `LargeStackRunner`,
   `XPathStreamabilityAnalyzer`, `XPathStreamabilityResult`, `XPathStreamabilityReason`, `XPathStreamabilityBinding`,
-  `EStreamabilityVerdict`, `EStreamabilityConstruct` and `EStreamContextMode`; `StaticContext`, `DynamicContext`, `IResourceResolver` and `ResourceUri` (`context`);
+  `EStreamabilityVerdict`, `EStreamabilityConstruct` and `EStreamContextMode`; `StaticContext`, `DynamicContext`, `IResourceResolver`, `ResourceUri`, `VariableFrame`, `VariableFrameLayout` and `VariableSlot` (`context`);
   `FunctionLibrary` and `IXPathFunction` (`fn`); `SeqType`, `ItemType` and `EOccurrence` (`ast`); `EPosture`, `ESweep`,
   `PostureSweep` and `EStreamFunctionCategory` (`stream`); the value types of `value`, `XPathOperators` (`eval`) and the node model
   of `phoxtrot-xdm`. Everything else in `ast` (expression nodes), `eval`, `parser`, `ops`, `pattern` and `stream` is
@@ -307,6 +307,54 @@ implementation of XSLT 3.0, XPath 3.1 and XSD. Its architecture, its test strate
 basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
+
+v0.5.0 - work in progress
+* New benchmark workload `rounding` (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
+* XPath expressions are compiled once into a tree of evaluation nodes instead of being interpreted per evaluation
+  (`XPathEvaluator.compile (IExpr)`, `compile (IExpr, StaticContext)`, new class `AbstractCompiledExpr`); `CompiledXPath`,
+  stylesheet expressions and patterns keep the compiled form
+* XSLT local variables and parameters are bound by slot in a variable frame per template or function call instead of
+  by name along a chain of contexts (new public classes `VariableFrame`, `VariableFrameLayout`, `VariableSlot`;
+  `DynamicContext.getFrame`/`withFrame`, `StaticContext.declareFrameVariable`/`getFrameVariable`)
+* An XSLT expression or pattern evaluation creates no dynamic context of its own when its static context differs
+  from the previous one only in the declared variables (new `StaticContext.internRunTimeIdentity` and
+  `isRunTimeEquivalent`; `DynamicContext.withStaticContext` returns the context itself for an equivalent static
+  context)
+* The variables an XPath expression binds itself (`for`, `let`, `some`/`every`, inline function parameters) are
+  bound by slot in a frame per evaluation instead of a new dynamic context per binding (new
+  `DynamicContext.getLocalFrame`/`withNewLocalFrame`, `VariableFrame.isLocal`)
+* `XdmParser` works around a bug of the XML 1.1 parser of the JDK (JDK 17 to 27, XML 1.0 is not affected), which drops
+  or repeats characters of a text when a `]` is the last character of its buffer (after the first 64 characters, then
+  every 8 KB; for example `a]a]]&gt;` read as `a]a]a]]>`): a source given as characters (a string, a character
+  stream) is read through a reader that never ends a chunk with `]`. A source of bytes or a URI is decoded by the JDK
+  parser itself and stays affected; a CDATA section ending in `]` (`]]]>`) is still a parse error under XML 1.1
+* The function conversion of arguments checks a single item without an iterator, keeps unchanged function items
+  without a sequence builder and, in XPath 1.0 compatibility mode, checks a value that already matches only once
+* A named function reference (`f#2`) keeps the resolution of its name in the function library (new component `site`
+  of `IExpr.NamedFunctionRefExpr`, as for static calls) and returns the same function item while it resolves to the
+  same function, unless the function is focus-dependent; a map constructor with literal keys whose values are
+  literals or named function references (a dispatch table) keeps its map while every reference resolves to the same
+  function
+* A template or stylesheet function call creates one dynamic context for its body, with the frame of its parameters,
+  instead of one context per changed property (new `DynamicContext.forHostCall`)
+* A tree without grandchildren (such as the temporary tree of an XSLT variable whose content is text) is numbered in
+  document order and given its namespace fixup without the stacks of the general tree walk
+* An XSLT template call, function call or variable body starts with the dynamic context of the caller's last
+  expression, so its first expression creates no dynamic context of its own when its static context is equivalent at
+  run time (`XsltContext.getDynamicContext` keeps returning the context with the static context of the instructions)
+* The existence or effective boolean value of a path whose steps after the first take the child, attribute or self
+  axis (such as `/a/b/c/@d` in a per-line Schematron assertion) stops at the first node of the last step instead of
+  evaluating all steps before it completely
+* A template rule whose pattern is a union of paths tests the last steps of the paths once per candidate instead of
+  twice (new `XsltPattern.isCanMatchTestedByMatches`)
+* The abstract class `XslNode` of the stylesheet tree is renamed to `AbstractXslNode` (incompatible change for code
+  that names the type, such as callers of `XsltException.at`/`locate`)
+* `AbstractXslNode` is sealed (`permits XslElement, XslText`); it could not be usefully subclassed outside its package
+  before either
+* An equality or inequality of two `generate-id` calls (the Muenchian grouping of XSLT 1.0,
+  `generate-id() = generate-id(key('k', @a)[1])`) compares the nodes instead of creating both identifiers
+* `key()` with one value returns the nodes kept in the key index without copying and sorting them per call:
+  `key('k', @a)[1]` for every node of a group took time proportional to the square of the group size
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

@@ -44,7 +44,7 @@ import org.openjdk.jmh.annotations.Warmup;
 @Fork (value = 1, jvmArgsAppend = { "-Xmx3g", "-Xss8m" })
 public class XsltBenchmark
 {
-  @Param ({ "identity", "dispatch", "keys", "grouping", "sort", "iterate", "recursion", "serialize-xml", "serialize-html", "serialize-json" })
+  @Param ({ "identity", "dispatch", "keys", "muenchian", "grouping", "sort", "iterate", "recursion", "serialize-xml", "serialize-html", "serialize-json" })
   public String m_sCase;
 
   /** The number of invoice lines (about ten elements each). */

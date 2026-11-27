@@ -126,10 +126,28 @@ public sealed interface IExpr
   record PlaceholderExpr () implements IExpr
   {}
 
-  /** A named function reference <code>name#arity</code>. */
+  /**
+   * A named function reference <code>name#arity</code>. The site caches the
+   * resolution of name and arity in the function library of the evaluation as
+   * for a static call (see {@link FunctionCallSite}); it does not take part in
+   * equality.
+   */
   @Immutable
-  record NamedFunctionRefExpr (@NonNull XdmQName name, int arity) implements IExpr
-  {}
+  record NamedFunctionRefExpr (@NonNull XdmQName name, int arity, @NonNull FunctionCallSite site) implements IExpr
+  {
+    /**
+     * A reference with its own, empty resolution cache.
+     *
+     * @param name
+     *        Expanded function name.
+     * @param arity
+     *        The arity.
+     */
+    public NamedFunctionRefExpr (@NonNull final XdmQName name, final int arity)
+    {
+      this (name, arity, new FunctionCallSite ());
+    }
+  }
 
   /** One parameter of an inline function. */
   @Immutable

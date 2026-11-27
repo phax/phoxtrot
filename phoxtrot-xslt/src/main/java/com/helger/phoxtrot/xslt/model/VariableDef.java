@@ -23,6 +23,7 @@ import com.helger.annotation.concurrent.Immutable;
 import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.ast.SeqType;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.eval.SequenceTypeMatcher;
 import com.helger.phoxtrot.xpath.value.XdmAtomic;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
@@ -95,6 +96,9 @@ public final class VariableDef
   private final SeqType m_aAs;
   private final boolean m_bTunnel;
   private final boolean m_bRequired;
+  // The slot of a parameter bound by slot; set once while compiling, null for
+  // a definition that is not bound by slot
+  private VariableSlot m_aSlot;
 
   public VariableDef (@NonNull final XslElement aElement,
                       @NonNull final EKind eKind,
@@ -150,6 +154,41 @@ public final class VariableDef
   public SeqType getAs ()
   {
     return m_aAs;
+  }
+
+  /**
+   * @return The slot the parameter is bound in (see
+   *         {@link com.helger.phoxtrot.xslt.compile.CompileContext#withVariable(XdmQName)}),
+   *         or <code>null</code> if it is not bound by slot.
+   */
+  @Nullable
+  public VariableSlot getSlot ()
+  {
+    return m_aSlot;
+  }
+
+  /**
+   * @return The slot the parameter is bound in.
+   * @throws IllegalStateException
+   *         if it has none
+   */
+  @NonNull
+  public VariableSlot getSlotOrThrow ()
+  {
+    if (m_aSlot == null)
+      throw new IllegalStateException ("The parameter $" + m_aName.getEQName () + " has no slot");
+    return m_aSlot;
+  }
+
+  /**
+   * Set the slot of a parameter. Only while compiling.
+   *
+   * @param aSlot
+   *        The slot.
+   */
+  public void setSlot (@NonNull final VariableSlot aSlot)
+  {
+    m_aSlot = aSlot;
   }
 
   public boolean isTunnel ()

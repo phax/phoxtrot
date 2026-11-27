@@ -167,6 +167,27 @@ public final class FnAccessorTest
     assertNotEquals (str ("generate-id(/r)", aDoc), "");
   }
 
+  /**
+   * A comparison of two calls compares the nodes and gives out no identifier: the call after it
+   * in the same evaluation gets the first identifier of the run.
+   */
+  @Test
+  public void testGenerateIdComparisonCreatesNoIdentifier ()
+  {
+    final IXdmNode aDoc = parse (XML);
+    assertEquals ("true false true true false d1n1",
+                  str ("(generate-id(/r) = generate-id(/r/self::r)," +
+                       " generate-id(/r) eq generate-id(/r/e[1])," +
+                       " generate-id(()) = generate-id(/r/zz)," +
+                       " generate-id(/r/@a) ne generate-id(/r)," +
+                       " generate-id() != generate-id(/)," +
+                       " generate-id(/r/e[1]))",
+                       aDoc));
+    assertError ("XPTY0004", "generate-id(/r/e) = generate-id(/r)", aDoc);
+    assertError ("XPTY0004", "generate-id(/r) = generate-id(1)", aDoc);
+    assertError ("XPDY0002", "generate-id() = generate-id(())");
+  }
+
   @Test
   public void testBaseAndDocumentUri ()
   {

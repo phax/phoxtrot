@@ -28,19 +28,44 @@ import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.SeqType;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
+import com.helger.phoxtrot.xpath.context.VariableFrame;
+import com.helger.phoxtrot.xpath.context.VariableFrameLayout;
+import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
- * The function item of an inline function expression: a closure over the
- * variables in scope where it was created. The focus is absent in its body
- * (XPath 3.1 section 3.1.7).
+ * The function item of an inline function expression: a closure over the variables in scope where
+ * it was created. The focus is absent in its body (XPath 3.1 section 3.1.7).
  *
  * @author Philip Helger
  */
 @Immutable
 public final class InlineFunctionItem extends AbstractFunctionItem
 {
-  private final IExpr.InlineFunctionExpr m_aExpr;
+  /**
+   * The compiled body of an inline function expression with its frame layout.
+   *
+   * @param expr
+   *        The compiled body.
+   * @param layout
+   *        The layout of the frame of a call: the parameters and the variables the body binds.
+   * @param paramSlots
+   *        The slots of the parameters, in order.
+   * @param captureNames
+   *        The variables of the enclosing expression that the body references, bound by name in the
+   *        closure.
+   * @param captureSlots
+   *        Their slots in the frame of the enclosing expression (or inline function body).
+   */
+  @Immutable
+  record Body (@NonNull AbstractCompiledExpr expr,
+               @NonNull VariableFrameLayout layout,
+               @NonNull VariableSlot [] paramSlots,
+               @NonNull XdmQName [] captureNames,
+               @NonNull VariableSlot [] captureSlots)
+  {}
+
+  private final Body m_aBody;
   private final ICommonsList <SeqType> m_aParamTypes;
   private final SeqType m_aReturnType;
   private final DynamicContext m_aClosure;
@@ -48,17 +73,38 @@ public final class InlineFunctionItem extends AbstractFunctionItem
   /**
    * @param aExpr
    *        The inline function expression.
+   * @param aBody
+   *        The compiled body of the expression.
    * @param aCtx
    *        The context at creation; its variables are captured.
    */
-  public InlineFunctionItem (final IExpr.@NonNull InlineFunctionExpr aExpr, @NonNull final DynamicContext aCtx)
+  InlineFunctionItem (final IExpr.@NonNull InlineFunctionExpr aExpr,
+                      @NonNull final Body aBody,
+                      @NonNull final DynamicContext aCtx)
   {
-    m_aExpr = aExpr;
+    m_aBody = aBody;
     m_aParamTypes = new CommonsArrayList <> ();
     for (final IExpr.Param aParam : aExpr.params ())
       m_aParamTypes.add (aParam.type () != null ? aParam.type () : SeqType.ANY);
     m_aReturnType = aExpr.returnType () != null ? aExpr.returnType () : SeqType.ANY;
-    m_aClosure = aCtx.withFocus (null, 0, 0);
+    // The frame of the host variables is changed in place while their scope runs; the function
+    // keeps the bindings of its creation, also beyond that scope
+    // The frame of the enclosing expression is changed in place too: the variables the body
+    // references are bound by name with their current values, and the frame is not kept
+    // (withFrame drops it)
+    final VariableFrame aFrame = aCtx.getFrame ();
+    final VariableFrame aLocalFrame = aCtx.getLocalFrame ();
+    DynamicContext aClosure = aCtx.withFocus (null, 0, 0);
+    if (aFrame != null || aLocalFrame != null)
+      aClosure = aClosure.withFrame (aFrame == null ? null : aFrame.getSnapshot ());
+    if (aLocalFrame != null)
+    {
+      final XdmQName [] aNames = aBody.captureNames ();
+      final VariableSlot [] aSlots = aBody.captureSlots ();
+      for (int i = 0; i < aNames.length; ++i)
+        aClosure = aClosure.withVariable (aNames[i], aLocalFrame.get (aSlots[i].index ()));
+    }
+    m_aClosure = aClosure;
   }
 
   @Nullable
@@ -85,17 +131,18 @@ public final class InlineFunctionItem extends AbstractFunctionItem
   }
 
   /**
-   * Evaluate the body in the captured closure (without focus), with each
-   * parameter bound to its argument. The caller's context is ignored.
+   * Evaluate the body in the captured closure (without focus), in a new frame with each parameter
+   * bound to its argument. The caller's context is ignored.
    */
   @NonNull
   public XdmSequence call (@NonNull final DynamicContext aCtx, @NonNull final List <XdmSequence> aArgs)
   {
-    DynamicContext aBodyCtx = m_aClosure;
-    final List <IExpr.Param> aParams = m_aExpr.params ();
-    for (int i = 0; i < aParams.size (); ++i)
-      aBodyCtx = aBodyCtx.withVariable (aParams.get (i).name (), aArgs.get (i));
-    return XPathEvaluator.evaluateInternal (m_aExpr.body (), aBodyCtx);
+    final DynamicContext aBodyCtx = m_aClosure.withNewLocalFrame (m_aBody.layout ());
+    final VariableFrame aFrame = aBodyCtx.getLocalFrame ();
+    final VariableSlot [] aParamSlots = m_aBody.paramSlots ();
+    for (int i = 0; i < aParamSlots.length; ++i)
+      aFrame.set (aParamSlots[i], aArgs.get (i));
+    return m_aBody.expr ().evaluate (aBodyCtx);
   }
 
   @Override

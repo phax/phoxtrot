@@ -18,7 +18,9 @@ package com.helger.phoxtrot.xslt.runtime;
 
 import java.util.ArrayDeque;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -51,6 +53,7 @@ import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.IResourceResolver;
 import com.helger.phoxtrot.xpath.context.ResourceUri;
 import com.helger.phoxtrot.xpath.context.StaticContext;
+import com.helger.phoxtrot.xpath.context.VariableFrameLayout;
 import com.helger.phoxtrot.xpath.eval.NodeSorter;
 import com.helger.phoxtrot.xpath.eval.SequenceTypeMatcher;
 import com.helger.phoxtrot.xpath.fn.FnAccessor;
@@ -68,7 +71,6 @@ import com.helger.phoxtrot.xslt.XsltMessage;
 import com.helger.phoxtrot.xslt.XsltTraceTemplate;
 import com.helger.phoxtrot.xslt.XsltTransformRequest;
 import com.helger.phoxtrot.xslt.XsltTransformResult;
-import com.helger.phoxtrot.xslt.compile.StylesheetCompiler;
 import com.helger.phoxtrot.xslt.model.AttributeSet;
 import com.helger.phoxtrot.xslt.model.CompiledStylesheet;
 import com.helger.phoxtrot.xslt.model.EOnNoMatch;
@@ -81,17 +83,16 @@ import com.helger.phoxtrot.xslt.model.TemplateRule;
 import com.helger.phoxtrot.xslt.model.VariableDef;
 import com.helger.phoxtrot.xslt.pkg.PackageModel;
 import com.helger.phoxtrot.xslt.pkg.PackageUnit;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 import com.helger.phoxtrot.xslt.tree.XslElement;
 import com.helger.phoxtrot.xslt.tree.XslModule;
-import com.helger.phoxtrot.xslt.tree.XslNode;
 import com.helger.phoxtrot.xslt.tree.XsltNames;
 
 /**
- * The state of one transformation: global variables (evaluated on first use,
- * XTDE0640 for circular definitions), template rule selection and invocation,
- * built-in template rules, keys, documents, messages, secondary results and
- * the execution budget (XPDY0130 when the number of instructions or the
- * nesting depth exceeds the limits).
+ * The state of one transformation: global variables (evaluated on first use, XTDE0640 for circular
+ * definitions), template rule selection and invocation, built-in template rules, keys, documents,
+ * messages, secondary results and the execution budget (XPDY0130 when the number of instructions or
+ * the nesting depth exceeds the limits).
  *
  * @author Philip Helger
  */
@@ -100,11 +101,11 @@ public final class Engine
 {
   /** The current output URI (fn:current-output-uri). */
   public static final XsltStateKey <String> CURRENT_OUTPUT_URI = new XsltStateKey <> ("current-output-uri",
-                                                                                     XsltStateKey.EScope.CLEARED_IN_FUNCTIONS);
+                                                                                      XsltStateKey.EScope.CLEARED_IN_FUNCTIONS);
 
   /**
-   * Default maximum number of executed instructions, used when the request
-   * sets none (see {@link XsltTransformRequest#setMaxSteps(long)}).
+   * Default maximum number of executed instructions, used when the request sets none (see
+   * {@link XsltTransformRequest#setMaxSteps(long)}).
    */
   public static final long DEFAULT_MAX_STEPS = 20_000_000L;
   /** Default maximum nesting depth of templates and functions. */
@@ -116,9 +117,9 @@ public final class Engine
   private static final AtomicLong KEY_INDEXES_FROM_NAMES = new AtomicLong (0);
 
   /**
-   * Identifies one built key index: a key name, the root of the tree it
-   * indexes and, in a multi-package stylesheet, the package whose xsl:key
-   * declarations it uses (<code>null</code> otherwise).
+   * Identifies one built key index: a key name, the root of the tree it indexes and, in a
+   * multi-package stylesheet, the package whose xsl:key declarations it uses (<code>null</code>
+   * otherwise).
    */
   @Immutable
   private record KeyIndexId (@NonNull XdmQName name, @NonNull IXdmNode root, @Nullable PackageUnit unit)
@@ -128,13 +129,17 @@ public final class Engine
   private final XsltTransformRequest m_aRequest;
   private final DynamicContext m_aRootDyn;
   private final DynamicContext m_aPatternDyn;
+  // The pattern context with the static context of the last pattern matched (getPatternContext
+  // (StaticContext))
+  private DynamicContext m_aLastPatternDyn;
   private IXdmItem m_aGlobalContextItem;
   private boolean m_bGlobalVariablesWithoutFocus;
   private final ICommonsMap <XdmQName, XdmSequence> m_aGlobalValues = new CommonsHashMap <> ();
   private final ICommonsSet <XdmQName> m_aGlobalsInProgress = new CommonsHashSet <> ();
   private final ICommonsMap <VariableDef, XdmSequence> m_aOriginalValues = new CommonsHashMap <> ();
   private final ICommonsSet <VariableDef> m_aOriginalsInProgress = new CommonsHashSet <> ();
-  private final ICommonsMap <KeyIndexId, ICommonsMap <Object, ICommonsList <IXdmNode>>> m_aKeyIndexes = new CommonsHashMap <> ();
+  // Per key: the nodes of each lookup key as a sequence in document order without duplicates
+  private final ICommonsMap <KeyIndexId, ICommonsMap <Object, XdmSequence>> m_aKeyIndexes = new CommonsHashMap <> ();
   private final ICommonsSet <XdmQName> m_aKeysInProgress = new CommonsHashSet <> ();
   private final ICommonsList <XsltMessage> m_aMessages = new CommonsArrayList <> ();
   private final ICommonsList <XsltTransformResult.SecondaryResult> m_aSecondaryResults = new CommonsArrayList <> ();
@@ -149,21 +154,18 @@ public final class Engine
   private final IXsltTraceListener m_aInstructionTraceListener;
 
   /**
-   * Set up the run-wide state of one transformation. The execution budget is
-   * the shared one of the request (a nested <code>fn:transform</code>) or a new
-   * one with the requested limits; a non-positive limit means the default, a
-   * maximum number of steps of {@link XsltTransformRequest#UNLIMITED_STEPS}
-   * means no step limit and a maximum depth of
-   * {@link XsltTransformRequest#UNLIMITED_DEPTH} no depth limit. The
-   * dynamic context gets the function library of the stylesheet, the static
-   * base URI of the principal module, the current date/time and interrupt of
-   * the request, a resolver that applies xsl:strip-space to every document it
-   * returns, and this engine as resolver of global variables. Two contexts are
-   * derived from it: the root context, whose state always holds
-   * {@link #CURRENT_OUTPUT_URI} (the base output URI of the request, or the
-   * empty string) so that its absence marks temporary output state, and the
-   * pattern context with an empty state. The trace listener of the request is
-   * asked once whether it traces instructions.
+   * Set up the run-wide state of one transformation. The execution budget is the shared one of the
+   * request (a nested <code>fn:transform</code>) or a new one with the requested limits; a
+   * non-positive limit means the default, a maximum number of steps of
+   * {@link XsltTransformRequest#UNLIMITED_STEPS} means no step limit and a maximum depth of
+   * {@link XsltTransformRequest#UNLIMITED_DEPTH} no depth limit. The dynamic context gets the
+   * function library of the stylesheet, the static base URI of the principal module, the current
+   * date/time and interrupt of the request, a resolver that applies xsl:strip-space to every
+   * document it returns, and this engine as resolver of global variables. Two contexts are derived
+   * from it: the root context, whose state always holds {@link #CURRENT_OUTPUT_URI} (the base
+   * output URI of the request, or the empty string) so that its absence marks temporary output
+   * state, and the pattern context with an empty state. The trace listener of the request is asked
+   * once whether it traces instructions.
    *
    * @param aSheet
    *        The compiled stylesheet.
@@ -181,7 +183,7 @@ public final class Engine
                                        aRequest.getMaxDepth () > 0 ? aRequest.getMaxDepth () : DEFAULT_MAX_DEPTH);
     m_aTraceListener = aRequest.getTraceListener ();
     m_aInstructionTraceListener = m_aTraceListener != null && m_aTraceListener.isTraceInstructions () ? m_aTraceListener
-                                                                                                       : null;
+                                                                                                      : null;
     final StaticContext aSC = new StaticContext ();
     aSC.setFunctionLibrary (aSheet.getFunctionLibrary ());
     final XslModule aPrincipal = aSheet.getPrincipalModule ();
@@ -204,8 +206,8 @@ public final class Engine
   }
 
   /**
-   * A resolver that applies xsl:strip-space to the documents it returns, so
-   * that documents read by document() and fn:doc are stripped too.
+   * A resolver that applies xsl:strip-space to the documents it returns, so that documents read by
+   * document() and fn:doc are stripped too.
    */
   @Immutable
   private final class StrippingResolver implements IResourceResolver
@@ -225,8 +227,8 @@ public final class Engine
     }
 
     /**
-     * A stylesheet module comes from the delegate as it is: xsl:strip-space
-     * of this stylesheet does not apply to it.
+     * A stylesheet module comes from the delegate as it is: xsl:strip-space of this stylesheet does
+     * not apply to it.
      */
     @Override
     @Nullable
@@ -279,9 +281,8 @@ public final class Engine
 
   /**
    * @return The trace listener of the request if it traces instructions
-   *         ({@link IXsltTraceListener#isTraceInstructions()} was
-   *         <code>true</code> when this engine was created),
-   *         <code>null</code> otherwise.
+   *         ({@link IXsltTraceListener#isTraceInstructions()} was <code>true</code> when this
+   *         engine was created), <code>null</code> otherwise.
    */
   @Nullable
   public IXsltTraceListener getInstructionTraceListener ()
@@ -318,8 +319,8 @@ public final class Engine
   }
 
   /**
-   * @return The execution budget of this transformation (shared with the
-   *         transformations it starts with fn:transform).
+   * @return The execution budget of this transformation (shared with the transformations it starts
+   *         with fn:transform).
    */
   @NonNull
   public ExecutionBudget getBudget ()
@@ -328,8 +329,8 @@ public final class Engine
   }
 
   /**
-   * @return The context patterns are matched in: no local variables, empty
-   *         XSLT state, the run-wide settings of this transformation.
+   * @return The context patterns are matched in: no local variables, empty XSLT state, the run-wide
+   *         settings of this transformation.
    */
   @NonNull
   public DynamicContext getPatternContext ()
@@ -338,8 +339,27 @@ public final class Engine
   }
 
   /**
-   * @return A context without focus and variables, with the initial XSLT
-   *         state.
+   * @param aStatic
+   *        The static context of a pattern.
+   * @return The pattern context ({@link #getPatternContext()}) with that static context. The
+   *         context of the last call is reused if its static context is equivalent at run time
+   *         ({@link StaticContext#isRunTimeEquivalent(StaticContext)}).
+   */
+  @NonNull
+  public DynamicContext getPatternContext (@NonNull final StaticContext aStatic)
+  {
+    final DynamicContext aLast = m_aLastPatternDyn;
+    // Optimisation: the patterns of a stylesheet mostly have equivalent static contexts, so a match
+    // creates no context
+    if (aLast != null && aLast.getStaticContext ().isRunTimeEquivalent (aStatic))
+      return aLast;
+    final DynamicContext ret = m_aPatternDyn.withStaticContext (aStatic);
+    m_aLastPatternDyn = ret;
+    return ret;
+  }
+
+  /**
+   * @return A context without focus and variables, with the initial XSLT state.
    */
   @NonNull
   public XsltContext createRootContext ()
@@ -360,10 +380,9 @@ public final class Engine
   }
 
   /**
-   * Evaluate global variables (not parameters) without context item: the
-   * principal source is declared streamed and the initial mode is streamable,
-   * so a global variable cannot navigate the streamed document (go-xslt
-   * <code>streamedVarsNoFocus</code>, <code>streamable-116</code>).
+   * Evaluate global variables (not parameters) without context item: the principal source is
+   * declared streamed and the initial mode is streamable, so a global variable cannot navigate the
+   * streamed document (go-xslt <code>streamedVarsNoFocus</code>, <code>streamable-116</code>).
    *
    * @param bWithoutFocus
    *        <code>true</code> to evaluate them without focus.
@@ -392,18 +411,16 @@ public final class Engine
   }
 
   /**
-   * Evaluate one global variable or parameter (XSLT 3.0 section 9.5), without
-   * caching. An abstract variable that was not overridden raises XTDE3052. The
-   * evaluation context has an empty XSLT state; the global context item is the
-   * focus (with no current item) unless it is absent, the declaration belongs
-   * to a used library package rather than the principal one, or it is a
-   * variable (not a parameter) while global variables are evaluated without
-   * focus (see {@link #setGlobalVariablesWithoutFocus(boolean)}). A declaration
-   * in xsl:override sees the value of the declaration it overrides as
-   * <code>$xsl:original</code>. For a parameter the value supplied in the
-   * request is converted to the declared type; with no supplied value a
-   * required parameter raises XTDE0050 and any other falls back to its
-   * default (the select expression or content).
+   * Evaluate one global variable or parameter (XSLT 3.0 section 9.5), without caching. An abstract
+   * variable that was not overridden raises XTDE3052. The evaluation context has an empty XSLT
+   * state; the global context item is the focus (with no current item) unless it is absent, the
+   * declaration belongs to a used library package rather than the principal one, or it is a
+   * variable (not a parameter) while global variables are evaluated without focus (see
+   * {@link #setGlobalVariablesWithoutFocus(boolean)}). A declaration in xsl:override sees the value
+   * of the declaration it overrides as <code>$xsl:original</code>. For a parameter the value
+   * supplied in the request is converted to the declared type; with no supplied value a required
+   * parameter raises XTDE0050 and any other falls back to its default (the select expression or
+   * content).
    *
    * @param aDef
    *        The global variable or parameter.
@@ -415,7 +432,9 @@ public final class Engine
     final XdmQName aName = aDef.getName ();
     final String sVisibility = aDef.getElement ().getAttr ("visibility");
     if (sVisibility != null && "abstract".equals (sVisibility.trim ()))
-      throw XsltException.at (aDef.getElement (), "XTDE3052", "The abstract variable $" + aName.getEQName () + " was not overridden");
+      throw XsltException.at (aDef.getElement (),
+                              "XTDE3052",
+                              "The abstract variable $" + aName.getEQName () + " was not overridden");
     XsltContext aCtx = createRootContext ().withState (XsltState.EMPTY);
     // A global of a used library package has no global context item
     if (m_aGlobalContextItem != null &&
@@ -423,11 +442,12 @@ public final class Engine
         !(m_bGlobalVariablesWithoutFocus && aDef.getKind () != VariableDef.EKind.GLOBAL_PARAM))
     {
       // The global context item is the focus, but there is no current item
-      aCtx = new XsltContext (this, aCtx.withFocus (m_aGlobalContextItem, 1, 1).getDynamicContext ().withCurrentItem (null));
+      aCtx = new XsltContext (this,
+                              aCtx.withFocus (m_aGlobalContextItem, 1, 1).getDynamicContext ().withCurrentItem (null));
     }
     final VariableDef aOriginal = m_aSheet.originalVariables ().get (aDef);
     if (aOriginal != null)
-      aCtx = aCtx.withVariable (StylesheetCompiler.XSL_ORIGINAL, _getOriginalValue (aOriginal));
+      aCtx = aCtx.withSlotValue (m_aSheet.originalVariableSlots ().get (aDef), _getOriginalValue (aOriginal));
     XdmSequence aValue = null;
     if (aDef.getKind () == VariableDef.EKind.GLOBAL_PARAM)
     {
@@ -436,7 +456,9 @@ public final class Engine
         aValue = aDef.convert (aSupplied, aCtx);
       else
         if (aDef.isRequired ())
-          throw XsltException.at (aDef.getElement (), "XTDE0050", "No value was supplied for the required parameter $" + aName.getEQName ());
+          throw XsltException.at (aDef.getElement (),
+                                  "XTDE0050",
+                                  "No value was supplied for the required parameter $" + aName.getEQName ());
     }
     if (aValue == null)
       aValue = aDef.evaluate (aCtx);
@@ -444,12 +466,11 @@ public final class Engine
   }
 
   /**
-   * The value of a global declaration looked up as a declaration rather than by
-   * name: the overridden original seen as <code>$xsl:original</code>, or the
-   * declaration a package sees for a name. Cached per declaration (separately
-   * from the by-name cache of {@link #getGlobalValue(VariableDef)}); a
-   * re-entrant request for the same declaration raises XTDE0640 (XSLT 3.0
-   * section 9.11), and errors are located at the declaration.
+   * The value of a global declaration looked up as a declaration rather than by name: the
+   * overridden original seen as <code>$xsl:original</code>, or the declaration a package sees for a
+   * name. Cached per declaration (separately from the by-name cache of
+   * {@link #getGlobalValue(VariableDef)}); a re-entrant request for the same declaration raises
+   * XTDE0640 (XSLT 3.0 section 9.11), and errors are located at the declaration.
    *
    * @param aDef
    *        The declaration.
@@ -462,7 +483,9 @@ public final class Engine
     if (aKnown != null)
       return aKnown;
     if (!m_aOriginalsInProgress.add (aDef))
-      throw XsltException.at (aDef.getElement (), "XTDE0640", "Circular definition of the global variable $" + aDef.getName ().getEQName ());
+      throw XsltException.at (aDef.getElement (),
+                              "XTDE0640",
+                              "Circular definition of the global variable $" + aDef.getName ().getEQName ());
     try
     {
       final XdmSequence ret = _computeGlobal (aDef);
@@ -480,27 +503,26 @@ public final class Engine
   }
 
   /**
-   * Resolve a global variable reference for the XPath evaluator. In a
-   * stylesheet with package-specific globals, the package of the referencing
-   * expression is found from its function library, and a declaration that
-   * package sees for the name wins. Otherwise the declaration with the highest
-   * import precedence applies: the compile-time value of a static variable or
-   * parameter is returned unless a non-static declaration of the same name is
-   * in effect, then an already computed value, then the value computed now.
+   * Resolve a global variable reference for the XPath evaluator. In a stylesheet with
+   * package-specific globals, the package of the referencing expression is found from its function
+   * library, and a declaration that package sees for the name wins. Otherwise the declaration with
+   * the highest import precedence applies: the compile-time value of a static variable or parameter
+   * is returned unless a non-static declaration of the same name is in effect, then an already
+   * computed value, then the value computed now.
    *
    * @param aDyn
    *        The context of the reference.
    * @param aName
    *        The variable name.
-   * @return The value or <code>null</code> if there is no such global
-   *         variable.
+   * @return The value or <code>null</code> if there is no such global variable.
    */
   @Nullable
   private XdmSequence _resolveGlobal (@NonNull final DynamicContext aDyn, @NonNull final XdmQName aName)
   {
     if (m_aSheet.packageGlobals ().isNotEmpty ())
     {
-      final PackageUnit aUnit = m_aSheet.getPackages ().getUnitForScope (aDyn.getStaticContext ().getFunctionLibrary ());
+      final PackageUnit aUnit = m_aSheet.getPackages ()
+                                        .getUnitForScope (aDyn.getStaticContext ().getFunctionLibrary ());
       final ICommonsMap <XdmQName, VariableDef> aOwn = m_aSheet.packageGlobals ().get (aUnit);
       final VariableDef aDef = aOwn == null ? null : aOwn.get (aName);
       if (aDef != null)
@@ -525,8 +547,7 @@ public final class Engine
    *        A global variable or parameter.
    * @return Its value, evaluated on first use.
    * @throws XPathException
-   *         XTDE0640 for a circular definition, XTDE0050 for a missing
-   *         required parameter
+   *         XTDE0640 for a circular definition, XTDE0050 for a missing required parameter
    */
   @NonNull
   public XdmSequence getGlobalValue (@NonNull final VariableDef aDef)
@@ -536,7 +557,9 @@ public final class Engine
     if (aKnown != null)
       return aKnown;
     if (!m_aGlobalsInProgress.add (aName))
-      throw XsltException.at (aDef.getElement (), "XTDE0640", "Circular definition of the global variable $" + aName.getEQName ());
+      throw XsltException.at (aDef.getElement (),
+                              "XTDE0640",
+                              "Circular definition of the global variable $" + aName.getEQName ());
     try
     {
       final XdmSequence aValue = _computeGlobal (aDef);
@@ -554,8 +577,8 @@ public final class Engine
   }
 
   /**
-   * Evaluate all global parameters, so that missing required parameters and
-   * type errors are reported even if the parameter is never used.
+   * Evaluate all global parameters, so that missing required parameters and type errors are
+   * reported even if the parameter is never used.
    */
   public void checkGlobalParams ()
   {
@@ -566,9 +589,8 @@ public final class Engine
   }
 
   /**
-   * Strip whitespace text nodes from a document according to
-   * xsl:strip-space/xsl:preserve-space (XSLT 3.0 section 4.4.2). Returns the
-   * same document if nothing is stripped.
+   * Strip whitespace text nodes from a document according to xsl:strip-space/xsl:preserve-space
+   * (XSLT 3.0 section 4.4.2). Returns the same document if nothing is stripped.
    *
    * @param aDoc
    *        Document (or other root).
@@ -588,8 +610,8 @@ public final class Engine
    *        Rule positions in ascending order.
    * @param nStart
    *        The first position of interest.
-   * @return The index in the array of the first position that is at least
-   *         <code>nStart</code>, the array length if there is none.
+   * @return The index in the array of the first position that is at least <code>nStart</code>, the
+   *         array length if there is none.
    */
   private static int _getFirstIndexFrom (@NonNull final int [] aIndexes, final int nStart)
   {
@@ -600,16 +622,15 @@ public final class Engine
   }
 
   /**
-   * Test one rule of a mode for {@link #_findRule}: its import precedence
-   * must lie in the range and its pattern must match the item. With
-   * <code>bCheckMultiple</code> the following rules of the same precedence
-   * and priority are tested as well (on-multiple-match="fail" or
+   * Test one rule of a mode for {@link #_findRule}: its import precedence must lie in the range and
+   * its pattern must match the item. With <code>bCheckMultiple</code> the following rules of the
+   * same precedence and priority are tested as well (on-multiple-match="fail" or
    * warning-on-multiple-match="yes").
    *
    * @return <code>true</code> if the rule at the position is the one to use.
    * @throws XPathException
-   *         XTDE0540 if another template of the same precedence and priority
-   *         matches and the mode has on-multiple-match="fail"
+   *         XTDE0540 if another template of the same precedence and priority matches and the mode
+   *         has on-multiple-match="fail"
    */
   private boolean _isRuleMatch (@NonNull final Mode aMode,
                                 final int nIndex,
@@ -652,17 +673,14 @@ public final class Engine
   }
 
   /**
-   * Find the first rule of a mode that matches an item, scanning the rules in
-   * their sorted order (import precedence, then priority, then declaration
-   * order, best first; XSLT 3.0 section 6.4). Only rules whose import
-   * precedence lies in the given range are considered (xsl:apply-imports),
-   * and with <code>aAfter</code> the scan starts behind that rule
-   * (xsl:next-match). For a plain selection in a mode with
-   * on-multiple-match="fail", the following rules of the same precedence and
-   * priority are tested as well and another matching template raises
-   * XTDE0540; with warning-on-multiple-match="yes" (and a message listener)
-   * they are tested too, and another matching template gives a warning
-   * before the best rule is used.
+   * Find the first rule of a mode that matches an item, scanning the rules in their sorted order
+   * (import precedence, then priority, then declaration order, best first; XSLT 3.0 section 6.4).
+   * Only rules whose import precedence lies in the given range are considered (xsl:apply-imports),
+   * and with <code>aAfter</code> the scan starts behind that rule (xsl:next-match). For a plain
+   * selection in a mode with on-multiple-match="fail", the following rules of the same precedence
+   * and priority are tested as well and another matching template raises XTDE0540; with
+   * warning-on-multiple-match="yes" (and a message listener) they are tested too, and another
+   * matching template gives a warning before the best rule is used.
    *
    * @param aMode
    *        The mode.
@@ -671,14 +689,13 @@ public final class Engine
    * @param aCtx
    *        Context the patterns are matched in.
    * @param aAfter
-   *        The rule after which the scan starts, or <code>null</code> to start
-   *        at the best rule.
+   *        The rule after which the scan starts, or <code>null</code> to start at the best rule.
    * @param nMinPrecedence
    *        Lowest import precedence considered.
    * @param nMaxPrecedence
    *        Highest import precedence considered.
-   * @return The matching rule, or <code>null</code> if none matches or
-   *         <code>aAfter</code> is not a rule of the mode.
+   * @return The matching rule, or <code>null</code> if none matches or <code>aAfter</code> is not a
+   *         rule of the mode.
    */
   @Nullable
   private TemplateRule _findRule (@NonNull final Mode aMode,
@@ -738,19 +755,20 @@ public final class Engine
    *        Context.
    * @return The best matching rule or <code>null</code>.
    * @throws XPathException
-   *         XTDE0540 if the mode has on-multiple-match="fail" and several
-   *         rules of the best precedence and priority match
+   *         XTDE0540 if the mode has on-multiple-match="fail" and several rules of the best
+   *         precedence and priority match
    */
   @Nullable
-  public TemplateRule findRule (@NonNull final Mode aMode, @NonNull final IXdmItem aItem, @NonNull final XsltContext aCtx)
+  public TemplateRule findRule (@NonNull final Mode aMode,
+                                @NonNull final IXdmItem aItem,
+                                @NonNull final XsltContext aCtx)
   {
     return _findRule (aMode, aItem, aCtx, null, Integer.MIN_VALUE, Integer.MAX_VALUE);
   }
 
   /**
-   * @return <code>true</code> if both sequences hold the very same item
-   *         objects in the same order, i.e. a type conversion left the
-   *         sequence unchanged.
+   * @return <code>true</code> if both sequences hold the very same item objects in the same order,
+   *         i.e. a type conversion left the sequence unchanged.
    */
   private static boolean _isSameItems (@NonNull final XdmSequence a, @NonNull final XdmSequence b)
   {
@@ -765,52 +783,69 @@ public final class Engine
   }
 
   /**
-   * Bind the parameters of a template and run its body. The supplied tunnel
-   * parameters are added to the tunnel parameters of the state. A declared
-   * xsl:context-item is checked first: use="required" without a context item
-   * raises XTTE3090, use="absent" removes the focus, and a context item that
-   * does not match the declared type raises XTTE0590. Each declared parameter
-   * takes the supplied value of the same name (a tunnel parameter from the
-   * state, any other from the non-tunnel supplied values), converted to its
-   * declared type; without one a required parameter raises XTDE0700 and any
-   * other is evaluated from its default. Supplied parameters the template does
-   * not declare are ignored. The body runs one nesting level deeper; with an
-   * <code>as</code> type its result is buffered and converted (XTTE0505 when
-   * it does not match), and the buffered output is replayed unchanged if the
-   * conversion kept the very same items.
+   * Bind the parameters of a template and run its body. The supplied tunnel parameters are added to
+   * the tunnel parameters of the state. A declared xsl:context-item is checked first:
+   * use="required" without a context item raises XTTE3090, use="absent" removes the focus, and a
+   * context item that does not match the declared type raises XTTE0590. Each declared parameter
+   * takes the supplied value of the same name (a tunnel parameter from the state, any other from
+   * the non-tunnel supplied values), converted to its declared type; without one a required
+   * parameter raises XTDE0700 and any other is evaluated from its default. Supplied parameters the
+   * template does not declare are ignored. The body runs one nesting level deeper; with an
+   * <code>as</code> type its result is buffered and converted (XTTE0505 when it does not match),
+   * and the buffered output is replayed unchanged if the conversion kept the very same items.
    *
    * @param aTemplate
    *        Template.
-   * @param aBase
-   *        Context with focus and state of the invocation, no variables.
+   * @param aCaller
+   *        Context of the caller. The body gets a context of its own (see
+   *        {@link XsltContext#forCall(IXdmItem, int, int, XsltState, VariableFrameLayout)}).
+   * @param aItem
+   *        Context item of the invocation, <code>null</code> for an absent focus.
+   * @param nPosition
+   *        Context position of the invocation.
+   * @param nSize
+   *        Context size of the invocation.
+   * @param aCallState
+   *        State of the invocation, before the supplied tunnel parameters.
    * @param aParams
    *        Supplied parameters.
    * @param aOut
    *        Output.
    */
   private void _runTemplate (@NonNull final Template aTemplate,
-                             @NonNull final XsltContext aBase,
+                             @NonNull final XsltContext aCaller,
+                             @Nullable final IXdmItem aItem,
+                             final int nPosition,
+                             final int nSize,
+                             @NonNull final XsltState aCallState,
                              @NonNull final List <ParamValue> aParams,
                              @NonNull final IXsltOutput aOut)
   {
-    XsltState aState = aBase.getState ();
+    XsltState aState = aCallState;
     for (final ParamValue aParam : aParams)
       if (aParam.tunnel ())
         aState = aState.withTunnelParam (aParam.name (), aParam.value ());
-    XsltContext aCtx = aBase.withState (aState);
     final Template.ContextItemDecl aCI = aTemplate.getContextItem ();
+    boolean bAbsentFocus = false;
     if (aCI != null)
     {
-      final IXdmItem aItem = aCtx.getContextItem ();
       if ("required".equals (aCI.use ()) && aItem == null)
         throw XsltException.at (aTemplate.getElement (), "XTTE3090", "The template requires a context item");
       if ("absent".equals (aCI.use ()))
-        aCtx = aCtx.withFocus (null, 0, 0);
+        bAbsentFocus = true;
       else
-        if (aItem != null && aCI.as () != null &&
-            !SequenceTypeMatcher.matches (XdmSequence.of (aItem), aCI.as ()))
-          throw XsltException.at (aTemplate.getElement (), "XTTE0590", "The context item does not match the declared type");
+        if (aItem != null && aCI.as () != null && !SequenceTypeMatcher.matches (XdmSequence.of (aItem), aCI.as ()))
+          throw XsltException.at (aTemplate.getElement (),
+                                  "XTTE0590",
+                                  "The context item does not match the declared type");
     }
+    final ICommonsList <VariableDef> aDeclared = aTemplate.params ();
+    // Optimisation: the context of the body is created once, with the frame of the parameters
+    // (they share the layout of the body), so binding them changes the frame in place
+    final VariableFrameLayout aLayout = aDeclared.isEmpty () ? null
+                                                             : aDeclared.getFirstOrNull ().getSlotOrThrow ().layout ();
+    XsltContext aCtx = bAbsentFocus ? aCaller.forCall (null, 0, 0, aState, aLayout)
+                                    : aCaller.forCall (aItem, nPosition, nSize, aState, aLayout);
     for (final VariableDef aParam : aTemplate.params ())
     {
       XdmSequence aValue = null;
@@ -830,7 +865,8 @@ public final class Engine
           if (aParam.isRequired ())
             throw XsltException.at (aParam.getElement (),
                                     "XTDE0700",
-                                    "No value was supplied for the required parameter $" + aParam.getName ().getEQName ());
+                                    "No value was supplied for the required parameter $" +
+                                                aParam.getName ().getEQName ());
           aValue = aParam.evaluate (aCtx);
         }
         else
@@ -840,7 +876,7 @@ public final class Engine
       {
         throw XsltException.locate (ex, aParam.getElement ());
       }
-      aCtx = aCtx.withVariable (aParam.getName (), aValue);
+      aCtx = aCtx.withSlotValue (aParam.getSlotOrThrow (), aValue);
     }
     enterDepth ();
     try
@@ -855,10 +891,7 @@ public final class Engine
         final XdmSequence aConverted;
         try
         {
-          aConverted = SequenceTypeMatcher.convert (aRaw,
-                                                                           aTemplate.getAs (),
-                                                                           aCtx.getDynamicContext (),
-                                                                           "XTTE0505");
+          aConverted = SequenceTypeMatcher.convert (aRaw, aTemplate.getAs (), aCtx.getDynamicContext (), "XTTE0505");
         }
         catch (final XPathException ex)
         {
@@ -885,9 +918,9 @@ public final class Engine
    *        The rule it was invoked as, <code>null</code> for a named template.
    * @param aMode
    *        The mode of the rule, <code>null</code> for a named template.
-   * @return The description: match pattern alternative, mode and priority of
-   *         the rule (<code>null</code>, <code>null</code> and NaN for a named
-   *         template), the template name and the location of its element.
+   * @return The description: match pattern alternative, mode and priority of the rule
+   *         (<code>null</code>, <code>null</code> and NaN for a named template), the template name
+   *         and the location of its element.
    */
   @NonNull
   private static XsltTraceTemplate _createTraceTemplate (@NonNull final Template aTemplate,
@@ -905,10 +938,9 @@ public final class Engine
   }
 
   /**
-   * Invoke a template rule for an item (apply-templates, next-match,
-   * apply-imports). With a trace listener the run of the template is
-   * enclosed in its template rule enter and leave calls; the leave call also
-   * happens when the template ends with an error.
+   * Invoke a template rule for an item (apply-templates, next-match, apply-imports). With a trace
+   * listener the run of the template is enclosed in its template rule enter and leave calls; the
+   * leave call also happens when the template ends with an error.
    */
   private void _invokeRule (@NonNull final TemplateRule aRule,
                             @NonNull final Mode aMode,
@@ -919,19 +951,17 @@ public final class Engine
                             @NonNull final List <ParamValue> aParams,
                             @NonNull final IXsltOutput aOut)
   {
-    final XsltContext aBase = aCaller.withoutFocusAndVariables ()
-                                     .withFocus (aItem, nPosition, nSize)
-                                     .withState (aCaller.getState ().forTemplateCall ().withCurrentRule (aRule, aMode));
+    final XsltState aState = aCaller.getState ().forTemplateCall ().withCurrentRule (aRule, aMode);
     final IXsltTraceListener aTrace = m_aTraceListener;
     if (aTrace == null)
-      _runTemplate (aRule.getTemplate (), aBase, aParams, aOut);
+      _runTemplate (aRule.getTemplate (), aCaller, aItem, nPosition, nSize, aState, aParams, aOut);
     else
     {
       final XsltTraceTemplate aInfo = _createTraceTemplate (aRule.getTemplate (), aRule, aMode);
       aTrace.onTemplateRuleEnter (aInfo, aItem);
       try
       {
-        _runTemplate (aRule.getTemplate (), aBase, aParams, aOut);
+        _runTemplate (aRule.getTemplate (), aCaller, aItem, nPosition, nSize, aState, aParams, aOut);
       }
       finally
       {
@@ -941,9 +971,8 @@ public final class Engine
   }
 
   /**
-   * Apply templates in the same mode to the children of a node, preceded by
-   * its attributes if requested, passing the parameters on (the implicit
-   * xsl:apply-templates of a built-in rule).
+   * Apply templates in the same mode to the children of a node, preceded by its attributes if
+   * requested, passing the parameters on (the implicit xsl:apply-templates of a built-in rule).
    *
    * @param aNode
    *        The node.
@@ -975,29 +1004,25 @@ public final class Engine
   }
 
   /**
-   * Apply the built-in template rule of a mode (XSLT 3.0 section 6.7). Any
-   * item in a mode with on-no-match="fail" raises XTDE0555. An array is copied
-   * unchanged with shallow-copy and deep-copy, ignored with deep-skip, and
-   * with text-only-copy and shallow-skip templates are applied to its
-   * flattened members. Atomic values, maps and other function items are copied
-   * unchanged (shallow-copy, deep-copy) or dropped (the skip variants and
-   * text-only-copy); with text-only-copy an atomic value produces its lexical
-   * form as text. For nodes:
+   * Apply the built-in template rule of a mode (XSLT 3.0 section 6.7). Any item in a mode with
+   * on-no-match="fail" raises XTDE0555. An array is copied unchanged with shallow-copy and
+   * deep-copy, ignored with deep-skip, and with text-only-copy and shallow-skip templates are
+   * applied to its flattened members. Atomic values, maps and other function items are copied
+   * unchanged (shallow-copy, deep-copy) or dropped (the skip variants and text-only-copy); with
+   * text-only-copy an atomic value produces its lexical form as text. For nodes:
    * <ul>
-   * <li>deep-skip: templates are applied to the children of a document node;
-   * every other node produces nothing.</li>
-   * <li>shallow-skip: templates are applied to the attributes and children of
-   * a document or element node; other nodes produce nothing.</li>
+   * <li>deep-skip: templates are applied to the children of a document node; every other node
+   * produces nothing.</li>
+   * <li>shallow-skip: templates are applied to the attributes and children of a document or element
+   * node; other nodes produce nothing.</li>
    * <li>deep-copy: a deep copy that keeps type annotations.</li>
-   * <li>shallow-copy: an element is copied without content but with its base
-   * URI and namespaces, and the results of applying templates to its
-   * attributes and children become its content; for a document node the
-   * results are written into the document the output is building, if it
-   * builds one, otherwise into a new document node with the base URI of the
-   * source; any other node is copied shallowly.</li>
-   * <li>text-only-copy: templates are applied to the children of a document
-   * or element node, text and attribute nodes produce their string value as
-   * text, other nodes produce nothing.</li>
+   * <li>shallow-copy: an element is copied without content but with its base URI and namespaces,
+   * and the results of applying templates to its attributes and children become its content; for a
+   * document node the results are written into the document the output is building, if it builds
+   * one, otherwise into a new document node with the base URI of the source; any other node is
+   * copied shallowly.</li>
+   * <li>text-only-copy: templates are applied to the children of a document or element node, text
+   * and attribute nodes produce their string value as text, other nodes produce nothing.</li>
    * </ul>
    *
    * @param aMode
@@ -1021,7 +1046,8 @@ public final class Engine
   {
     final EOnNoMatch eOnNoMatch = aMode.getOnNoMatch ();
     if (eOnNoMatch == EOnNoMatch.FAIL)
-      throw new XPathException ("XTDE0555", "No template rule matches the item and the mode " + aMode + " has on-no-match='fail'");
+      throw new XPathException ("XTDE0555",
+                                "No template rule matches the item and the mode " + aMode + " has on-no-match='fail'");
     if (aItem instanceof final XdmArray aArray &&
         (eOnNoMatch == EOnNoMatch.TEXT_ONLY_COPY || eOnNoMatch == EOnNoMatch.SHALLOW_SKIP))
     {
@@ -1108,9 +1134,8 @@ public final class Engine
   }
 
   /**
-   * XSLT 3.0 section 6.6.3: typed="yes", "strict" and "lax" require the
-   * elements and attributes a mode processes to be typed (XTTE3100), typed="no"
-   * requires them to be untyped (XTTE3110).
+   * XSLT 3.0 section 6.6.3: typed="yes", "strict" and "lax" require the elements and attributes a
+   * mode processes to be typed (XTTE3100), typed="no" requires them to be untyped (XTTE3110).
    */
   private static void _checkTypedMode (@NonNull final Mode aMode, @NonNull final IXdmItem aItem)
   {
@@ -1126,12 +1151,18 @@ public final class Engine
       case "yes", "true", "1", "strict", "lax":
         if (!bTyped)
           throw new XPathException ("XTTE3100",
-                                    "The mode is declared typed='" + sTyped + "' but the node " + aNode.getName ().getLexicalName () + " is untyped");
+                                    "The mode is declared typed='" +
+                                                sTyped +
+                                                "' but the node " +
+                                                aNode.getName ().getLexicalName () +
+                                                " is untyped");
         break;
       case "no", "false", "0":
         if (bTyped)
           throw new XPathException ("XTTE3110",
-                                    "The mode is declared typed='no' but the node " + aNode.getName ().getLexicalName () + " has a type annotation");
+                                    "The mode is declared typed='no' but the node " +
+                                                aNode.getName ().getLexicalName () +
+                                                " has a type annotation");
         break;
       default:
         break;
@@ -1139,9 +1170,8 @@ public final class Engine
   }
 
   /**
-   * xsl:apply-templates: process each item with the best matching rule of the
-   * mode, or the built-in rule, with its position and the size of the
-   * selection as focus. See
+   * xsl:apply-templates: process each item with the best matching rule of the mode, or the built-in
+   * rule, with its position and the size of the selection as focus. See
    * {@link #applyTemplates(XsltContext, IXdmItem, int, int, Mode, List, IXsltOutput)}.
    *
    * @param aCaller
@@ -1167,15 +1197,13 @@ public final class Engine
   }
 
   /**
-   * Apply templates to one item of a selection (also used for xsl:apply-templates
-   * over the records of a streamed document). The typed attribute of the mode
-   * is checked (XTTE3100/XTTE3110). With a matching rule, the rule runs with
-   * the item as focus, no local variables, and the caller's state with this
-   * rule as current rule and this mode as current mode. Otherwise (after a
-   * warning to the message listener if the mode has warning-on-no-match="yes")
-   * the built-in rule runs one nesting level deeper with the same focus and the
-   * current rule cleared, keeping the mode for its implicit
-   * xsl:apply-templates.
+   * Apply templates to one item of a selection (also used for xsl:apply-templates over the records
+   * of a streamed document). The typed attribute of the mode is checked (XTTE3100/XTTE3110). With a
+   * matching rule, the rule runs with the item as focus, no local variables, and the caller's state
+   * with this rule as current rule and this mode as current mode. Otherwise (after a warning to the
+   * message listener if the mode has warning-on-no-match="yes") the built-in rule runs one nesting
+   * level deeper with the same focus and the current rule cleared, keeping the mode for its
+   * implicit xsl:apply-templates.
    *
    * @param aCaller
    *        Context of the instruction.
@@ -1228,15 +1256,13 @@ public final class Engine
   }
 
   /**
-   * xsl:next-match and xsl:apply-imports (XSLT 3.0 section 6.8). Both work in
-   * the current mode (the default mode if none is set) on the context item,
-   * keeping its position and size. xsl:next-match looks for the next matching
-   * rule after the current rule in the sorted rule list; xsl:apply-imports
-   * looks for the best matching rule among the modules imported by the module
-   * of the current rule, i.e. with an import precedence from the lowest
-   * precedence of those modules up to just below that of the current template.
-   * If no rule is found the built-in rule of the mode runs, with the current
-   * rule cleared.
+   * xsl:next-match and xsl:apply-imports (XSLT 3.0 section 6.8). Both work in the current mode (the
+   * default mode if none is set) on the context item, keeping its position and size. xsl:next-match
+   * looks for the next matching rule after the current rule in the sorted rule list;
+   * xsl:apply-imports looks for the best matching rule among the modules imported by the module of
+   * the current rule, i.e. with an import precedence from the lowest precedence of those modules up
+   * to just below that of the current template. If no rule is found the built-in rule of the mode
+   * runs, with the current rule cleared.
    *
    * @param aCtx
    *        Context of the instruction.
@@ -1247,8 +1273,7 @@ public final class Engine
    * @param aOut
    *        Output.
    * @throws XPathException
-   *         XTDE0560 if there is no current template rule or the context item
-   *         is absent
+   *         XTDE0560 if there is no current template rule or the context item is absent
    */
   public void applyNextMatch (@NonNull final XsltContext aCtx,
                               final boolean bImports,
@@ -1259,13 +1284,17 @@ public final class Engine
     final TemplateRule aCurrent = aState.getCurrentRule ();
     if (aCurrent == null)
       throw new XPathException ("XTDE0560",
-                                "xsl:" + (bImports ? "apply-imports" : "next-match") + " is used while there is no current template rule");
+                                "xsl:" +
+                                            (bImports ? "apply-imports" : "next-match") +
+                                            " is used while there is no current template rule");
     final Mode aMode = aState.getCurrentMode () != null ? aState.getCurrentMode ()
                                                         : m_aSheet.getOrCreateMode (m_aSheet.getDefaultModeName ());
     final IXdmItem aItem = aCtx.getContextItem ();
     if (aItem == null)
       throw new XPathException ("XTDE0560",
-                                "xsl:" + (bImports ? "apply-imports" : "next-match") + " is used while the context item is absent");
+                                "xsl:" +
+                                            (bImports ? "apply-imports" : "next-match") +
+                                            " is used while the context item is absent");
     final TemplateRule aNext;
     if (bImports)
     {
@@ -1291,11 +1320,10 @@ public final class Engine
   }
 
   /**
-   * xsl:call-template (also the initial template). The template runs with the
-   * focus of the caller, no local variables, and the caller's state as
-   * prepared by {@link XsltState#forTemplateCall()}. With a trace listener the
-   * run is enclosed in its named template enter and leave calls; the leave
-   * call also happens when the template ends with an error.
+   * xsl:call-template (also the initial template). The template runs with the focus of the caller,
+   * no local variables, and the caller's state as prepared by {@link XsltState#forTemplateCall()}.
+   * With a trace listener the run is enclosed in its named template enter and leave calls; the
+   * leave call also happens when the template ends with an error.
    *
    * @param aCaller
    *        Context of the caller: its focus stays.
@@ -1315,13 +1343,19 @@ public final class Engine
   {
     final String sVisibility = aTemplate.getElement ().getAttr ("visibility");
     if (sVisibility != null && "abstract".equals (sVisibility.trim ()))
-      throw new XPathException ("XTDE3052", "The abstract template " + aTemplate.getName ().getEQName () + " was not overridden");
-    final XsltContext aBase = aCaller.withoutFocusAndVariables ()
-                                     .withFocus (aCaller.getContextItem (), aCaller.getPosition (), aCaller.getSize ())
-                                     .withState (aCaller.getState ().forTemplateCall ());
+      throw new XPathException ("XTDE3052",
+                                "The abstract template " + aTemplate.getName ().getEQName () + " was not overridden");
+    final XsltState aState = aCaller.getState ().forTemplateCall ();
     final IXsltTraceListener aTrace = m_aTraceListener;
     if (aTrace == null)
-      _runTemplate (aTemplate, aBase, aParams, aOut);
+      _runTemplate (aTemplate,
+                    aCaller,
+                    aCaller.getContextItem (),
+                    aCaller.getPosition (),
+                    aCaller.getSize (),
+                    aState,
+                    aParams,
+                    aOut);
     else
     {
       final XsltTraceTemplate aInfo = _createTraceTemplate (aTemplate, null, null);
@@ -1329,7 +1363,7 @@ public final class Engine
       aTrace.onNamedTemplateEnter (aInfo, aItem);
       try
       {
-        _runTemplate (aTemplate, aBase, aParams, aOut);
+        _runTemplate (aTemplate, aCaller, aItem, aCaller.getPosition (), aCaller.getSize (), aState, aParams, aOut);
       }
       finally
       {
@@ -1339,13 +1373,11 @@ public final class Engine
   }
 
   /**
-   * Evaluate one named attribute set (XSLT 3.0 section 10.2.4): for each of
-   * its declarations in order, first the attribute sets it uses, then its own
-   * attribute instructions, evaluated with the focus of the caller but no
-   * local variables. A missing set raises XTSE0710, a set that is already
-   * being evaluated further up raises XTSE0720 (the recursion depth is bounded
-   * by the number of attribute sets), an abstract declaration raises
-   * XTDE3052.
+   * Evaluate one named attribute set (XSLT 3.0 section 10.2.4): for each of its declarations in
+   * order, first the attribute sets it uses, then its own attribute instructions, evaluated with
+   * the focus of the caller but no local variables. A missing set raises XTSE0710, a set that is
+   * already being evaluated further up raises XTSE0720 (the recursion depth is bounded by the
+   * number of attribute sets), an abstract declaration raises XTDE3052.
    *
    * @param aName
    *        The attribute set name.
@@ -1354,8 +1386,7 @@ public final class Engine
    * @param aOut
    *        The output of the element being constructed.
    * @param aActive
-   *        The names of the attribute sets being evaluated (modified while
-   *        this set is evaluated).
+   *        The names of the attribute sets being evaluated (modified while this set is evaluated).
    */
   private void _applyAttributeSet (@NonNull final XdmQName aName,
                                    @NonNull final XsltContext aCtx,
@@ -1370,12 +1401,14 @@ public final class Engine
     aActive.add (aName);
     // Attribute sets are evaluated with the focus of the caller but no local
     // variables
-    final XsltContext aSetCtx = aCtx.withoutFocusAndVariables ().withFocus (aCtx.getContextItem (), aCtx.getPosition (), aCtx.getSize ());
+    final XsltContext aSetCtx = aCtx.withoutFocusAndVariables ()
+                                    .withFocus (aCtx.getContextItem (), aCtx.getPosition (), aCtx.getSize ());
     for (final AttributeSet.Decl aDecl : aSet.decls ())
     {
       final String sVisibility = aDecl.element ().getAttr ("visibility");
       if (sVisibility != null && "abstract".equals (sVisibility.trim ()))
-        throw new XPathException ("XTDE3052", "The abstract attribute set " + aName.getEQName () + " was not overridden");
+        throw new XPathException ("XTDE3052",
+                                  "The abstract attribute set " + aName.getEQName () + " was not overridden");
       for (final XdmQName aUse : aDecl.uses ())
         _applyAttributeSet (aUse, aCtx, aOut, aActive);
       aDecl.body ().execute (aSetCtx, aOut);
@@ -1403,18 +1436,16 @@ public final class Engine
   }
 
   /**
-   * The lookup key of an atomic key value, built so that values equal under
-   * <code>eq</code> map to equal keys. String-like values give the string
-   * prefixed with "S" or, with a collation, its collation key. Numeric values give their xs:double value with
-   * negative zero normalised to zero; NaN gives a unique object that is never
-   * searched for in a single-value lookup. Other values use
+   * The lookup key of an atomic key value, built so that values equal under <code>eq</code> map to
+   * equal keys. String-like values give the string prefixed with "S" or, with a collation, its
+   * collation key. Numeric values give their xs:double value with negative zero normalised to zero;
+   * NaN gives a unique object that is never searched for in a single-value lookup. Other values use
    * {@link AtomicComparator#getMapKey(XdmAtomic)}.
    *
    * @param aValue
    *        The atomic value.
    * @param aCollation
-   *        The collation of the key, or <code>null</code> for the codepoint
-   *        collation.
+   *        The collation of the key, or <code>null</code> for the codepoint collation.
    * @return The lookup key.
    */
   @NonNull
@@ -1437,9 +1468,8 @@ public final class Engine
   }
 
   /**
-   * Add a node to the entry of a key in an index. A node that is already the
-   * last one in the entry (the same node with several equal key values) is
-   * not added twice.
+   * Add a node to the entry of a key in an index. A node that is already the last one in the entry
+   * (the same node with several equal key values) is not added twice.
    */
   private static void _addToIndex (@NonNull final ICommonsMap <Object, ICommonsList <IXdmNode>> aIndex,
                                    @NonNull final Object aKey,
@@ -1453,10 +1483,9 @@ public final class Engine
   /**
    * @param aDefs
    *        The declarations of a key (not empty).
-   * @return <code>true</code> if the key is processed in backwards compatible
-   *         mode (XSLT 3.0 section 20.2.2): at least one declaration is
-   *         processed with XSLT 1.0 behaviour and the key is not composite.
-   *         Its key values and searched values are then cast to xs:string and
+   * @return <code>true</code> if the key is processed in backwards compatible mode (XSLT 3.0
+   *         section 20.2.2): at least one declaration is processed with XSLT 1.0 behaviour and the
+   *         key is not composite. Its key values and searched values are then cast to xs:string and
    *         compared as strings.
    */
   private static boolean _isBackwardsCompatibleKey (@NonNull final ICommonsList <KeyDefinition> aDefs)
@@ -1471,10 +1500,8 @@ public final class Engine
    *        The collation, or <code>null</code> for the codepoint collation.
    * @param bAsString
    *        <code>true</code> for a key in backwards compatible mode (see
-   *        {@link #_isBackwardsCompatibleKey(ICommonsList)}): the value is
-   *        cast to xs:string first.
-   * @return The lookup key of the value, see
-   *         {@link #_getKeyValue(XdmAtomic, ICollation)}.
+   *        {@link #_isBackwardsCompatibleKey(ICommonsList)}): the value is cast to xs:string first.
+   * @return The lookup key of the value, see {@link #_getKeyValue(XdmAtomic, ICollation)}.
    */
   @NonNull
   private static Object _getKeyValue (@NonNull final IXdmItem aAtom,
@@ -1486,11 +1513,10 @@ public final class Engine
   }
 
   /**
-   * Add one node to a key index: for every xsl:key declaration whose match
-   * pattern matches the node, the key specifier (use attribute or content) is
-   * evaluated with the node as focus and atomised. With composite keys the
-   * whole sequence of values forms one key, otherwise each value is a key of
-   * its own, cast to xs:string first for a key in backwards compatible mode.
+   * Add one node to a key index: for every xsl:key declaration whose match pattern matches the
+   * node, the key specifier (use attribute or content) is evaluated with the node as focus and
+   * atomised. With composite keys the whole sequence of values forms one key, otherwise each value
+   * is a key of its own, cast to xs:string first for a key in backwards compatible mode.
    *
    * @param aNode
    *        The node.
@@ -1544,22 +1570,20 @@ public final class Engine
   }
 
   /**
-   * The candidates of a key index from the name index of the document: if the
-   * match pattern of every declaration names the elements and attributes it
-   * can match ({@link com.helger.phoxtrot.xpath.pattern.XsltPattern#getFinalNames()}),
-   * the elements and attributes of these names, merged in document order.
-   * Every node the walk of the whole tree would find matching is among them,
-   * and they come in the order of the walk, so testing only these against the
-   * full patterns gives the same index.
+   * The candidates of a key index from the name index of the document: if the match pattern of
+   * every declaration names the elements and attributes it can match
+   * ({@link com.helger.phoxtrot.xpath.pattern.XsltPattern#getFinalNames()}), the elements and
+   * attributes of these names, merged in document order. Every node the walk of the whole tree
+   * would find matching is among them, and they come in the order of the walk, so testing only
+   * these against the full patterns gives the same index.
    *
    * @param aDefs
    *        The declarations of the key.
    * @param aRoot
    *        The root of the tree.
-   * @return The candidates, or <code>null</code> if a pattern can match other
-   *         nodes, the root is no document node, the document is streamed or
-   *         the tree is not numbered (no name index): then the whole tree must
-   *         be walked.
+   * @return The candidates, or <code>null</code> if a pattern can match other nodes, the root is no
+   *         document node, the document is streamed or the tree is not numbered (no name index):
+   *         then the whole tree must be walked.
    */
   @Nullable
   private static List <IXdmNode> _getKeyCandidatesFromNames (@NonNull final ICommonsList <KeyDefinition> aDefs,
@@ -1606,15 +1630,14 @@ public final class Engine
     final ICommonsList <IXdmNode> ret = new CommonsArrayList <> ();
     for (final List <IXdmNode> aNodes : aLists)
       ret.addAll (aNodes);
-    ret.sort ( (a, b) -> Integer.compare (a.getOrder (), b.getOrder ()));
+    ret.sort (Comparator.comparing (IXdmNode::getOrder));
     return ret;
   }
 
   /**
-   * @return The number of key indexes built so far (in this JVM) from the
-   *         name index of the document instead of a walk of the whole tree.
-   *         For tests that need to know which path ran: the index is the same
-   *         either way.
+   * @return The number of key indexes built so far (in this JVM) from the name index of the
+   *         document instead of a walk of the whole tree. For tests that need to know which path
+   *         ran: the index is the same either way.
    */
   public static long getKeyIndexFromNamesCount ()
   {
@@ -1622,14 +1645,26 @@ public final class Engine
   }
 
   /**
-   * Build the index of a key over the whole tree below a root in document
-   * order. If the match patterns allow it, only the candidates from the name
-   * index of the document are tested
-   * ({@link #_getKeyCandidatesFromNames(ICommonsList, IXdmNode)}); otherwise
-   * the tree is walked iteratively: every node, its attributes and, only if
-   * one of the match patterns mentions <code>namespace-node</code>, its
-   * namespace nodes. The collation and the composite setting are taken from
-   * the first declaration.
+   * Turn the node lists of a key index into the sequences that <code>key()</code> returns, each in
+   * document order without duplicates, so that a lookup of one value returns its sequence without
+   * copying or sorting it.
+   */
+  @NonNull
+  private static ICommonsMap <Object, XdmSequence> _toSequences (@NonNull final ICommonsMap <Object, ICommonsList <IXdmNode>> aIndex)
+  {
+    final ICommonsMap <Object, XdmSequence> ret = new CommonsHashMap <> (aIndex.size ());
+    for (final Map.Entry <Object, ICommonsList <IXdmNode>> aEntry : aIndex.entrySet ())
+      ret.put (aEntry.getKey (), NodeSorter.sortAndDeduplicate (XdmSequence.of (aEntry.getValue ())));
+    return ret;
+  }
+
+  /**
+   * Build the index of a key over the whole tree below a root in document order. If the match
+   * patterns allow it, only the candidates from the name index of the document are tested
+   * ({@link #_getKeyCandidatesFromNames(ICommonsList, IXdmNode)}); otherwise the tree is walked
+   * iteratively: every node, its attributes and, only if one of the match patterns mentions
+   * <code>namespace-node</code>, its namespace nodes. The collation and the composite setting are
+   * taken from the first declaration.
    *
    * @param aDefs
    *        The declarations of the key (not empty).
@@ -1637,19 +1672,20 @@ public final class Engine
    *        The root of the tree.
    * @param aCtx
    *        Context of the fn:key call (not used).
-   * @return The index from lookup key to the nodes in document order.
+   * @return The index from lookup key to the sequence of its nodes in document order without
+   *         duplicates.
    * @throws XPathException
    *         if the collation is not known
    */
   @NonNull
-  private ICommonsMap <Object, ICommonsList <IXdmNode>> _buildKeyIndex (@NonNull final ICommonsList <KeyDefinition> aDefs,
-                                                                     @NonNull final IXdmNode aRoot,
-                                                                     @NonNull final XsltContext aCtx)
+  private ICommonsMap <Object, XdmSequence> _buildKeyIndex (@NonNull final ICommonsList <KeyDefinition> aDefs,
+                                                            @NonNull final IXdmNode aRoot,
+                                                            @NonNull final XsltContext aCtx)
   {
     final ICommonsMap <Object, ICommonsList <IXdmNode>> ret = new CommonsHashMap <> ();
     final String sCollation = aDefs.getFirst ().getCollation ();
     final ICollation aCollation = CollationRegistry.CODEPOINT_URI.equals (sCollation) ? null
-                                                                                       : CollationRegistry.getCollationOrThrow (sCollation);
+                                                                                      : CollationRegistry.getCollationOrThrow (sCollation);
     final boolean bComposite = aDefs.getFirst ().isComposite ();
     final boolean bAsStrings = _isBackwardsCompatibleKey (aDefs);
     final XsltContext aUseCtx = createRootContext ().withState (XsltState.EMPTY);
@@ -1661,7 +1697,7 @@ public final class Engine
       KEY_INDEXES_FROM_NAMES.incrementAndGet ();
       for (final IXdmNode aNode : aCandidates)
         _indexNode (aNode, aDefs, aUseCtx, aCollation, bComposite, bAsStrings, ret);
-      return ret;
+      return _toSequences (ret);
     }
     boolean bNamespaces = false;
     for (final KeyDefinition aDef : aDefs)
@@ -1681,18 +1717,16 @@ public final class Engine
       for (int i = aNode.getChildCount () - 1; i >= 0; --i)
         aStack.push (aNode.getChildAtIndex (i));
     }
-    return ret;
+    return _toSequences (ret);
   }
 
   /**
-   * fn:key (XSLT 3.0 section 20.2.2). In a multi-package stylesheet only the
-   * xsl:key declarations of the package of the calling expression are used.
-   * The index is built on first use per key name, tree root and package, and
-   * cached for the run. Values are atomised; with a non-composite key each
-   * value is looked up separately (NaN finds nothing; in backwards compatible
-   * mode, section 20.2.2, as its string value), with a composite key
-   * the whole sequence is one lookup key. The result is restricted to
-   * <code>aTop</code> and its descendants when it is not the root.
+   * fn:key (XSLT 3.0 section 20.2.2). In a multi-package stylesheet only the xsl:key declarations
+   * of the package of the calling expression are used. The index is built on first use per key
+   * name, tree root and package, and cached for the run. Values are atomised; with a non-composite
+   * key each value is looked up separately (NaN finds nothing; in backwards compatible mode,
+   * section 20.2.2, as its string value), with a composite key the whole sequence is one lookup
+   * key. The result is restricted to <code>aTop</code> and its descendants when it is not the root.
    *
    * @param aCtx
    *        Context.
@@ -1701,13 +1735,11 @@ public final class Engine
    * @param aValues
    *        Searched values (atomized).
    * @param aTop
-   *        The node whose tree is searched; only its descendants-or-self
-   *        are returned.
+   *        The node whose tree is searched; only its descendants-or-self are returned.
    * @return Matching nodes in document order.
    * @throws XPathException
-   *         XTDE1260 if there is no such key (in the calling package),
-   *         XTSE3430 if the tree is a streamed document, XTDE0640 if building
-   *         the index of a key needs the same key again
+   *         XTDE1260 if there is no such key (in the calling package), XTSE3430 if the tree is a
+   *         streamed document, XTDE0640 if building the index of a key needs the same key again
    */
   @NonNull
   public XdmSequence findKeyNodes (@NonNull final XsltContext aCtx,
@@ -1721,7 +1753,9 @@ public final class Engine
     {
       // Keys are local to a package
       final PackageModel aPackages = m_aSheet.getPackages ();
-      final PackageUnit aCaller = aPackages.getUnitForScope (aCtx.getDynamicContext ().getStaticContext ().getFunctionLibrary ());
+      final PackageUnit aCaller = aPackages.getUnitForScope (aCtx.getDynamicContext ()
+                                                                 .getStaticContext ()
+                                                                 .getFunctionLibrary ());
       aUnit = aCaller;
       aDefs = aDefs.getAll (x -> aPackages.getUnit (x.getElement ()) == aCaller);
       if (aDefs.isEmpty ())
@@ -1734,9 +1768,11 @@ public final class Engine
     // one holds only a part (go-xslt raises the same run-time error)
     if (aRoot instanceof final XdmDocumentNode aDoc && aDoc.isStreamed ())
       throw new XPathException ("XTSE3430",
-                                "The key " + aName.getEQName () + " cannot be used over a document that is read as a stream");
+                                "The key " +
+                                            aName.getEQName () +
+                                            " cannot be used over a document that is read as a stream");
     final KeyIndexId aId = new KeyIndexId (aName, aRoot, aUnit);
-    ICommonsMap <Object, ICommonsList <IXdmNode>> aIndex = m_aKeyIndexes.get (aId);
+    ICommonsMap <Object, XdmSequence> aIndex = m_aKeyIndexes.get (aId);
     if (aIndex == null)
     {
       if (!m_aKeysInProgress.add (aName))
@@ -1753,32 +1789,42 @@ public final class Engine
     }
     final String sCollation = aDefs.getFirst ().getCollation ();
     final ICollation aCollation = CollationRegistry.CODEPOINT_URI.equals (sCollation) ? null
-                                                                                       : CollationRegistry.getCollationOrThrow (sCollation);
-    final XdmSequence.Builder aResult = new XdmSequence.Builder ();
+                                                                                      : CollationRegistry.getCollationOrThrow (sCollation);
     final XdmSequence aAtoms = Atomizer.atomize (aValues);
+    XdmSequence ret;
     if (aDefs.getFirst ().isComposite ())
     {
       final ICommonsList <Object> aKey = new CommonsArrayList <> ();
       for (final IXdmItem aAtom : aAtoms)
         aKey.add (_getKeyValue ((XdmAtomic) aAtom, aCollation));
-      final ICommonsList <IXdmNode> aNodes = aIndex.get (aKey);
-      if (aNodes != null)
-        for (final IXdmNode aNode : aNodes)
-          aResult.add (aNode);
+      ret = aIndex.get (aKey);
     }
     else
     {
       final boolean bAsStrings = _isBackwardsCompatibleKey (aDefs);
-      for (final IXdmItem aAtom : aAtoms)
+      if (aAtoms.size () == 1)
       {
-        final Object aKey = _getKeyValue (aAtom, aCollation, bAsStrings);
-        final ICommonsList <IXdmNode> aNodes = aKey == NAN_KEY ? null : aIndex.get (aKey);
-        if (aNodes != null)
-          for (final IXdmNode aNode : aNodes)
-            aResult.add (aNode);
+        // Optimisation: the sequence of one value is returned as kept in the index, without a
+        // copy and a sort per call (key('k', @a)[1] per node of a group was quadratic)
+        final Object aKey = _getKeyValue (aAtoms.get (0), aCollation, bAsStrings);
+        ret = aKey == NAN_KEY ? null : aIndex.get (aKey);
+      }
+      else
+      {
+        final XdmSequence.Builder aResult = new XdmSequence.Builder ();
+        for (final IXdmItem aAtom : aAtoms)
+        {
+          final Object aKey = _getKeyValue (aAtom, aCollation, bAsStrings);
+          final XdmSequence aNodes = aKey == NAN_KEY ? null : aIndex.get (aKey);
+          if (aNodes != null)
+            for (final IXdmItem aNode : aNodes)
+              aResult.add (aNode);
+        }
+        ret = NodeSorter.sortAndDeduplicate (aResult.build ());
       }
     }
-    XdmSequence ret = NodeSorter.sortAndDeduplicate (aResult.build ());
+    if (ret == null)
+      return XdmSequence.EMPTY;
     if (aTop != aRoot)
     {
       final XdmSequence.Builder aFiltered = new XdmSequence.Builder ();
@@ -1794,15 +1840,12 @@ public final class Engine
     return ret;
   }
 
-
   /**
-   * Make <code>fn:doc</code> and <code>document()</code> return the source
-   * document itself for its document URI, instead of reading it a second time
-   * as another tree.
+   * Make <code>fn:doc</code> and <code>document()</code> return the source document itself for its
+   * document URI, instead of reading it a second time as another tree.
    *
    * @param aNode
-   *        The global context item. Only a document node with a document URI
-   *        is registered.
+   *        The global context item. Only a document node with a document URI is registered.
    */
   public void registerSourceDocument (@NonNull final IXdmNode aNode)
   {
@@ -1812,16 +1855,15 @@ public final class Engine
   }
 
   /**
-   * Load a document for document() (cached per run together with fn:doc,
-   * whitespace stripped).
+   * Load a document for document() (cached per run together with fn:doc, whitespace stripped).
    *
    * @param aCtx
    *        Context.
    * @param aUri
-   *        The URI, possibly with a fragment identifier, with the reference as
-   *        written and its base URI.
-   * @return The document (or the element identified by the fragment), or
-   *         <code>null</code> if the fragment identifies nothing.
+   *        The URI, possibly with a fragment identifier, with the reference as written and its base
+   *        URI.
+   * @return The document (or the element identified by the fragment), or <code>null</code> if the
+   *         fragment identifies nothing.
    * @throws XPathException
    *         FODC0002 if the document cannot be retrieved
    */
@@ -1890,14 +1932,14 @@ public final class Engine
   }
 
   /**
-   * Open a document for streamed processing with the resolver of the request,
-   * applying xsl:strip-space while it is read.
+   * Open a document for streamed processing with the resolver of the request, applying
+   * xsl:strip-space while it is read.
    *
    * @param aUri
    *        The URI of the document.
-   * @return The open reader, or <code>null</code> if the document is to be
-   *         read in full (no resolver that streams it, a fragment identifier,
-   *         or a document the reader does not stream).
+   * @return The open reader, or <code>null</code> if the document is to be read in full (no
+   *         resolver that streams it, a fragment identifier, or a document the reader does not
+   *         stream).
    * @throws XPathException
    *         FODC0002 if the document cannot be read
    */
@@ -1919,24 +1961,24 @@ public final class Engine
     }
     catch (final XdmParseException ex)
     {
-      throw new XPathException ("FODC0002", "The document '" + sAbsoluteUri + "' cannot be retrieved: " + ex.getMessage ());
+      throw new XPathException ("FODC0002",
+                                "The document '" + sAbsoluteUri + "' cannot be retrieved: " + ex.getMessage ());
     }
   }
 
   /**
-   * Record the message of an xsl:message or a failed xsl:assert and pass it
-   * to the message listener of the request, if there is one, right away.
+   * Record the message of an xsl:message or a failed xsl:assert and pass it to the message listener
+   * of the request, if there is one, right away.
    *
    * @param eKind
-   *        {@link EXsltMessageKind#MESSAGE} or
-   *        {@link EXsltMessageKind#ASSERTION}.
+   *        {@link EXsltMessageKind#MESSAGE} or {@link EXsltMessageKind#ASSERTION}.
    * @param sText
    *        The text of the message.
    * @param aContent
    *        The content of the message.
    * @param aErrorCode
-   *        The code of the error the message ends the transformation with, or
-   *        <code>null</code> if it does not terminate.
+   *        The code of the error the message ends the transformation with, or <code>null</code> if
+   *        it does not terminate.
    * @param aNode
    *        The instruction, for its location. May be <code>null</code>.
    */
@@ -1944,7 +1986,7 @@ public final class Engine
                           @NonNull final String sText,
                           @NonNull final XdmSequence aContent,
                           @Nullable final XdmQName aErrorCode,
-                          @Nullable final XslNode aNode)
+                          @Nullable final AbstractXslNode aNode)
   {
     final XsltMessage aMessage = new XsltMessage (eKind,
                                                   sText,
@@ -1961,8 +2003,8 @@ public final class Engine
   }
 
   /**
-   * @return <code>true</code> if the request has a message listener, so that
-   *         warnings are worth computing.
+   * @return <code>true</code> if the request has a message listener, so that warnings are worth
+   *         computing.
    */
   public boolean hasMessageListener ()
   {
@@ -1970,16 +2012,15 @@ public final class Engine
   }
 
   /**
-   * Pass a processor warning to the message listener of the request; without
-   * a listener nothing happens. Warnings are not recorded.
+   * Pass a processor warning to the message listener of the request; without a listener nothing
+   * happens. Warnings are not recorded.
    *
    * @param aNode
-   *        The stylesheet node the warning is about, for its location. May be
-   *        <code>null</code>.
+   *        The stylesheet node the warning is about, for its location. May be <code>null</code>.
    * @param sText
    *        The text of the warning.
    */
-  public void addWarning (@Nullable final XslNode aNode, @NonNull final String sText)
+  public void addWarning (@Nullable final AbstractXslNode aNode, @NonNull final String sText)
   {
     final IXsltMessageListener aListener = m_aRequest.getMessageListener ();
     if (aListener != null)
@@ -1994,8 +2035,7 @@ public final class Engine
   }
 
   /**
-   * @return A copy of the messages recorded so far, in the order they were
-   *         produced.
+   * @return A copy of the messages recorded so far, in the order they were produced.
    */
   @NonNull
   @ReturnsMutableCopy
@@ -2005,8 +2045,7 @@ public final class Engine
   }
 
   /**
-   * @return The texts of the messages recorded so far, in the order they were
-   *         produced.
+   * @return The texts of the messages recorded so far, in the order they were produced.
    */
   @NonNull
   @ReturnsMutableCopy
@@ -2033,9 +2072,8 @@ public final class Engine
   /**
    * @param aCtx
    *        A context.
-   * @return The context in temporary output state (XSLT 3.0 section 25.2):
-   *         there is no current output URI and xsl:result-document is not
-   *         allowed.
+   * @return The context in temporary output state (XSLT 3.0 section 25.2): there is no current
+   *         output URI and xsl:result-document is not allowed.
    */
   @NonNull
   public static XsltContext withTemporaryOutputState (@NonNull final XsltContext aCtx)
@@ -2046,8 +2084,8 @@ public final class Engine
   /**
    * @param aCtx
    *        A context.
-   * @return <code>true</code> if the context is in temporary output state
-   *         (in a variable, function, key, sort key, pattern, ...).
+   * @return <code>true</code> if the context is in temporary output state (in a variable, function,
+   *         key, sort key, pattern, ...).
    */
   public static boolean isTemporaryOutputState (@NonNull final XsltContext aCtx)
   {
@@ -2072,8 +2110,8 @@ public final class Engine
 
   /**
    * @param aDef
-   *        The output definition that replaces the unnamed one for the
-   *        principal result (an xsl:result-document without href).
+   *        The output definition that replaces the unnamed one for the principal result (an
+   *        xsl:result-document without href).
    */
   public void setPrincipalOutputDefinition (@Nullable final OutputDefinition aDef)
   {
@@ -2088,8 +2126,8 @@ public final class Engine
   }
 
   /**
-   * Mark the principal result as complete (written by an xsl:result-document
-   * without href): anything written to it afterwards is XTDE1490.
+   * Mark the principal result as complete (written by an xsl:result-document without href):
+   * anything written to it afterwards is XTDE1490.
    *
    * @param nSize
    *        The number of items in the principal output at that point.

@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xpath.eval;
 import static org.junit.Assert.assertEquals;
 
 import java.math.BigDecimal;
+import java.util.List;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -85,7 +86,23 @@ public final class XPathEvaluatorPropertyTest
                                            "//b[a]/c",
                                            "//a[b][2]",
                                            "//zz/a",
-                                           "(//zz | //a)/b" };
+                                           "(//zz | //a)/b",
+                                           // Depth-first existence: child, attribute and self steps after the first
+                                           "/*/a/b",
+                                           "/*/a/b/@x",
+                                           "a/b/c",
+                                           "a/b[2]/c",
+                                           "a/b[last()]/c",
+                                           "*/*[@x]/c",
+                                           "//a/b/c",
+                                           "//a/b[1]/@y",
+                                           "//b/self::*/a[last()]/*",
+                                           "a/@x",
+                                           "ancestor::*/b/a",
+                                           // Depth-first with boolean predicates tested on the visited nodes
+                                           "/*/a[@x]/b[c]/@y",
+                                           "//a[@y = '1']/*[not(@x)]",
+                                           "a[b and @x]/b[2]" };
 
   /** Element names as name test and as the QName constructor of the reference */
   private static final String [] [] ELEMENT_NAMES = { { "a", "QName('', 'a')" },
@@ -101,6 +118,15 @@ public final class XPathEvaluatorPropertyTest
                                                         { "y", "QName('', 'y')" },
                                                         { "p:x", "QName('urn:p', 'x')" },
                                                         { "zz", "QName('', 'zz')" } };
+
+  /** The keys of the maps of {@link #testConstantMaps()}: strings and integers */
+  private static final String [] MAP_KEYS = { "'a'", "'b'", "'c'", "1", "2" };
+
+  /**
+   * The values of the maps of {@link #testConstantMaps()}: function references (focus-dependent
+   * ones too) and literals
+   */
+  private static final String [] MAP_VALUES = { "abs#1", "round#1", "string#1", "name#0", "position#0", "last#0", "1", "'v'" };
 
   /**
    * Pairs of an expression using the name index and a reference without name
@@ -240,6 +266,24 @@ public final class XPathEvaluatorPropertyTest
    * (<code>CallMemo</code>), each with a reference whose arguments are passed
    * through an inline function, which makes the calls ineligible.
    */
+  /**
+   * Operands of the <code>fn:generate-id</code> comparisons, with empty arguments, the context
+   * node, single nodes and errors (more than one node, a variable that holds no node)
+   */
+  private static final String [] GENERATE_ID_OPERANDS = { "generate-id()",
+                                                          "generate-id(.)",
+                                                          "generate-id(..)",
+                                                          "generate-id(())",
+                                                          "generate-id(//zz)",
+                                                          "generate-id((//a)[1])",
+                                                          "generate-id((//*)[last()])",
+                                                          "generate-id(@x)",
+                                                          "generate-id(//a)",
+                                                          "generate-id($v)",
+                                                          "generate-id(root())" };
+
+  private static final String [] GENERATE_ID_OPERATORS = { " = ", " != ", " eq ", " ne ", " lt " };
+
   private static final String [] [] LOOP_INVARIANT_PAIRS = { { "for $x in //* return count($x//a)",
                                                                "for $x in //* return count((function ($q) { $q })($x//a))" },
                                                              { "for $x in //* return string-join($x/@* ! string(.), ',')",
@@ -573,6 +617,34 @@ public final class XPathEvaluatorPropertyTest
   }
 
   /**
+   * An (in)equality of two <code>fn:generate-id</code> calls, which compares the nodes, gives the
+   * same result or error as the same comparison of the identifiers as strings, at the top level and
+   * as a predicate over every node.
+   */
+  @Test
+  public void testGenerateIdComparison ()
+  {
+    new PropertyChecker ().setTries (300)
+                          .forAll (XPathPropertyTestHelper.DOCUMENTS,
+                                   Generators.lists (Generators.ints (0, 100), 3, 3),
+                                   VALUES,
+                                   (sXml, aChoice, aV) -> {
+                                     final IXdmNode aDoc = XPathPropertyTestHelper.parse (sXml);
+                                     final String sLeft = GENERATE_ID_OPERANDS[aChoice.get (0).intValue () % GENERATE_ID_OPERANDS.length];
+                                     final String sOp = GENERATE_ID_OPERATORS[aChoice.get (1).intValue () % GENERATE_ID_OPERATORS.length];
+                                     final String sRight = GENERATE_ID_OPERANDS[aChoice.get (2).intValue () % GENERATE_ID_OPERANDS.length];
+                                     final String sExpr = sLeft + sOp + sRight;
+                                     final String sReference = "string(" + sLeft + ")" + sOp + "string(" + sRight + ")";
+                                     m_aHelper.assertEquivalent (sExpr, sReference, aDoc, aV, XdmSequence.EMPTY);
+                                     m_aHelper.assertEquivalent ("(//node(), //@*)[" + sExpr + "]",
+                                                                 "(//node(), //@*)[" + sReference + "]",
+                                                                 aDoc,
+                                                                 aV,
+                                                                 XdmSequence.EMPTY);
+                                   });
+  }
+
+  /**
    * Built-in calls in loops that the run memo keeps return the same values as
    * the same calls made ineligible for the memo, also with shadowed variables,
    * nested loops and calls that read the focus.
@@ -588,6 +660,52 @@ public final class XPathEvaluatorPropertyTest
                                      final IXdmNode aDoc = XPathPropertyTestHelper.parse (sXml);
                                      m_aHelper.assertEquivalent (aPair[0], aPair[1], aDoc, aV, XdmSequence.EMPTY);
                                    });
+  }
+
+  /**
+   * A map of literal keys and literal or function reference values, which is
+   * kept for the resolved functions, gives the same entries in every
+   * evaluation as the same map with keys that are no literals (built each
+   * time), also with focus-dependent functions, which capture the focus of
+   * each evaluation, and with duplicate keys.
+   */
+  @Test
+  public void testConstantMaps ()
+  {
+    // Each entry is a pair of indices into MAP_KEYS and MAP_VALUES
+    final IGenerator <List <List <Integer>>> aEntries = Generators.lists (Generators.lists (Generators.ints (0, 39), 2, 2),
+                                                                         0,
+                                                                         5);
+    final String sTemplate = "//* ! (let $m := {MAP} return string-join(" +
+                             "for $k in sort(map:keys($m), (), function ($x) { string($x) || ($x instance of xs:integer) }) " +
+                             "return let $v := $m($k) return string(if ($v instance of function(*)) " +
+                             "then (if (function-arity($v) eq 0) then $v() else $v(-2.5)) else $v), ','))";
+    new PropertyChecker ().setTries (300)
+                          .forAll (XPathPropertyTestHelper.DOCUMENTS, aEntries, (sXml, aEntryList) -> {
+                            final IXdmNode aDoc = XPathPropertyTestHelper.parse (sXml);
+                            final StringBuilder aMap = new StringBuilder ("map { ");
+                            final StringBuilder aRef = new StringBuilder ("map { ");
+                            for (int i = 0; i < aEntryList.size (); ++i)
+                            {
+                              final String sKey = MAP_KEYS[aEntryList.get (i).get (0).intValue () % MAP_KEYS.length];
+                              final String sValue = MAP_VALUES[aEntryList.get (i).get (1).intValue () % MAP_VALUES.length];
+                              if (i > 0)
+                              {
+                                aMap.append (", ");
+                                aRef.append (", ");
+                              }
+                              aMap.append (sKey).append (" : ").append (sValue);
+                              // data() makes the key no literal, so the map is built each time
+                              aRef.append ("data(").append (sKey).append (") : ").append (sValue);
+                            }
+                            aMap.append (" }");
+                            aRef.append (" }");
+                            m_aHelper.assertEquivalent (sTemplate.replace ("{MAP}", aMap),
+                                                        sTemplate.replace ("{MAP}", aRef),
+                                                        aDoc,
+                                                        XdmSequence.EMPTY,
+                                                        XdmSequence.EMPTY);
+                          });
   }
 
   /**

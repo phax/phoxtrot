@@ -623,3 +623,107 @@ the QT3 cases expect; refined in ST3 to function coercion); inferred types keep 
 | ST2 | Required-type checks of static function call arguments after the function conversion rules (atomisation, `xs:untypedAtomic`, promotion, function subtyping, implicit context arguments); XPST0005 for an exactly empty static type next to `XPathStaticAxes` | done: the 20 cases pass, QT3 22,403 of 22,407; XPST0005 for every other expression than `()` and `data(())` inferred as `empty-sequence()`, next to the provably empty steps of `XPathStaticAxes` |
 | ST3 | Further checks: path and axis step operands (XPTY0019/XPTY0020), arithmetic and comparison operands, cast operands, inline function body against its declared return type | done: also dynamic call bases, arity and arguments, lookup bases, range operands; a function argument against a function type is checked by function coercion (parameters and return type through the conversion rules) instead of plain subtyping, so `sort(..., (), function ($a) { $a })` passes |
 | ST4 | `StaticContext.setContextItemStaticType`, typed variable declarations; QT3 harness declares `document-node()` for a `.` source and the `as` types of its parameters; unit tests, `qt3.md`, README, release notes | done: `StaticContext.setContextItemStaticType`, `declareVariable (name, SeqType)`/`getVariableType`; the QT3 harness declares the kind or atomic type of the context item and of every variable it binds (from the values), a parameter with `as` with that type |
+
+## Interpreter speed on template-heavy stylesheets (2026-11-25)
+
+Status: option 1 done without a measurable gain (changes reverted); option 2 in progress on branch
+`closure-compilation` (C1 to C4 done); option 3 in the backlog.
+
+The rounding stylesheets of the property tests (`phoxtrot-xslt/src/test/resources/rounding`) gave a first comparison
+(quick measurement, 10,000 roundings in one transformation, JDK 21, median of 21 runs):
+
+| Implementation | Per rounding |
+|----------------|--------------|
+| Java `BigDecimal.setScale` | 0.05 µs |
+| XSLT 1.0 templates on the XSLT 1.0 processor of the JDK (XSLTC, byte code) | 1.2 µs |
+| XSLT 3.0 functions on phoxtrot | 2.9 µs |
+| XSLT 1.0 templates on phoxtrot, 3.0 behaviour | 6.1 µs |
+| XSLT 1.0 templates on phoxtrot, 1.0 behaviour | 6.3 µs |
+
+The JMH workload is `rounding` of `phoxtrot-xslt-benchmark` (`RoundingBenchmark`, with the JDK processor as an
+engine-independent reference case).
+
+1. **Profile and remove interpreter overhead** (done, no gain). Profile the `rounding` workload and fix what
+   dominates, without a second implementation of any semantics. Gate: the QT3, XSLT30 and `-Dxslt30.writeTo=true`
+   fail lists unchanged by name, the benchmark before/after with `compare.sh`.
+
+   Findings (JFR, `templates-1.0`, JDK 21): no single hot spot. The CPU samples spread over expression dispatch
+   (`XPathEvaluator` 18 % self), variable lookup by name along the binding chain (`XdmQName.equals` and
+   `DynamicContext` together 19 %), and the per-call state. The run allocates about 3.2 GB/s: `DynamicContext`
+   objects are 24 % of the bytes (`withStaticContext` for every XPath evaluation in XSLT 12 %, `withLazyVariable`
+   10.5 %), and every `xsl:variable` binding creates about five objects (context, binding, lazy value, closure, XSLT
+   context). Several small methods that the CPU samples pointed at (`XsltState.get` from `LocalVariable.bind`, the
+   static base URI of a temporary tree, `substring` on BMP strings) were fixed and made no measurable difference;
+   the JIT inlines them and the samples were misattributed. Fast paths for flat temporary trees (numbering and
+   namespace fixup without stacks) seemed to give about 4 % on the templates, but `compare.sh` in both orders
+   (alternating the commits cancels the drift of the machine, which the JDK reference case shows at 9 to 12 %)
+   showed no effect beyond the noise, so all these changes were reverted.
+
+   Conclusion: the remaining cost is structural (one context object per evaluation and per binding, variables found
+   by name), which is what option 2 removes. Further local fixes would not change the picture.
+2. **Closure compilation of XPath** (in progress). Compile the `IExpr` tree once into a tree of Java lambdas instead of
+   the `switch` of `XPathEvaluator` per evaluation. The operators keep going through `XPathOperators`, functions
+   through their `FunctionDef`, so the semantics stay in one place; what moves is the dispatch, the variable lookup
+   (slots instead of names) and the focus handling. Needs every optimised path of `XPathEvaluator` (early exit, name
+   index, step unions, focus-independent and name predicates, loop-invariant calls) in the compiled form too, or a
+   fallback to the interpreter for them, and the differential property tests run on both. Estimate: weeks; expected
+   1.5 to 3 times on expression-heavy stylesheets (not measured).
+
+   Decision: the compiled form replaces the interpreter (one implementation, no switch; the W3C suites are the
+   differential test). Stages, each measured with `compare.sh` in both orders and gated by the QT3, XSLT30 and
+   `-Dxslt30.writeTo=true` fail lists:
+
+   | Stage | Content | Status |
+   |-------|---------|--------|
+   | C1 | `XPathEvaluator.compile` builds a tree of `AbstractCompiledExpr` nodes (one class per expression kind, compiled children, shape analyses done once); `CompiledXPath`, `XPathExpr`, patterns (`CompiledXsltPattern`, `PatternMatcher.DirectPath`), streamed record paths and inline functions hold compiled expressions; the interpreter `switch` is gone; static calls keep the call memo plan creator | done: allocation per operation (JMH `-prof gc`) against main -3 % on the rounding templates, -1 % on the functions, -9 to -18 % on the XPath workloads, -4 % on XSLT recursion and iterate |
+   | C2 | No `DynamicContext` per XSLT expression evaluation for the static context (`XPathExpr.evaluate`, `withStaticContext`) | done: static contexts interned by their run-time fields (`StaticContext.internRunTimeIdentity`/`isRunTimeEquivalent`), the dynamic context reused for an equivalent one (`DynamicContext.withStaticContext`, `XsltContext.getDynamicContextFor`, `Engine.getPatternContext (StaticContext)`); a static context for the root context of a run equivalent to the expressions was tried and dropped (instructions read the root context directly, a 1.0 stylesheet then converted declared types in XPath 1.0 mode); `StaticContextReuseTest`. Allocation per operation against C4: -9.6 % on the rounding templates, -3.4 % on the functions, -7 to -10 % on `dispatch`, `keys` and `recursion`, -3 to -10 % on `sort`, serialisation and `iterate`, `identity` unchanged (small workloads switch between a few allocation levels per fork, depending on the JIT: `grouping` 1000 and XPath `positional` move by 10 % between runs of the same code) |
+   | C3 | Frame slots for the XPath-local variables (`for`, `let`, quantifiers, inline function parameters) instead of the lookup by name | done: a slot per binding in a frame per evaluation of the expression (`DynamicContext.getLocalFrame`, `LocalFrameNode`), written in place per iteration; inline function bodies with their own frame per call, the enclosing variables they reference copied into the closure by name; `LocalVariableSlotTest` (xpath, xslt). The local frame shares the frame field of the context and links to the host frame: a second field made every context 8 bytes larger and the XSLT workloads 2 to 6 % more allocating. Allocation per operation against C2: -6 to -7 % on `flwor`, -9.5 % on `maps`, -5 % on `strings` 10000, the XSLT and rounding workloads within +0.7 % (frames 8 bytes larger), single JIT-level jumps of up to 10 % either way as before |
+   | C4 | Slots for the XSLT local variables and parameters, assigned at stylesheet compile time | done: `VariableFrameLayout`/`VariableSlot` per body, a `VariableFrame` per activation changed in place, snapshots for inline function items, lazy values computed with the frame they are read from; `LocalVariableSlotTest`. Allocation per operation against C1 (both orders agree): -14 % on the rounding templates, -9 % on the functions, -6 % on `iterate`, -1 % on `recursion`, the XPath workloads unchanged. Time against main (C1 and C4 together, quiet machine, `compare.sh` in both orders, geometric mean): -6 to -10 % on the rounding workloads, -5 to -16 % on `iterate`, -5 to -7 % on `recursion`, -12 to -22 % on `grouping`, -2 to -7 % on `sort` and serialisation, `dispatch`, `identity` and `keys` level within the drift of the machine (the engine measured second is 5 to 10 % slower in every run) |
+
+   Result of C1 to C4 against main (quiet machine, `compare.sh` in both orders, geometric mean, the JDK reference `templates-1.0-jdk` within 0.3 %). Time: -17 % on the rounding templates, -12 % as 3.0, -8 % on the functions; -14 % on `keys`, -6 to -7 % on `iterate` and `recursion`, -6 to -20 % on `sort`, -3 to -4 % on `dispatch` and `grouping`, `identity` and serialisation within the drift; XPath -13 to -14 % on `flwor` 1000, `maps` 10000, `positional` and `predicate` 10000, -4 to -10 % on `arithmetic`, `exists` 1000 and `rules`, the path and string workloads within the drift. Allocation per operation: -25 % on the rounding templates, -14 % on the functions, -12 % on `iterate` and `recursion`, -9 to -14 % on `keys` and `dispatch`, -3 to -9 % on `grouping`, -5 % on serialisation, `identity` and `sort` level; XPath -15 to -19 % on `flwor` and `maps`, -15 to -17 % on `positional`, -16 % on `arithmetic` 1000, -7 to -10 % on `predicate` and `strings`. The one increase, `exists` 10000 (+28 to +35 %, from 4.5 to 5.8-6.1 MB; 1000 is -10 %), comes from the JIT: without escape analysis (`-XX:-DoEscapeAnalysis`) the branch allocates 9 % less than main at both sizes and is 13 to 17 % faster, so main's objects there are scalar replaced and the branch's are not.
+
+   Follow-up from the profile of C1 to C4 (JFR on both rounding workloads; no interpreter dispatch left as a cost,
+   so no case for option 3): the two first points, both done. (1) Argument conversion: `SequenceTypeMatcher.matches`
+   checks one item without an iterator and longer sequences with an index loop, function items are coerced without a
+   builder until one changes, and in XPath 1.0 compatibility mode a matching value is checked once. (2) Named function
+   references resolve through a `FunctionCallSite` (`IExpr.NamedFunctionRefExpr.site`) and keep the item of a function
+   that is not focus-dependent; a map of literal keys and literal or function reference values (the dispatch table of
+   the 3.0 rounding functions) is kept for the definitions its references resolve to. Gates unchanged (QT3 no fail,
+   XSLT30 and `-Dxslt30.writeTo=true` the same 7 by name). Result against the commit before (`compare.sh` in both
+   orders, `-prof gc`, then the rounding workload twice more in both orders with 3 forks): allocation per operation
+   -12 % on the rounding functions, -5 to -9 % on XPath `arithmetic` 10000, `maps` and `strings` 10000, -3 % on
+   `keys` and `sort` 10000, everything else within 1 %; the rounding templates allocate the same bytes to the last
+   digit, so the iterator of `matches` that JFR attributed 8 to 12 % of their bytes to is scalar replaced in the
+   steady state. Time: -8 to -10 % on the rounding functions in every run; the templates move between -8 and +7 %
+   between runs (the JDK reference up to 8 %), so no effect on them can be claimed; the other workloads were measured
+   in one run only, on a machine that was not quiet, and scatter as much. Point 3, done: a template or stylesheet
+   function call creates the context of its body in one step (`DynamicContext.forHostCall`, `XsltContext.forCall`),
+   with the frame of its parameters, instead of about nine derived contexts and a frame created at the first binding
+   (six for a function). XSLT30 and `-Dxslt30.writeTo=true` unchanged (the same 7 by name). Allocation per operation
+   against the commit before (`compare.sh` in both orders, `-prof gc`, the two orders within 2 % of each other):
+   `dispatch` -18 to -21 %, `recursion` -13 %, the rounding templates -6 to -7 % (the profile had put about 11 % of
+   their bytes on these contexts; the frame and the parameter bindings remain), the rounding functions -3 %,
+   everything else within the noise. Time: the second order ran on a loaded machine (load average about 5) and
+   scatters from 0.31 to 2.16 times, so no time effect can be claimed from this run. Point 4, done: a tree
+   without grandchildren (the temporary tree of a variable whose content is text, every variable of the rounding
+   templates) is numbered and given its namespace fixup without the stacks of the general walk
+   (`XdmFlatTreeNumberingPropertyTest` against the same tree with a nested element). Point 5, done: counting showed
+   no alternation of static contexts (all expressions of the rounding stylesheet share one run-time identity); the
+   misses were the first expression of every new `XsltContext` (template calls and variable bodies, half each),
+   which started from the static context of the instructions. A derived context now starts from the dynamic
+   context of its parent's last expression; `getDynamicContext ()` keeps the instructions' static context
+   (`StaticContextReuseTest`: a declared type after an XSLT 1.0 expression). A first version wrote the expression
+   context back into the base field of the context, which stopped the JIT from removing a context that does not
+   escape: `keys` allocated 9 % more (one `DynamicContext` per indexed node); the cache in its own field fixed it.
+   Gates unchanged (QT3 no fail, XSLT30 and `-Dxslt30.writeTo=true` the same 7 by name). Allocation per operation
+   (one fork, against the figures of the commit before): rounding templates -18 % (point 4 alone -14 %), the
+   rounding functions and the JDK reference unchanged, `identity` -1 %, `keys` +0.5 % (the context is 8 bytes
+   larger), everything else within the noise; no time measured (battery). The profile list is done.
+
+3. **Byte code generation** (backlog), as XSLTC does for XSLT 1.0. A code generator for every construct of XSLT 3.0
+   and XPath 3.1, with the same behaviour as the interpreter, and the W3C suites passing on both paths. On the JDK 21
+   baseline it needs a byte code library (ASM; `java.lang.classfile` is final only from JDK 24). Compiling simple
+   `xsl:function` bodies into compiled parts was measured once and gave no gain (see "Function calls, conversions
+   and key patterns"), and it would put the semantics in two places. Estimate: months; expected 3 to 10 times on
+   CPU-bound stylesheets (not measured). Only worth it if option 2 shows that the remaining cost is the interpretation
+   itself.

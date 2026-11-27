@@ -99,7 +99,8 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `com.helger.phoxtrot.xpath/package-info.java`): `XPathCompiler`, `CompiledXPath`, `XPathException`, `EThreading`,
   `LargeStackRunner`, `XPathStreamabilityAnalyzer` (with `XPathStreamabilityResult`, `XPathStreamabilityReason`,
   `XPathStreamabilityBinding`, `EStreamabilityVerdict`, `EStreamabilityConstruct`, `EStreamContextMode`),
-  `StaticContext`, `DynamicContext`, `IResourceResolver`, `ResourceUri`, `FunctionLibrary`, `IXPathFunction`,
+  `StaticContext`, `DynamicContext`, `IResourceResolver`, `ResourceUri`, `VariableFrame`, `VariableFrameLayout`,
+  `VariableSlot`, `FunctionLibrary`, `IXPathFunction`,
   `SeqType`, `ItemType`, `EOccurrence`, `EPosture`, `ESweep`, `PostureSweep`, `EStreamFunctionCategory`, the `value`
   types and `XPathOperators`. A change to one of them goes into the release notes; keep both lists in sync when the set
   changes.
@@ -276,10 +277,16 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - Early exit (XPath 3.1 section 2.3.4): where only existence or the effective boolean value matters (`fn:exists`,
   `fn:empty`, `fn:boolean`, `fn:not` resolved to their built-in implementation, `and`/`or`, `if`, `satisfies`,
   predicates, `XPathEvaluator.evaluateEffectiveBooleanValue`), paths ending in an axis step and filter expressions
-  stop at the first decisive item; only the last predicate of the last step is short-circuited. Any other shape falls
+  stop at the first decisive item; only the last predicate of the last step is short-circuited. A path without start
+  expression whose steps after the first take the child, attribute or self axis (no filter step, no unfused
+  `descendant-or-self::node()`) is walked depth-first (`PathNode._existsDepthFirst`, iterative): these axes give
+  distinct nodes for distinct context nodes, so the walk needs no sort or deduplication; do not admit an axis that can
+  give the same node twice (descendant, ancestor, following, ...), the walk would repeat work. Predicates of a step
+  that `ExprWalker.isFocusFreeBoolean` accepts are tested on each node the walk visits, others on the whole step
+  result per context node. Any other shape falls
   back to the complete evaluation. `and`/`or` operands stay left to right. A path whose last child/descendant step
   names an element the document's index does not contain is empty without evaluating its prefix
-  (`XPathEvaluator._isEmptyByNameIndex`, also in the complete evaluation), but only for prefixes that cannot raise an
+  (`XPathEvaluator._isEmptyByNameIndex`, the name decided once per path in `PathNode`, also in the complete evaluation), but only for prefixes that cannot raise an
   error (axis steps without predicates, unions of such paths, a node as context item in a tree with a document root).
 - Focus-independent predicates: a predicate that `ExprWalker.isFocusIndependent` accepts (no context item, no path
   other than `$x/a/@b`, no function items, only the listed built-in functions, each resolving to the implementation of
@@ -290,7 +297,7 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   accepts (all calls inside resolving to the default implementation) and that has an argument with work is kept per
   run (`DynamicContext.getRunMemo`) with the static context and the identity tokens of the bindings of all variables
   it references (`DynamicContext.getVariableToken`); one that reads the focus only at the focus of the innermost
-  `for`/`some`/`every` (`DynamicContext.get/setLoopFocus`, set by `_evalForExpr`/`_evalQuantifiedExpr`). Errors are
+  `for`/`some`/`every` (`DynamicContext.get/setLoopFocus`, set by the `for` and quantified expression nodes of `XPathEvaluator`). Errors are
   not kept. The plan is kept in the `FunctionCallSite` (`getMemoPlan`) like the resolution. Add a function to the
   lists of `ExprWalker` only if it reads nothing that changes within a run.
 - Name predicates: an `and` of `=`/`eq` comparisons of `name()`, `local-name()` or `namespace-uri()` (built-in, context
@@ -301,6 +308,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `namespace-uri()`, several atoms for `eq`) goes through the generic comparison. `fn:path` keeps the sibling positions
   of parents with at least 16 children in the run cache (`FnAccessor.SiblingPositions`, weak by child, used only while
   the parent has the same child count).
+- `generate-id` comparisons: `ComparisonNode` answers `=`, `!=`, `eq` and `ne` of two static calls of the built-in
+  `fn:generate-id` (recognised by identity, `FnAccessor.GENERATE_ID`) under the codepoint collation by comparing the
+  nodes, with the errors of the calls (left first), and creates no identifier; the identifiers a run gives out
+  therefore depend on the calls that are really made (they are implementation-dependent anyway).
 - A single-node named child or descendant step whose result is a complete list of the name index
   (`AxisNavigator.getNamedIndexList`) takes the sequence of that list from the run memo
   (`XPathEvaluator._getIndexListSequence`) instead of copying it.
@@ -322,7 +333,67 @@ for the architecture). Roadmap: `docs/PLAN.md`.
 - `XPathOperators` (`phoxtrot-xpath`, package `eval`) is the one place for the semantics of comparisons, arithmetic,
   cast/castable and the static function call with argument conversion; `XPathEvaluator` calls it. Change these
   operators there, never in a copy (it is the public API for generated code such as ph-sch2java's).
-- Static calls resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr` (cached per library instance
+- Evaluation (closure compilation, plan in `docs/PLAN.md`, "Interpreter speed"): `XPathEvaluator.compile` turns an
+  `IExpr` into a tree of `AbstractCompiledExpr` nodes (one nested node class per expression kind in `XPathEvaluator`, holding
+  its compiled children; shape analyses that depend only on the expression are done in the node constructors, those
+  that depend on the static context still at run time). There is no interpreter `switch`. Code that evaluates an
+  expression more than once holds its `AbstractCompiledExpr` (`CompiledXPath`, the XSLT `XPathExpr`, `CompiledXsltPattern`
+  with an identity map for `PatternMatcher`, `PatternMatcher.DirectPath`, `StreamRecordPath`, `InlineFunctionItem`)
+  and evaluates it with `XPathEvaluator.evaluate (AbstractCompiledExpr, ...)`/`evaluateEffectiveBooleanValue`;
+  `evaluate (IExpr, ...)` compiles each time and is only for one-off evaluations. Compiled nodes keep no run state;
+  the only values they keep are immutable ones fixed by the resolved functions, in volatile fields: the function item
+  of a named function reference that is not focus-dependent (`NamedFunctionRefNode`) and a map built only from
+  literal keys and literal or function reference values (`MapConstructorNode`), both kept for the definitions (by
+  identity) the references resolve to again on every evaluation.
+  Early exit is `AbstractCompiledExpr.tryEarlyEbv`/`exists`, overridden by the path, filter and sequence nodes.
+- XSLT local variables and parameters are bound by slot (closure compilation C4): `CompileContext.withVariable` gives
+  every declaration its own slot in the `VariableFrameLayout` of its body (a new layout where the scope starts empty),
+  `createStaticContext` declares the locals with `StaticContext.declareFrameVariable`, and
+  `XPathEvaluator.compile (IExpr, StaticContext)` turns a reference to one into a slot read (unless a `for`/`let`/
+  quantifier/inline function parameter of the expression binds the name). At run time the binding writes the slot of
+  the `VariableFrame` of the dynamic context in place (`XsltContext.withSlotValue`/`withLazySlotValue`; a new frame
+  only for the first binding of a body in an activation, `withoutFocusAndVariables` drops it). A template or function
+  call creates the context of its body in one step (`XsltContext.forCall`, `DynamicContext.forHostCall`), with the
+  frame already there if the body has parameters (their layout is that of the body). Rules: every name that
+  `CompileContext.withVariable` brings into scope must be bound by slot at run time (the seven sites: sequence
+  constructor variables, template, function and `xsl:iterate` parameters, `xsl:original`, `err:*`, accumulator
+  `$value`), never with `DynamicContext.withVariable` (a slot reference does not see it, and a name lookup does not
+  see frames); an expression or pattern that can see locals is compiled with its static context
+  (`XPathExpr`, `StreamRecordPath`, `CompiledXsltPattern`/`PatternMatcher`); whatever keeps a context beyond the scope
+  of its variables takes `VariableFrame.getSnapshot ()` (`InlineFunctionItem`); a lazy value is evaluated with the
+  frame it is read from (`VariableFrame.AbstractLazyValue.compute (holder)`); `CallMemo` takes the tokens of frame
+  variables from their slots. `LocalVariableSlotTest` covers shadowing, loops, escaping closures and the memo.
+- XPath-local variables by slot (closure compilation C3): `XPathEvaluator.ExprCompiler` gives every `for`, `let`,
+  quantifier and inline function parameter binding its own slot (`bindLocal`); the nodes write the slot of the frame
+  of the expression (`DynamicContext.getLocalFrame`) in place and the references read it (`LocalVarRefNode`). The
+  context keeps one frame field: a local frame links to the host frame (`VariableFrame.createLocal`), `getFrame`
+  follows the link and `withFrame` drops the local frame (a second field made every context 8 bytes larger and the
+  XSLT workloads allocate 2 to 6 % more). The root of a compiled expression that binds variables is a
+  `LocalFrameNode`, which creates a new frame per evaluation (so a re-entrant evaluation never shares one; keep it
+  so even though the paths through stylesheet functions drop frames anyway); an inline function body has its own
+  layout and a new frame per call (`InlineFunctionItem.Body`), and the variables of the enclosing scope it
+  references are copied into its closure by name when the item is created (`FunctionBoundary` captures; a reference
+  across a function boundary compiles to a name lookup). An expression that binds the name shadows a host slot
+  variable (`_isBoundByExpression`). `CallMemo` tokens of such variables come from their slot (`getTokenSlot`).
+  Tests: `LocalVariableSlotTest` in `phoxtrot-xpath` (closures, recursion through function items, memo) and in
+  `phoxtrot-xslt` (an expression re-entered by a recursive stylesheet function).
+- Static context reuse (closure compilation C2): every XSLT expression and pattern has its own `StaticContext`,
+  but most differ only in their declared variables, which evaluation never reads. `CompileContext.createStaticContext`
+  interns each one (`StaticContext.internRunTimeIdentity`, one map per compilation,
+  `StylesheetCompiler.getRunTimeIdentities`); every setter of a run-time field drops the identity again (a new
+  run-time field must be added to `RunTimeKey` and reset it). `isRunTimeEquivalent` contexts give the same results,
+  so `DynamicContext.withStaticContext` returns the same context for one, `XsltContext.getDynamicContextFor` keeps
+  the context of the last expression evaluated in it, and every context derived from it starts from that one
+  (`getDynamicContext ()` gives the context with the static context of the instructions, created once per
+  `XsltContext` when needed; keep the cache in its own field: writing it back into the base field stops the JIT from
+  removing contexts that do not escape, `keys` allocated 9 % more) and `Engine.getPatternContext
+  (StaticContext)` that of the last pattern. Never change the static context of the root context of a run to make it
+  equivalent: instructions read it through `XsltContext.getDynamicContext ()` (declared type conversions must not run
+  in XPath 1.0 mode). `StaticContextReuseTest` uses constructs that read the static context at run time (casts to
+  `xs:QName`, collations, `static-base-uri`, 1.0 comparisons); names in steps are resolved at compile time and test
+  nothing here.
+- Static calls and named function references resolve through the `FunctionCallSite` of their `IExpr.FunctionCallExpr`/
+  `IExpr.NamedFunctionRefExpr` (cached per library instance
   and `FunctionLibrary.getModificationStamp`, the sum of the change counters of the parent chain). Every new
   `FunctionLibrary` method that changes what `getFunction` returns must call `_checkWritable` and increment
   `m_nModCount` inside the write lock (so a change cannot race with `freeze`). A call site reuses an entry for a
@@ -334,9 +405,13 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   and xsl:original libraries at the end of `compile`, and `EvaluateExtension` freezes its library: anything that
   registers functions must do so before (a registration afterwards throws).
 - Patterns: `XsltPattern.canMatch` rejects a node that the last step of no union path can select (it must stay a pure
-  pre-test of what the path search rejects first); `getFinalNames` gives the exact element/attribute names when every
+  pre-test of what the path search rejects first). A union pattern tests it inside its match
+  (`isCanMatchTestedByMatches`), so `CompiledPattern.matches` skips the separate call for it; a pattern whose match
+  can evaluate something before that test must keep returning `false` there. `getFinalNames` gives the exact element/attribute names when every
   alternative ends in one, and `Engine._buildKeyIndex` then tests only those nodes from the document's name index
-  instead of walking the tree (`Engine.getKeyIndexFromNamesCount ()` tells tests which path ran).
+  instead of walking the tree (`Engine.getKeyIndexFromNamesCount ()` tells tests which path ran). A key index keeps
+  the nodes of each value as one `XdmSequence` in document order without duplicates, which `key()` with one value
+  returns as it is: never change it, and keep a new way of filling the index sorting its entries (`_toSequences`).
   `CompiledXsltPattern` opens a parenthesised union whose predicates pass `ExprWalker.isFocusFreeBoolean`
   (`(P1 | P2)[q]` is matched as `P1[q] | P2[q]`, the source, priority and alternatives unchanged), so it has union
   paths and final names. A union path of only `child`/`attribute` steps without `position`/`last`/`function-lookup`
@@ -353,6 +428,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   in use (a nested parse on the same thread creates its own) and reset with its handlers cleared afterwards, so the
   cache holds no tree. Every per-parse setting must stay in `_parse` (set on each parse), the factory settings in
   `_createSAXParser`.
+  A source with a character stream is read through `BracketHoldBackReader` (never ends a chunk with `]`): the XML 1.1
+  scanner of the JDK drops or repeats text characters when a `]` ends its buffer. Keep it for every character source;
+  byte sources are decoded by the JDK and stay affected. `XdmStreamReader` refuses XML 1.1, so it needs no wrapper.
 - Streamability (XSLT 3.0 section 19): `com.helger.phoxtrot.xpath.stream.XPathStreamability` classifies expressions and
   patterns; the XSLT layer supplies its knowledge through `StreamContext`. It fails closed: an unknown construct is
   roaming/free-ranging, never "streamable". `XPathStreamabilityAnalyzer` is its public facade (no AST in its API); its

@@ -21,7 +21,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xslt.XsltException;
-import com.helger.phoxtrot.xslt.tree.XslNode;
+import com.helger.phoxtrot.xslt.tree.AbstractXslNode;
 
 /**
  * A dynamic error raised while a lazily bound local variable was evaluated. It
@@ -53,7 +53,7 @@ public final class LazyVariableException extends XsltException
    */
   @NonNull
   public static LazyVariableException of (@NonNull final XPathException aEx,
-                                          @Nullable final XslNode aVariable,
+                                          @Nullable final AbstractXslNode aVariable,
                                           @Nullable final TryScope aScope)
   {
     final XPathException aLocated = XsltException.locate (aEx, aVariable);

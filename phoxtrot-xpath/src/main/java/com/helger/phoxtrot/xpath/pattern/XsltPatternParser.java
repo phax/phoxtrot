@@ -224,10 +224,11 @@ public final class XsltPatternParser
         aAlternatives.add (new CompiledXsltPattern (sAltSource != null ? sAltSource : sPattern,
                                                     aAlt,
                                                     dPriority,
-                                                    new CommonsArrayList <> ()));
+                                                    new CommonsArrayList <> (),
+                                                    aStaticCtx));
       }
     }
-    return new CompiledXsltPattern (sPattern, aExpr, dMax, aAlternatives);
+    return new CompiledXsltPattern (sPattern, aExpr, dMax, aAlternatives, aStaticCtx);
   }
 
   /**
@@ -320,11 +321,16 @@ public final class XsltPatternParser
       aNewAlternatives.add (new CompiledXsltPattern (aCompiledAlt.getSource (),
                                                      aExpr,
                                                      aCompiledAlt.getDefaultPriority (),
-                                                     new CommonsArrayList <> ()));
+                                                     new CommonsArrayList <> (),
+                                                     aCompiledAlt.getStaticContext ()));
       aUnion = aUnion == null ? aExpr : new IExpr.SetExpr (IExpr.SetExpr.ESetOp.UNION, aUnion, aExpr);
     }
     if (!bChanged)
       return aPattern;
-    return new CompiledXsltPattern (aCompiled.getSource (), aUnion, aCompiled.getDefaultPriority (), aNewAlternatives);
+    return new CompiledXsltPattern (aCompiled.getSource (),
+                                    aUnion,
+                                    aCompiled.getDefaultPriority (),
+                                    aNewAlternatives,
+                                    aCompiled.getStaticContext ());
   }
 }
