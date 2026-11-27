@@ -54,6 +54,7 @@ import com.helger.phoxtrot.xpath.ast.ExprWalker;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
 import com.helger.phoxtrot.xpath.ast.SeqType;
+import com.helger.phoxtrot.xpath.collation.CollationRegistry;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
 import com.helger.phoxtrot.xpath.context.StaticContext;
 import com.helger.phoxtrot.xpath.context.VariableFrame;
@@ -2238,6 +2239,68 @@ public final class XPathEvaluator
   }
 
   /**
+   * @return The call if a compiled expression is a static call of <code>fn:generate-id</code> with
+   *         zero or one argument and without placeholder, otherwise <code>null</code>. Whether it
+   *         resolves to the built-in implementation is decided at run time.
+   */
+  @Nullable
+  private static FunctionCallNode _getGenerateIdCall (@NonNull final AbstractCompiledExpr aExpr)
+  {
+    if (aExpr instanceof final FunctionCallNode aCall &&
+        aCall.m_aArgs.length <= 1 &&
+        "generate-id".equals (aCall.m_aCall.name ().localName ()) &&
+        XdmConstants.NS_FN.equals (aCall.m_aCall.name ().namespaceUri ()) &&
+        !aCall.m_aCall.site ().hasPlaceholder (aCall.m_aCall.args ()))
+      return aCall;
+    return null;
+  }
+
+  /**
+   * @return The definition a <code>fn:generate-id</code> call (see
+   *         {@link #_getGenerateIdCall(AbstractCompiledExpr)}) resolves to in the function library of
+   *         the static context if it is the built-in implementation ({@link FnAccessor#GENERATE_ID}),
+   *         otherwise <code>null</code>, so that a host function of that name is called as written.
+   */
+  @Nullable
+  private static FunctionDef _getBuiltInGenerateId (@NonNull final FunctionCallNode aCall, @NonNull final DynamicContext aCtx)
+  {
+    final FunctionDef aDef = aCall.m_aCall.site ()
+                                          .getFunction (aCtx.getStaticContext ().getFunctionLibrary (),
+                                                        aCall.m_aCall.name (),
+                                                        aCall.m_aArgs.length);
+    return aDef != null && aDef.getImpl () == FnAccessor.GENERATE_ID ? aDef : null;
+  }
+
+  /**
+   * The node a built-in <code>fn:generate-id</code> call would give the identifier of, with the
+   * errors of the call: the context item for the zero-argument form (XPDY0002 if absent, XPTY0004
+   * if it is no node), otherwise the argument converted to <code>node()?</code>.
+   *
+   * @return <code>null</code> for an empty argument.
+   */
+  @Nullable
+  private static IXdmNode _getGenerateIdNode (@NonNull final FunctionCallNode aCall,
+                                              @NonNull final FunctionDef aDef,
+                                              @NonNull final DynamicContext aCtx)
+  {
+    if (aCall.m_aArgs.length == 0)
+    {
+      final IXdmItem aItem = aCtx.getContextItem ();
+      if (aItem == null)
+        throw XPathException.noContext ("The context item is absent");
+      if (aItem instanceof final IXdmNode aNode)
+        return aNode;
+      throw XPathException.type ("The context item is not a node");
+    }
+    final XdmSequence aArg = XPathOperators.convertArgument (aCall.m_aArgs[0].evaluate (aCtx),
+                                                             aDef.getParamTypes ().get (0),
+                                                             aCtx,
+                                                             aDef.getName (),
+                                                             0);
+    return aArg.isEmpty () ? null : (IXdmNode) aArg.get (0);
+  }
+
+  /**
    * A value, general or node comparison (XPath 3.1 section 3.7). A general comparison with a range
    * expression as one operand is first tried without materialising the range
    * ({@link XPathEvaluator#_evalRangeComparison(EComparisonOp, RangeNode, XdmSequence, DynamicContext)});
@@ -2245,6 +2308,12 @@ public final class XPathEvaluator
    * else goes to
    * {@link XPathOperators#compare(EComparisonOp, XdmSequence, XdmSequence, DynamicContext)}. The
    * left operand is evaluated before the right one.
+   * <p>
+   * An equality or inequality (<code>=</code>, <code>!=</code>, <code>eq</code>, <code>ne</code>)
+   * of two calls of the built-in <code>fn:generate-id</code> under the codepoint collation (the
+   * Muenchian grouping of XSLT 1.0, <code>generate-id() = generate-id(key('k', @a)[1])</code>)
+   * compares the nodes: the identifiers are equal exactly for the same node or two empty
+   * arguments, so no identifier is created.
    */
   @Immutable
   private static final class ComparisonNode extends AbstractCompiledExpr
@@ -2252,6 +2321,9 @@ public final class XPathEvaluator
     private final EComparisonOp m_eOp;
     private final AbstractCompiledExpr m_aLeft;
     private final AbstractCompiledExpr m_aRight;
+    // Both operands as fn:generate-id calls for an (in)equality, otherwise null
+    private final FunctionCallNode m_aLeftGenerateId;
+    private final FunctionCallNode m_aRightGenerateId;
 
     ComparisonNode (@NonNull final ExprCompiler aC, final IExpr.@NonNull ComparisonExpr aExpr)
     {
@@ -2259,12 +2331,56 @@ public final class XPathEvaluator
       m_eOp = aExpr.op ();
       m_aLeft = aC.compile (aExpr.left ());
       m_aRight = aC.compile (aExpr.right ());
+      final boolean bEquality = m_eOp == EComparisonOp.GENERAL_EQ ||
+                                m_eOp == EComparisonOp.GENERAL_NE ||
+                                m_eOp == EComparisonOp.VALUE_EQ ||
+                                m_eOp == EComparisonOp.VALUE_NE;
+      final FunctionCallNode aLeftCall = bEquality ? _getGenerateIdCall (m_aLeft) : null;
+      final FunctionCallNode aRightCall = aLeftCall != null ? _getGenerateIdCall (m_aRight) : null;
+      m_aLeftGenerateId = aRightCall != null ? aLeftCall : null;
+      m_aRightGenerateId = aRightCall;
+    }
+
+    /**
+     * Compare two built-in <code>fn:generate-id</code> calls by their nodes (see the class
+     * description), the left argument evaluated first, as the calls would be.
+     *
+     * @return <code>null</code> if a call does not resolve to the built-in implementation or the
+     *         default collation is not the codepoint collation; the caller then evaluates the
+     *         comparison as written.
+     */
+    @Nullable
+    private XdmSequence _tryGenerateIdComparison (@NonNull final DynamicContext aCtx)
+    {
+      // Another collation might take different identifiers for equal
+      if (!CollationRegistry.CODEPOINT_URI.equals (aCtx.getStaticContext ().getDefaultCollation ()))
+        return null;
+      final FunctionDef aLeftDef = _getBuiltInGenerateId (m_aLeftGenerateId, aCtx);
+      if (aLeftDef == null)
+        return null;
+      final FunctionDef aRightDef = _getBuiltInGenerateId (m_aRightGenerateId, aCtx);
+      if (aRightDef == null)
+        return null;
+      final IXdmNode aLeft = _getGenerateIdNode (m_aLeftGenerateId, aLeftDef, aCtx);
+      final IXdmNode aRight = _getGenerateIdNode (m_aRightGenerateId, aRightDef, aCtx);
+      // Nodes have identity semantics, as in the identifier table of fn:generate-id
+      final boolean bSame = aLeft == aRight;
+      final boolean bEqual = m_eOp == EComparisonOp.GENERAL_EQ || m_eOp == EComparisonOp.VALUE_EQ;
+      return _bool (bSame == bEqual);
     }
 
     @Override
     @NonNull
     XdmSequence evaluate (@NonNull final DynamicContext aCtx)
     {
+      if (m_aLeftGenerateId != null)
+      {
+        // Optimisation: two fn:generate-id calls are compared by their nodes, without creating the
+        // identifiers (a run cache and a weak map lookup and a string per call)
+        final XdmSequence aFast = _tryGenerateIdComparison (aCtx);
+        if (aFast != null)
+          return aFast;
+      }
       // XPath 1.0 compatibility mode has its own general comparison rules
       if (m_eOp.isGeneral () && !aCtx.getStaticContext ().isXPath10Compatibility ())
       {

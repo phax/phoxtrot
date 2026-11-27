@@ -266,6 +266,24 @@ public final class XPathEvaluatorPropertyTest
    * (<code>CallMemo</code>), each with a reference whose arguments are passed
    * through an inline function, which makes the calls ineligible.
    */
+  /**
+   * Operands of the <code>fn:generate-id</code> comparisons, with empty arguments, the context
+   * node, single nodes and errors (more than one node, a variable that holds no node)
+   */
+  private static final String [] GENERATE_ID_OPERANDS = { "generate-id()",
+                                                          "generate-id(.)",
+                                                          "generate-id(..)",
+                                                          "generate-id(())",
+                                                          "generate-id(//zz)",
+                                                          "generate-id((//a)[1])",
+                                                          "generate-id((//*)[last()])",
+                                                          "generate-id(@x)",
+                                                          "generate-id(//a)",
+                                                          "generate-id($v)",
+                                                          "generate-id(root())" };
+
+  private static final String [] GENERATE_ID_OPERATORS = { " = ", " != ", " eq ", " ne ", " lt " };
+
   private static final String [] [] LOOP_INVARIANT_PAIRS = { { "for $x in //* return count($x//a)",
                                                                "for $x in //* return count((function ($q) { $q })($x//a))" },
                                                              { "for $x in //* return string-join($x/@* ! string(.), ',')",
@@ -595,6 +613,34 @@ public final class XPathEvaluatorPropertyTest
                                                                  aDoc,
                                                                  aV,
                                                                  aW);
+                                   });
+  }
+
+  /**
+   * An (in)equality of two <code>fn:generate-id</code> calls, which compares the nodes, gives the
+   * same result or error as the same comparison of the identifiers as strings, at the top level and
+   * as a predicate over every node.
+   */
+  @Test
+  public void testGenerateIdComparison ()
+  {
+    new PropertyChecker ().setTries (300)
+                          .forAll (XPathPropertyTestHelper.DOCUMENTS,
+                                   Generators.lists (Generators.ints (0, 100), 3, 3),
+                                   VALUES,
+                                   (sXml, aChoice, aV) -> {
+                                     final IXdmNode aDoc = XPathPropertyTestHelper.parse (sXml);
+                                     final String sLeft = GENERATE_ID_OPERANDS[aChoice.get (0).intValue () % GENERATE_ID_OPERANDS.length];
+                                     final String sOp = GENERATE_ID_OPERATORS[aChoice.get (1).intValue () % GENERATE_ID_OPERATORS.length];
+                                     final String sRight = GENERATE_ID_OPERANDS[aChoice.get (2).intValue () % GENERATE_ID_OPERANDS.length];
+                                     final String sExpr = sLeft + sOp + sRight;
+                                     final String sReference = "string(" + sLeft + ")" + sOp + "string(" + sRight + ")";
+                                     m_aHelper.assertEquivalent (sExpr, sReference, aDoc, aV, XdmSequence.EMPTY);
+                                     m_aHelper.assertEquivalent ("(//node(), //@*)[" + sExpr + "]",
+                                                                 "(//node(), //@*)[" + sReference + "]",
+                                                                 aDoc,
+                                                                 aV,
+                                                                 XdmSequence.EMPTY);
                                    });
   }
 
