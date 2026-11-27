@@ -349,6 +349,8 @@ v0.5.0 - work in progress
   twice (new `XsltPattern.isCanMatchTestedByMatches`)
 * The abstract class `XslNode` of the stylesheet tree is renamed to `AbstractXslNode` (incompatible change for code
   that names the type, such as callers of `XsltException.at`/`locate`)
+* `AbstractXslNode` is sealed (`permits XslElement, XslText`); it could not be usefully subclassed outside its package
+  before either
 * An equality or inequality of two `generate-id` calls (the Muenchian grouping of XSLT 1.0,
   `generate-id() = generate-id(key('k', @a)[1])`) compares the nodes instead of creating both identifiers
 * `key()` with one value returns the nodes kept in the key index without copying and sorting them per call:
