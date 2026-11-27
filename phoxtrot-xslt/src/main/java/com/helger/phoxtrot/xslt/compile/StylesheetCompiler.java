@@ -21,6 +21,7 @@ import java.util.Collections;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
+import java.util.function.Consumer;
 import java.util.function.Predicate;
 
 import org.jspecify.annotations.NonNull;
@@ -2288,6 +2289,9 @@ public final class StylesheetCompiler
     // The XSLT and stylesheet functions go into a child of the shared default library
     final FunctionLibrary aLib = FunctionLibrary.getDefault ().createChild ();
     m_aRegistry.contributeFunctions (aLib);
+    // The extension functions of this compilation only, after the global ones
+    for (final Consumer <FunctionLibrary> aContributor : m_aOptions.functionContributors ())
+      aContributor.accept (aLib);
     XsltFunctions.registerClaims (aLib, m_aOptions.isStreamingClaim (), m_aOptions.isBackwardsCompatibleClaim ());
     m_aStylesheet = new CompiledStylesheet (aLib, aPrincipal);
     m_aStylesheet.setPackages (m_aPackages);

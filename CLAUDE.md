@@ -242,7 +242,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   (`XsltFunctions.registerRuntime`, the default extensions) go only into the stylesheet library; later (user)
   contributors also into the library of the static expressions (`contributeUserFunctions`, called by the
   `StylesheetLoader` constructor). A new XSLT function that XSLT 3.0 section 9.7 excludes from static expressions is
-  registered from a default extension, never later.
+  registered from a default extension, never later. Contributors of one compilation
+  (`XsltCompileOptions.functionContributors`, JAXP `ATTR_FUNCTION_CONTRIBUTOR`) are called after the global ones at
+  the same two places (`StylesheetCompiler`, `StylesheetLoader`) and passed on to a nested `fn:transform`
+  (`XsltTransformHandler._createCompileOptions`); a new library of a compilation gets them too.
 - EXSLT - Common: the core functions `exsl:node-set` and `exsl:object-type` (`com.helger.phoxtrot.xslt.fn.ExsltCommon`,
   registered with the static XSLT functions, so `function-available` sees them); no other EXSLT module and no
   `exsl:document`.
@@ -273,7 +276,14 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   change. Element constructors must create their content output with `ContentOutput.createFor` (pass `false` when the
   instruction changes the content after adding it, as inherit-namespaces="no" and validation do); a temporary output
   (`BufferedOutput`, variables) is never drained. `ResultDrain.getDrainedRunCount ()` tells tests which path ran;
-  `-Dxslt30.writeTo=true` reruns every XSLT30 case through the writer and fails it with "harness" on any difference.
+  `-Dxslt30.writeTo=true` reruns every XSLT30 case through the writer and through SAX and fails it with "harness" on
+  any difference. The drain writes through an `IResultDrainSink`: the incremental serializer, or for
+  `XsltExecutable.transform (request, ContentHandler, LexicalHandler)` (JAXP `SAXResult`) `SaxResultSink` over
+  `XdmSaxWriter` (`phoxtrot-xdm`, the events of `XdmToSax.emit`, which uses it; drain conditions in
+  `XsltTransformer._createSaxDrain`: not schema-aware, no xsl:result-document, a tree, method and serialization
+  parameters do not matter, no html checks, namespace fixup as for xml). A handler's `SAXException` leaves the engine
+  as `SaxResultSink.HandlerException` (no `xsl:try` catches it) and is thrown unwrapped by `XsltTransformer.runTo`;
+  the fallback emits the finished tree with `XdmToSax.emit`.
 - Early exit (XPath 3.1 section 2.3.4): where only existence or the effective boolean value matters (`fn:exists`,
   `fn:empty`, `fn:boolean`, `fn:not` resolved to their built-in implementation, `and`/`or`, `if`, `satisfies`,
   predicates, `XPathEvaluator.evaluateEffectiveBooleanValue`), paths ending in an axis step and filter expressions

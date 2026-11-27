@@ -21,10 +21,14 @@ import java.io.Writer;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.ext.LexicalHandler;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
+import com.helger.base.enforce.ValueEnforcer;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
 import com.helger.collection.commons.CommonsHashSet;
@@ -548,6 +552,19 @@ public final class CompiledStylesheet implements XsltExecutable
   public XsltTransformResult transform (@NonNull final XsltTransformRequest aRequest, @NonNull final Writer aWriter)
   {
     return new XsltTransformer (this, aRequest).runTo (aWriter);
+  }
+
+  /**
+   * {@inheritDoc} Each call runs a new {@link XsltTransformer}.
+   */
+  @Override
+  @NonNull
+  public XsltTransformResult transform (@NonNull final XsltTransformRequest aRequest,
+                                        @NonNull final ContentHandler aHandler,
+                                        @Nullable final LexicalHandler aLexicalHandler) throws SAXException
+  {
+    ValueEnforcer.notNull (aHandler, "Handler");
+    return new XsltTransformer (this, aRequest).runTo (aHandler, aLexicalHandler);
   }
 
   /**

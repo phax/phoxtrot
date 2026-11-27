@@ -22,7 +22,10 @@ import java.io.StringWriter;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.Test;
+import org.xml.sax.SAXException;
 
+import com.helger.phoxtrot.xdm.IXdmNode;
+import com.helger.phoxtrot.xdm.bridge.XdmToSax;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xslt.XsltCompileOptions;
 import com.helger.phoxtrot.xslt.XsltCompiler;
@@ -39,7 +42,8 @@ import com.helger.unittest.property.PropertyChecker;
  * constructs elements, attributes, namespaces, text, atomic values, comments,
  * processing instructions and copies in any order writes the same characters
  * to a writer, where the result is written while it is built, as the string
- * result; where the run fails, both fail with the same error code.
+ * result, and passes the same SAX events to a content handler as the complete
+ * result tree gives; where the run fails, both fail with the same error code.
  *
  * @author Philip Helger
  */
@@ -136,6 +140,68 @@ public final class ResultDrainPropertyTest
       return "error " + ex.getCode ();
     }
     return aSW.toString ();
+  }
+
+  @NonNull
+  private static String _treeToSax (@NonNull final XsltExecutable aExec)
+  {
+    final SaxEventRecorder aRecorder = new SaxEventRecorder ();
+    try
+    {
+      final IXdmNode aTree = aExec.transform (_request ().setBaseOutputUri ("urn:out")).principalTree ();
+      XdmToSax.emit (aTree, aRecorder, aRecorder);
+    }
+    catch (final XPathException ex)
+    {
+      return "error " + ex.getCode ();
+    }
+    catch (final SAXException ex)
+    {
+      throw new IllegalStateException (ex);
+    }
+    return aRecorder.toString ();
+  }
+
+  @NonNull
+  private static String _toSax (@NonNull final XsltExecutable aExec)
+  {
+    final SaxEventRecorder aRecorder = new SaxEventRecorder ();
+    try
+    {
+      aExec.transform (_request ().setBaseOutputUri ("urn:out"), aRecorder, aRecorder);
+    }
+    catch (final XPathException ex)
+    {
+      return "error " + ex.getCode ();
+    }
+    catch (final SAXException ex)
+    {
+      throw new IllegalStateException (ex);
+    }
+    return aRecorder.toString ();
+  }
+
+  /**
+   * The SAX events passed to a content handler while the result is built are
+   * those of the complete result tree, and an error is raised with the same
+   * code by both. Every run takes the drain.
+   */
+  @Test
+  public void testSaxMatchesTree ()
+  {
+    new PropertyChecker ().setTries (2000).forAll (OUTPUTS, BODIES, (sOutput, sBody) -> {
+      final String sSheet = XsltTestHelper.SHEET +
+                            sOutput +
+                            "<xsl:template match='/'>" +
+                            sBody +
+                            "</xsl:template>" +
+                            XsltTestHelper.END;
+      final XsltExecutable aExec = XsltCompiler.compile (sSheet, new XsltCompileOptions ());
+      final String sExpected = _treeToSax (aExec);
+      final long nDrained = ResultDrain.getDrainedRunCount ();
+      assertEquals (sSheet, sExpected, _toSax (aExec));
+      assertEquals (sSheet, nDrained + 1, ResultDrain.getDrainedRunCount ());
+    });
   }
 
   /**

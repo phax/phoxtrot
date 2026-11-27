@@ -543,8 +543,8 @@ public final class XsltTransformHandler implements ITransformHandler
    * Build the compile options of the nested stylesheet: the given base URI,
    * the compile resolver of the host, the load-external-entities setting, the
    * backwards compatibility claim (the same processor runs the nested
-   * stylesheet) and the library packages of the calling stylesheet if known,
-   * and the values
+   * stylesheet), the library packages and the function contributors of the
+   * calling stylesheet if known, and the values
    * of the static-params option as static parameters.
    *
    * @param aOpts
@@ -570,6 +570,7 @@ public final class XsltTransformHandler implements ITransformHandler
       ret.setBackwardsCompatibleClaim (aHost.callerOptions ().isBackwardsCompatibleClaim ());
       ret.setSecondaryResultsAllowed (aHost.callerOptions ().isSecondaryResultsAllowed ());
       ret.packages ().addAll (aHost.callerOptions ().packages ());
+      ret.functionContributors ().addAll (aHost.callerOptions ().functionContributors ());
     }
     // A requested xsl:supports-backwards-compatibility configures the claim
     final Boolean aBackwards = _getRequestedBackwardsCompatibility (aOpts);

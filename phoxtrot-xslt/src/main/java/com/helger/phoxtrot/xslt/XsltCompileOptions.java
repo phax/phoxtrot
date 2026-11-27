@@ -16,6 +16,8 @@
  */
 package com.helger.phoxtrot.xslt;
 
+import java.util.function.Consumer;
+
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 
@@ -30,6 +32,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.EThreading;
 import com.helger.phoxtrot.xpath.context.IResourceResolver;
+import com.helger.phoxtrot.xpath.fn.FunctionLibrary;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
@@ -144,6 +147,7 @@ public final class XsltCompileOptions
   private boolean m_bBackwardsCompatibleClaim = DEFAULT_BACKWARDS_COMPATIBLE_CLAIM;
   private boolean m_bSecondaryResultsAllowed = DEFAULT_SECONDARY_RESULTS_ALLOWED;
   private final ICommonsList <HostSchema> m_aHostSchemas = new CommonsArrayList <> ();
+  private final ICommonsList <Consumer <FunctionLibrary>> m_aFunctionContributors = new CommonsArrayList <> ();
   private EThreading m_eThreading = EThreading.DEFAULT;
 
   /** @return The stylesheet's own URI, against which import/include hrefs resolve. */
@@ -211,6 +215,43 @@ public final class XsltCompileOptions
   {
     ValueEnforcer.notNull (aPackage, "Package");
     m_aPackages.add (aPackage);
+    return this;
+  }
+
+  /**
+   * @return The function contributors of this compilation (modifiable), see
+   *         {@link #addFunctionContributor(Consumer)}.
+   */
+  @NonNull
+  public ICommonsList <Consumer <FunctionLibrary>> functionContributors ()
+  {
+    return m_aFunctionContributors;
+  }
+
+  /**
+   * Add extension functions for the stylesheets compiled with these options
+   * only, unlike
+   * {@link com.helger.phoxtrot.xslt.compile.XsltExtensionRegistry#registerFunctions(Consumer)},
+   * which adds them for every stylesheet of the JVM. The contributor is called,
+   * in the order of addition and after the globally registered contributors,
+   * for the function library of the stylesheet (so the functions are visible
+   * to <code>xsl:evaluate</code> too) and for the library of its static
+   * expressions (<code>use-when</code>, static variables and parameters,
+   * shadow attributes), so <code>function-available</code> gives the same
+   * answer there as at run time. A stylesheet compiled by
+   * <code>fn:transform</code> from it gets the same contributors. A
+   * contributor is therefore called at least twice per compilation and must
+   * register the same functions each time.
+   *
+   * @param aContributor
+   *        Registers functions into the library. May not be <code>null</code>.
+   * @return this for chaining
+   */
+  @NonNull
+  public XsltCompileOptions addFunctionContributor (@NonNull final Consumer <FunctionLibrary> aContributor)
+  {
+    ValueEnforcer.notNull (aContributor, "Contributor");
+    m_aFunctionContributors.add (aContributor);
     return this;
   }
 

@@ -1745,3 +1745,59 @@ phoxtrot resolves functions by namespace URI.
 Already there: a literal predicate indexes the sequence (`_applyPredicate`); scopes and frames per loop (C3/C4 slots);
 node lists filled in place (`XdmSequence.ListBuilder`, index lists). Suggested order: `generate-id`, compact
 decimal division and `sum`/`avg`, the two XSD 1.0 items, `xsl:iterate`; the rest only if a profile shows it.
+
+## Suggestions from the ph-schematron `pure-xslt` plan (2026-11-27)
+
+ph-schematron's `pure-xslt` engine generates an XSLT 3.0 stylesheet from a Schematron in Java (a DOM `Document`)
+and validates with it on Saxon s9api only. The ph-schematron plan (`docs/PLAN-phoxtrot-engine.md`, section
+"`pure-xslt` on phoxtrot (D12 reopened)") proposes running it on phoxtrot through the JAXP adapter, like the ISO
+Schematron and SchXslt pipelines. Checked against phoxtrot 0.5.0-SNAPSHOT (`2440481`): compiling the generated stylesheet from a
+`DOMSource`, validating an `XdmSource` (or a DOM via `XdmDomView`), `SAXResult`, `URIResolver`, `ErrorListener` and
+`IXsltTraceListener` cover everything the engine needs functionally. The two items below are what the s9api path has
+and the JAXP adapter has not. Neither blocks a first version.
+
+### S56 - Streaming `SAXResult` and a function library per factory
+
+Status: done (2026-11-27). 1: a `SAXResult` (and the new native
+`XsltExecutable.transform (request, ContentHandler, LexicalHandler)`) gets its events while the result is built, through
+the drain of `StreamResult` with a new sink (`IResultDrainSink`: the incremental serializer or `SaxResultSink` over the
+new `XdmSaxWriter` of `phoxtrot-xdm`, which also writes `XdmToSax.emit`). Conditions: not schema-aware, no
+`xsl:result-document`, a tree is built (method and serialization parameters do not matter); otherwise the finished tree
+goes to the handler as before. A handler's `SAXException` stops the run at once (carried as
+`SaxResultSink.HandlerException`, which no `xsl:try` catches), thrown as it is natively and as cause of the
+`TransformerException` in JAXP. `getLastResult ()` has no principal tree for a `SAXResult` any more. Tests:
+`SaxResultTest` (events before the run ends, a handler exception, fallbacks, JAXP), the property
+`ResultDrainPropertyTest.testSaxMatchesTree` (2,000 generated stylesheets, same events as `XdmToSax.emit` of the tree),
+and the `-Dxslt30.writeTo=true` rerun, which now also compares the SAX events of every XSLT30 case. 2:
+`XsltCompileOptions.addFunctionContributor` and the factory attribute `ATTR_FUNCTION_CONTRIBUTOR` (a
+`Consumer <FunctionLibrary>`, set replaces, `null` removes); called after the global contributors for the stylesheet
+library (so `xsl:evaluate` sees them) and the library of the static expressions, and passed on to a nested
+`fn:transform`. Tests: `FunctionContributorTest`.
+
+1. **Streaming `SAXResult`.** `PhoxtrotTransformer._transformToSax` sets `setPrincipalTreeOnly (true)`, builds the
+   whole principal result tree and then emits it with `XdmToSax.emit`. Saxon's `SAXDestination` (and its JAXP
+   `SAXResult`) passes the events to the content handler while the result is produced. ph-schematron reads the SVRL
+   from these events straight into a JAXB `UnmarshallerHandler`, and checks validity with a content handler that only
+   looks for `svrl:failed-assert`; with the tree first, a large SVRL (failure-heavy documents, Peppol reports) is held
+   twice, as the XDM tree and as the JAXB objects. `StreamResult` is already written while it is built where the
+   output definition allows it.
+   Proposal: emit SAX events while the principal result is constructed when the result is a `SAXResult` (same
+   conditions as for `StreamResult`, falling back to the tree otherwise), optionally with a native counterpart on
+   `XsltTransformRequest` (a push destination taking a `ContentHandler` and `LexicalHandler`). A `SAXException` from
+   the handler should stop the transformation (today it can only surface after the transformation has finished).
+   Tests: SAX events arrive before the transformation ends (e.g. a handler that records the step count at the first
+   `startElement`); the event sequence is identical to the current `XdmToSax.emit` output for the existing
+   `SAXResult` tests; a handler exception stops the run and is reported as `TransformerException` with the cause.
+2. **Extension functions per factory or per compilation.** Functions can only be added globally
+   (`XsltExtensionRegistry.getInstance ().registerFunctions`); `PhoxtrotTransformerFactory` has no attribute for it and
+   `XsltCompileOptions` has no function library. Saxon registers extension functions per `Configuration`
+   (`Configuration.registerExtensionFunction`), so `pure-xslt` registers its three location functions
+   (`index-by-name`, `index-by-ns-name`, `fn-path` in `urn:com:helger:schematron:pure-xslt-functions:v1.0`) only on
+   its own `Processor`. On phoxtrot they become visible to every stylesheet of the JVM, and a caller cannot have two
+   factories with different functions.
+   Proposal: a `Consumer <FunctionLibrary>` (or a `FunctionLibrary` child) on `XsltCompileOptions`, and a factory
+   attribute (e.g. `ATTR_FUNCTION_CONTRIBUTOR`) that passes it on; contributed after the global ones, visible in
+   static expressions as in S49.
+   Tests: a function contributed on one factory is available in stylesheets of that factory (call and
+   `function-available`, also in `use-when`) and unknown (XPST0017) in stylesheets of another factory; a global
+   function stays available on both.

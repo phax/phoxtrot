@@ -39,6 +39,7 @@ import javax.xml.transform.stream.StreamSource;
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.InputSource;
+import org.xml.sax.SAXException;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.style.VisibleForTesting;
@@ -58,6 +59,7 @@ import com.helger.phoxtrot.xdm.XdmConstants;
 import com.helger.phoxtrot.xdm.XdmParseException;
 import com.helger.phoxtrot.xdm.XdmParser;
 import com.helger.phoxtrot.xdm.XdmQName;
+import com.helger.phoxtrot.xdm.bridge.XdmToSax;
 import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.conformance.QT3EngineEvaluator;
@@ -99,11 +101,16 @@ public final class XSLT30CaseRunner
   /**
    * <code>-Dxslt30.writeTo=true</code>: every transformation is run a second
    * time writing to a writer, which must give the same characters (or the
-   * same error code); a difference fails the case with "harness".
+   * same error code), and a third time passing the result to a SAX handler,
+   * which must get the events of the result tree (or the same error code,
+   * except for a serialization error, which the SAX run does not raise); a
+   * difference fails the case with "harness".
    */
   static final boolean WRITE_TO = Boolean.getBoolean ("xslt30.writeTo");
   /** The number of transformations compared by the writeTo check. */
   static final AtomicLong WRITE_TO_COMPARED = new AtomicLong (0);
+  /** The number of transformations compared by the SAX part of the writeTo check. */
+  static final AtomicLong WRITE_TO_SAX_COMPARED = new AtomicLong (0);
 
   /**
    * <code>-Dxslt30.jaxp=true</code>: every transformation whose shape JAXP
@@ -449,6 +456,83 @@ public final class XSLT30CaseRunner
     else
       if (!aSW.toString ().equals (sExpected))
         throw new HarnessException ("writeTo: different output: " + _cut (aSW.toString ()));
+  }
+
+  /**
+   * @param sCode
+   *        An error code.
+   * @return <code>true</code> for an error only the serialization raises (the
+   *         SE codes except SENR0001, which result tree construction raises
+   *         too).
+   */
+  private static boolean _isSerializationOnlyError (@NonNull final String sCode)
+  {
+    return sCode.startsWith ("SE") && !"SENR0001".equals (sCode);
+  }
+
+  /**
+   * Run the transformation again, passing the result to a SAX handler, and
+   * compare with the events of the result tree of the first run.
+   *
+   * @param aTree
+   *        The principal result tree of the first run, <code>null</code> if it
+   *        failed or built no tree.
+   * @param sExpectedCode
+   *        The error code of the first run, <code>null</code> if it succeeded.
+   */
+  private static void _compareSax (@NonNull final XsltExecutable aExecutable,
+                                   @NonNull final XsltTransformRequest aRequest,
+                                   @Nullable final IXdmNode aTree,
+                                   @Nullable final String sExpectedCode)
+  {
+    WRITE_TO_SAX_COMPARED.incrementAndGet ();
+    final SaxEventText aActual = new SaxEventText ();
+    String sCode = null;
+    boolean bNoTree = false;
+    try
+    {
+      aExecutable.transform (aRequest, aActual, aActual);
+    }
+    catch (final XPathException ex)
+    {
+      sCode = ex.getCode ();
+    }
+    catch (final IllegalStateException ex)
+    {
+      bNoTree = true;
+    }
+    catch (final SAXException ex)
+    {
+      throw new HarnessException ("writeTo SAX: the recording handler failed: " + ex.getMessage ());
+    }
+    if (sExpectedCode != null)
+    {
+      // A serialization error does not happen without serialization
+      if (!sExpectedCode.equals (sCode) && !(_isSerializationOnlyError (sExpectedCode) && sCode == null))
+        throw new HarnessException ("writeTo SAX: error " + sCode + " instead of " + sExpectedCode);
+      return;
+    }
+    if (sCode != null)
+      throw new HarnessException ("writeTo SAX: error " + sCode + " instead of none");
+    if (aTree == null)
+    {
+      if (!bNoTree)
+        throw new HarnessException ("writeTo SAX: events for a result without tree");
+      return;
+    }
+    if (bNoTree)
+      throw new HarnessException ("writeTo SAX: no tree for a result with tree");
+    final SaxEventText aExpected = new SaxEventText ();
+    try
+    {
+      XdmToSax.emit (aTree, aExpected, aExpected);
+    }
+    catch (final SAXException ex)
+    {
+      throw new HarnessException ("writeTo SAX: the recording handler failed: " + ex.getMessage ());
+    }
+    if (!aActual.toString ().equals (aExpected.toString ()))
+      throw new HarnessException ("writeTo SAX: different events: " + _cut (aActual.toString ()));
   }
 
   /** Ignores warnings and lets fatal errors be thrown by the adapter. */
@@ -991,13 +1075,19 @@ public final class XSLT30CaseRunner
     catch (final XPathException ex)
     {
       if (WRITE_TO)
+      {
         _compareWriteTo (aExecutable, aRequest, null, ex.getCode ());
+        _compareSax (aExecutable, aRequest, null, ex.getCode ());
+      }
       if (bJaxp)
         _compareJaxp (m_bBackwardsCompatible, sBaseUri, aSource, aStreamablePath, aRequest, aResolver, null, ex.getCode ());
       throw ex;
     }
     if (WRITE_TO && !aRequest.isRawDelivery ())
+    {
       _compareWriteTo (aExecutable, aRequest, aResult.principalSerialized (), null);
+      _compareSax (aExecutable, aRequest, aResult.principalTree (), null);
+    }
     if (bJaxp)
       _compareJaxp (m_bBackwardsCompatible,
                     sBaseUri,

@@ -22,6 +22,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.ext.LexicalHandler;
 
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
@@ -38,7 +40,8 @@ import com.helger.phoxtrot.xpath.value.XdmMap;
 /**
  * Writes the principal result tree while it is built and releases every part
  * that can no longer change, so that the memory used does not grow with the
- * size of the result.
+ * size of the result. The parts go to a serializer or, for a SAX result, to a
+ * content handler ({@link IResultDrainSink}).
  * <p>
  * The engine builds elements bottom-up: an instruction creates the element,
  * fills it through its own {@link ContentOutput} and appends it to the
@@ -81,8 +84,45 @@ public final class ResultDrain
     }
   }
 
+  /** Writes through the incremental serializer. */
+  @NotThreadSafe
+  private static final class SerializerSink implements IResultDrainSink
+  {
+    private final XdmIncrementalSerializer m_aSerializer;
+
+    SerializerSink (@NonNull final XdmIncrementalSerializer aSerializer)
+    {
+      m_aSerializer = aSerializer;
+    }
+
+    public void writeNode (@NonNull final IXdmNode aNode)
+    {
+      m_aSerializer.writeNode (aNode);
+    }
+
+    public void startElement (@NonNull final IXdmNode aElement)
+    {
+      m_aSerializer.startElement (aElement);
+    }
+
+    public void endElement ()
+    {
+      m_aSerializer.endElement ();
+    }
+
+    public void finish ()
+    {
+      m_aSerializer.finish ();
+    }
+
+    public void flush ()
+    {
+      m_aSerializer.flush ();
+    }
+  }
+
   private final SerializationParams m_aParams;
-  private final XdmIncrementalSerializer m_aSerializer;
+  private final IResultDrainSink m_aSink;
   private final boolean m_bText;
   private final boolean m_bHtml;
   private final ContentOutput m_aDocument;
@@ -91,26 +131,66 @@ public final class ResultDrain
   private Level m_aClosing;
   private XPathException m_aError;
 
+  private ResultDrain (@Nullable final SerializationParams aParams,
+                       @NonNull final IResultDrainSink aSink,
+                       @Nullable final String sBaseUri)
+  {
+    m_aParams = aParams;
+    m_aSink = aSink;
+    m_bText = aParams != null && SerializationParams.METHOD_TEXT.equals (aParams.getMethod ());
+    m_bHtml = aParams != null && SerializationParams.METHOD_HTML.equals (aParams.getMethod ());
+    final IXdmNode aDocument = IXdmNode.createDocument ();
+    if (sBaseUri != null)
+      aDocument.setBaseUri (sBaseUri);
+    m_aDocument = new ContentOutput (aDocument, this);
+    final Level aDocLevel = new Level (m_aDocument);
+    aDocLevel.m_bCommitted = true;
+    m_aLevels.add (aDocLevel);
+    DRAINED_RUNS.incrementAndGet ();
+  }
+
   /**
+   * Create a drain that serializes the result.
+   *
    * @param aParams
    *        The serialization parameters, supported by
    *        {@link XdmIncrementalSerializer#isSupported(SerializationParams)}.
    * @param aWriter
    *        The target.
+   * @return The drain.
    * @throws XPathException
    *         for invalid serialization parameters
    */
-  ResultDrain (@NonNull final SerializationParams aParams, @NonNull final Writer aWriter)
+  @NonNull
+  static ResultDrain createSerializing (@NonNull final SerializationParams aParams, @NonNull final Writer aWriter)
   {
-    m_aParams = aParams;
-    m_aSerializer = new XdmIncrementalSerializer (aParams, aWriter);
-    m_bText = SerializationParams.METHOD_TEXT.equals (aParams.getMethod ());
-    m_bHtml = SerializationParams.METHOD_HTML.equals (aParams.getMethod ());
-    m_aDocument = new ContentOutput (IXdmNode.createDocument (), this);
-    final Level aDocLevel = new Level (m_aDocument);
-    aDocLevel.m_bCommitted = true;
-    m_aLevels.add (aDocLevel);
-    DRAINED_RUNS.incrementAndGet ();
+    return new ResultDrain (aParams, new SerializerSink (new XdmIncrementalSerializer (aParams, aWriter)), null);
+  }
+
+  /**
+   * Create a drain that passes the result to a SAX content handler, with the
+   * events {@link com.helger.phoxtrot.xdm.bridge.XdmToSax} gives for the
+   * complete result tree: the namespace fixup runs as for the xml method, the
+   * serialization checks do not (no serialization happens). The document is
+   * started at once.
+   *
+   * @param aHandler
+   *        The content handler.
+   * @param aLexicalHandler
+   *        The receiver of comments, may be <code>null</code>.
+   * @param sBaseUri
+   *        The base URI of the result tree (the system ID of the locator), may
+   *        be <code>null</code>.
+   * @return The drain.
+   * @throws SaxResultSink.HandlerException
+   *         if the handler fails
+   */
+  @NonNull
+  static ResultDrain createSax (@NonNull final ContentHandler aHandler,
+                                @Nullable final LexicalHandler aLexicalHandler,
+                                @Nullable final String sBaseUri)
+  {
+    return new ResultDrain (null, new SaxResultSink (aHandler, aLexicalHandler, sBaseUri), sBaseUri);
   }
 
   /**
@@ -169,7 +249,7 @@ public final class ResultDrain
         NamespaceFixup.fixNamespaces (aNode);
       if (m_bHtml)
         SerializationChecks.checkHtmlContent (m_aParams, aNode, true);
-      m_aSerializer.writeNode (aNode);
+      m_aSink.writeNode (aNode);
     }
     catch (final XPathException ex)
     {
@@ -201,7 +281,7 @@ public final class ResultDrain
         NamespaceFixup.fixElement (aElement);
       if (m_bHtml)
         SerializationChecks.checkHtmlContent (m_aParams, aElement, false);
-      m_aSerializer.startElement (aElement);
+      m_aSink.startElement (aElement);
     }
     catch (final XPathException ex)
     {
@@ -219,7 +299,7 @@ public final class ResultDrain
       return;
     try
     {
-      m_aSerializer.endElement ();
+      m_aSink.endElement ();
     }
     catch (final XPathException ex)
     {
@@ -355,7 +435,7 @@ public final class ResultDrain
       flushQuietly ();
       throw m_aError;
     }
-    m_aSerializer.finish ();
+    m_aSink.finish ();
   }
 
   /** Write what was serialized so far, after an error. */
@@ -363,7 +443,7 @@ public final class ResultDrain
   {
     try
     {
-      m_aSerializer.flush ();
+      m_aSink.flush ();
     }
     catch (final UncheckedIOException ex)
     {

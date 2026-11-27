@@ -16,6 +16,7 @@
  */
 package com.helger.phoxtrot.xslt.jaxp;
 
+import java.util.function.Consumer;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +51,7 @@ import com.helger.phoxtrot.xdm.XdmParser;
 import com.helger.phoxtrot.xpath.EThreading;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.fn.FnUri;
+import com.helger.phoxtrot.xpath.fn.FunctionLibrary;
 import com.helger.phoxtrot.xslt.IXsltMessageListener;
 import com.helger.phoxtrot.xslt.IXsltTraceListener;
 import com.helger.phoxtrot.xslt.XsltCompileOptions;
@@ -115,7 +117,8 @@ import com.helger.phoxtrot.xslt.XsltExecutable;
  * {@link #ATTR_LOAD_EXTERNAL_ENTITIES}, {@link #ATTR_ENTITY_RESOLVER},
  * {@link #ATTR_SCHEMA_AWARE}, {@link #ATTR_BACKWARDS_COMPATIBLE},
  * {@link #ATTR_MESSAGE_LISTENER}, {@link #ATTR_TRACE_LISTENER},
- * {@link #ATTR_MAX_STEPS}, {@link #ATTR_MAX_DEPTH} and {@link #ATTR_THREADING}. Other names are
+ * {@link #ATTR_MAX_STEPS}, {@link #ATTR_MAX_DEPTH}, {@link #ATTR_THREADING} and
+ * {@link #ATTR_FUNCTION_CONTRIBUTOR}. Other names are
  * rejected.</li>
  * </ul>
  *
@@ -203,6 +206,17 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
    */
   public static final String ATTR_THREADING = ATTR_PREFIX + "threading";
   /**
+   * Attribute (a {@link Consumer} of {@link FunctionLibrary} or
+   * <code>null</code>): registers extension functions for the stylesheets
+   * compiled by this factory only (default <code>null</code>, see
+   * {@link XsltCompileOptions#addFunctionContributor(Consumer)}). The
+   * functions registered globally through
+   * {@link com.helger.phoxtrot.xslt.compile.XsltExtensionRegistry#registerFunctions(Consumer)}
+   * stay available as well. Setting the attribute replaces the previous
+   * contributor; combine several with {@link Consumer#andThen(Consumer)}.
+   */
+  public static final String ATTR_FUNCTION_CONTRIBUTOR = ATTR_PREFIX + "function-contributor";
+  /**
    * The default of {@link XMLConstants#FEATURE_SECURE_PROCESSING}: on.
    */
   public static final boolean DEFAULT_SECURE_PROCESSING = true;
@@ -244,6 +258,7 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
   private long m_nMaxSteps = 0;
   private int m_nMaxDepth = 0;
   private EThreading m_eThreading = EThreading.DEFAULT;
+  private Consumer <FunctionLibrary> m_aFunctionContributor;
 
   /** Create a factory with the default settings. */
   public PhoxtrotTransformerFactory ()
@@ -320,6 +335,8 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
                                                                  // As Saxon: no xsl:result-document with href
                                                                  .setSecondaryResultsAllowed (!m_bSecureProcessing)
                                                                  .setThreading (m_eThreading);
+    if (m_aFunctionContributor != null)
+      aOptions.addFunctionContributor (m_aFunctionContributor);
     final XsltExecutable aExecutable;
     try
     {
@@ -671,6 +688,16 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
       case ATTR_THREADING:
         m_eThreading = _toThreading (sName, aValue);
         break;
+      case ATTR_FUNCTION_CONTRIBUTOR:
+      {
+        if (aValue != null && !(aValue instanceof Consumer))
+          throw new IllegalArgumentException ("The attribute '" + sName + "' needs a Consumer <FunctionLibrary>");
+        // The type argument cannot be checked; a wrong one fails at the first compilation
+        @SuppressWarnings ("unchecked")
+        final Consumer <FunctionLibrary> aContributor = (Consumer <FunctionLibrary>) aValue;
+        m_aFunctionContributor = aContributor;
+        break;
+      }
       default:
         throw new IllegalArgumentException ("The attribute '" + sName + "' is not supported");
     }
@@ -699,6 +726,7 @@ public class PhoxtrotTransformerFactory extends TransformerFactory
       case ATTR_MAX_STEPS -> Long.valueOf (m_nMaxSteps);
       case ATTR_MAX_DEPTH -> Integer.valueOf (m_nMaxDepth);
       case ATTR_THREADING -> m_eThreading;
+      case ATTR_FUNCTION_CONTRIBUTOR -> m_aFunctionContributor;
       default -> throw new IllegalArgumentException ("The attribute '" + sName + "' is not supported");
     };
   }

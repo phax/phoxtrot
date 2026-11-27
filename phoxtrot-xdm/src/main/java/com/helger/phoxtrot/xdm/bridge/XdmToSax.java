@@ -16,29 +16,17 @@
  */
 package com.helger.phoxtrot.xdm.bridge;
 
-import java.util.ArrayDeque;
-import java.util.Map;
-
-import javax.xml.XMLConstants;
-
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
 import org.xml.sax.ContentHandler;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
-import org.xml.sax.helpers.AttributesImpl;
-import org.xml.sax.helpers.LocatorImpl;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.style.PresentForCodeCoverage;
 import com.helger.base.enforce.ValueEnforcer;
-import com.helger.collection.commons.CommonsArrayList;
-import com.helger.collection.commons.CommonsLinkedHashMap;
-import com.helger.collection.commons.ICommonsList;
-import com.helger.collection.commons.ICommonsOrderedMap;
 import com.helger.phoxtrot.xdm.ENodeKind;
 import com.helger.phoxtrot.xdm.IXdmNode;
-import com.helger.phoxtrot.xdm.XdmQName;
 
 /**
  * Writes an XDM tree as namespace-aware SAX events, wrapped in
@@ -70,89 +58,6 @@ public final class XdmToSax
   private XdmToSax ()
   {}
 
-  /** One step of the walk: a node to open, or (with close) an element to close. */
-  @Immutable
-  private record Step (@NonNull IXdmNode node, boolean close, @Nullable ICommonsList <String> prefixes)
-  {}
-
-  @NonNull
-  private static String _getSaxType (@NonNull final IXdmNode aAttr)
-  {
-    return switch (aAttr.getIDKind ())
-    {
-      case ID -> "ID";
-      case IDREF -> "IDREF";
-      case IDREFS -> "IDREFS";
-      default -> "CDATA";
-    };
-  }
-
-  /**
-   * Report the start of an element: the prefix mappings it declares and needs, then the start tag,
-   * and open a scope frame.
-   *
-   * @return The prefixes mapped, for the end of the element.
-   */
-  @NonNull
-  private static ICommonsList <String> _startElement (@NonNull final IXdmNode aElement,
-                                                      final boolean bOutermost,
-                                                      @NonNull final NamespaceScope aScope,
-                                                      @NonNull final ContentHandler aHandler) throws SAXException
-  {
-    final ICommonsOrderedMap <String, String> aDecls = new CommonsLinkedHashMap <> ();
-    aScope.pushFrame ();
-    if (bOutermost)
-      aDecls.putAll (aElement.getInScopeNamespaces ());
-    else
-      if (aElement.hasDeclaredNamespaces ())
-      {
-        // Declarations that repeat the binding in scope are not reported
-        for (final Map.Entry <String, String> aEntry : aElement.declaredNamespaces ().entrySet ())
-          if (!aScope.isBoundTo (aEntry.getKey (), aEntry.getValue ()))
-            aDecls.put (aEntry.getKey (), aEntry.getValue ());
-      }
-    aDecls.remove (XMLConstants.XML_NS_PREFIX);
-    for (final Map.Entry <String, String> aEntry : aDecls.entrySet ())
-      aScope.bind (aEntry.getKey (), aEntry.getValue ());
-
-    final XdmQName aName = aElement.getName ();
-    if (!XMLConstants.XML_NS_PREFIX.equals (aName.prefix ()) &&
-        !aScope.isBoundTo (aName.prefix (), aName.namespaceUri ()))
-    {
-      aDecls.put (aName.prefix (), aName.namespaceUri ());
-      aScope.bind (aName.prefix (), aName.namespaceUri ());
-    }
-
-    final AttributesImpl aAttrs = new AttributesImpl ();
-    for (int i = 0; i < aElement.getAttributeCount (); ++i)
-    {
-      final IXdmNode aAttr = aElement.getAttributeAtIndex (i);
-      final XdmQName aAttrName = aAttr.getName ();
-      String sQName = aAttrName.getLexicalName ();
-      if (aAttrName.hasNamespace () &&
-          !XMLConstants.XML_NS_PREFIX.equals (aAttrName.prefix ()) &&
-          (!aAttrName.hasPrefix () || !aScope.isBoundTo (aAttrName.prefix (), aAttrName.namespaceUri ())))
-      {
-        String sPrefix = aAttrName.prefix ();
-        if (sPrefix.isEmpty () || aScope.lookup (sPrefix) != null)
-          sPrefix = aScope.createPrefix (aDecls);
-        aDecls.put (sPrefix, aAttrName.namespaceUri ());
-        aScope.bind (sPrefix, aAttrName.namespaceUri ());
-        sQName = sPrefix + ":" + aAttrName.localName ();
-      }
-      aAttrs.addAttribute (aAttrName.namespaceUri (),
-                           aAttrName.localName (),
-                           sQName,
-                           _getSaxType (aAttr),
-                           aAttr.getValue ());
-    }
-
-    for (final Map.Entry <String, String> aEntry : aDecls.entrySet ())
-      aHandler.startPrefixMapping (aEntry.getKey (), aEntry.getValue ());
-    aHandler.startElement (aName.namespaceUri (), aName.localName (), aName.getLexicalName (), aAttrs);
-    return new CommonsArrayList <> (aDecls.keySet ());
-  }
-
   /**
    * Write an XDM node as a SAX document.
    *
@@ -177,66 +82,9 @@ public final class XdmToSax
     if (aNode.isAttribute () || aNode.getKind () == ENodeKind.NAMESPACE)
       throw new IllegalArgumentException ("An attribute or namespace node cannot be written as a SAX document");
     final IXdmNode aRoot = aNode.getRoot ();
-    final LocatorImpl aLocator = new LocatorImpl ();
-    aLocator.setSystemId (aRoot.getDocumentUri () != null ? aRoot.getDocumentUri () : aRoot.getBaseUri ());
-    aHandler.setDocumentLocator (aLocator);
-    aHandler.startDocument ();
-    final NamespaceScope aScope = new NamespaceScope (null);
-    final ArrayDeque <Step> aStack = new ArrayDeque <> ();
-    if (aNode.isDocument ())
-    {
-      for (int i = aNode.getChildCount () - 1; i >= 0; --i)
-        aStack.push (new Step (aNode.getChildAtIndex (i), false, null));
-    }
-    else
-      aStack.push (new Step (aNode, false, null));
-
-    int nOpen = 0;
-    while (!aStack.isEmpty ())
-    {
-      final Step aStep = aStack.pop ();
-      final IXdmNode aCur = aStep.node ();
-      if (aStep.close ())
-      {
-        final XdmQName aName = aCur.getName ();
-        aHandler.endElement (aName.namespaceUri (), aName.localName (), aName.getLexicalName ());
-        for (final String sPrefix : aStep.prefixes ())
-          aHandler.endPrefixMapping (sPrefix);
-        aScope.popFrame ();
-        nOpen--;
-        continue;
-      }
-      switch (aCur.getKind ())
-      {
-        case ELEMENT:
-        {
-          final ICommonsList <String> aPrefixes = _startElement (aCur, nOpen == 0, aScope, aHandler);
-          nOpen++;
-          aStack.push (new Step (aCur, true, aPrefixes));
-          for (int i = aCur.getChildCount () - 1; i >= 0; --i)
-            aStack.push (new Step (aCur.getChildAtIndex (i), false, null));
-          break;
-        }
-        case TEXT:
-        {
-          final char [] aChars = aCur.getValue ().toCharArray ();
-          aHandler.characters (aChars, 0, aChars.length);
-          break;
-        }
-        case COMMENT:
-          if (aLexicalHandler != null)
-          {
-            final char [] aChars = aCur.getValue ().toCharArray ();
-            aLexicalHandler.comment (aChars, 0, aChars.length);
-          }
-          break;
-        case PROCESSING_INSTRUCTION:
-          aHandler.processingInstruction (aCur.getName ().localName (), aCur.getValue ());
-          break;
-        default:
-          break;
-      }
-    }
-    aHandler.endDocument ();
+    final XdmSaxWriter aWriter = new XdmSaxWriter (aHandler, aLexicalHandler);
+    aWriter.startDocument (aRoot.getDocumentUri () != null ? aRoot.getDocumentUri () : aRoot.getBaseUri ());
+    aWriter.writeNode (aNode);
+    aWriter.endDocument ();
   }
 }

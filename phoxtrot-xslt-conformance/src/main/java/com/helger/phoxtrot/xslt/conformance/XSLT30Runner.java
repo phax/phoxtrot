@@ -212,7 +212,9 @@ public final class XSLT30Runner
                           XSLT30CaseRunner.WRITE_TO_COMPARED.get () +
                           " runs compared, " +
                           ResultDrain.getDrainedRunCount () +
-                          " written while built");
+                          " written while built, " +
+                          XSLT30CaseRunner.WRITE_TO_SAX_COMPARED.get () +
+                          " SAX runs compared");
     if (XSLT30CaseRunner.JAXP)
       System.out.println ("jaxp: " + XSLT30CaseRunner.JAXP_COMPARED.get () + " runs compared");
     ret.writeFiles (m_aSettings.outDir ());

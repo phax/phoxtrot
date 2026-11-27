@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xslt.compile;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -116,7 +117,8 @@ public final class StylesheetLoader
    * Create a loader. The function library for static expressions is a child
    * of the shared default library with the XSLT functions allowed in static expressions,
    * the extension functions registered by the user through
-   * {@link XsltExtensionRegistry#registerFunctions(java.util.function.Consumer)}, and the system-property function of the claims of the options (streaming,
+   * {@link XsltExtensionRegistry#registerFunctions(java.util.function.Consumer)} and through
+   * {@link XsltCompileOptions#addFunctionContributor(java.util.function.Consumer)}, and the system-property function of the claims of the options (streaming,
    * backwards compatibility).
    *
    * @param aOptions
@@ -131,6 +133,8 @@ public final class StylesheetLoader
     // The extension functions of the user are visible to function-available in static expressions,
     // as at run time (they may also be called there)
     XsltExtensionRegistry.getInstance ().contributeUserFunctions (m_aStaticFunctions);
+    for (final Consumer <FunctionLibrary> aContributor : aOptions.functionContributors ())
+      aContributor.accept (m_aStaticFunctions);
     XsltFunctions.registerClaims (m_aStaticFunctions, aOptions.isStreamingClaim (), aOptions.isBackwardsCompatibleClaim ());
   }
 

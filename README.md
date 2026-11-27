@@ -170,7 +170,14 @@ aTransformer.transform (new DOMSource (aDoc), new DOMResult ());
 
 * Sources: `StreamSource`, `DOMSource`, `SAXSource` (with or without `XMLReader`) and `XdmSource` (a phoxtrot tree);
   results: `StreamResult` (writer, stream or `file:` system ID; written while it is built where the output
-  definition allows it), `DOMResult` and `SAXResult`. `newTransformer ()` is the identity transformer.
+  definition allows it), `DOMResult` and `SAXResult` (passed to the handler while it is built where the stylesheet
+  allows it: not schema-aware, no `xsl:result-document`, a tree is built; an exception of the handler stops the
+  transformation). `newTransformer ()` is the identity transformer. Natively: `XsltExecutable.transform (request,
+  OutputStream|Writer)` and `transform (request, ContentHandler, LexicalHandler)`.
+* Extension functions for the stylesheets of one factory only: the factory attribute
+  `PhoxtrotTransformerFactory.ATTR_FUNCTION_CONTRIBUTOR` (a `Consumer <FunctionLibrary>`; natively
+  `XsltCompileOptions.addFunctionContributor`), visible in calls, `function-available`, `use-when` and nested
+  `fn:transform`; `XsltExtensionRegistry.registerFunctions` registers for every stylesheet of the JVM.
 * Parameters: `String` becomes `xs:untypedAtomic` (so `as="xs:integer"` accepts "42"), numbers, `Boolean`, `URI`,
   `QName`, DOM nodes, phoxtrot items and sequences, arrays and collections (as sequences). Names `{uri}local`.
 * Output properties: the `OutputKeys` and the other XSLT 3.0 serialization attributes except `use-character-maps`
@@ -223,7 +230,7 @@ aTransformer.transform (new DOMSource (aDoc), new DOMResult ());
 and `DomToXdm.convert` returns the counterpart of a given DOM node in it; `DomToXdm.convertWithMapping` also keeps
 the way back from every XDM node to its DOM node (`DomNodeMapping.getDomNode`); `XdmToDom.toDocument`,
 `toDocumentFragment` and `appendTo` write a tree, a subtree or a parentless node into a DOM with correct namespace
-declarations; `XdmToSax.emit` writes a tree as SAX events. `XdmDomView` shows a tree as a read-only DOM without
+declarations; `XdmToSax.emit` writes a tree as SAX events, `XdmSaxWriter` the same events piece by piece. `XdmDomView` shows a tree as a read-only DOM without
 copying it (`new XdmDomView (aDoc).getNode (aXdmNode)`, one DOM node per XDM node, `XdmDomView.getXdmNode` back), e.g.
 to report a node an XPath expression matched to code that expects `org.w3c.dom` nodes.
 
@@ -355,6 +362,21 @@ v0.5.0 - work in progress
   `generate-id() = generate-id(key('k', @a)[1])`) compares the nodes instead of creating both identifiers
 * `key()` with one value returns the nodes kept in the key index without copying and sorting them per call:
   `key('k', @a)[1]` for every node of a group took time proportional to the square of the group size
+* JAXP: a `SAXResult` gets the events while the result is built where the stylesheet allows it (not schema-aware, no
+  `xsl:result-document`, a tree is built), so that a large result is not held as a tree first; an exception of the
+  handler stops the transformation at once (before, it came after the whole result was built). The events are those
+  of the complete tree, as before. Behaviour change: `PhoxtrotTransformer.getLastResult ()` no longer has the
+  principal result tree and raw sequence for a `SAXResult` (as for a `StreamResult`)
+* New `XsltExecutable.transform (XsltTransformRequest, ContentHandler, LexicalHandler)`: the principal result tree to
+  SAX handlers, while it is built where the stylesheet allows it; a handler's `SAXException` is thrown as it is
+* New `XdmSaxWriter` (`phoxtrot-xdm`, package `bridge`): writes the SAX events of `XdmToSax.emit` piece by piece
+  (complete nodes, start and end tags of elements whose content follows); `XdmToSax.emit` uses it
+* Extension functions per compilation: new `XsltCompileOptions.addFunctionContributor`/`functionContributors` and the
+  JAXP factory attribute `PhoxtrotTransformerFactory.ATTR_FUNCTION_CONTRIBUTOR`; the functions are visible to the
+  stylesheets of these options or that factory only (calls, `function-available`, `use-when`, static variables,
+  `xsl:evaluate`, nested `fn:transform`), after the globally registered ones
+* The XSLT30 harness rerun `-Dxslt30.writeTo=true` also passes every result to a SAX handler and compares the events
+  with those of the result tree
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

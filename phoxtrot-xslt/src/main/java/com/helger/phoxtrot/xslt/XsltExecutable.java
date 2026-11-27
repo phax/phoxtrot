@@ -21,6 +21,9 @@ import java.io.Writer;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.ext.LexicalHandler;
 
 import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 import com.helger.phoxtrot.xpath.context.StaticContext;
@@ -109,6 +112,48 @@ public interface XsltExecutable
   default XsltTransformResult transform (@NonNull final XsltTransformRequest aRequest, @NonNull final Writer aWriter)
   {
     throw new UnsupportedOperationException ("Writing to a writer is not supported by " + getClass ().getName ());
+  }
+
+  /**
+   * Transform and pass the principal result tree to SAX handlers instead of
+   * returning it, with the events of
+   * {@link com.helger.phoxtrot.xdm.bridge.XdmToSax#emit(com.helger.phoxtrot.xdm.IXdmNode, ContentHandler, LexicalHandler)}
+   * for the tree. Where the stylesheet allows it (not schema-aware, no
+   * xsl:result-document in the stylesheet, an unnamed xsl:output that builds
+   * a tree), the events are passed on while the result is built, so that it
+   * never exists as a whole; otherwise the tree is built in full and then
+   * passed on. The events are the same either way. A {@link SAXException} of
+   * a handler stops the transformation at once.
+   *
+   * @param aRequest
+   *        How to invoke the stylesheet. Raw delivery does not apply. Its base
+   *        output URI is the system ID of the locator.
+   * @param aHandler
+   *        The receiver of the content events. May not be <code>null</code>.
+   * @param aLexicalHandler
+   *        The receiver of comments, may be <code>null</code> to drop them.
+   * @return The results, with an empty principal result, no principal tree
+   *         and an empty serialized form; the secondary results and messages
+   *         as with {@link #transform(XsltTransformRequest)}.
+   * @throws SAXException
+   *         from a handler, as it was thrown
+   * @throws XsltException
+   *         for dynamic errors (and XPath errors wrapped with their code),
+   *         carrying the messages produced until then. Part of the result may
+   *         have been passed on then.
+   * @throws IllegalStateException
+   *         if the principal result is no tree (build-tree is "no", or the
+   *         method is json or adaptive)
+   * @throws UnsupportedOperationException
+   *         if this implementation does not support it
+   */
+  @NonNull
+  default XsltTransformResult transform (@NonNull final XsltTransformRequest aRequest,
+                                         @NonNull final ContentHandler aHandler,
+                                         @Nullable final LexicalHandler aLexicalHandler) throws SAXException
+  {
+    throw new UnsupportedOperationException ("Passing the result to SAX handlers is not supported by " +
+                                             getClass ().getName ());
   }
 
   /**

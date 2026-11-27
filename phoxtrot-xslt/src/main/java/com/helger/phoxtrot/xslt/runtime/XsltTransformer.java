@@ -23,7 +23,11 @@ import java.util.Objects;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
+import org.xml.sax.ContentHandler;
+import org.xml.sax.SAXException;
+import org.xml.sax.ext.LexicalHandler;
 
+import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsHashMap;
@@ -35,6 +39,7 @@ import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmParseException;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.XdmStreamReader;
+import com.helger.phoxtrot.xdm.bridge.XdmToSax;
 import com.helger.phoxtrot.xpath.LargeStackRunner;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.context.ResourceUri;
@@ -77,6 +82,12 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
  * ({@link XdmIncrementalSerializer#isSupported(SerializationParams)}).
  * Otherwise the tree is built in full and then written, with the same
  * characters as the returned string.
+ * <p>
+ * The principal result tree can also be passed to a SAX content handler. It is
+ * then passed on while it is built under the same conditions, except that the
+ * method and the serialization parameters do not matter (only that a tree is
+ * built); otherwise the tree is built in full and then passed on. The events
+ * are the same either way.
  *
  * @author Philip Helger
  */
@@ -86,8 +97,15 @@ public final class XsltTransformer
   private static final XdmQName INITIAL_TEMPLATE = new XdmQName (XsltNames.NS_XSL, "initial-template");
   private static final String NS_XHTML = "http://www.w3.org/1999/xhtml";
 
+  /** The SAX handlers the principal result tree goes to. */
+  @Immutable
+  private record SaxTarget (@NonNull ContentHandler handler, @Nullable LexicalHandler lexicalHandler)
+  {}
+
   private final CompiledStylesheet m_aSheet;
   private final XsltTransformRequest m_aRequest;
+  // The SAX handlers of a run started by runTo (ContentHandler, LexicalHandler)
+  private SaxTarget m_aSaxTarget;
   // The drain of the current run, if its result is written while it is built
   private ResultDrain m_aDrain;
   // The engine of the current run, for the messages of a failed run
@@ -655,7 +673,32 @@ public final class XsltTransformer
       // Raised by the serialization after the run, as without a drain
       return null;
     }
-    return new ResultDrain (aParams, aTarget.open (aParams));
+    return ResultDrain.createSerializing (aParams, aTarget.open (aParams));
+  }
+
+  /**
+   * Create the drain for the SAX target when the principal result tree can be
+   * passed on while it is built: not schema-aware, no xsl:result-document
+   * anywhere and an output definition that builds a tree (for the xml method
+   * if it states none). Unlike {@link #_createDrain(ResultTarget)} neither the
+   * method nor the serialization parameters matter: no serialization happens.
+   *
+   * @return The drain, which has started the document already, or
+   *         <code>null</code> if the tree must be built in full first.
+   * @throws SaxResultSink.HandlerException
+   *         if the handler fails at the start of the document
+   */
+  @Nullable
+  private ResultDrain _createSaxDrain ()
+  {
+    // Schema-aware: validation may change or check a tree after it was built
+    if (m_aSheet.isSchemaAware () || m_aSheet.hasResultDocument ())
+      return null;
+    final OutputDefinition aOutputDef = _withOverrides (m_aSheet.getOutput ());
+    final String sMethod = aOutputDef.getMethod ();
+    if (!aOutputDef.isBuildTree (sMethod != null ? sMethod : SerializationParams.METHOD_XML))
+      return null;
+    return ResultDrain.createSax (m_aSaxTarget.handler (), m_aSaxTarget.lexicalHandler (), m_aRequest.getBaseOutputUri ());
   }
 
   /**
@@ -770,7 +813,10 @@ public final class XsltTransformer
     XsltContext aCtx = aEngine.createRootContext ();
     if (aGlobalItem != null)
       aCtx = aCtx.withFocus (aGlobalItem, 1, 1);
-    m_aDrain = aTarget != null ? _createDrain (aTarget) : null;
+    if (aTarget != null)
+      m_aDrain = _createDrain (aTarget);
+    else
+      m_aDrain = m_aSaxTarget != null ? _createSaxDrain () : null;
     final BufferedOutput aBuffer = m_aDrain == null ? new BufferedOutput () : null;
     final IXsltOutput aPrincipal = m_aDrain != null ? m_aDrain.getOutput () : aBuffer;
     aEngine.setPrincipalOutput (aPrincipal);
@@ -864,7 +910,7 @@ public final class XsltTransformer
                                                                                                         : m_aSheet.getOutput ());
     final String sDeclaredMethod = aOutputDef.getMethod ();
     // Raw delivery does not apply when the result is written to a target
-    final boolean bRawOnly = aTarget == null && m_aRequest.isRawDelivery ();
+    final boolean bRawOnly = aTarget == null && m_aSaxTarget == null && m_aRequest.isRawDelivery ();
     final boolean bBuildTree = !bRawOnly &&
                                aOutputDef.isBuildTree (sDeclaredMethod != null ? sDeclaredMethod : SerializationParams.METHOD_XML);
     final XdmSequence aRaw;
@@ -906,7 +952,28 @@ public final class XsltTransformer
                                       aEngine.getMessageTexts (),
                                       sMethod,
                                       false);
-    // Shortcut: a caller that only uses the tree (a DOM or SAX result) gets no
+    if (m_aSaxTarget != null)
+    {
+      // The complete tree goes to the handlers, with the events of the drain
+      if (aTree == null)
+        throw new IllegalStateException ("The principal result is no tree (build-tree is \"no\" or the method is json or adaptive)");
+      try
+      {
+        XdmToSax.emit (aTree, m_aSaxTarget.handler (), m_aSaxTarget.lexicalHandler ());
+      }
+      catch (final SAXException ex)
+      {
+        throw new SaxResultSink.HandlerException (ex);
+      }
+      return new XsltTransformResult (XdmSequence.EMPTY,
+                                      null,
+                                      "",
+                                      aEngine.getSecondaryResults ().getClone (),
+                                      aEngine.getMessageTexts (),
+                                      sMethod,
+                                      false);
+    }
+    // Shortcut: a caller that only uses the tree (a DOM result) gets no
     // serialization it would never read
     if (aTarget == null && m_aRequest.isPrincipalTreeOnly ())
       return new XsltTransformResult (aRaw,
@@ -1043,6 +1110,48 @@ public final class XsltTransformer
           throw ex;
         }
       }, "phoxtrot-transform", m_aRequest.getThreading ());
+    }
+    catch (final XPathException ex)
+    {
+      throw _withMessages (ex);
+    }
+  }
+
+  /**
+   * Run the transformation on the thread the request selects and pass the
+   * principal result tree to SAX handlers (see the class description for when
+   * it is passed on while it is built). A {@link SAXException} of a handler
+   * stops the transformation at once and is thrown as it is.
+   *
+   * @param aHandler
+   *        The receiver of the content events.
+   * @param aLexicalHandler
+   *        The receiver of comments, may be <code>null</code> to drop them.
+   * @return The result, with an empty principal result, no principal tree and
+   *         an empty serialized form; the secondary results and messages as
+   *         with {@link #run()}.
+   * @throws SAXException
+   *         from a handler
+   * @throws XsltException
+   *         for dynamic errors (an XPath error is wrapped with its code), with
+   *         the messages produced until then; part of the result may have been
+   *         passed on then
+   * @throws IllegalStateException
+   *         if the principal result is no tree (build-tree is "no", or the
+   *         method is json or adaptive)
+   */
+  @NonNull
+  public XsltTransformResult runTo (@NonNull final ContentHandler aHandler,
+                                    @Nullable final LexicalHandler aLexicalHandler) throws SAXException
+  {
+    m_aSaxTarget = new SaxTarget (aHandler, aLexicalHandler);
+    try
+    {
+      return LargeStackRunner.run ( () -> _runTraced (null), "phoxtrot-transform", m_aRequest.getThreading ());
+    }
+    catch (final SaxResultSink.HandlerException ex)
+    {
+      throw ex.getSAXException ();
     }
     catch (final XPathException ex)
     {

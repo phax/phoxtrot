@@ -43,6 +43,7 @@ import org.jspecify.annotations.Nullable;
 import org.w3c.dom.Document;
 import org.w3c.dom.DOMException;
 import org.w3c.dom.Node;
+import org.xml.sax.ContentHandler;
 import org.xml.sax.EntityResolver;
 import org.xml.sax.SAXException;
 import org.xml.sax.ext.LexicalHandler;
@@ -56,7 +57,6 @@ import com.helger.collection.commons.ICommonsOrderedMap;
 import com.helger.phoxtrot.xdm.IXdmNode;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xdm.bridge.XdmToDom;
-import com.helger.phoxtrot.xdm.bridge.XdmToSax;
 import com.helger.phoxtrot.xpath.EThreading;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
@@ -85,8 +85,11 @@ import com.helger.phoxtrot.xslt.XsltTransformResult;
  * {@link com.helger.phoxtrot.xslt.XsltExecutable#transform(XsltTransformRequest, OutputStream)}),
  * {@link DOMResult} (into the given node, or a new document) and
  * {@link SAXResult} (the content handler, and the lexical handler if given or
- * implemented by the content handler). The system ID of the result is the
- * base output URI.</li>
+ * implemented by the content handler; the events are passed on while the
+ * result is built where the stylesheet allows it, see
+ * {@link com.helger.phoxtrot.xslt.XsltExecutable#transform(XsltTransformRequest, ContentHandler, LexicalHandler)},
+ * and an exception of a handler stops the transformation). The system ID of
+ * the result is the base output URI.</li>
  * <li>Messages: <code>xsl:message</code>, failed <code>xsl:assert</code> and
  * mode warnings go to the message listener if one is set
  * ({@link #setMessageListener(IXsltMessageListener)} or the factory
@@ -217,9 +220,11 @@ public class PhoxtrotTransformer extends Transformer
   /**
    * @return The phoxtrot result of the last successful transformation: its
    *         secondary results (<code>xsl:result-document</code>) and message
-   *         texts; for a {@link DOMResult} or {@link SAXResult} also the
-   *         principal result as tree and raw sequence (it is not serialised,
-   *         so {@link XsltTransformResult#principalSerialized()} is empty).
+   *         texts; for a {@link DOMResult} also the principal result as tree
+   *         and raw sequence (it is not serialised, so
+   *         {@link XsltTransformResult#principalSerialized()} is empty); for a
+   *         {@link StreamResult} and a {@link SAXResult} the principal result
+   *         went to the result only.
    *         <code>null</code> before the first one and after
    *         {@link #reset()}.
    */
@@ -549,29 +554,35 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
-   * Emit the principal result tree as SAX events to a SAX result.
+   * Pass the principal result tree to a SAX result as SAX events, while it is
+   * built where the stylesheet allows it (see
+   * {@link XsltExecutable#transform(XsltTransformRequest, ContentHandler, LexicalHandler)}).
+   * Its lexical handler, or else its content handler if that is a
+   * {@link LexicalHandler}, receives the comments. A {@link SAXException} of
+   * a handler stops the transformation.
    */
   @NonNull
   private XsltTransformResult _transformToSax (@NonNull final XsltTransformRequest aRequest, @NonNull final SAXResult aResult) throws TransformerException
   {
-    if (aResult.getHandler () == null)
+    final ContentHandler aHandler = aResult.getHandler ();
+    if (aHandler == null)
       throw new TransformerException ("The SAXResult has no content handler");
-    // Only the tree is emitted: no serialization
-    aRequest.setPrincipalTreeOnly (true);
-    final XsltTransformResult ret = m_aTemplates.getExecutable ().transform (aRequest);
-    final IXdmNode aTree = _getTree (ret);
     LexicalHandler aLexical = aResult.getLexicalHandler ();
-    if (aLexical == null && aResult.getHandler () instanceof final LexicalHandler aHandlerLexical)
+    if (aLexical == null && aHandler instanceof final LexicalHandler aHandlerLexical)
       aLexical = aHandlerLexical;
     try
     {
-      XdmToSax.emit (aTree, aResult.getHandler (), aLexical);
+      return m_aTemplates.getExecutable ().transform (aRequest, aHandler, aLexical);
     }
     catch (final SAXException ex)
     {
       throw new TransformerException ("The SAXResult handler failed: " + ex.getMessage (), ex);
     }
-    return ret;
+    catch (final IllegalStateException ex)
+    {
+      // The principal result is no tree
+      throw new TransformerException (ex.getMessage (), ex);
+    }
   }
 
   /**
