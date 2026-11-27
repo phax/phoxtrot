@@ -33,9 +33,11 @@ it do less. `MainProfile verify` runs these checks for every case.
 | | `flwor` | | `for`, `let`, `some`/`every`, `distinct-values`, `sort`, date subtraction |
 | | `maps` | | `map:merge` with combine, `array:join`, `fold-left` and `array:fold-left` with inline functions |
 | | `rules` | | Schematron-like: select the lines, then 10 assertions per line as effective boolean value |
+| | `rules-absolute` | | `rules` plus two assertions per line with an absolute path over all lines (stops at the first match) |
 | `xslt` (`XsltBenchmark`) | `identity` | 1,000, 10,000 | `on-no-match="shallow-copy"`, serialised as XML (the output equals the input) |
 | | `dispatch` | | `apply-templates` over four modes, value and structure predicates, priorities |
 | | `keys` | | three `xsl:key`s, `key()` per category, per line and through a parent step |
+| | `muenchian` | | XSLT 1.0 Muenchian grouping: the first line per key, by comparing two `generate-id` calls
 | | `grouping` | | `xsl:for-each-group` with `group-by` (sorted), `group-adjacent` and a computed key |
 | | `sort` | | `xsl:sort` of all lines by a decimal key descending, then a string key |
 | | `iterate` | | `xsl:iterate` with an `array(xs:decimal)` parameter that grows by one member per line |

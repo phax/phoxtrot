@@ -376,6 +376,22 @@ final class BenchExpected
     return "A=" + aCats[0] + ",B=" + aCats[1] + ",C=" + aCats[2] + ";" + nSkuSum + ";" + nRate0;
   }
 
+  /**
+   * @return The result of <code>muenchian.xsl</code>: every category with its number of lines,
+   *         sorted by category, each followed by a comma.
+   */
+  @NonNull
+  static String xsltMuenchian (@NonNull final BenchData aData)
+  {
+    final Map <String, int []> aByCat = new TreeMap <> ();
+    for (final Line aLine : aData.getAllLines ())
+      aByCat.computeIfAbsent (aLine.cat (), sKey -> new int [1])[0]++;
+    final StringBuilder aSB = new StringBuilder ();
+    for (final Map.Entry <String, int []> aEntry : aByCat.entrySet ())
+      aSB.append (aEntry.getKey ()).append ('=').append (aEntry.getValue ()[0]).append (',');
+    return aSB.toString ();
+  }
+
   @NonNull
   static String xsltGrouping (@NonNull final BenchData aData)
   {
