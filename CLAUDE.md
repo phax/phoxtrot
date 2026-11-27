@@ -308,6 +308,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `namespace-uri()`, several atoms for `eq`) goes through the generic comparison. `fn:path` keeps the sibling positions
   of parents with at least 16 children in the run cache (`FnAccessor.SiblingPositions`, weak by child, used only while
   the parent has the same child count).
+- `generate-id` comparisons: `ComparisonNode` answers `=`, `!=`, `eq` and `ne` of two static calls of the built-in
+  `fn:generate-id` (recognised by identity, `FnAccessor.GENERATE_ID`) under the codepoint collation by comparing the
+  nodes, with the errors of the calls (left first), and creates no identifier; the identifiers a run gives out
+  therefore depend on the calls that are really made (they are implementation-dependent anyway).
 - A single-node named child or descendant step whose result is a complete list of the name index
   (`AxisNavigator.getNamedIndexList`) takes the sequence of that list from the run memo
   (`XPathEvaluator._getIndexListSequence`) instead of copying it.
@@ -405,7 +409,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   (`isCanMatchTestedByMatches`), so `CompiledPattern.matches` skips the separate call for it; a pattern whose match
   can evaluate something before that test must keep returning `false` there. `getFinalNames` gives the exact element/attribute names when every
   alternative ends in one, and `Engine._buildKeyIndex` then tests only those nodes from the document's name index
-  instead of walking the tree (`Engine.getKeyIndexFromNamesCount ()` tells tests which path ran).
+  instead of walking the tree (`Engine.getKeyIndexFromNamesCount ()` tells tests which path ran). A key index keeps
+  the nodes of each value as one `XdmSequence` in document order without duplicates, which `key()` with one value
+  returns as it is: never change it, and keep a new way of filling the index sorting its entries (`_toSequences`).
   `CompiledXsltPattern` opens a parenthesised union whose predicates pass `ExprWalker.isFocusFreeBoolean`
   (`(P1 | P2)[q]` is matched as `P1[q] | P2[q]`, the source, priority and alternatives unchanged), so it has union
   paths and final names. A union path of only `child`/`attribute` steps without `position`/`last`/`function-lookup`

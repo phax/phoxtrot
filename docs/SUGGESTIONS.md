@@ -1710,7 +1710,21 @@ skeleton, where every element is matched against the rules of every pattern mode
 
 ### S55 - Items of go-xslt 0.4.4
 
-Status: proposed. Found 2026-11-26 by reading `v0.4.3..upstream/main` of go-xslt (80 commits, release v0.4.4,
+Status: `generate-id` comparison done (2026-11-27), together with a quadratic `key()` that the new benchmark case
+`muenchian` (XSLT 1.0 Muenchian grouping, `line[generate-id() = generate-id(key('byCat', @cat)[1])]`) showed: every
+call copied the nodes of its value into a new sequence and sorted it, so `key('k', @a)[1]` per line grew with the square
+of the group size. The key index now keeps one sorted sequence per value, returned as it is for a lookup of one value.
+Measured at 10,000 lines, both orders, JMH `-prof gc`:
+
+| Change | Case | Time | Allocation per run |
+| ------ | ---- | ---- | ------------------ |
+| `key()` one sequence per value | `muenchian` | 162 ms to 1.65 ms | 776 MB to 7.3 MB |
+| | `keys` | 0.70 / 0.69 | 0.70 / 0.68 |
+| | `dispatch` | unchanged (within the error) | unchanged |
+| `generate-id` comparison, on top of the `key()` change | `muenchian` | 0.72 / 0.74 | 0.70 / 0.67 |
+| `generate-id` comparison, before the `key()` change | `keys`, `dispatch`, `grouping`, XPath `predicate`, `arithmetic`, `rules` | unchanged (within the error) | unchanged |
+
+The rest is proposed. Found 2026-11-26 by reading `v0.4.3..upstream/main` of go-xslt (80 commits, release v0.4.4,
 performance rounds 13 to 15, no conformance change, output byte-identical according to its release notes); nothing
 measured yet. Most commits are Go-specific (scratch and lent arrays, pools, escape analysis, the Go tokenizer and
 readers, which phoxtrot does not have: it reads through the JDK SAX parser and StAX). Not to be ported: Go's
