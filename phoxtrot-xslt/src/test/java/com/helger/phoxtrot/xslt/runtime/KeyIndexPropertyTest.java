@@ -95,7 +95,13 @@ public final class KeyIndexPropertyTest
            aMatch.predicate () +
            "][" +
            sUse +
-           " = $v] ! generate-id()\"/>|" +
+           " = $v] ! generate-id()\"/>/" +
+           "<xsl:value-of select=\"key('named', ($v, '1', $v), $top) ! generate-id()\"/>/" +
+           "<xsl:value-of select=\"$top/descendant-or-self::*[" +
+           aMatch.predicate () +
+           "][" +
+           sUse +
+           " = ($v, '1')] ! generate-id()\"/>|" +
            "</xsl:for-each>" +
            "</xsl:for-each>" +
            "</xsl:template>" +
@@ -105,7 +111,8 @@ public final class KeyIndexPropertyTest
   /**
    * For every value and every subtree of a generated document, the key with a
    * named match pattern, the same key without names and the path expression
-   * find the same nodes in the same order. Over all tries the name index must
+   * find the same nodes in the same order; so do the key with several values
+   * (one of them twice) and its path expression. Over all tries the name index must
    * have been used.
    */
   @Test
@@ -120,9 +127,10 @@ public final class KeyIndexPropertyTest
                             for (final String sCase : sResult.split ("\\|"))
                             {
                               final String [] aParts = sCase.split ("/", -1);
-                              assertEquals (sResult, 3, aParts.length);
+                              assertEquals (sResult, 5, aParts.length);
                               assertEquals (sResult, aParts[2], aParts[0]);
                               assertEquals (sResult, aParts[2], aParts[1]);
+                              assertEquals (sResult, aParts[4], aParts[3]);
                             }
                           });
     assertTrue (Engine.getKeyIndexFromNamesCount () > nBefore);

@@ -19,6 +19,7 @@ package com.helger.phoxtrot.xslt.runtime;
 import java.util.ArrayDeque;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Supplier;
 
@@ -137,7 +138,8 @@ public final class Engine
   private final ICommonsSet <XdmQName> m_aGlobalsInProgress = new CommonsHashSet <> ();
   private final ICommonsMap <VariableDef, XdmSequence> m_aOriginalValues = new CommonsHashMap <> ();
   private final ICommonsSet <VariableDef> m_aOriginalsInProgress = new CommonsHashSet <> ();
-  private final ICommonsMap <KeyIndexId, ICommonsMap <Object, ICommonsList <IXdmNode>>> m_aKeyIndexes = new CommonsHashMap <> ();
+  // Per key: the nodes of each lookup key as a sequence in document order without duplicates
+  private final ICommonsMap <KeyIndexId, ICommonsMap <Object, XdmSequence>> m_aKeyIndexes = new CommonsHashMap <> ();
   private final ICommonsSet <XdmQName> m_aKeysInProgress = new CommonsHashSet <> ();
   private final ICommonsList <XsltMessage> m_aMessages = new CommonsArrayList <> ();
   private final ICommonsList <XsltTransformResult.SecondaryResult> m_aSecondaryResults = new CommonsArrayList <> ();
@@ -1660,6 +1662,20 @@ public final class Engine
   }
 
   /**
+   * Turn the node lists of a key index into the sequences that <code>key()</code> returns, each
+   * in document order without duplicates, so that a lookup of one value returns its sequence
+   * without copying or sorting it.
+   */
+  @NonNull
+  private static ICommonsMap <Object, XdmSequence> _toSequences (@NonNull final ICommonsMap <Object, ICommonsList <IXdmNode>> aIndex)
+  {
+    final ICommonsMap <Object, XdmSequence> ret = new CommonsHashMap <> (aIndex.size ());
+    for (final Map.Entry <Object, ICommonsList <IXdmNode>> aEntry : aIndex.entrySet ())
+      ret.put (aEntry.getKey (), NodeSorter.sortAndDeduplicate (XdmSequence.of (aEntry.getValue ())));
+    return ret;
+  }
+
+  /**
    * Build the index of a key over the whole tree below a root in document
    * order. If the match patterns allow it, only the candidates from the name
    * index of the document are tested
@@ -1675,14 +1691,15 @@ public final class Engine
    *        The root of the tree.
    * @param aCtx
    *        Context of the fn:key call (not used).
-   * @return The index from lookup key to the nodes in document order.
+   * @return The index from lookup key to the sequence of its nodes in document order without
+   *         duplicates.
    * @throws XPathException
    *         if the collation is not known
    */
   @NonNull
-  private ICommonsMap <Object, ICommonsList <IXdmNode>> _buildKeyIndex (@NonNull final ICommonsList <KeyDefinition> aDefs,
-                                                                     @NonNull final IXdmNode aRoot,
-                                                                     @NonNull final XsltContext aCtx)
+  private ICommonsMap <Object, XdmSequence> _buildKeyIndex (@NonNull final ICommonsList <KeyDefinition> aDefs,
+                                                           @NonNull final IXdmNode aRoot,
+                                                           @NonNull final XsltContext aCtx)
   {
     final ICommonsMap <Object, ICommonsList <IXdmNode>> ret = new CommonsHashMap <> ();
     final String sCollation = aDefs.getFirst ().getCollation ();
@@ -1699,7 +1716,7 @@ public final class Engine
       KEY_INDEXES_FROM_NAMES.incrementAndGet ();
       for (final IXdmNode aNode : aCandidates)
         _indexNode (aNode, aDefs, aUseCtx, aCollation, bComposite, bAsStrings, ret);
-      return ret;
+      return _toSequences (ret);
     }
     boolean bNamespaces = false;
     for (final KeyDefinition aDef : aDefs)
@@ -1719,7 +1736,7 @@ public final class Engine
       for (int i = aNode.getChildCount () - 1; i >= 0; --i)
         aStack.push (aNode.getChildAtIndex (i));
     }
-    return ret;
+    return _toSequences (ret);
   }
 
   /**
@@ -1774,7 +1791,7 @@ public final class Engine
       throw new XPathException ("XTSE3430",
                                 "The key " + aName.getEQName () + " cannot be used over a document that is read as a stream");
     final KeyIndexId aId = new KeyIndexId (aName, aRoot, aUnit);
-    ICommonsMap <Object, ICommonsList <IXdmNode>> aIndex = m_aKeyIndexes.get (aId);
+    ICommonsMap <Object, XdmSequence> aIndex = m_aKeyIndexes.get (aId);
     if (aIndex == null)
     {
       if (!m_aKeysInProgress.add (aName))
@@ -1792,31 +1809,41 @@ public final class Engine
     final String sCollation = aDefs.getFirst ().getCollation ();
     final ICollation aCollation = CollationRegistry.CODEPOINT_URI.equals (sCollation) ? null
                                                                                        : CollationRegistry.getCollationOrThrow (sCollation);
-    final XdmSequence.Builder aResult = new XdmSequence.Builder ();
     final XdmSequence aAtoms = Atomizer.atomize (aValues);
+    XdmSequence ret;
     if (aDefs.getFirst ().isComposite ())
     {
       final ICommonsList <Object> aKey = new CommonsArrayList <> ();
       for (final IXdmItem aAtom : aAtoms)
         aKey.add (_getKeyValue ((XdmAtomic) aAtom, aCollation));
-      final ICommonsList <IXdmNode> aNodes = aIndex.get (aKey);
-      if (aNodes != null)
-        for (final IXdmNode aNode : aNodes)
-          aResult.add (aNode);
+      ret = aIndex.get (aKey);
     }
     else
     {
       final boolean bAsStrings = _isBackwardsCompatibleKey (aDefs);
-      for (final IXdmItem aAtom : aAtoms)
+      if (aAtoms.size () == 1)
       {
-        final Object aKey = _getKeyValue (aAtom, aCollation, bAsStrings);
-        final ICommonsList <IXdmNode> aNodes = aKey == NAN_KEY ? null : aIndex.get (aKey);
-        if (aNodes != null)
-          for (final IXdmNode aNode : aNodes)
-            aResult.add (aNode);
+        // Optimisation: the sequence of one value is returned as kept in the index, without a
+        // copy and a sort per call (key('k', @a)[1] per node of a group was quadratic)
+        final Object aKey = _getKeyValue (aAtoms.get (0), aCollation, bAsStrings);
+        ret = aKey == NAN_KEY ? null : aIndex.get (aKey);
+      }
+      else
+      {
+        final XdmSequence.Builder aResult = new XdmSequence.Builder ();
+        for (final IXdmItem aAtom : aAtoms)
+        {
+          final Object aKey = _getKeyValue (aAtom, aCollation, bAsStrings);
+          final XdmSequence aNodes = aKey == NAN_KEY ? null : aIndex.get (aKey);
+          if (aNodes != null)
+            for (final IXdmItem aNode : aNodes)
+              aResult.add (aNode);
+        }
+        ret = NodeSorter.sortAndDeduplicate (aResult.build ());
       }
     }
-    XdmSequence ret = NodeSorter.sortAndDeduplicate (aResult.build ());
+    if (ret == null)
+      return XdmSequence.EMPTY;
     if (aTop != aRoot)
     {
       final XdmSequence.Builder aFiltered = new XdmSequence.Builder ();
