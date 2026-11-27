@@ -34,9 +34,8 @@ import com.helger.phoxtrot.xpath.context.VariableSlot;
 import com.helger.phoxtrot.xpath.value.XdmSequence;
 
 /**
- * The function item of an inline function expression: a closure over the
- * variables in scope where it was created. The focus is absent in its body
- * (XPath 3.1 section 3.1.7).
+ * The function item of an inline function expression: a closure over the variables in scope where
+ * it was created. The focus is absent in its body (XPath 3.1 section 3.1.7).
  *
  * @author Philip Helger
  */
@@ -53,8 +52,8 @@ public final class InlineFunctionItem extends AbstractFunctionItem
    * @param paramSlots
    *        The slots of the parameters, in order.
    * @param captureNames
-   *        The variables of the enclosing expression that the body references, bound by name in
-   *        the closure.
+   *        The variables of the enclosing expression that the body references, bound by name in the
+   *        closure.
    * @param captureSlots
    *        Their slots in the frame of the enclosing expression (or inline function body).
    */
@@ -66,7 +65,6 @@ public final class InlineFunctionItem extends AbstractFunctionItem
                @NonNull VariableSlot [] captureSlots)
   {}
 
-  private final IExpr.InlineFunctionExpr m_aExpr;
   private final Body m_aBody;
   private final ICommonsList <SeqType> m_aParamTypes;
   private final SeqType m_aReturnType;
@@ -84,7 +82,6 @@ public final class InlineFunctionItem extends AbstractFunctionItem
                       @NonNull final Body aBody,
                       @NonNull final DynamicContext aCtx)
   {
-    m_aExpr = aExpr;
     m_aBody = aBody;
     m_aParamTypes = new CommonsArrayList <> ();
     for (final IExpr.Param aParam : aExpr.params ())

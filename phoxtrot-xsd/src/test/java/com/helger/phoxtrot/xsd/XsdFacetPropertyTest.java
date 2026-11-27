@@ -18,6 +18,9 @@ package com.helger.phoxtrot.xsd;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
+import static org.junit.Assert.assertTrue;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -37,12 +40,11 @@ import com.helger.unittest.property.IGenerator;
 import com.helger.unittest.property.PropertyChecker;
 
 /**
- * Property based tests for the constraining facets (XML Schema 1.1 Part 2,
- * section 4.3): a restriction is built from generated facet values, compiled
- * under XSD 1.0 and 1.1, and every generated value must be accepted exactly
- * when a reference predicate on the value space says so. The schema
- * constraints between facets (min below max, fractionDigits not above
- * totalDigits, minLength not above maxLength) are checked as well.
+ * Property based tests for the constraining facets (XML Schema 1.1 Part 2, section 4.3): a
+ * restriction is built from generated facet values, compiled under XSD 1.0 and 1.1, and every
+ * generated value must be accepted exactly when a reference predicate on the value space says so.
+ * The schema constraints between facets (min below max, fractionDigits not above totalDigits,
+ * minLength not above maxLength) are checked as well.
  *
  * @author Philip Helger
  */
@@ -100,8 +102,8 @@ public final class XsdFacetPropertyTest
                                     final boolean bExpected,
                                     @NonNull final String sRaw)
   {
-    assertEquals (sMessage + " (1.0)", bExpected, _isValid (aTypes[0], sRaw, EXsdVersion.V10));
-    assertEquals (sMessage + " (1.1)", bExpected, _isValid (aTypes[1], sRaw, EXsdVersion.V11));
+    assertTrue (sMessage + " (1.0)", bExpected == _isValid (aTypes[0], sRaw, EXsdVersion.V10));
+    assertTrue (sMessage + " (1.1)", bExpected == _isValid (aTypes[1], sRaw, EXsdVersion.V11));
   }
 
   /**
@@ -121,19 +123,14 @@ public final class XsdFacetPropertyTest
   @NonNull
   private static String _formatInteger (final int n, final int nFormat)
   {
-    switch (nFormat)
+    return switch (nFormat)
     {
-      case 1:
-        return n + ".0";
-      case 2:
-        return n < 0 ? "-0" + -n : "0" + n;
-      case 3:
-        return n + ".00";
-      case 4:
-        return n < 0 ? Integer.toString (n) : "+" + n;
-      default:
-        return Integer.toString (n);
-    }
+      case 1 -> n + ".0";
+      case 2 -> n < 0 ? "-0" + -n : "0" + n;
+      case 3 -> n + ".00";
+      case 4 -> n < 0 ? Integer.toString (n) : "+" + n;
+      default -> Integer.toString (n);
+    };
   }
 
   /**
@@ -166,12 +163,13 @@ public final class XsdFacetPropertyTest
                                                             " value=\"" +
                                                             aHigh.toPlainString () +
                                                             "\"/>";
-                                     final XsdSimpleType [] aTypes = _compile (bInteger ? "integer" : "decimal", sFacets);
+                                     final XsdSimpleType [] aTypes = _compile (bInteger ? "integer" : "decimal",
+                                                                               sFacets);
                                      final int nCmp = aLow.compareTo (aHigh);
                                      if (nCmp < 0)
-                                       assertNotEquals (sFacets + " must compile", null, aTypes);
+                                       assertNotNull (sFacets + " must compile", aTypes);
                                      if (nCmp > 0)
-                                       assertEquals (sFacets + " must not compile", null, aTypes);
+                                       assertNull (sFacets + " must not compile", aTypes);
                                      if (aTypes != null)
                                        for (final Integer aValue : aValues)
                                        {
@@ -187,8 +185,8 @@ public final class XsdFacetPropertyTest
 
   /**
    * Model property for the length facets on xs:string: <code>length</code>, <code>minLength</code>,
-   * <code>maxLength</code> and both of the latter count characters (code points, not UTF-16
-   * units); <code>minLength</code> above <code>maxLength</code> is a schema error.
+   * <code>maxLength</code> and both of the latter count characters (code points, not UTF-16 units);
+   * <code>minLength</code> above <code>maxLength</code> is a schema error.
    */
   @Test
   public void testStringLengthFacets ()
@@ -196,9 +194,7 @@ public final class XsdFacetPropertyTest
     final IGenerator <String> aStrings = Generators.lists (Generators.of (Integer.valueOf ('a'),
                                                                           Integer.valueOf (0xE9),
                                                                           Integer.valueOf (0x1F600),
-                                                                          Integer.valueOf (' ')),
-                                                           0,
-                                                           7)
+                                                                          Integer.valueOf (' ')), 0, 7)
                                                    .map (aCodePoints -> {
                                                      final StringBuilder aSB = new StringBuilder ();
                                                      for (final Integer aCP : aCodePoints)
@@ -214,28 +210,20 @@ public final class XsdFacetPropertyTest
                                      final int nVariant = aVariant.intValue ();
                                      final int nA = aA.intValue ();
                                      final int nB = aB.intValue ();
-                                     final String sFacets;
-                                     switch (nVariant)
+                                     final String sFacets = switch (nVariant)
                                      {
-                                       case 0:
-                                         sFacets = "<xs:length value=\"" + nA + "\"/>";
-                                         break;
-                                       case 1:
-                                         sFacets = "<xs:minLength value=\"" +
-                                                   nA +
-                                                   "\"/><xs:maxLength value=\"" +
-                                                   nB +
-                                                   "\"/>";
-                                         break;
-                                       case 2:
-                                         sFacets = "<xs:minLength value=\"" + nA + "\"/>";
-                                         break;
-                                       default:
-                                         sFacets = "<xs:maxLength value=\"" + nB + "\"/>";
-                                         break;
-                                     }
+                                       case 0 -> "<xs:length value=\"" + nA + "\"/>";
+                                       case 1 -> "<xs:minLength value=\"" +
+                                                 nA +
+                                                 "\"/><xs:maxLength value=\"" +
+                                                 nB +
+                                                 "\"/>";
+                                       case 2 -> "<xs:minLength value=\"" + nA + "\"/>";
+                                       default -> "<xs:maxLength value=\"" + nB + "\"/>";
+                                     };
                                      final XsdSimpleType [] aTypes = _compile ("string", sFacets);
-                                     assertEquals (sFacets, Boolean.valueOf (nVariant != 1 || nA <= nB),
+                                     assertEquals (sFacets,
+                                                   Boolean.valueOf (nVariant != 1 || nA <= nB),
                                                    Boolean.valueOf (aTypes != null));
                                      if (aTypes != null)
                                        for (final String sValue : aValues)
@@ -254,9 +242,9 @@ public final class XsdFacetPropertyTest
   }
 
   /**
-   * Model property for the length facet on xs:hexBinary and xs:base64Binary: the length is
-   * measured in octets, so a value is accepted exactly when it encodes that many bytes, whatever
-   * the padding and the spaces of the base64 form.
+   * Model property for the length facet on xs:hexBinary and xs:base64Binary: the length is measured
+   * in octets, so a value is accepted exactly when it encodes that many bytes, whatever the padding
+   * and the spaces of the base64 form.
    */
   @Test
   public void testBinaryLengthFacet ()
@@ -301,9 +289,9 @@ public final class XsdFacetPropertyTest
                                                                                                                                          6)
                                                                                                                                .map (sFrac -> "." +
                                                                                                                                               sFrac))
-                                                                                                            .map (sFrac -> sSign +
-                                                                                                                           sInt +
-                                                                                                                           sFrac)));
+                                                                                                             .map (sFrac -> sSign +
+                                                                                                                            sInt +
+                                                                                                                            sFrac)));
     new PropertyChecker ().setTries (300)
                           .forAll (Generators.ints (1, 5),
                                    Generators.ints (0, 6),
@@ -317,7 +305,9 @@ public final class XsdFacetPropertyTest
                                                             nFraction +
                                                             "\"/>";
                                      final XsdSimpleType [] aTypes = _compile ("decimal", sFacets);
-                                     assertEquals (sFacets, Boolean.valueOf (nFraction <= nTotal), Boolean.valueOf (aTypes != null));
+                                     assertEquals (sFacets,
+                                                   Boolean.valueOf (nFraction <= nTotal),
+                                                   Boolean.valueOf (aTypes != null));
                                      if (aTypes != null)
                                        for (final String sValue : aValues)
                                        {
@@ -362,14 +352,16 @@ public final class XsdFacetPropertyTest
                                      for (final String sEnum : aEnum)
                                        aFacets.append ("<xs:enumeration value=\"").append (sEnum).append ("\"/>");
                                      final String sFacets = aFacets.toString ();
-                                     final XsdSimpleType [] aTypes = _compile (bDecimal ? "decimal" : "string", sFacets);
+                                     final XsdSimpleType [] aTypes = _compile (bDecimal ? "decimal" : "string",
+                                                                               sFacets);
                                      assertNotEquals (sFacets + " must compile", null, aTypes);
                                      for (final String sValue : aValues)
                                      {
                                        boolean bExpected = false;
                                        if (bDecimal)
                                        {
-                                         // A value outside the lexical space of xs:decimal matches nothing
+                                         // A value outside the lexical space of xs:decimal matches
+                                         // nothing
                                          if (sValue.matches ("[+-]?[0-9]+(\\.[0-9]*)?"))
                                            for (final String sEnum : aEnum)
                                              if (new BigDecimal (sEnum).compareTo (new BigDecimal (sValue)) == 0)

@@ -35,20 +35,22 @@ import com.helger.unittest.property.PropertyAssume;
 import com.helger.unittest.property.PropertyChecker;
 
 /**
- * Property based tests for <code>fn:format-number</code> ({@link FormatNumber},
- * F&amp;O 3.1 section 4.7) with xs:decimal input, whose exact value makes the
- * rounding (half to even) predictable; {@link BigDecimal} serves as reference.
+ * Property based tests for <code>fn:format-number</code> ({@link FormatNumber}, F&amp;O 3.1 section
+ * 4.7) with xs:decimal input, whose exact value makes the rounding (half to even) predictable;
+ * {@link BigDecimal} serves as reference.
  *
  * @author Philip Helger
  */
 public final class FormatNumberPropertyTest
 {
   /** Decimals with up to 10 digit unscaled values and up to 6 fraction digits */
-  private static final IGenerator <BigDecimal> DECIMALS = Generators.lists (Generators.longs (-9_999_999_999L, 9_999_999_999L), 2, 2)
-                                                                    .map (x -> BigDecimal.valueOf (x.get (0).longValue (),
-                                                                                                   (int) Math.floorMod (x.get (1)
-                                                                                                                         .longValue (),
-                                                                                                                        7)));
+  private static final IGenerator <BigDecimal> DECIMALS = Generators.lists (Generators.longs (-9_999_999_999L,
+                                                                                              9_999_999_999L), 2, 2)
+                                                                    .map (x -> BigDecimal.valueOf (x.get (0)
+                                                                                                    .longValue (),
+                                                                                                   Math.floorMod (x.get (1)
+                                                                                                                   .longValue (),
+                                                                                                                  7)));
 
   private final XPathPropertyTestHelper m_aHelper = new XPathPropertyTestHelper ();
 
@@ -76,8 +78,8 @@ public final class FormatNumberPropertyTest
   }
 
   /**
-   * The model of a picture with one mandatory integer digit, optional grouping
-   * by three, and the given minimum and maximum number of fraction digits.
+   * The model of a picture with one mandatory integer digit, optional grouping by three, and the
+   * given minimum and maximum number of fraction digits.
    */
   @NonNull
   private static String _model (@NonNull final BigDecimal aValue,
@@ -97,10 +99,9 @@ public final class FormatNumberPropertyTest
   }
 
   /**
-   * <code>0.###</code>, <code>#,##0.00</code>, <code>0.0%</code> and a
-   * negative sub-picture round the exact decimal value half to even to the
-   * maximum number of fraction digits, drop optional trailing zeros and group
-   * the integer digits by three (F&amp;O 3.1 section 4.7.5).
+   * <code>0.###</code>, <code>#,##0.00</code>, <code>0.0%</code> and a negative sub-picture round
+   * the exact decimal value half to even to the maximum number of fraction digits, drop optional
+   * trailing zeros and group the integer digits by three (F&amp;O 3.1 section 4.7.5).
    */
   @Test
   public void testDecimalPictures ()
@@ -118,8 +119,8 @@ public final class FormatNumberPropertyTest
   }
 
   /**
-   * Any picture text either formats the value or is rejected with FODF1310,
-   * never with another exception.
+   * Any picture text either formats the value or is rejected with FODF1310, never with another
+   * exception.
    */
   @Test
   public void testArbitraryPictures ()

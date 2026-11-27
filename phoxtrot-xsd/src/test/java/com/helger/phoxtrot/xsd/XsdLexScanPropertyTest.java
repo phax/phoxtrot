@@ -16,7 +16,6 @@
  */
 package com.helger.phoxtrot.xsd;
 
-import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
 import java.util.Base64;
@@ -32,10 +31,9 @@ import com.helger.unittest.property.IGenerator;
 import com.helger.unittest.property.PropertyChecker;
 
 /**
- * Property based tests for the hand-written lexical scanners of
- * {@link XsdLexScan}. Each scanner claims to accept exactly the language of a
- * regular expression of XML Schema 1.1 Part 2, so the reference is that
- * expression, written down from the specification.
+ * Property based tests for the hand-written lexical scanners of {@link XsdLexScan}. Each scanner
+ * claims to accept exactly the language of a regular expression of XML Schema 1.1 Part 2, so the
+ * reference is that expression, written down from the specification.
  *
  * @author Philip Helger
  */
@@ -136,9 +134,9 @@ public final class XsdLexScanPropertyTest
   {
     new PropertyChecker ().setTries (3000)
                           .forAll (_base64Candidates (),
-                                   sValue -> assertEquals (sValue,
-                                                           BASE64_GRAMMAR.matcher (sValue).matches (),
-                                                           XsdLexScan.isBase64BinaryLex (sValue)));
+                                   sValue -> assertTrue (sValue,
+                                                         BASE64_GRAMMAR.matcher (sValue).matches () == XsdLexScan
+                                                                                                                 .isBase64BinaryLex (sValue)));
   }
 
   /**
@@ -150,9 +148,8 @@ public final class XsdLexScanPropertyTest
   {
     new PropertyChecker ().setTries (3000)
                           .forAll (_base64Candidates (),
-                                   sValue -> assertEquals (sValue,
-                                                           _isCanonicalBase64 (sValue),
-                                                           XsdLexScan.isBase64BinaryLex (sValue)));
+                                   sValue -> assertTrue (sValue,
+                                                         _isCanonicalBase64 (sValue) == XsdLexScan.isBase64BinaryLex (sValue)));
   }
 
   /**
@@ -174,9 +171,9 @@ public final class XsdLexScanPropertyTest
                                        final String sMutated = sValue.substring (0, nPos) +
                                                                sReplacement +
                                                                sValue.substring (nPos + 1);
-                                       assertEquals (sMutated,
-                                                     BASE64_GRAMMAR.matcher (sMutated).matches (),
-                                                     XsdLexScan.isBase64BinaryLex (sMutated));
+                                       assertTrue (sMutated,
+                                                   BASE64_GRAMMAR.matcher (sMutated).matches () == XsdLexScan
+                                                                                                             .isBase64BinaryLex (sMutated));
                                      }
                                    });
   }
@@ -190,9 +187,9 @@ public final class XsdLexScanPropertyTest
   {
     new PropertyChecker ().setTries (1000)
                           .forAll (Generators.strings ("0aF9gG ٠", 0, 10),
-                                   sValue -> assertEquals (sValue,
-                                                           HEX_GRAMMAR.matcher (sValue).matches (),
-                                                           XsdLexScan.isHexBinaryLex (sValue)));
+                                   sValue -> assertTrue (sValue,
+                                                         HEX_GRAMMAR.matcher (sValue).matches () == XsdLexScan
+                                                                                                              .isHexBinaryLex (sValue)));
     new PropertyChecker ().forAll (Generators.byteArrays (0, 64), aBytes -> {
       assertTrue (XsdLexScan.isHexBinaryLex (HexFormat.of ().formatHex (aBytes)));
       assertTrue (XsdLexScan.isHexBinaryLex (HexFormat.of ().withUpperCase ().formatHex (aBytes)));
@@ -207,15 +204,10 @@ public final class XsdLexScanPropertyTest
   @Test
   public void testIntegerAndDecimal ()
   {
-    new PropertyChecker ().setTries (2000)
-                          .forAll (Generators.strings ("0+-.9 e٣", 0, 8), sValue -> {
-                            assertEquals (sValue,
-                                          INTEGER_GRAMMAR.matcher (sValue).matches (),
-                                          XsdLexScan.isIntegerLex (sValue));
-                            assertEquals (sValue,
-                                          DECIMAL_GRAMMAR.matcher (sValue).matches (),
-                                          XsdLexScan.isDecimalLex (sValue));
-                          });
+    new PropertyChecker ().setTries (2000).forAll (Generators.strings ("0+-.9 e٣", 0, 8), sValue -> {
+      assertTrue (sValue, INTEGER_GRAMMAR.matcher (sValue).matches () == XsdLexScan.isIntegerLex (sValue));
+      assertTrue (sValue, DECIMAL_GRAMMAR.matcher (sValue).matches () == XsdLexScan.isDecimalLex (sValue));
+    });
   }
 
   /**
@@ -228,8 +220,7 @@ public final class XsdLexScanPropertyTest
     final IGenerator <String> aNames = Generators.strings ("aZ_-.09:é·̀‿× \uD800", 0, 6);
     new PropertyChecker ().setTries (3000)
                           .forAll (aNames,
-                                   sValue -> assertEquals (sValue,
-                                                           XsdLexical.isNCName (sValue),
-                                                           XsdLexScan.isNCNameLex (sValue)));
+                                   sValue -> assertTrue (sValue,
+                                                         XsdLexical.isNCName (sValue) == XsdLexScan.isNCNameLex (sValue)));
   }
 }

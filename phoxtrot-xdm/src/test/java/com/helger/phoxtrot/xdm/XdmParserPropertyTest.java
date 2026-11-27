@@ -30,8 +30,6 @@ import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
 import org.junit.Test;
@@ -54,7 +52,9 @@ import com.helger.unittest.property.PropertyChecker;
  */
 public final class XdmParserPropertyTest
 {
-  /** Code points inserted into documents: markup, line ends, invalid characters and name characters */
+  /**
+   * Code points inserted into documents: markup, line ends, invalid characters and name characters
+   */
   private static final int [] INSERTED_CHARS = { '<',
                                                  '>',
                                                  '&',
@@ -73,8 +73,6 @@ public final class XdmParserPropertyTest
                                                  0xeffff,
                                                  0xfffe,
                                                  0xd800 };
-
-  private static final Pattern ENCODING_DECLARATION = Pattern.compile ("^<\\?xml[^>]*encoding\\s*=\\s*[\"']([^\"']*)[\"']");
 
   @NonNull
   private static InputSource _bytes (final byte @NonNull [] aBytes)
@@ -176,7 +174,8 @@ public final class XdmParserPropertyTest
     });
   }
 
-  private static void _assertSameNodes (@NonNull final List <IXdmNode> aExpected, @NonNull final List <IXdmNode> aActual)
+  private static void _assertSameNodes (@NonNull final List <IXdmNode> aExpected,
+                                        @NonNull final List <IXdmNode> aActual)
   {
     assertEquals (aExpected.size (), aActual.size ());
     for (int i = 0; i < aExpected.size (); ++i)
@@ -253,10 +252,12 @@ public final class XdmParserPropertyTest
   public void testNameIndexes ()
   {
     new PropertyChecker ().setTries (200)
-                          .forAll (XdmDocumentGenerator.documents (), Generators.booleans (), (aDoc, aChildrenFirst) -> {
-                            final XdmDocumentNode aParsed = (XdmDocumentNode) new XdmParser ().parse (aDoc.getAsXml ());
-                            assertNameIndexes (aParsed, aChildrenFirst.booleanValue ());
-                          });
+                          .forAll (XdmDocumentGenerator.documents (),
+                                   Generators.booleans (),
+                                   (aDoc, aChildrenFirst) -> {
+                                     final XdmDocumentNode aParsed = (XdmDocumentNode) new XdmParser ().parse (aDoc.getAsXml ());
+                                     assertNameIndexes (aParsed, aChildrenFirst.booleanValue ());
+                                   });
   }
 
   @NonNull
@@ -296,25 +297,16 @@ public final class XdmParserPropertyTest
   private static IGenerator <byte []> _mutatedDocuments ()
   {
     return Generators.mutatedByteArrays (XdmDocumentGenerator.documents ()
-                                                             .map (x -> x.getAsXml ().getBytes (StandardCharsets.UTF_8)));
+                                                             .map (x -> x.getAsXml ()
+                                                                         .getBytes (StandardCharsets.UTF_8)));
   }
 
   /**
-   * @return <code>true</code> if the document has an XML declaration with an encoding name other
-   *         than UTF-8.
-   */
-  private static boolean _isOtherEncodingDeclared (final byte @NonNull [] aBytes)
-  {
-    final Matcher aMatcher = ENCODING_DECLARATION.matcher (new String (aBytes, StandardCharsets.ISO_8859_1));
-    return aMatcher.find () && !"UTF-8".equalsIgnoreCase (aMatcher.group (1));
-  }
-
-  /**
-   * Damaged documents (bytes replaced, inserted, deleted, truncated) are either read or refused with
-   * {@link XdmParseException} by {@link XdmParser} and {@link XdmStreamReader}, never with another
-   * exception. Both accept the same documents, with the same tree, unless the stream reader refuses
-   * one as unsupported. Documents that declare another encoding than UTF-8 are left out of that
-   * comparison, see {@link #testStreamReaderAcceptsEncodingNamesOfParser()}.
+   * Damaged documents (bytes replaced, inserted, deleted, truncated) are either read or refused
+   * with {@link XdmParseException} by {@link XdmParser} and {@link XdmStreamReader}, never with
+   * another exception. Both accept the same documents, with the same tree, unless the stream reader
+   * refuses one as unsupported. Documents that declare another encoding than UTF-8 are left out of
+   * that comparison, see {@link #testStreamReaderAcceptsEncodingNamesOfParser()}.
    */
   @Test
   public void testMutatedBytes ()
@@ -368,8 +360,11 @@ public final class XdmParserPropertyTest
                                      final String sXml = aDoc.getAsXml ();
                                      final Charset aCharset = Charset.forName (sEncoding);
                                      // Only documents whose characters the encoding can write
-                                     final StringBuilder aSB = new StringBuilder ("<?xml version=\"1.0\" encoding=\"" + sEncoding + "\"?>");
-                                     final String sBody = sXml.startsWith ("<?xml") ? sXml.substring (sXml.indexOf ("?>") + 2) : sXml;
+                                     final StringBuilder aSB = new StringBuilder ("<?xml version=\"1.0\" encoding=\"" +
+                                                                                  sEncoding +
+                                                                                  "\"?>");
+                                     final String sBody = sXml.startsWith ("<?xml") ? sXml.substring (sXml.indexOf ("?>") +
+                                                                                                      2) : sXml;
                                      PropertyAssume.that (aCharset.newEncoder ().canEncode (sBody));
                                      aSB.append (sBody);
                                      final byte [] aBytes = aSB.toString ().getBytes (aCharset);

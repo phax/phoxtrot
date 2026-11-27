@@ -20,7 +20,6 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
 import java.math.BigInteger;
-import java.util.List;
 import java.util.regex.Pattern;
 
 import org.jspecify.annotations.NonNull;
@@ -35,13 +34,13 @@ import com.helger.unittest.property.IGenerator;
 import com.helger.unittest.property.PropertyChecker;
 
 /**
- * Property based tests for the whiteSpace facet (XML Schema 1.1 Part 2, section 4.3.6) and for
- * list types (section 2.4.1.2 and 4.3.1 to 4.3.5 for lists): the expected verdicts are computed
- * from a Java implementation of the normalisation (<code>replace</code> turns tab, line feed and
- * carriage return into spaces, <code>collapse</code> also merges runs of spaces and strips leading
- * and trailing ones), the length facets count characters of the normalised value or items of a
- * list, the pattern facet applies to the normalised value, and the enumeration of a list type
- * compares the item values one by one.
+ * Property based tests for the whiteSpace facet (XML Schema 1.1 Part 2, section 4.3.6) and for list
+ * types (section 2.4.1.2 and 4.3.1 to 4.3.5 for lists): the expected verdicts are computed from a
+ * Java implementation of the normalisation (<code>replace</code> turns tab, line feed and carriage
+ * return into spaces, <code>collapse</code> also merges runs of spaces and strips leading and
+ * trailing ones), the length facets count characters of the normalised value or items of a list,
+ * the pattern facet applies to the normalised value, and the enumeration of a list type compares
+ * the item values one by one.
  *
  * @author Philip Helger
  */
@@ -55,7 +54,17 @@ public final class XsdListWhiteSpacePropertyTest
                                                  { ".* .*", "[^\\n\\r]* [^\\n\\r]*" },
                                                  { "(\\s?[ab]+)*", "(?:[ \\t\\n\\r]?[ab]+)*" } };
   /** Items of the generated lists: valid xs:int forms and invalid ones */
-  private static final String [] LIST_ITEMS = { "1", "-2", "007", "+3", "01", "0", "-0", "2147483647", "2147483648", "x", "1.5" };
+  private static final String [] LIST_ITEMS = { "1",
+                                                "-2",
+                                                "007",
+                                                "+3",
+                                                "01",
+                                                "0",
+                                                "-0",
+                                                "2147483647",
+                                                "2147483648",
+                                                "x",
+                                                "1.5" };
   private static final String [] SEPARATORS = { " ", "  ", "\t", "\n", "\r\n", " \t " };
   private static final BigInteger INT_MIN = BigInteger.valueOf (Integer.MIN_VALUE);
   private static final BigInteger INT_MAX = BigInteger.valueOf (Integer.MAX_VALUE);
@@ -116,7 +125,9 @@ public final class XsdListWhiteSpacePropertyTest
                                      Pattern aJavaPattern = null;
                                      if (nPattern >= 0)
                                      {
-                                       aFacets.append ("<xs:pattern value=\"").append (PATTERNS[nPattern][0]).append ("\"/>");
+                                       aFacets.append ("<xs:pattern value=\"")
+                                              .append (PATTERNS[nPattern][0])
+                                              .append ("\"/>");
                                        aJavaPattern = Pattern.compile (PATTERNS[nPattern][1]);
                                      }
                                      for (final EXsdVersion eVersion : EXsdVersion.values ())
@@ -129,17 +140,23 @@ public final class XsdListWhiteSpacePropertyTest
                                        {
                                          final String sNormalised = _normalise (sValue, sWhiteSpace);
                                          final int nLength = sNormalised.length ();
-                                         final boolean bLength = nVariant == 0 ? nLength == nA : nLength >= nA && nLength <= nB;
+                                         final boolean bLength = nVariant == 0 ? nLength == nA
+                                                                               : nLength >= nA && nLength <= nB;
                                          final boolean bExpected = bLength &&
-                                                                   (aJavaPattern == null || aJavaPattern.matcher (sNormalised).matches ());
+                                                                   (aJavaPattern == null ||
+                                                                    aJavaPattern.matcher (sNormalised).matches ());
                                          assertEquals (aFacets +
                                                        " '" +
-                                                       sValue.replace ("\n", "\\n").replace ("\r", "\\r").replace ("\t", "\\t") +
+                                                       sValue.replace ("\n", "\\n")
+                                                             .replace ("\r", "\\r")
+                                                             .replace ("\t", "\\t") +
                                                        "' (" +
                                                        eVersion.getID () +
                                                        ")",
                                                        Boolean.valueOf (bExpected),
-                                                       Boolean.valueOf (XsdPropertyTestHelper.isValidValue (aType, sValue, eVersion)));
+                                                       Boolean.valueOf (XsdPropertyTestHelper.isValidValue (aType,
+                                                                                                            sValue,
+                                                                                                            eVersion)));
                                        }
                                      }
                                    });
@@ -210,7 +227,8 @@ public final class XsdListWhiteSpacePropertyTest
                                                        aSB.append (LIST_ITEMS[aItems.get (i).intValue ()]);
                                                      }
                                                      if (aEdges.booleanValue ())
-                                                       aSB.append (SEPARATORS[aSeparators.get (aItems.size ()).intValue ()]);
+                                                       aSB.append (SEPARATORS[aSeparators.get (aItems.size ())
+                                                                                         .intValue ()]);
                                                      return aSB.toString ();
                                                    })));
   }
@@ -288,7 +306,9 @@ public final class XsdListWhiteSpacePropertyTest
                                            final EXsdVersion eVersion = i == 0 ? EXsdVersion.V10 : EXsdVersion.V11;
                                            assertEquals (aFacets +
                                                          " '" +
-                                                         sValue.replace ("\n", "\\n").replace ("\r", "\\r").replace ("\t", "\\t") +
+                                                         sValue.replace ("\n", "\\n")
+                                                               .replace ("\r", "\\r")
+                                                               .replace ("\t", "\\t") +
                                                          "' (" +
                                                          eVersion.getID () +
                                                          ")",
@@ -303,8 +323,8 @@ public final class XsdListWhiteSpacePropertyTest
 
   /**
    * Model property for a list of a restricted item type: the item type's facets apply to every
-   * item, the list's length facet to the number of items. The item type is xs:int with
-   * maxInclusive 5.
+   * item, the list's length facet to the number of items. The item type is xs:int with maxInclusive
+   * 5.
    */
   @Test
   public void testListOfRestrictedItems ()
