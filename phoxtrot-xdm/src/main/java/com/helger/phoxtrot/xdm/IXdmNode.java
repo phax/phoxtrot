@@ -17,6 +17,7 @@
 package com.helger.phoxtrot.xdm;
 
 import java.util.Map;
+import java.util.function.Consumer;
 
 import org.jspecify.annotations.NonNull;
 import org.jspecify.annotations.Nullable;
@@ -646,4 +647,16 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
    * node is fine. It must be called again after the structure was changed.
    */
   void assignDocumentOrder ();
+
+  /**
+   * Like {@link #assignDocumentOrder()}, and call a visitor for every element of the tree in
+   * document order (an element after all its ancestors), in the same walk, so that a caller that
+   * must look at every element after building a tree needs no second pass over it. The visitor may
+   * declare namespaces on the element it gets, but must not change the structure of the tree
+   * (children, attributes, names).
+   *
+   * @param aElementVisitor
+   *        Called for every element. May be <code>null</code> for none.
+   */
+  void assignDocumentOrder (@Nullable Consumer <? super IXdmNode> aElementVisitor);
 }

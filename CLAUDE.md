@@ -79,6 +79,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `XsdInstanceValidator` uses instead of walking the tree. Children are a plain array with a count in
   `AbstractXdmParentNode` (trimmed by the builder at `endElement`); indentation text (a line end and spaces or tabs) is
   one shared string per document.
+- `NamespaceFixup.finish` fixes the namespaces of a tree root in the numbering walk
+  (`IXdmNode.assignDocumentOrder (Consumer)`, pre-order, an element after its ancestors); only a subtree with a parent
+  still takes the separate `fixNamespaces` walk. A visitor of that walk may declare namespaces, never change the
+  structure. `NamespaceFixupPropertyTest` (`phoxtrot-xslt`) compares it with the two-walk form.
 - Use `hasDeclaredNamespaces ()`/`getDeclaredNamespaceUri (prefix)` where only a check or a lookup is needed:
   `getDeclaredNamespaces ()` returns a copy, also for an element without declarations. `declareSharedNamespaces`
   lets an element without declarations keep the given map (literal result elements share one per instruction);

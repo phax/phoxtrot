@@ -1032,7 +1032,15 @@ or buy). A last descendant step still builds the index, as its evaluation does. 
 | five absent `exists(Item/X/Y)` joined by `or` | 1,949 | 2,500 |
 
 The index costs about 1 ms here, a check without it about 20 ns; the last row is the price of the rule (the index
-comes after 40,000 checks), below twice the cost of building it at once. Item 1 open, item 3 is an observation.
+comes after 40,000 checks), below twice the cost of building it at once. Item 3 is an observation.
+
+Item 1 done (2026-11-28) with proposal (c) in a smaller form: `NamespaceFixup.finish` fixes each element in the walk
+that numbers the tree (`IXdmNode.assignDocumentOrder (Consumer)`, the same pre-order as `fixNamespaces`) instead of
+walking the finished tree twice. Proposal (a) was not taken: an element whose shared namespace map binds its names
+already costs only one map lookup on itself, so a flag would save that lookup and still need the walk. Measured on
+JDK 21 with an SVRL-shaped run (20,000 `svrl:fired-rule` and about 2,900 `svrl:failed-assert` elements from a
+literal result stylesheet, tree result only, calling thread, best of 300 runs, one JVM): 4.81 ms before, 4.48 ms now;
+without any fixup (incorrect, for comparison only) 4.34 ms.
 
 Measured 2026-11-11 with phoxtrot `c09e6c0` (S36, S41, S42), Saxon-HE 13.1, JDK 21. Effect of S41 and S42 on
 ph-schematron's `BenchmarkProcessorSize` (ISO Schematron, compiled once; JMH, `-prof gc`):

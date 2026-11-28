@@ -382,6 +382,9 @@ v0.5.0 - work in progress
   tree (then the index is built): a single pass that asks once per element (`number(Item/value)` per line) no longer
   pays for indexing the whole document. A last descendant step builds the index at once, as its evaluation does. New
   `XdmDocumentNode.getElementsByNameWhenRepeated`
+* XSLT: the namespace fixup of a finished result tree runs in the walk that numbers it instead of a walk of its own
+  (about 7 % of a run that writes 20,000 SVRL elements). New `IXdmNode.assignDocumentOrder (Consumer)`, which calls a
+  visitor for every element while numbering
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

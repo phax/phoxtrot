@@ -20,6 +20,7 @@ import java.util.ArrayDeque;
 import java.util.Collections;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicLong;
+import java.util.function.Consumer;
 
 import javax.xml.XMLConstants;
 
@@ -729,8 +730,13 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
    * @param aTree
    *        The new tree number.
    */
-  private static void _assignFlatDocumentOrder (@NonNull final AbstractXdmNode aRoot, @NonNull final TreeStamp aTree)
+  private static void _assignFlatDocumentOrder (@NonNull final AbstractXdmNode aRoot,
+                                                @NonNull final TreeStamp aTree,
+                                                @Nullable final Consumer <? super IXdmNode> aElementVisitor)
   {
+    // In a flat tree only the root can be an element
+    if (aElementVisitor != null && aRoot.isElement ())
+      aElementVisitor.accept (aRoot);
     int nOrder = 0;
     aRoot.m_aTree = aTree;
     aRoot.m_nOrder = nOrder++;
@@ -762,13 +768,23 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
    */
   public final void assignDocumentOrder ()
   {
+    assignDocumentOrder (null);
+  }
+
+  /**
+   * The walk of {@link #assignDocumentOrder()}, calling the visitor for each element when the
+   * element is numbered (before its attributes and children); see
+   * {@link IXdmNode#assignDocumentOrder(Consumer)}.
+   */
+  public final void assignDocumentOrder (@Nullable final Consumer <? super IXdmNode> aElementVisitor)
+  {
     final AbstractXdmNode aRoot = getRoot ();
     final TreeStamp aTree = internalNewTree ();
     // Optimisation: a tree without grandchildren (the temporary tree of an XSLT variable whose
     // content is text, a parentless leaf) is numbered without the two stacks
     if (_isFlatTree (aRoot))
     {
-      _assignFlatDocumentOrder (aRoot, aTree);
+      _assignFlatDocumentOrder (aRoot, aTree, aElementVisitor);
       return;
     }
     int nOrder = 0;
@@ -782,6 +798,9 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
       // Every open node that is no ancestor of this one is finished
       while (!aOpen.isEmpty () && aOpen.peek () != aCur.m_aParent)
         aOpen.pop ().internalSetEndOrder (nOrder - 1);
+      // Pre-order: the ancestors of an element were visited before it
+      if (aElementVisitor != null && aCur.isElement ())
+        aElementVisitor.accept (aCur);
       aCur.m_aTree = aTree;
       aCur.m_nOrder = nOrder++;
       for (int i = 0; i < aCur.getAttributeCount (); ++i)

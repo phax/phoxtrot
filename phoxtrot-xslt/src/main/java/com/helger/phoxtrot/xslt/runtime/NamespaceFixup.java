@@ -270,7 +270,15 @@ public final class NamespaceFixup
   {
     if (aRoot == null)
       return;
-    fixNamespaces (aRoot);
-    aRoot.assignDocumentOrder ();
+    if (aRoot.getParent () != null)
+    {
+      // Not the root: the numbering covers the whole tree, the fixup only this subtree
+      fixNamespaces (aRoot);
+      aRoot.assignDocumentOrder ();
+      return;
+    }
+    // Optimisation: the fixup in the numbering walk, in the same pre-order as fixNamespaces, so
+    // that the tree is walked once (the second walk over a large result missed the cache)
+    aRoot.assignDocumentOrder (NamespaceFixup::_fixElement);
   }
 }
