@@ -298,6 +298,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   names an element the document's index does not contain is empty without evaluating its prefix
   (`XPathEvaluator._isEmptyByNameIndex`, the name decided once per path in `PathNode`, also in the complete evaluation), but only for prefixes that cannot raise an
   error (axis steps without predicates, unions of such paths, a node as context item in a tree with a document root).
+  A last descendant step builds the index (its evaluation would); a last child step only uses it through
+  `XdmDocumentNode.getElementsByNameWhenRepeated` (built after node count / 4 calls without it, rent or buy), so a
+  single pass never pays for indexing the document. Do not make the child case build the index directly.
 - Focus-independent predicates: a predicate that `ExprWalker.isFocusIndependent` accepts (no context item, no path
   other than `$x/a/@b`, no function items, only the listed built-in functions, each resolving to the implementation of
   `FunctionLibrary.getDefault ()`) is evaluated once per step or filter application with two or more candidates

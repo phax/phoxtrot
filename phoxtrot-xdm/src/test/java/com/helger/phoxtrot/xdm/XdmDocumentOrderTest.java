@@ -106,6 +106,34 @@ public final class XdmDocumentOrderTest
   }
 
   @Test
+  public void testNameIndexWhenRepeated () throws XdmParseException
+  {
+    // 13 nodes: the index is built on the third call without it
+    final XdmDocumentNode aDoc = _parse ("<r><x/><x/><x/><x/><x/><x/><x/><x/><x/><x/><x/></r>");
+    assertEquals (12, aDoc.getEndOrder ());
+    assertNull (aDoc.getElementsByNameWhenRepeated (X));
+    assertNull (aDoc.getElementsByNameWhenRepeated (X));
+    final List <IXdmNode> aXs = aDoc.getElementsByNameWhenRepeated (X);
+    assertNotNull (aXs);
+    assertEquals (11, aXs.size ());
+    assertSame (aXs, aDoc.getElementsByName (X));
+    assertEquals (0, aDoc.getElementsByNameWhenRepeated (new XdmQName ("none")).size ());
+
+    // A change starts the count again; an index built otherwise is used at once
+    aDoc.getChildAtIndex (0).appendChild (IXdmNode.createElement (X));
+    aDoc.assignDocumentOrder ();
+    assertNull (aDoc.getElementsByNameWhenRepeated (X));
+    assertEquals (12, aDoc.getElementsByName (X).size ());
+    assertEquals (12, aDoc.getElementsByNameWhenRepeated (X).size ());
+
+    // Not numbered
+    final IXdmNode aUnnumbered = IXdmNode.createDocument ();
+    aUnnumbered.appendChild (IXdmNode.createElement (X));
+    for (int i = 0; i < 5; ++i)
+      assertNull (((XdmDocumentNode) aUnnumbered).getElementsByNameWhenRepeated (X));
+  }
+
+  @Test
   public void testUnnumbered ()
   {
     final IXdmNode aDoc = IXdmNode.createDocument ();

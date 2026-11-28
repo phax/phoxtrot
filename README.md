@@ -377,6 +377,11 @@ v0.5.0 - work in progress
   `xsl:evaluate`, nested `fn:transform`), after the globally registered ones
 * The XSLT30 harness rerun `-Dxslt30.writeTo=true` also passes every result to a SAX handler and compares the events
   with those of the result tree
+* A path whose last child step names an element the document does not contain is only answered from the document's
+  name index if the index is built already, or once such checks have been made for a quarter of the nodes of the
+  tree (then the index is built): a single pass that asks once per element (`number(Item/value)` per line) no longer
+  pays for indexing the whole document. A last descendant step builds the index at once, as its evaluation does. New
+  `XdmDocumentNode.getElementsByNameWhenRepeated`
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

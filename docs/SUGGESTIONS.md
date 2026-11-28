@@ -1018,6 +1018,22 @@ Saxon is the reference for the result, which must not change: the same nodes in 
 
 ### S43 - Remaining hotspots after S41 and S42: namespace fixup pass and name index
 
+Status: item 2 done (2026-11-28), with a change: the proposal "use the shortcut only if the index already exists"
+loses where it pays off, so a last child step uses `XdmDocumentNode.getElementsByNameWhenRepeated` (the index if it
+is built, otherwise nothing until such calls were made for a quarter of the nodes of the tree, then it is built; rent
+or buy). A last descendant step still builds the index, as its evaluation does. Measured on JDK 21 (20,000 lines of
+8 nodes, one per-line expression evaluated from each line, best of 300 runs, one JVM, µs per pass):
+
+| Per line | before | now |
+|---|--:|--:|
+| `number(Item/value)` (the name occurs) | 1,942 | 911 |
+| `exists(Item/Tax/Reason)` (absent) | 1,181 | 538 |
+| `Item/Tax/Reason` (absent) | 1,119 | 371 |
+| five absent `exists(Item/X/Y)` joined by `or` | 1,949 | 2,500 |
+
+The index costs about 1 ms here, a check without it about 20 ns; the last row is the price of the rule (the index
+comes after 40,000 checks), below twice the cost of building it at once. Item 1 open, item 3 is an observation.
+
 Measured 2026-11-11 with phoxtrot `c09e6c0` (S36, S41, S42), Saxon-HE 13.1, JDK 21. Effect of S41 and S42 on
 ph-schematron's `BenchmarkProcessorSize` (ISO Schematron, compiled once; JMH, `-prof gc`):
 

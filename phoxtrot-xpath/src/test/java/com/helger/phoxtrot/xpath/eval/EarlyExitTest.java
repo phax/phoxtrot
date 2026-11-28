@@ -450,15 +450,39 @@ public final class EarlyExitTest
                                   "</cac:InvoiceLine><cbc:Note>n</cbc:Note></Invoice>");
     final IXdmNode aRoot = aDoc.getChildAtIndex (0);
     final IXdmNode aLine = aRoot.getChildAtIndex (0);
-    // The generated code's per-line shape: relative steps, the last one absent
+    // A last descendant step builds the index at once (its evaluation would build it anyway)
+    assertTrue (_isEmptyByNameIndex ("/Invoice/cac:InvoiceLine//cbc:UUID", aRoot));
+    // Now the index is there and child steps use it
     assertTrue (_isEmptyByNameIndex ("cac:Item/cac:ClassifiedTaxCategory/cbc:TaxExemptionReason", aLine));
     assertTrue (_isEmptyByNameIndex ("(cac:InvoiceLine|cac:CreditNoteLine)/cbc:UUID", aRoot));
-    assertTrue (_isEmptyByNameIndex ("/Invoice/cac:InvoiceLine//cbc:UUID", aRoot));
     // Not decidable: the name occurs, a single step, a predicate in the prefix,
     // a context item that is no node
     assertFalse (_isEmptyByNameIndex ("cac:Item/cbc:Name", aLine));
     assertFalse (_isEmptyByNameIndex ("cbc:UUID", aLine));
     assertFalse (_isEmptyByNameIndex ("cac:Item[1]/cbc:UUID", aLine));
     assertFalse (_isEmptyByNameIndex ("cac:Item/cbc:UUID", XdmAtomic.integer (1)));
+  }
+
+  @Test
+  public void testEmptyByNameIndexBuiltWhenRepeated ()
+  {
+    final StringBuilder aSB = new StringBuilder ("<Invoice xmlns:cac='" + NS_CAC + "' xmlns:cbc='" + NS_CBC + "'>");
+    for (int i = 0; i < 100; ++i)
+      aSB.append ("<cac:InvoiceLine><cbc:ID>").append (i).append ("</cbc:ID></cac:InvoiceLine>");
+    final IXdmNode aDoc = _parse (aSB.append ("</Invoice>").toString ());
+    final IXdmNode aLine = aDoc.getChildAtIndex (0).getChildAtIndex (0);
+    // The per-line shape with a last child step: without an index it is evaluated, until it was
+    // asked often enough to pay for building the index (a quarter of the 301 nodes)
+    final String sPath = "cac:Item/cac:ClassifiedTaxCategory/cbc:TaxExemptionReason";
+    int nCalls = 1;
+    while (!_isEmptyByNameIndex (sPath, aLine))
+    {
+      assertTrue (nCalls < 100);
+      ++nCalls;
+    }
+    assertEquals (aDoc.getEndOrder () / 4, nCalls);
+    // The result is the same either way
+    assertEquals ("false", _eval ("exists(" + sPath + ")", aLine));
+    assertTrue (_isEmptyByNameIndex (sPath, aLine));
   }
 }

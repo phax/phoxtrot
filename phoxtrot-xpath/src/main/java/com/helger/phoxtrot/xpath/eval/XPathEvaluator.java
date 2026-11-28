@@ -1018,15 +1018,25 @@ public final class XPathEvaluator
    * @param aName
    *        The name from {@link #_getEmptyByIndexName(IExpr.PathExpr, IExpr.StepExpr, int)}, may
    *        be <code>null</code>.
+   * @param bBuildIndex
+   *        <code>true</code> to build the element index of the document if it is not there (for a
+   *        last descendant step, whose evaluation builds it anyway), <code>false</code> to build it
+   *        only once the check was asked often enough to pay for it (for a last child step, which
+   *        does not need it: in a single pass over the document building it would cost more than
+   *        the shortcut saves), see {@link XdmDocumentNode#getElementsByNameWhenRepeated(XdmQName)}.
    */
-  private static boolean _isNameAbsent (@Nullable final XdmQName aName, @NonNull final DynamicContext aCtx)
+  private static boolean _isNameAbsent (@Nullable final XdmQName aName,
+                                        final boolean bBuildIndex,
+                                        @NonNull final DynamicContext aCtx)
   {
     if (aName == null)
       return false;
     if (!(aCtx.getContextItem () instanceof final IXdmNode aNode) || !(aNode.getRoot () instanceof final XdmDocumentNode aDoc))
       return false;
-    // null if the tree is not numbered or the document is streamed
-    final List <IXdmNode> aElements = aDoc.getElementsByName (aName);
+    // null if the tree is not numbered, the document is streamed or (without bBuildIndex) the
+    // index is not built yet
+    final List <IXdmNode> aElements = bBuildIndex ? aDoc.getElementsByName (aName)
+                                                  : aDoc.getElementsByNameWhenRepeated (aName);
     return aElements != null && aElements.isEmpty ();
   }
 
@@ -1052,7 +1062,7 @@ public final class XPathEvaluator
                                                final int nPrefix,
                                                @NonNull final DynamicContext aCtx)
   {
-    return _isNameAbsent (_getEmptyByIndexName (aExpr, aLast, nPrefix), aCtx);
+    return _isNameAbsent (_getEmptyByIndexName (aExpr, aLast, nPrefix), aLast.axis () != EAxis.CHILD, aCtx);
   }
 
   /**
@@ -1176,6 +1186,8 @@ public final class XPathEvaluator
     private final int m_nPrefix;
     // Null if the name index cannot answer the path
     private final XdmQName m_aEmptyByIndexName;
+    // True if the check may build the element index (a last descendant step, which uses it anyway)
+    private final boolean m_bEmptyByIndexBuild;
     // "//@name": the full evaluation answers it from the attribute index
     private final boolean m_bSubtreeAttributes;
     // The steps before the last one if the existence is answered depth-first, null otherwise
@@ -1196,6 +1208,7 @@ public final class XPathEvaluator
         m_aLast = null;
         m_nPrefix = 0;
         m_aEmptyByIndexName = null;
+        m_bEmptyByIndexBuild = false;
         m_bSubtreeAttributes = false;
         m_aDepthFirstSteps = null;
       }
@@ -1206,6 +1219,7 @@ public final class XPathEvaluator
         m_aLast = bFused ? m_aSteps[nSteps - 2].m_aFused : m_aSteps[nSteps - 1];
         m_nPrefix = bFused ? nSteps - 2 : nSteps - 1;
         m_aEmptyByIndexName = _getEmptyByIndexName (aPath, m_aLast.m_aStep, m_nPrefix);
+        m_bEmptyByIndexBuild = m_aLast.m_aStep.axis () != EAxis.CHILD;
         m_bSubtreeAttributes = m_nPrefix == nSteps - 1 &&
                                nSteps >= 2 &&
                                _isDescendantOrSelfNode (aSteps.get (nSteps - 2)) &&
@@ -1424,7 +1438,7 @@ public final class XPathEvaluator
       if (m_aLast == null || m_aLast.m_aPostfix != null)
         return null;
       // Optimisation: empty by the document's name index, without evaluating the prefix
-      if (_isNameAbsent (m_aEmptyByIndexName, aCtx))
+      if (_isNameAbsent (m_aEmptyByIndexName, m_bEmptyByIndexBuild, aCtx))
         return Boolean.FALSE;
       // "//@name": the full evaluation answers it from the attribute index,
       // which is cheaper than visiting every node of the subtrees here
@@ -1453,7 +1467,7 @@ public final class XPathEvaluator
     {
       // Optimisation: a last element name the document does not contain makes the path empty
       // without evaluating its prefix
-      if (m_aLast != null && _isNameAbsent (m_aEmptyByIndexName, aCtx))
+      if (m_aLast != null && _isNameAbsent (m_aEmptyByIndexName, m_bEmptyByIndexBuild, aCtx))
         return XdmSequence.EMPTY;
       return _evalPrefix (aCtx, m_aSteps.length);
     }

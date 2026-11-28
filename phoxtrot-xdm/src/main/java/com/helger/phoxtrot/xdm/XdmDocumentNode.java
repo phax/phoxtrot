@@ -44,6 +44,9 @@ import com.helger.collection.commons.ICommonsOrderedMap;
 @NotThreadSafe
 public final class XdmDocumentNode extends AbstractXdmParentNode
 {
+  // getElementsByNameWhenRepeated builds the index after node count / this many calls without it
+  private static final int INDEX_REQUESTS_DIVISOR = 4;
+
   /** A parent node (by identity) and the name of its child elements. */
   @Immutable
   private record ChildKey (@NonNull IXdmNode parent, @NonNull XdmQName name)
@@ -92,6 +95,9 @@ public final class XdmDocumentNode extends AbstractXdmParentNode
   private volatile NameIndex m_aAttributeIndex;
   // The child elements by name of single parents, like the element index
   private volatile ChildLists m_aChildLists;
+  // The calls of getElementsByNameWhenRepeated without an index, and the numbering they belong to
+  private int m_nIndexRequests;
+  private TreeStamp m_aIndexRequestTree;
   // Built by XdmStreamReader: only a part of the document is attached
   private boolean m_bStreamed;
   // The maximum element depth recorded by XdmTreeBuilder, and the numbering it
@@ -319,6 +325,44 @@ public final class XdmDocumentNode extends AbstractXdmParentNode
     final NameIndex aIndex = _getIndex (false);
     if (aIndex == null)
       return null;
+
+    final List <IXdmNode> ret = aIndex.m_aNodes.get (aName);
+    return ret == null ? List.of () : ret;
+  }
+
+  /**
+   * The elements of this document with a name for a caller that only takes a shortcut with them:
+   * from the element index of the current numbering if it is built, otherwise <code>null</code>,
+   * until such calls without an index have been made for a quarter of the nodes of the tree; then
+   * the index is built. A single pass that asks once per line never pays for indexing the whole
+   * document, while a check repeated often enough gets the index (it costs about as much as these
+   * calls cost the caller without it). The count of calls is not synchronised: a lost increment
+   * from a concurrent run only builds the index a little later.
+   *
+   * @param aName
+   *        The element name (namespace URI and local name).
+   * @return The elements in document order as a read-only list, or <code>null</code> if the index
+   *         is not built (yet), the tree is not numbered or is {@link #isStreamed() streamed}.
+   */
+  @Nullable
+  public List <IXdmNode> getElementsByNameWhenRepeated (@NonNull final XdmQName aName)
+  {
+    ValueEnforcer.notNull (aName, "Name");
+    final TreeStamp aTree = internalGetTree ();
+    if (aTree == null || m_bStreamed)
+      return null;
+    final NameIndex aIndex = m_aNameIndex;
+    if (aIndex == null || aIndex.m_aTree != aTree)
+    {
+      if (m_aIndexRequestTree != aTree)
+      {
+        m_aIndexRequestTree = aTree;
+        m_nIndexRequests = 0;
+      }
+      if (++m_nIndexRequests < getEndOrder () / INDEX_REQUESTS_DIVISOR)
+        return null;
+      return getElementsByName (aName);
+    }
 
     final List <IXdmNode> ret = aIndex.m_aNodes.get (aName);
     return ret == null ? List.of () : ret;
