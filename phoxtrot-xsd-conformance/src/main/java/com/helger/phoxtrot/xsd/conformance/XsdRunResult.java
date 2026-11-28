@@ -51,6 +51,8 @@ public final class XsdRunResult
   private final ICommonsList <XsdSetResult> m_aSets;
 
   /**
+   * Create a run result.
+   *
    * @param eVersion
    *        The version that was run.
    * @param sFilePrefix
@@ -101,12 +103,22 @@ public final class XsdRunResult
     return aSB.toString ();
   }
 
+  /**
+   * Get the XSD version that was run.
+   *
+   * @return The version.
+   */
   @NonNull
   public EXsdVersion getVersion ()
   {
     return m_eVersion;
   }
 
+  /**
+   * Get the results of all test sets.
+   *
+   * @return A copy of the per test-set results in suite order.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XsdSetResult> getAllSets ()
@@ -114,38 +126,71 @@ public final class XsdRunResult
     return m_aSets.getClone ();
   }
 
+  /**
+   * Get the number of passing cases.
+   *
+   * @return The sum of the passes of all test sets.
+   */
   public int getPass ()
   {
     return _sum (XsdSetResult::getPass);
   }
 
+  /**
+   * Get the number of failing cases.
+   *
+   * @return The sum of the fails of all test sets.
+   */
   public int getFail ()
   {
     return _sum (XsdSetResult::getFail);
   }
 
+  /**
+   * Get the number of skipped cases.
+   *
+   * @return The sum of the skips of all test sets.
+   */
   public int getSkip ()
   {
     return _sum (XsdSetResult::getSkip);
   }
 
+  /**
+   * Get the number of unsupported cases.
+   *
+   * @return The sum of the unsupported cases of all test sets.
+   */
   public int getUnsupported ()
   {
     return _sum (XsdSetResult::getUnsupported);
   }
 
+  /**
+   * Get the number of queried cases.
+   *
+   * @return The sum of the queried (W3C-disputed) cases of all test sets.
+   */
   public int getQueried ()
   {
     return _sum (XsdSetResult::getQueried);
   }
 
-  /** @return The queried schema tests whose compilation crashed. */
+  /**
+   * Get the number of queried schema tests whose compilation crashed.
+   *
+   * @return The queried schema tests whose compilation crashed.
+   */
   public int getQueriedCrash ()
   {
     return _sum (XsdSetResult::getQueriedCrash);
   }
 
-  /** @return All skip reasons with their counts. */
+  /**
+   * Get the skip reasons of all test sets.
+   *
+   * @return All skip reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getSkipReasons ()
@@ -161,7 +206,11 @@ public final class XsdRunResult
     return ret;
   }
 
-  /** @return All failing case names, sorted (duplicates kept). */
+  /**
+   * Get the names of all failing cases.
+   *
+   * @return All failing case names, sorted (duplicates kept).
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getFailNames ()
@@ -173,7 +222,11 @@ public final class XsdRunResult
     return ret;
   }
 
-  /** @return The human readable summary. */
+  /**
+   * Build the human readable summary of the run.
+   *
+   * @return The human readable summary.
+   */
   @NonNull
   public String getSummary ()
   {
@@ -228,7 +281,11 @@ public final class XsdRunResult
     return aSB.toString ();
   }
 
-  /** @return The per test-set counts as CSV, in suite order. */
+  /**
+   * Build the per test-set counts as CSV.
+   *
+   * @return The per test-set counts as CSV, in suite order.
+   */
   @NonNull
   public String getBySetCsv ()
   {
@@ -249,7 +306,11 @@ public final class XsdRunResult
     return aSB.toString ();
   }
 
-  /** @return The name of the fail list file of this version. */
+  /**
+   * Get the name of the fail list file.
+   *
+   * @return The name of the fail list file of this version.
+   */
   @NonNull
   public String getFailFileName ()
   {

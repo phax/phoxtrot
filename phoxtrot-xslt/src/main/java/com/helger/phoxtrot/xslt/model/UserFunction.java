@@ -66,6 +66,21 @@ public final class UserFunction implements IXPathFunction
   private SequenceConstructor m_aBody = SequenceConstructor.EMPTY;
   private boolean m_bMemoize;
 
+  /**
+   * Create a stylesheet function. The body is set afterwards.
+   *
+   * @param aElement
+   *        The xsl:function element. May not be <code>null</code>.
+   * @param aName
+   *        The function name. May not be <code>null</code>.
+   * @param aParams
+   *        The parameters in declaration order. May not be
+   *        <code>null</code>.
+   * @param aAs
+   *        The declared result type, <code>null</code> if none.
+   * @param sVisibility
+   *        The declared visibility, <code>null</code> if none.
+   */
   public UserFunction (@NonNull final XslElement aElement,
                        @NonNull final XdmQName aName,
                        @NonNull final List <VariableDef> aParams,
@@ -79,49 +94,86 @@ public final class UserFunction implements IXPathFunction
     m_sVisibility = sVisibility;
   }
 
+  /**
+   * Get the declaring element.
+   *
+   * @return The xsl:function element, never <code>null</code>.
+   */
   @NonNull
   public XslElement getElement ()
   {
     return m_aElement;
   }
 
+  /**
+   * Get the function name.
+   *
+   * @return The function name, never <code>null</code>.
+   */
   @NonNull
   public XdmQName getName ()
   {
     return m_aName;
   }
 
-  /** @return The number of parameters. */
+  /**
+   * Get the arity of the function.
+   *
+   * @return The number of parameters.
+   */
   public int getArity ()
   {
     return m_aParams.size ();
   }
 
+  /**
+   * Get a copy of the function parameters.
+   *
+   * @return The parameters in declaration order, never <code>null</code>.
+   */
   @NonNull
   public ICommonsList <VariableDef> getParams ()
   {
     return m_aParams.getClone ();
   }
 
+  /**
+   * Get the declared result type.
+   *
+   * @return The declared result type, <code>null</code> if none.
+   */
   @Nullable
   public SeqType getAs ()
   {
     return m_aAs;
   }
 
-  /** @return The declared visibility (public, private, final, abstract) or <code>null</code>. */
+  /**
+   * Get the declared visibility of the function.
+   *
+   * @return The declared visibility (public, private, final, abstract) or
+   *         <code>null</code>.
+   */
   @Nullable
   public String getVisibility ()
   {
     return m_sVisibility;
   }
 
+  /**
+   * Set the compiled body of the function.
+   *
+   * @param aBody
+   *        The body. May not be <code>null</code>.
+   */
   public void setBody (@NonNull final SequenceConstructor aBody)
   {
     m_aBody = aBody;
   }
 
   /**
+   * Set whether the results of the function are cached.
+   *
    * @param bMemoize
    *        <code>true</code> if results are cached by argument values
    *        (cache="yes" or new-each-time="no").

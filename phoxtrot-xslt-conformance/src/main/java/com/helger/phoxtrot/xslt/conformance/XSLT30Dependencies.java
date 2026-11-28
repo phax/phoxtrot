@@ -261,6 +261,9 @@ public final class XSLT30Dependencies
   }
 
   /**
+   * Determine the skip reason of a case for a run that claims neither schema-awareness, nor streaming, nor backwards
+   * compatibility.
+   *
    * @param aSetDeps
    *        The dependencies of the test set.
    * @param aCaseDeps
@@ -277,6 +280,8 @@ public final class XSLT30Dependencies
   }
 
   /**
+   * Determine the skip reason of a case for a run that claims neither streaming nor backwards compatibility.
+   *
    * @param aSetDeps
    *        The dependencies of the test set.
    * @param aCaseDeps
@@ -295,6 +300,8 @@ public final class XSLT30Dependencies
   }
 
   /**
+   * Determine the skip reason of a case for a run that does not claim backwards compatibility.
+   *
    * @param aSetDeps
    *        The dependencies of the test set.
    * @param aCaseDeps
@@ -316,6 +323,8 @@ public final class XSLT30Dependencies
   }
 
   /**
+   * Determine the skip reason of a case from the dependencies of its test set, then from its own.
+   *
    * @param aSetDeps
    *        The dependencies of the test set.
    * @param aCaseDeps

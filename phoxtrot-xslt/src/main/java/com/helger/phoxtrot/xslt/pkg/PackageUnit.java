@@ -38,7 +38,14 @@ import com.helger.phoxtrot.xslt.tree.XslModule;
 @NotThreadSafe
 public final class PackageUnit
 {
-  /** One xsl:use-package of this package with the unit it loaded. */
+  /**
+   * One xsl:use-package of this package with the unit it loaded.
+   *
+   * @param element
+   *        The xsl:use-package element. Never <code>null</code>.
+   * @param used
+   *        The unit of the used package. Never <code>null</code>.
+   */
   @Immutable
   public record Use (@NonNull XslElement element, @NonNull PackageUnit used)
   {}
@@ -64,26 +71,46 @@ public final class PackageUnit
     m_bPrincipal = bPrincipal;
   }
 
-  /** @return The identity of the package source (equal for two uses of one package). */
+  /**
+   * Get the identity of the package source.
+   *
+   * @return The identity of the package source (equal for two uses of one
+   *         package).
+   */
   @NonNull
   public String getKey ()
   {
     return m_sKey;
   }
 
+  /**
+   * Check whether this is the principal package of the compilation.
+   *
+   * @return <code>true</code> for the principal package, <code>false</code>
+   *         for a used library package.
+   */
   public boolean isPrincipal ()
   {
     return m_bPrincipal;
   }
 
-  /** @return The package module, <code>null</code> before it is loaded. */
+  /**
+   * Get the package module, the first module of the package.
+   *
+   * @return The package module, <code>null</code> before it is loaded.
+   */
   @Nullable
   public XslModule getPackageModule ()
   {
     return m_aModules.getFirstOrNull ();
   }
 
-  /** @return The xsl:package (or xsl:stylesheet) element of the package module. */
+  /**
+   * Get the root element of the package module.
+   *
+   * @return The xsl:package (or xsl:stylesheet) element of the package module,
+   *         <code>null</code> before the package module is loaded.
+   */
   @Nullable
   public XslElement getRoot ()
   {
@@ -91,14 +118,24 @@ public final class PackageUnit
     return aModule == null ? null : aModule.getRoot ();
   }
 
-  /** @return The modules of the package, the package module first (modifiable). */
+  /**
+   * Get the modules of the package.
+   *
+   * @return The modules of the package, the package module first
+   *         (modifiable).
+   */
   @NonNull
   public ICommonsList <XslModule> modules ()
   {
     return m_aModules;
   }
 
-  /** @return The xsl:use-package elements of the package (modifiable). */
+  /**
+   * Get the uses of other packages by this package.
+   *
+   * @return The xsl:use-package elements of the package with the units they
+   *         loaded (modifiable).
+   */
   @NonNull
   public ICommonsList <Use> uses ()
   {
@@ -106,6 +143,8 @@ public final class PackageUnit
   }
 
   /**
+   * Get the hidden components of the used packages.
+   *
    * @return The symbolic names of used-package components that code in this
    *         package cannot see (modifiable). Filled by
    *         {@link PackageModel#analyse()}; read when names are resolved.

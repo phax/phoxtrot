@@ -65,6 +65,8 @@ public final class XsdSchemaProvider implements IXdmSchemaProvider
   {}
 
   /**
+   * Create a schema set over a compiled schema, with lenient entities.
+   *
    * @param aSchema
    *        A compiled schema. May not be <code>null</code>.
    * @return The schema set over it.
@@ -76,6 +78,8 @@ public final class XsdSchemaProvider implements IXdmSchemaProvider
   }
 
   /**
+   * Create a schema set over a compiled schema.
+   *
    * @param aSchema
    *        A compiled schema. May not be <code>null</code>.
    * @param bLenientEntities

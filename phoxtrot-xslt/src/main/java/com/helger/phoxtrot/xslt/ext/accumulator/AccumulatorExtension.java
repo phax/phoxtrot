@@ -205,6 +205,12 @@ public final class AccumulatorExtension implements IXsltExtension
   }
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public AccumulatorExtension ()
+  {}
+
+  /**
    * @param aEl
    *        An xsl:accumulator-rule element.
    * @return <code>true</code> if it has a child element or a text child that
@@ -894,6 +900,9 @@ public final class AccumulatorExtension implements IXsltExtension
   }
 
   /**
+   * Check whether the accumulators applied by an xsl:source-document can be computed over a
+   * streamed document.
+   *
    * @param aSheet
    *        The stylesheet.
    * @param aUseAccumulators
@@ -909,6 +918,9 @@ public final class AccumulatorExtension implements IXsltExtension
   }
 
   /**
+   * Check whether the accumulators applicable to the initial match selection in a mode can be
+   * computed over a streamed document.
+   *
    * @param aSheet
    *        The stylesheet.
    * @param aMode

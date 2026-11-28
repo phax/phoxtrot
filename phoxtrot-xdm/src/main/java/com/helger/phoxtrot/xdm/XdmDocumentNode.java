@@ -128,6 +128,8 @@ public final class XdmDocumentNode extends AbstractXdmParentNode
   }
 
   /**
+   * Check whether this document is read as a stream.
+   *
    * @return <code>true</code> if this document is read by an {@link XdmStreamReader}: only the part
    *         of it that the reader keeps is attached, so a question about the whole document cannot
    *         be answered from the tree.

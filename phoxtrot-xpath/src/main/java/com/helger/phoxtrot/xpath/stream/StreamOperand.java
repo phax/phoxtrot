@@ -80,6 +80,8 @@ public record StreamOperand (@NonNull EPosture posture,
   }
 
   /**
+   * Create an operand from its posture, sweep and usage.
+   *
    * @param aPS
    *        Posture and sweep of the operand.
    * @param eUsage
@@ -94,6 +96,8 @@ public record StreamOperand (@NonNull EPosture posture,
   }
 
   /**
+   * Create a copy with another childless flag.
+   *
    * @param bChildless
    *        The new childless flag.
    * @return A copy with the given childless flag.
@@ -105,6 +109,8 @@ public record StreamOperand (@NonNull EPosture posture,
   }
 
   /**
+   * Create a copy with another higher-order flag.
+   *
    * @param bHigherOrder
    *        The new higher-order flag.
    * @return A copy with the given higher-order flag.
@@ -116,6 +122,8 @@ public record StreamOperand (@NonNull EPosture posture,
   }
 
   /**
+   * Create a copy in another choice group.
+   *
    * @param nChoice
    *        The new choice group, 0 for none.
    * @return A copy in the given choice group.
@@ -127,6 +135,8 @@ public record StreamOperand (@NonNull EPosture posture,
   }
 
   /**
+   * Create a copy with another "usage stated by the Recommendation" flag.
+   *
    * @param bRecUsage
    *        The new flag.
    * @return A copy with the given "usage stated by the Recommendation" flag.

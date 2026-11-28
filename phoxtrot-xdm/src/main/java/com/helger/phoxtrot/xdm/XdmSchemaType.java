@@ -136,6 +136,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Find the most specific built-in atomic type that a derivation check accepts.
+   *
    * @param aDerivesFrom
    *        The derivation check of a type against a built-in atomic type name.
    * @return The most specific built-in atomic type the check accepts, or <code>null</code>.
@@ -171,6 +173,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Get the type definition of the node.
+   *
    * @return The type definition of the node, as the schema provider reports it. Never
    *         <code>null</code>.
    */
@@ -181,6 +185,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Get the type definition the value was validated against.
+   *
    * @return The type definition the value was validated against (for a union the matching member
    *         type). Never <code>null</code>.
    */
@@ -191,6 +197,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Get the type definition of the node from a schema component model.
+   *
    * @return The type definition of the node if the provider has a schema component model (the
    *         native validator, see {@link com.helger.phoxtrot.xdm.schema.XdmSchemaSupport}),
    *         otherwise <code>null</code> (the JDK validator).
@@ -202,6 +210,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Get the type definition the value was validated against from a schema component model.
+   *
    * @return The type definition the value was validated against (for a union the matching member
    *         type), or <code>null</code> like {@link #getDefinition()}.
    */
@@ -212,6 +222,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Get the name of the type.
+   *
    * @return The type name. Anonymous types carry a name whose local part starts with <code>#</code>
    *         (see {@link #isAnonymous()}).
    */
@@ -222,6 +234,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Check whether the type is anonymous.
+   *
    * @return <code>true</code> if the type is anonymous.
    */
   public boolean isAnonymous ()
@@ -230,6 +244,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Check whether the type is a simple type.
+   *
    * @return <code>true</code> for a simple type (atomic, list or union), <code>false</code> for a
    *         complex type.
    */
@@ -239,6 +255,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Check whether the typed value is a list.
+   *
    * @return <code>true</code> if the typed value is a list: a list type or a complex type whose
    *         simple content is a list type. A value type of <code>xs:anySimpleType</code> counts as
    *         a list as well.
@@ -249,6 +267,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Get the built-in atomic type of the typed value.
+   *
    * @return The built-in atomic type (in the <code>xs</code> namespace) of the typed value, for a
    *         list type the type of its items. <code>null</code> for complex content and for types
    *         whose built-in base cannot be determined (a union that was not resolved to a member, a
@@ -261,6 +281,8 @@ public final class XdmSchemaType
   }
 
   /**
+   * Check whether the typed value is a single value of exactly the given built-in atomic type.
+   *
    * @param sAtomicLocalName
    *        Local name of a built-in atomic type.
    * @return <code>true</code> if the typed value is a single value and {@link #getAtomicBase()} is

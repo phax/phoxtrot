@@ -61,6 +61,12 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
 public final class SourceDocumentExtension implements IXsltExtension
 {
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public SourceDocumentExtension ()
+  {}
+
+  /**
    * Run the body over the document read as a stream.
    *
    * @return <code>false</code> if the document is not streamed (and nothing was done).

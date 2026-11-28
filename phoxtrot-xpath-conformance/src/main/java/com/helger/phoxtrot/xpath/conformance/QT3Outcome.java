@@ -48,6 +48,11 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
 
   private static final QT3Outcome PASS = new QT3Outcome (EQT3Status.PASS, "", true);
 
+  /**
+   * Get the plain pass outcome.
+   *
+   * @return A pass without reason.
+   */
   @NonNull
   public static QT3Outcome pass ()
   {
@@ -55,6 +60,8 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
   }
 
   /**
+   * Create a pass with a note.
+   *
    * @param sNote
    *        The note, e.g. {@link #NOTE_ERROR_CODE}.
    * @return A pass that carries a note in its reason.
@@ -66,6 +73,8 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
   }
 
   /**
+   * Create a conclusive fail.
+   *
    * @param sReason
    *        The fail reason.
    * @return A conclusive fail: the assertion was evaluated and is false.
@@ -77,6 +86,8 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
   }
 
   /**
+   * Create an inconclusive fail.
+   *
    * @param sReason
    *        The fail reason.
    * @return An inconclusive fail: the assertion could not be evaluated.
@@ -87,6 +98,13 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
     return new QT3Outcome (EQT3Status.FAIL, sReason, false);
   }
 
+  /**
+   * Create a skip.
+   *
+   * @param sReason
+   *        The skip reason.
+   * @return A skip with the reason.
+   */
   @NonNull
   public static QT3Outcome skip (@NonNull final String sReason)
   {
@@ -94,6 +112,8 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
   }
 
   /**
+   * Create a pass or a conclusive fail.
+   *
    * @param bPass
    *        Whether the check passed.
    * @param sReason
@@ -106,17 +126,29 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
     return bPass ? PASS : fail (sReason);
   }
 
+  /**
+   * Check whether this is a pass.
+   *
+   * @return <code>true</code> for a pass.
+   */
   public boolean isPass ()
   {
     return status == EQT3Status.PASS;
   }
 
+  /**
+   * Check whether this is a fail.
+   *
+   * @return <code>true</code> for a fail, conclusive or not.
+   */
   public boolean isFail ()
   {
     return status == EQT3Status.FAIL;
   }
 
   /**
+   * Check whether this is a conclusive fail.
+   *
    * @return <code>true</code> for a fail of an assertion that was evaluated
    *         and is false.
    */
@@ -125,6 +157,11 @@ public record QT3Outcome (@NonNull EQT3Status status, @NonNull String reason, bo
     return status == EQT3Status.FAIL && conclusive;
   }
 
+  /**
+   * Check whether this is a skip.
+   *
+   * @return <code>true</code> for a skip.
+   */
   public boolean isSkip ()
   {
     return status == EQT3Status.SKIP;

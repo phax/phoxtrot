@@ -50,6 +50,8 @@ public final class XsltStateKey <T>
   private final EScope m_eScope;
 
   /**
+   * Create a new key.
+   *
    * @param sName
    *        A name for debugging.
    * @param eScope
@@ -61,12 +63,22 @@ public final class XsltStateKey <T>
     m_eScope = eScope;
   }
 
+  /**
+   * Get the name of this key.
+   *
+   * @return The name for debugging, never <code>null</code>.
+   */
   @NonNull
   public String getName ()
   {
     return m_sName;
   }
 
+  /**
+   * Get what happens to the value of this key in calls.
+   *
+   * @return The scope, never <code>null</code>.
+   */
   @NonNull
   public EScope getScope ()
   {

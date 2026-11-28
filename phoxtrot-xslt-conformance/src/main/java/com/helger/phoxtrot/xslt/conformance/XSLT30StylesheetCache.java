@@ -40,6 +40,14 @@ public final class XSLT30StylesheetCache
   private final ConcurrentHashMap <String, Object> m_aMap = new ConcurrentHashMap <> ();
 
   /**
+   * Create an empty cache.
+   */
+  public XSLT30StylesheetCache ()
+  {}
+
+  /**
+   * Get a compiled stylesheet from the cache, compiling it on a miss.
+   *
    * @param sKey
    *        The cache key.
    * @param aCompiler

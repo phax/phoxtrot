@@ -45,7 +45,7 @@ public final class XsdCommandTest
     // xs:assert needs XSD 1.1
     CliResult aResult = CliRunner.run ("xsd", "check", BASIC + "invoice.xsd");
     assertEquals (_output (aResult), PhoxtrotCli.EXIT_FAILURE, aResult.exitCode ());
-    assertTrue (aResult.err (), aResult.err ().contains ("invoice.xsd:24:"));
+    assertTrue (aResult.err (), aResult.err ().contains ("invoice.xsd:42:"));
 
     aResult = CliRunner.run ("xsd", "check", "--xsd-version", "1.1", BASIC + "invoice.xsd");
     assertEquals (_output (aResult), PhoxtrotCli.EXIT_OK, aResult.exitCode ());
@@ -67,9 +67,9 @@ public final class XsdCommandTest
                                              BASIC + "invoice-invalid.xml");
     assertEquals (_output (aResult), PhoxtrotCli.EXIT_FAILURE, aResult.exitCode ());
     assertTrue (aResult.out (), aResult.out ().contains ("invoice.xml: valid"));
-    assertTrue (aResult.err (), aResult.err ().contains ("invoice-invalid.xml:2:"));
+    assertTrue (aResult.err (), aResult.err ().contains ("invoice-invalid.xml:20:"));
     assertTrue (aResult.err (), aResult.err ().contains ("cvc-assertion"));
-    assertTrue (aResult.err (), aResult.err ().contains ("invoice-invalid.xml:4:"));
+    assertTrue (aResult.err (), aResult.err ().contains ("invoice-invalid.xml:22:"));
     assertTrue (aResult.err (), aResult.err ().contains ("cvc-datatype-valid"));
     assertTrue (aResult.err (), aResult.err ().contains ("1 of 2 document(s) are invalid"));
   }

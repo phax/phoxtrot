@@ -88,6 +88,9 @@ public final class StreamedGroupScope
   }
 
   /**
+   * Check whether an instruction is contained in a declared-streamable
+   * construct.
+   *
    * @param aSheet
    *        The stylesheet.
    * @param aEl
@@ -128,6 +131,8 @@ public final class StreamedGroupScope
   }
 
   /**
+   * Get the context to invoke the template with.
+   *
    * @param aCtx
    *        The context of the invocation instruction.
    * @return The context to invoke the template with: without current group and
@@ -151,6 +156,8 @@ public final class StreamedGroupScope
   }
 
   /**
+   * Create the scope of an invocation instruction.
+   *
    * @param aCtx
    *        Compile context.
    * @param aEl

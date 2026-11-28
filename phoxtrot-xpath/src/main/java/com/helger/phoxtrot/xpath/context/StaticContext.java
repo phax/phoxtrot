@@ -173,6 +173,8 @@ public final class StaticContext
   }
 
   /**
+   * Look up the namespace URI bound to a prefix.
+   *
    * @param sPrefix
    *        The prefix.
    * @return The namespace URI or <code>null</code> if the prefix is unbound.
@@ -184,6 +186,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the default element/type namespace.
+   *
    * @return The default element/type namespace of XPath: the namespace of an
    *         unprefixed element or type name. Empty for no namespace (the
    *         default).
@@ -194,6 +198,14 @@ public final class StaticContext
     return m_sDefaultElementNamespace;
   }
 
+  /**
+   * Set the default element/type namespace.
+   *
+   * @param sNamespaceUri
+   *        The namespace URI, empty for no namespace. May not be
+   *        <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setDefaultElementNamespace (@NonNull final String sNamespaceUri)
   {
@@ -204,6 +216,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the default namespace declared in scope of the expression.
+   *
    * @return The default namespace declared in scope of the expression
    *         (<code>xmlns="..."</code> in a host language such as XSLT), which
    *         is not the default element namespace of XPath. Empty if none.
@@ -215,6 +229,8 @@ public final class StaticContext
   }
 
   /**
+   * Set the default namespace declared in scope of the expression.
+   *
    * @param sNamespaceUri
    *        The default namespace declared in scope of the expression, empty
    *        for none.
@@ -231,6 +247,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the default function namespace.
+   *
    * @return The namespace of an unprefixed function name; the
    *         <code>fn</code> namespace unless set otherwise.
    */
@@ -240,6 +258,14 @@ public final class StaticContext
     return m_sDefaultFunctionNamespace;
   }
 
+  /**
+   * Set the default function namespace.
+   *
+   * @param sNamespaceUri
+   *        The namespace of an unprefixed function name. May not be
+   *        <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setDefaultFunctionNamespace (@NonNull final String sNamespaceUri)
   {
@@ -250,6 +276,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the static base URI.
+   *
    * @return The static base URI, used to resolve relative URIs (e.g. of
    *         <code>fn:doc</code>), or <code>null</code> if none is known.
    */
@@ -259,6 +287,13 @@ public final class StaticContext
     return m_sBaseUri;
   }
 
+  /**
+   * Set the static base URI.
+   *
+   * @param sBaseUri
+   *        The static base URI. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setBaseUri (@Nullable final String sBaseUri)
   {
@@ -269,12 +304,24 @@ public final class StaticContext
     return this;
   }
 
+  /**
+   * Get the function library of this static context.
+   *
+   * @return The function library. Never <code>null</code>.
+   */
   @NonNull
   public FunctionLibrary getFunctionLibrary ()
   {
     return m_aFunctions;
   }
 
+  /**
+   * Set the function library of this static context.
+   *
+   * @param aFunctions
+   *        The function library. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setFunctionLibrary (@NonNull final FunctionLibrary aFunctions)
   {
@@ -285,6 +332,8 @@ public final class StaticContext
   }
 
   /**
+   * Check whether XPath 1.0 compatibility mode is on.
+   *
    * @return <code>true</code> if XPath 1.0 compatibility mode is on: general
    *         comparisons, arithmetic and the conversion of function arguments
    *         (XPath 3.1 section 3.1.5.2) follow the XPath 1.0 rules. Default
@@ -295,6 +344,13 @@ public final class StaticContext
     return m_bXPath10Compatibility;
   }
 
+  /**
+   * Switch XPath 1.0 compatibility mode on or off.
+   *
+   * @param bXPath10Compatibility
+   *        <code>true</code> to switch it on.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setXPath10Compatibility (final boolean bXPath10Compatibility)
   {
@@ -305,6 +361,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the error code of the fallback error function of a host language.
+   *
    * @return The error code of the fallback error function of a host language,
    *         or <code>null</code> (the default) if a static call of an unknown
    *         function is the static error XPST0017. See
@@ -341,6 +399,8 @@ public final class StaticContext
   }
 
   /**
+   * Check whether the Static Typing Feature is in effect.
+   *
    * @return <code>true</code> if the narrow part of the optional Static Typing
    *         Feature that this engine implements is in effect: an axis step
    *         that provably selects nothing is the static error XPST0005.
@@ -371,6 +431,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the context item static type.
+   *
    * @return The context item static type (XPath 3.1 section 2.1.1) the Static
    *         Typing Feature assumes, or <code>null</code> for
    *         <code>item()</code> (the default).
@@ -405,6 +467,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the in-scope schema definitions.
+   *
    * @return The in-scope schema definitions beyond the built-in types (the
    *         components of a schema-aware host), or <code>null</code> if there
    *         are none.
@@ -482,6 +546,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the declared static type of a variable.
+   *
    * @param aName
    *        Variable name.
    * @return The static type declared with
@@ -541,6 +607,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the slot of a variable that is bound by slot.
+   *
    * @param aName
    *        Variable name.
    * @return The slot of a variable declared with {@link #declareFrameVariable(VariableSlot)}, or
@@ -553,6 +621,8 @@ public final class StaticContext
   }
 
   /**
+   * Check whether a variable is declared.
+   *
    * @param aName
    *        Variable name.
    * @return <code>true</code> if the variable was declared via
@@ -569,13 +639,25 @@ public final class StaticContext
     return m_aSharedVariables != null && m_aSharedVariables.contains (aName) && !aName.equals (m_aSharedVariableExcluded);
   }
 
-  /** @return The default collation URI; the codepoint collation unless set. */
+  /**
+   * Get the default collation URI.
+   *
+   * @return The default collation URI; the codepoint collation unless set.
+   */
   @NonNull
   public String getDefaultCollation ()
   {
     return m_sDefaultCollation;
   }
 
+  /**
+   * Set the default collation URI.
+   *
+   * @param sCollationUri
+   *        The default collation URI. May neither be <code>null</code> nor
+   *        empty.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setDefaultCollation (@NonNull final String sCollationUri)
   {
@@ -649,13 +731,24 @@ public final class StaticContext
     return ret;
   }
 
-  /** @return The unnamed decimal format used by fn:format-number. */
+  /**
+   * Get the default decimal format.
+   *
+   * @return The unnamed decimal format used by fn:format-number.
+   */
   @NonNull
   public FormatDecimalFormat getDefaultDecimalFormat ()
   {
     return m_aDefaultDecimalFormat;
   }
 
+  /**
+   * Set the unnamed decimal format.
+   *
+   * @param aFormat
+   *        The decimal format. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setDefaultDecimalFormat (@NonNull final FormatDecimalFormat aFormat)
   {
@@ -666,6 +759,8 @@ public final class StaticContext
   }
 
   /**
+   * Look up a named decimal format.
+   *
    * @param aName
    *        Expanded name of a decimal format.
    * @return The named decimal format or <code>null</code> if there is none.
@@ -698,6 +793,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the XML version.
+   *
    * @return The XML version whose rules apply where XML 1.0 and 1.1 differ.
    *         Default is {@link #DEFAULT_XML_VERSION}.
    */
@@ -707,6 +804,13 @@ public final class StaticContext
     return m_eXmlVersion;
   }
 
+  /**
+   * Set the XML version whose rules apply where XML 1.0 and 1.1 differ.
+   *
+   * @param eXmlVersion
+   *        The XML version. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setXmlVersion (@NonNull final EXmlVersion eXmlVersion)
   {
@@ -717,6 +821,8 @@ public final class StaticContext
   }
 
   /**
+   * Get the XSD datatype version.
+   *
    * @return The XSD datatype version whose rules apply where XSD 1.0 and 1.1
    *         differ. Default is {@link #DEFAULT_XSD_VERSION}.
    */
@@ -727,6 +833,8 @@ public final class StaticContext
   }
 
   /**
+   * Check whether the XSD version was set explicitly.
+   *
    * @return <code>true</code> if {@link #setXsdVersion(EXsdVersion)} was
    *         called, <code>false</code> if the default applies.
    */
@@ -735,6 +843,14 @@ public final class StaticContext
     return m_bXsdVersionSet;
   }
 
+  /**
+   * Set the XSD datatype version whose rules apply where XSD 1.0 and 1.1
+   * differ.
+   *
+   * @param eXsdVersion
+   *        The XSD version. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public StaticContext setXsdVersion (@NonNull final EXsdVersion eXsdVersion)
   {

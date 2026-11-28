@@ -31,6 +31,8 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
 public interface IInstructionCompiler
 {
   /**
+   * Compile an instruction.
+   *
    * @param aCtx
    *        Compile context (scope of the element).
    * @param aElement

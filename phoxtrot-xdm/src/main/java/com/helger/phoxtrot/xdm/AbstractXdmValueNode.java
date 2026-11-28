@@ -40,6 +40,12 @@ public abstract sealed class AbstractXdmValueNode extends AbstractXdmNode permit
   // for both, so that a text node needs no field for its pending text
   private Object m_aValue;
 
+  /**
+   * Constructor for the node kinds that extend this class.
+   *
+   * @param sValue
+   *        The raw value of the node. May not be <code>null</code>.
+   */
   protected AbstractXdmValueNode (@NonNull final String sValue)
   {
     m_aValue = sValue;

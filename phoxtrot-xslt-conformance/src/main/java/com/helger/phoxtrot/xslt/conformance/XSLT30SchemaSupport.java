@@ -77,6 +77,8 @@ public final class XSLT30SchemaSupport
   }
 
   /**
+   * Get the schema documents offered to xsl:import-schema.
+   *
    * @param aEnv
    *        The environment, may be <code>null</code>.
    * @param aSuiteDir
@@ -181,6 +183,8 @@ public final class XSLT30SchemaSupport
   }
 
   /**
+   * Get the validation mode of a source.
+   *
    * @param aEnv
    *        The environment, may be <code>null</code>.
    * @param aSource

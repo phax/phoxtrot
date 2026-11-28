@@ -117,6 +117,8 @@ public final class XdmSaxEmitter
   }
 
   /**
+   * Write an element and its subtree as the events of a SAX document to the given handlers.
+   *
    * @param aElement
    *        The element to write. Its in-scope namespaces are declared on it.
    * @param aHandler

@@ -32,6 +32,9 @@ import com.helger.phoxtrot.xdm.IXdmNode;
 public interface IStreamAccumulators
 {
   /**
+   * Apply the start-phase rules of the accumulators to a node that was just
+   * entered.
+   *
    * @param aNode
    *        A node that was just read (an element without children yet, or a
    *        leaf).
@@ -39,6 +42,8 @@ public interface IStreamAccumulators
   void enter (@NonNull IXdmNode aNode);
 
   /**
+   * Apply the end-phase rules of the accumulators to a node that is complete.
+   *
    * @param aNode
    *        A node that is complete (an element after its end tag, a leaf, or
    *        the document node at the end).

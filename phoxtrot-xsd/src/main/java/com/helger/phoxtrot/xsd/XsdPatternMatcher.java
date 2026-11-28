@@ -40,6 +40,8 @@ public final class XsdPatternMatcher
   }
 
   /**
+   * Check whether a value matches the pattern.
+   *
    * @param sValue
    *        The value. No whitespace normalisation is applied.
    * @return <code>true</code> if the whole value matches the pattern.

@@ -48,6 +48,8 @@ public abstract class AbstractCompiledExpr
   }
 
   /**
+   * Get the expression this node was compiled from.
+   *
    * @return The expression this node was compiled from, for the analyses that look at its shape.
    *         Never <code>null</code>.
    */

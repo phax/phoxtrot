@@ -369,6 +369,8 @@ public final class CompiledXsltPattern implements XsltPattern
   }
 
   /**
+   * Get the static context of this pattern.
+   *
    * @return The static context the pattern was parsed with, or <code>null</code>
    *         if unknown.
    */
@@ -385,6 +387,8 @@ public final class CompiledXsltPattern implements XsltPattern
   }
 
   /**
+   * Get the parsed pattern expression.
+   *
    * @return The parsed pattern. A predicate pattern is a
    *         {@link IExpr.ContextItemExpr} or a {@link IExpr.FilterExpr} on it;
    *         a selection pattern consists of {@link IExpr.SetExpr} nodes over
@@ -398,7 +402,11 @@ public final class CompiledXsltPattern implements XsltPattern
     return m_aExpr;
   }
 
-  /** @return <code>true</code> for a predicate pattern (<code>.</code> with zero or more predicates). */
+  /**
+   * Check if this is a predicate pattern.
+   *
+   * @return <code>true</code> for a predicate pattern (<code>.</code> with zero or more predicates).
+   */
   public boolean isPredicatePattern ()
   {
     return m_aExpr instanceof IExpr.ContextItemExpr ||
@@ -406,6 +414,8 @@ public final class CompiledXsltPattern implements XsltPattern
   }
 
   /**
+   * Check if the pattern refers to a function whose name passes a filter.
+   *
    * @param aFilter
    *        Tests a function name.
    * @return <code>true</code> if the pattern, including its predicates,

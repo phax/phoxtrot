@@ -80,6 +80,8 @@ public final class XsltContext
   }
 
   /**
+   * Create an XSLT context for the given engine and dynamic context.
+   *
    * @param aEngine
    *        The engine of the transformation.
    * @param aDyn
@@ -108,6 +110,11 @@ public final class XsltContext
     return null;
   }
 
+  /**
+   * Get the engine of the transformation.
+   *
+   * @return The engine, never <code>null</code>.
+   */
   @NonNull
   public Engine getEngine ()
   {
@@ -115,6 +122,8 @@ public final class XsltContext
   }
 
   /**
+   * Get the dynamic context of the instructions.
+   *
    * @return The dynamic context with the static context of the instructions
    *         (the one the context was created with), for instructions that
    *         read it (type conversions, collations, the function library).
@@ -164,25 +173,43 @@ public final class XsltContext
     return ret;
   }
 
-  /** @return The XSLT state, never <code>null</code>. */
+  /**
+   * Get the XSLT state of this context.
+   *
+   * @return The XSLT state, never <code>null</code>.
+   */
   @NonNull
   public XsltState getState ()
   {
     return m_aDyn.getHostState () instanceof final XsltState aState ? aState : XsltState.EMPTY;
   }
 
-  /** @return The context item or <code>null</code> if the focus is absent. */
+  /**
+   * Get the context item.
+   *
+   * @return The context item or <code>null</code> if the focus is absent.
+   */
   @Nullable
   public IXdmItem getContextItem ()
   {
     return m_aDyn.getContextItem ();
   }
 
+  /**
+   * Get the context position.
+   *
+   * @return The 1-based context position of the focus.
+   */
   public int getPosition ()
   {
     return m_aDyn.getPosition ();
   }
 
+  /**
+   * Get the context size.
+   *
+   * @return The context size of the focus.
+   */
   public int getSize ()
   {
     return m_aDyn.getSize ();
@@ -259,6 +286,8 @@ public final class XsltContext
   }
 
   /**
+   * Get a context with the given variable frame.
+   *
    * @param aFrame
    *        The frame of the variables bound by slot.
    * @return This context if it has that frame, otherwise a derived context
@@ -308,6 +337,13 @@ public final class XsltContext
                             m_aInstrStatic);
   }
 
+  /**
+   * Derive a context with another XSLT state.
+   *
+   * @param aState
+   *        The new XSLT state. May not be <code>null</code>.
+   * @return The derived context, never <code>null</code>.
+   */
   @NonNull
   public XsltContext withState (@NonNull final XsltState aState)
   {
@@ -315,6 +351,8 @@ public final class XsltContext
   }
 
   /**
+   * Derive a context without focus and local variables.
+   *
    * @return A context with the same state but without focus and without local
    *         variables (global variables remain visible).
    */
@@ -325,6 +363,8 @@ public final class XsltContext
   }
 
   /**
+   * Get the value of an extension slot of the XSLT state.
+   *
    * @param aKey
    *        Slot key.
    * @param <T>
@@ -338,6 +378,8 @@ public final class XsltContext
   }
 
   /**
+   * Derive a context whose XSLT state has an extension slot bound to a value.
+   *
    * @param aKey
    *        Slot key.
    * @param aValue

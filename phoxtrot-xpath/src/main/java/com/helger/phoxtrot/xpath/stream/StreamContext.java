@@ -70,6 +70,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   private MutableBoolean m_aDefinite;
 
   /**
+   * Create a stream context with the passed context posture.
+   *
    * @param eContextPosture
    *        The posture of the context item (XSLT 3.0 section 19.6).
    */
@@ -112,7 +114,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     m_aDefinite = aOther.m_aDefinite;
   }
 
-  /** @return The posture of the context item (XSLT 3.0 section 19.6). */
+  /**
+   * Get the posture of the context item.
+   *
+   * @return The posture of the context item (XSLT 3.0 section 19.6).
+   */
   @NonNull
   public EPosture getContextPosture ()
   {
@@ -120,6 +126,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Set the posture of the context item.
+   *
    * @param eContextPosture
    *        The posture of the context item (XSLT 3.0 section 19.6).
    * @return this for chaining
@@ -132,7 +140,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return <code>true</code> if the context item is statically known to be a document node. */
+  /**
+   * Check whether the context item is statically known to be a document node.
+   *
+   * @return <code>true</code> if the context item is statically known to be a document node.
+   */
   public boolean isContextDocument ()
   {
     return m_bContextDocument;
@@ -156,6 +168,9 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Check whether a leading <code>/</code> is taken as the document element on
+   * the ancestor-or-self axis.
+   *
    * @return <code>true</code> if a leading <code>/</code> followed by a child
    *         step that selects elements is taken as the document element on the
    *         ancestor-or-self axis.
@@ -185,7 +200,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return <code>true</code> if the context item cannot have children. */
+  /**
+   * Check whether the context item cannot have children.
+   *
+   * @return <code>true</code> if the context item cannot have children.
+   */
   public boolean isContextChildless ()
   {
     return m_bContextChildless;
@@ -210,6 +229,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Get the posture of the item <code>fn:current()</code> returns.
+   *
    * @return The posture of the item <code>fn:current()</code> returns, or
    *         <code>null</code> if not supplied.
    */
@@ -240,7 +261,12 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return <code>true</code> if the node <code>fn:current()</code> returns cannot have children. */
+  /**
+   * Check whether the node <code>fn:current()</code> returns cannot have
+   * children.
+   *
+   * @return <code>true</code> if the node <code>fn:current()</code> returns cannot have children.
+   */
   public boolean isCurrentChildless ()
   {
     return m_bCurrentChildless;
@@ -264,6 +290,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Check whether a variable is bound to a streaming parameter.
+   *
    * @param aName
    *        A variable name.
    * @return <code>true</code> if the variable is bound to the streaming
@@ -274,13 +302,21 @@ public final class StreamContext implements ICloneable <StreamContext>
     return aName != null && m_aStreamingParams.contains (aName);
   }
 
-  /** @return <code>true</code> if at least one streaming parameter is registered. */
+  /**
+   * Check whether a streaming parameter is registered.
+   *
+   * @return <code>true</code> if at least one streaming parameter is registered.
+   */
   public boolean hasStreamingParams ()
   {
     return m_aStreamingParams.isNotEmpty ();
   }
 
-  /** @return The names of the variables bound to a streaming parameter. */
+  /**
+   * Get the variables bound to a streaming parameter.
+   *
+   * @return The names of the variables bound to a streaming parameter.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSet <XdmQName> getAllStreamingParams ()
@@ -308,6 +344,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Register a variable bound to a streaming parameter.
+   *
    * @param aName
    *        A variable bound to a streaming parameter.
    * @return this for chaining
@@ -324,6 +362,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Check whether a variable is statically known to hold a map or an array.
+   *
    * @param aName
    *        A variable name.
    * @return <code>true</code> if the declared type of the variable makes it
@@ -334,7 +374,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return aName != null && m_aMapArrayVariables.contains (aName);
   }
 
-  /** @return The names of the variables statically known to hold a map or an array. */
+  /**
+   * Get the variables statically known to hold a map or an array.
+   *
+   * @return The names of the variables statically known to hold a map or an array.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSet <XdmQName> getAllMapArrayVariables ()
@@ -362,6 +406,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Register a variable statically known to hold a map or an array.
+   *
    * @param aName
    *        A variable statically known to hold a map or an array.
    * @return this for chaining
@@ -378,6 +424,9 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Check whether a reference to the streaming parameter is permitted inside a
+   * higher-order operand.
+   *
    * @return <code>true</code> if a reference to the streaming parameter is
    *         permitted inside a higher-order operand.
    */
@@ -405,6 +454,8 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Get the posture of a reference to the streaming parameter.
+   *
    * @return The posture of a reference to the streaming parameter, or
    *         <code>null</code> if not supplied.
    */
@@ -432,7 +483,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return The sweep of a reference to the streaming parameter. */
+  /**
+   * Get the sweep of a reference to the streaming parameter.
+   *
+   * @return The sweep of a reference to the streaming parameter.
+   */
   @NonNull
   public ESweep getStreamingParamSweep ()
   {
@@ -457,7 +512,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return <code>true</code> while the walk is inside a higher-order operand. */
+  /**
+   * Check whether the walk is inside a higher-order operand.
+   *
+   * @return <code>true</code> while the walk is inside a higher-order operand.
+   */
   public boolean isInHigherOrder ()
   {
     return m_bInHigherOrder;
@@ -494,6 +553,9 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Check whether the focus was re-established by an inner focus-setting
+   * container.
+   *
    * @return <code>true</code> if the focus was re-established by an inner
    *         focus-setting container.
    */
@@ -519,7 +581,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return The accumulator rule phase the construct sits in. */
+  /**
+   * Get the accumulator rule phase of the construct.
+   *
+   * @return The accumulator rule phase the construct sits in.
+   */
   @NonNull
   public EAccumulatorRulePhase getAccumulatorPhase ()
   {
@@ -544,6 +610,9 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Check whether a preceding instruction of the same sequence constructor
+   * already consumed the stream.
+   *
    * @return <code>true</code> if a preceding instruction of the same sequence
    *         constructor already consumed the stream.
    */
@@ -569,6 +638,9 @@ public final class StreamContext implements ICloneable <StreamContext>
   }
 
   /**
+   * Get the posture of the select expression of the containing
+   * <code>xsl:for-each-group</code>.
+   *
    * @return The posture of the select expression of the containing
    *         <code>xsl:for-each-group</code>, or <code>null</code> if there is
    *         none.
@@ -597,7 +669,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return The stylesheet function resolver, or <code>null</code>. */
+  /**
+   * Get the stylesheet function resolver.
+   *
+   * @return The stylesheet function resolver, or <code>null</code>.
+   */
   @Nullable
   public IStreamFunctionResolver getFunctionResolver ()
   {
@@ -620,7 +696,11 @@ public final class StreamContext implements ICloneable <StreamContext>
     return this;
   }
 
-  /** @return The flag that receives "definite" verdicts, or <code>null</code>. */
+  /**
+   * Get the flag that receives "definite" verdicts.
+   *
+   * @return The flag that receives "definite" verdicts, or <code>null</code>.
+   */
   @Nullable
   public MutableBoolean getDefiniteFlag ()
   {

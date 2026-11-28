@@ -31,6 +31,8 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
 public interface IDeclarationCompiler
 {
   /**
+   * Compile a top-level declaration.
+   *
    * @param aCtx
    *        Compile context (global scope).
    * @param aElement

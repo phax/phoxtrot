@@ -50,6 +50,8 @@ public final class XsdSetResult
   private String m_sLoadError;
 
   /**
+   * Create the result of a test set.
+   *
    * @param sName
    *        The test-set name.
    */
@@ -58,18 +60,28 @@ public final class XsdSetResult
     m_sName = sName;
   }
 
+  /**
+   * Get the test-set name.
+   *
+   * @return The test-set name.
+   */
   @NonNull
   public String getName ()
   {
     return m_sName;
   }
 
+  /**
+   * Count one passing case.
+   */
   public void addPass ()
   {
     m_nPass++;
   }
 
   /**
+   * Count one failing case.
+   *
    * @param sCaseName
    *        The failing schema or instance test.
    * @param sLine
@@ -84,6 +96,8 @@ public final class XsdSetResult
   }
 
   /**
+   * Count one unsupported case.
+   *
    * @param sLine
    *        Dump line, may be <code>null</code> if not collected.
    */
@@ -94,6 +108,9 @@ public final class XsdSetResult
       m_aLines.add (sLine);
   }
 
+  /**
+   * Count one queried (W3C-disputed) case.
+   */
   public void addQueried ()
   {
     m_nQueried++;
@@ -134,6 +151,8 @@ public final class XsdSetResult
   }
 
   /**
+   * Count one skipped case and its reason.
+   *
    * @param sReason
    *        Why the case was skipped.
    */
@@ -145,6 +164,8 @@ public final class XsdSetResult
   }
 
   /**
+   * Remember why the test set could not be read.
+   *
    * @param sLoadError
    *        The error that prevented reading the test set.
    */
@@ -153,62 +174,112 @@ public final class XsdSetResult
     m_sLoadError = sLoadError;
   }
 
-  /** @return The error that prevented reading the test set, or <code>null</code>. */
+  /**
+   * Get the load error.
+   *
+   * @return The error that prevented reading the test set, or <code>null</code>.
+   */
   @Nullable
   public String getLoadError ()
   {
     return m_sLoadError;
   }
 
+  /**
+   * Get the number of passing cases.
+   *
+   * @return The number of passes.
+   */
   public int getPass ()
   {
     return m_nPass;
   }
 
+  /**
+   * Get the number of failing cases.
+   *
+   * @return The number of fails.
+   */
   public int getFail ()
   {
     return m_nFail;
   }
 
+  /**
+   * Get the number of skipped cases.
+   *
+   * @return The number of skips.
+   */
   public int getSkip ()
   {
     return m_nSkip;
   }
 
+  /**
+   * Get the number of unsupported cases.
+   *
+   * @return The number of unsupported cases.
+   */
   public int getUnsupported ()
   {
     return m_nUnsupported;
   }
 
+  /**
+   * Get the number of queried cases.
+   *
+   * @return The number of queried (W3C-disputed) cases.
+   */
   public int getQueried ()
   {
     return m_nQueried;
   }
 
-  /** @return The queried schema tests whose compilation crashed. */
+  /**
+   * Get the number of queried schema tests whose compilation crashed.
+   *
+   * @return The queried schema tests whose compilation crashed.
+   */
   public int getQueriedCrash ()
   {
     return m_nQueriedCrash;
   }
 
-  /** @return The passing schema tests (part of {@link #getPass()}). */
+  /**
+   * Get the number of passing schema tests.
+   *
+   * @return The passing schema tests (part of {@link #getPass()}).
+   */
   public int getSchemaPass ()
   {
     return m_nSchemaPass;
   }
 
-  /** @return The failing schema tests (part of {@link #getFail()}). */
+  /**
+   * Get the number of failing schema tests.
+   *
+   * @return The failing schema tests (part of {@link #getFail()}).
+   */
   public int getSchemaFail ()
   {
     return m_nSchemaFail;
   }
 
-  /** @return The unsupported schema tests (part of {@link #getUnsupported()}). */
+  /**
+   * Get the number of unsupported schema tests.
+   *
+   * @return The unsupported schema tests (part of {@link #getUnsupported()}).
+   */
   public int getSchemaUnsupported ()
   {
     return m_nSchemaUnsupported;
   }
 
+  /**
+   * Get the skip reasons.
+   *
+   * @return A copy of the skip reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getSkipReasons ()
@@ -216,6 +287,11 @@ public final class XsdSetResult
     return m_aSkipReasons.getClone ();
   }
 
+  /**
+   * Get the names of the failing cases.
+   *
+   * @return A copy of the failing case names in the order they were added.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getFailNames ()
@@ -223,7 +299,11 @@ public final class XsdSetResult
     return m_aFailNames.getClone ();
   }
 
-  /** @return The collected fail (and unsupported) lines. */
+  /**
+   * Get the collected dump lines.
+   *
+   * @return The collected fail (and unsupported) lines.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getLines ()

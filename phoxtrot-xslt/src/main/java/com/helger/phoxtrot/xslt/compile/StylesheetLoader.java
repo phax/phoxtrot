@@ -79,6 +79,11 @@ public final class StylesheetLoader
    * module together with those of the modules it includes, in declaration
    * order. <code>importLo</code> is the index of the lowest level that belongs
    * to the module's import subtree (its own index if it imports nothing).
+   *
+   * @param declarations
+   *        The top-level declarations of this level, in declaration order.
+   * @param importLo
+   *        The index of the lowest level of the import subtree of the module.
    */
   @Immutable
   public record Level (@NonNull ICommonsList <XslElement> declarations, int importLo)
@@ -138,21 +143,33 @@ public final class StylesheetLoader
     XsltFunctions.registerClaims (m_aStaticFunctions, aOptions.isStreamingClaim (), aOptions.isBackwardsCompatibleClaim ());
   }
 
-  /** @return The static variables and parameters with their values. */
+  /**
+   * Get the values of the static variables and parameters.
+   *
+   * @return The static variables and parameters with their values.
+   */
   @NonNull
   public ICommonsOrderedMap <XdmQName, XdmSequence> getStaticValues ()
   {
     return m_aStaticValues;
   }
 
-  /** @return The packages taking part, the principal one first. */
+  /**
+   * Get the packages of the compilation.
+   *
+   * @return The packages taking part, the principal one first.
+   */
   @NonNull
   public PackageModel getPackages ()
   {
     return m_aPackages;
   }
 
-  /** @return All loaded modules (a module imported twice appears twice). */
+  /**
+   * Get all loaded stylesheet modules.
+   *
+   * @return All loaded modules (a module imported twice appears twice).
+   */
   @NonNull
   public ICommonsList <XslModule> getAllModules ()
   {

@@ -28,25 +28,41 @@ import com.helger.phoxtrot.xdm.XdmQName;
  */
 public interface IXdmElementDeclaration
 {
+  /**
+   * Get the name of the declared element.
+   *
+   * @return The element name. Never <code>null</code>.
+   */
   @NonNull
   XdmQName getName ();
 
+  /**
+   * Get the type definition of the declared element.
+   *
+   * @return The type definition. Never <code>null</code>.
+   */
   @NonNull
   IXdmTypeDefinition getTypeDefinition ();
 
   /**
+   * Check whether the declaration is nillable.
+   *
    * @return <code>true</code> if the declaration has <code>nillable="true"</code>, so that an
    *         instance may carry <code>xsi:nil="true"</code>.
    */
   boolean isNillable ();
 
   /**
+   * Check whether the declaration is abstract.
+   *
    * @return <code>true</code> if the declaration has <code>abstract="true"</code>, so that only
    *         members of its substitution group may appear in an instance.
    */
   boolean isAbstract ();
 
   /**
+   * Find a declaration by name in the substitution group of this declaration.
+   *
    * @param aName
    *        An element name.
    * @return This declaration if it has the name, else the declaration with that name in the

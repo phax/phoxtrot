@@ -50,7 +50,11 @@ public enum EPosture
     m_sName = sName;
   }
 
-  /** @return The name the specification uses, e.g. <code>striding</code>. */
+  /**
+   * Get the name of the posture.
+   *
+   * @return The name the specification uses, e.g. <code>striding</code>.
+   */
   @NonNull
   public String getName ()
   {

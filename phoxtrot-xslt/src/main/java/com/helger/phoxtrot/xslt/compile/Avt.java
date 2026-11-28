@@ -39,6 +39,8 @@ public final class Avt
   private final boolean m_bTextValueTemplate;
 
   /**
+   * Create a value template from its parts.
+   *
    * @param aParts
    *        The parts: {@link String} for fixed text, {@link XPathExpr} for expressions.
    * @param bTextValueTemplate
@@ -82,7 +84,11 @@ public final class Avt
     return SimpleContent.join (aExpr.evaluate (aCtx), " ");
   }
 
-  /** @return <code>true</code> if the template contains no expression. */
+  /**
+   * Check whether the template is constant.
+   *
+   * @return <code>true</code> if the template contains no expression.
+   */
   public boolean isConstant ()
   {
     for (final Object aPart : m_aParts)
@@ -91,7 +97,11 @@ public final class Avt
     return true;
   }
 
-  /** @return The fixed value if {@link #isConstant()}, else <code>null</code>. */
+  /**
+   * Get the fixed value of a constant template.
+   *
+   * @return The fixed value if {@link #isConstant()}, else <code>null</code>.
+   */
   @Nullable
   public String getConstantValue ()
   {

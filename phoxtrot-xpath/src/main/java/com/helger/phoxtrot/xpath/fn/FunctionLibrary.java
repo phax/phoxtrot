@@ -158,6 +158,11 @@ public final class FunctionLibrary
       }
     }
 
+    /**
+     * Get the expanded name of the function.
+     *
+     * @return The function name. Never <code>null</code>.
+     */
     @NonNull
     public XdmQName getName ()
     {
@@ -165,6 +170,8 @@ public final class FunctionLibrary
     }
 
     /**
+     * Get the arity of the function.
+     *
      * @return The number of parameters. Parses the signature on first use.
      */
     public int getArity ()
@@ -173,6 +180,8 @@ public final class FunctionLibrary
     }
 
     /**
+     * Get the parameter types of the function.
+     *
      * @return The parameter types in order. Parses the signature on first use.
      */
     @NonNull
@@ -183,6 +192,8 @@ public final class FunctionLibrary
     }
 
     /**
+     * Get the return type of the function.
+     *
      * @return The declared return type. Parses the signature on first use.
      */
     @NonNull
@@ -192,6 +203,11 @@ public final class FunctionLibrary
       return m_aReturnType;
     }
 
+    /**
+     * Get the implementation used for a static function call.
+     *
+     * @return The implementation. Never <code>null</code>.
+     */
     @NonNull
     public IXPathFunction getImpl ()
     {
@@ -199,6 +215,8 @@ public final class FunctionLibrary
     }
 
     /**
+     * Get the implementation used for a dynamic function call.
+     *
      * @return The implementation used when the function is called through a function item (dynamic
      *         function call). Normally the same as {@link #getImpl()}; XSLT functions such as
      *         current-group() whose context is not available in a dynamic call register their own.
@@ -211,6 +229,8 @@ public final class FunctionLibrary
     }
 
     /**
+     * Check if the function depends on the focus.
+     *
      * @return <code>true</code> if the function reads the focus (e.g. <code>position()</code>,
      *         <code>name()</code> without argument). A named function reference to such a function
      *         captures the focus at the time the reference is evaluated.
@@ -220,6 +240,11 @@ public final class FunctionLibrary
       return m_bFocusDependent;
     }
 
+    /**
+     * Get the signature text of the function.
+     *
+     * @return The signature text. Never <code>null</code>.
+     */
     @NonNull
     public String getSignature ()
     {
@@ -697,6 +722,8 @@ public final class FunctionLibrary
   }
 
   /**
+   * Check if a function with a name exists with any arity.
+   *
    * @param aName
    *        Expanded function name.
    * @return <code>true</code> if a function of that name exists with any arity: registered in this
@@ -732,6 +759,8 @@ public final class FunctionLibrary
   }
 
   /**
+   * Get all functions visible in this library.
+   *
    * @return All functions registered in this library and, for a child library, those of the parent
    *         chain that are neither redefined (same name and arity) nor hidden here. The functions
    *         of a variadic registration are only included for the arities that
@@ -782,6 +811,8 @@ public final class FunctionLibrary
   }
 
   /**
+   * Check if this library is frozen.
+   *
    * @return <code>true</code> if this library is frozen (see {@link #freeze()}); its parent chain
    *         is then frozen too.
    */

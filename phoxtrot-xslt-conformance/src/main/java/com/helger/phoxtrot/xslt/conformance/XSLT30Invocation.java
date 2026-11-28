@@ -80,7 +80,11 @@ public record XSLT30Invocation (@NonNull ICommonsList <XSLT30Environment.Module>
                        @NonNull ICommonsList <XSLT30Param> params,
                        @NonNull ICommonsOrderedMap <String, String> namespaces)
   {
-    /** @return <code>true</code> if a name is written but its prefix is unbound. */
+    /**
+     * Check whether the name cannot be resolved.
+     *
+     * @return <code>true</code> if a name is written but its prefix is unbound.
+     */
     public boolean isNameUnresolved ()
     {
       return name == null && !lexicalName.isEmpty ();

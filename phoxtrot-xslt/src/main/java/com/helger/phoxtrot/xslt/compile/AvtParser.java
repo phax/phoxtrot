@@ -36,7 +36,12 @@ import com.helger.phoxtrot.xpath.XPathException;
 @Immutable
 public final class AvtParser
 {
-  /** Marker for the text of an expression part. */
+  /**
+   * Marker for the text of an expression part.
+   *
+   * @param text
+   *        The source text of the expression between the braces.
+   */
   @Immutable
   public record ExprPart (@NonNull String text)
   {}

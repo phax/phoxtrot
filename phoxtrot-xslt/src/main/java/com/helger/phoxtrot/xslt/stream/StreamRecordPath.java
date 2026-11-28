@@ -91,6 +91,8 @@ public final class StreamRecordPath
   }
 
   /**
+   * Get the number of steps of this path.
+   *
    * @return The number of steps, which is the depth of the records below the
    *         document node (1 for its children).
    */
@@ -101,6 +103,8 @@ public final class StreamRecordPath
   }
 
   /**
+   * Check whether the node test of a step selects a node.
+   *
    * @param nIndex
    *        0-based step index.
    * @param aNode
@@ -119,6 +123,8 @@ public final class StreamRecordPath
   }
 
   /**
+   * Check whether a step has predicates.
+   *
    * @param nIndex
    *        0-based step index.
    * @return <code>true</code> if the step has predicates.
@@ -173,6 +179,8 @@ public final class StreamRecordPath
   }
 
   /**
+   * Check whether the records of this path and of another one can be nested.
+   *
    * @param aOther
    *        Another record path over the same document.
    * @return <code>true</code> if a record of one path could contain a record
@@ -235,6 +243,8 @@ public final class StreamRecordPath
   }
 
   /**
+   * Create the record path of a select expression.
+   *
    * @param aSelect
    *        The select expression of the consumer, evaluated with the document
    *        node as context item.

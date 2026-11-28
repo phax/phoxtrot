@@ -210,7 +210,11 @@ public class PhoxtrotTransformer extends Transformer
     reset ();
   }
 
-  /** @return The templates this transformer belongs to. Never <code>null</code>. */
+  /**
+   * Get the templates this transformer was created from.
+   *
+   * @return The templates this transformer belongs to. Never <code>null</code>.
+   */
   @NonNull
   public final PhoxtrotTemplates getTemplates ()
   {
@@ -218,6 +222,8 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * Get the result of the last successful transformation.
+   *
    * @return The phoxtrot result of the last successful transformation: its
    *         secondary results (<code>xsl:result-document</code>) and message
    *         texts; for a {@link DOMResult} also the principal result as tree
@@ -235,6 +241,8 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * Get the listener for messages and warnings.
+   *
    * @return The message listener, <code>null</code> if messages go to the
    *         error listener.
    */
@@ -259,6 +267,8 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * Get the trace listener.
+   *
    * @return The trace listener, <code>null</code> for none.
    */
   @Nullable
@@ -282,6 +292,8 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * Get the threading mode of the transformations.
+   *
    * @return The thread the transformations run on. Never <code>null</code>.
    */
   @NonNull
@@ -305,6 +317,8 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * Get the nesting depth limit of templates and functions.
+   *
    * @return The nesting depth limit of the transformations: 0 for the engine
    *         default, {@link XsltTransformRequest#UNLIMITED_DEPTH} for none.
    */
@@ -331,6 +345,8 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * Get the value of <code>fn:current-dateTime()</code> for the transformations.
+   *
    * @return The value of <code>fn:current-dateTime()</code> for the
    *         transformations, <code>null</code> for the time at which each
    *         transformation starts.
@@ -358,6 +374,8 @@ public class PhoxtrotTransformer extends Transformer
   }
 
   /**
+   * Get the SAX entity resolver of the transformations.
+   *
    * @return The SAX entity resolver for external DTDs and entities of the
    *         source and the documents of the run, <code>null</code> for none.
    */

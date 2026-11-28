@@ -23,17 +23,29 @@ package com.helger.phoxtrot.xpath.ast;
  */
 public enum EComparisonOp
 {
+  /** The general comparison <code>=</code>. */
   GENERAL_EQ,
+  /** The general comparison <code>!=</code>. */
   GENERAL_NE,
+  /** The general comparison <code>&lt;</code>. */
   GENERAL_LT,
+  /** The general comparison <code>&lt;=</code>. */
   GENERAL_LE,
+  /** The general comparison <code>&gt;</code>. */
   GENERAL_GT,
+  /** The general comparison <code>&gt;=</code>. */
   GENERAL_GE,
+  /** The value comparison <code>eq</code>. */
   VALUE_EQ,
+  /** The value comparison <code>ne</code>. */
   VALUE_NE,
+  /** The value comparison <code>lt</code>. */
   VALUE_LT,
+  /** The value comparison <code>le</code>. */
   VALUE_LE,
+  /** The value comparison <code>gt</code>. */
   VALUE_GT,
+  /** The value comparison <code>ge</code>. */
   VALUE_GE,
   /** <code>is</code> */
   NODE_IS,
@@ -43,6 +55,8 @@ public enum EComparisonOp
   NODE_FOLLOWS;
 
   /**
+   * Check whether this is a general comparison.
+   *
    * @return <code>true</code> for the general comparisons <code>=</code>,
    *         <code>!=</code>, <code>&lt;</code>, <code>&lt;=</code>,
    *         <code>&gt;</code> and <code>&gt;=</code>.
@@ -53,6 +67,8 @@ public enum EComparisonOp
   }
 
   /**
+   * Check whether this is a value comparison.
+   *
    * @return <code>true</code> for the value comparisons <code>eq</code>,
    *         <code>ne</code>, <code>lt</code>, <code>le</code>, <code>gt</code>
    *         and <code>ge</code>.
@@ -63,6 +79,8 @@ public enum EComparisonOp
   }
 
   /**
+   * Check whether this is a node comparison.
+   *
    * @return <code>true</code> for the node comparisons <code>is</code>,
    *         <code>&lt;&lt;</code> and <code>&gt;&gt;</code>.
    */

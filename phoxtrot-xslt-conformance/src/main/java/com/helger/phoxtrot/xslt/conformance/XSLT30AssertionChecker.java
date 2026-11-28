@@ -126,6 +126,8 @@ public final class XSLT30AssertionChecker
   private final IXdmSchemaSet m_aSchemaSet;
 
   /**
+   * Create an assertion checker for one test set, without schema set.
+   *
    * @param aDir
    *        Directory of the test set (an assertion's <code>file</code> and a
    *        relative result document href are relative to it).
@@ -143,6 +145,8 @@ public final class XSLT30AssertionChecker
   }
 
   /**
+   * Create an assertion checker for one test set, with the in-scope schema definitions of the stylesheet.
+   *
    * @param aDir
    *        Directory of the test set.
    * @param aNow

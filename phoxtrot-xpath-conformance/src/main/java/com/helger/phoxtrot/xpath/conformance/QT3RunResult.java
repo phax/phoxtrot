@@ -46,6 +46,8 @@ public final class QT3RunResult
   private final ICommonsList <QT3SetResult> m_aSets;
 
   /**
+   * Create a run result.
+   *
    * @param aSets
    *        The per test-set results in catalog order.
    */
@@ -94,6 +96,11 @@ public final class QT3RunResult
     return aSB.toString ();
   }
 
+  /**
+   * Get the results of all test sets.
+   *
+   * @return A copy of the per test-set results in catalog order.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <QT3SetResult> getAllSets ()
@@ -101,22 +108,41 @@ public final class QT3RunResult
     return m_aSets.getClone ();
   }
 
+  /**
+   * Get the number of passing cases.
+   *
+   * @return The sum of the passes of all test sets.
+   */
   public int getPass ()
   {
     return m_aSets.stream ().mapToInt (QT3SetResult::getPass).sum ();
   }
 
+  /**
+   * Get the number of failing cases.
+   *
+   * @return The sum of the fails of all test sets.
+   */
   public int getFail ()
   {
     return m_aSets.stream ().mapToInt (QT3SetResult::getFail).sum ();
   }
 
+  /**
+   * Get the number of skipped cases.
+   *
+   * @return The sum of the skips of all test sets.
+   */
   public int getSkip ()
   {
     return m_aSets.stream ().mapToInt (QT3SetResult::getSkip).sum ();
   }
 
-  /** @return All skip reasons with their counts. */
+  /**
+   * Get the skip reasons of all test sets.
+   *
+   * @return All skip reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getSkipReasons ()
@@ -127,7 +153,11 @@ public final class QT3RunResult
     return ret;
   }
 
-  /** @return All fail reasons with their counts. */
+  /**
+   * Get the fail reasons of all test sets.
+   *
+   * @return All fail reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getFailReasons ()
@@ -138,7 +168,11 @@ public final class QT3RunResult
     return ret;
   }
 
-  /** @return All failing case names, sorted. */
+  /**
+   * Get the names of all failing cases.
+   *
+   * @return All failing case names, sorted.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getFailNames ()
@@ -150,7 +184,11 @@ public final class QT3RunResult
     return ret;
   }
 
-  /** @return All error code mismatch lines, sorted. */
+  /**
+   * Get the error code mismatches of all test sets.
+   *
+   * @return All error code mismatch lines, sorted.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getCodeMismatches ()
@@ -163,6 +201,8 @@ public final class QT3RunResult
   }
 
   /**
+   * Build the human readable summary of the run.
+   *
    * @return The human readable summary: total, ran, pass, fail, pass rate
    *         (pass divided by the cases that ran, skips excluded) and skipped
    *         on one line, then the number of test sets, all skip and fail
@@ -203,7 +243,11 @@ public final class QT3RunResult
     return aSB.toString ();
   }
 
-  /** @return The per test-set counts as CSV. */
+  /**
+   * Build the per test-set counts as CSV.
+   *
+   * @return The per test-set counts as CSV.
+   */
   @NonNull
   public String getBySetCsv ()
   {

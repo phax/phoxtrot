@@ -50,6 +50,8 @@ public enum EStreamabilityVerdict
   FREE_RANGING;
 
   /**
+   * Get the verdict for a posture and sweep.
+   *
    * @param aPostureSweep
    *        The posture and sweep. May not be <code>null</code>.
    * @return The verdict for them, never {@link #BURST}. Never <code>null</code>.

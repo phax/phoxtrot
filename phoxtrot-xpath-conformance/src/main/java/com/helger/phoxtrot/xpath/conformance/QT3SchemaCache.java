@@ -74,6 +74,8 @@ public final class QT3SchemaCache
   {}
 
   /**
+   * Check which schema processor the run uses.
+   *
    * @return <code>true</code> if the provider of {@link XdmSchemaSupport}
    *         (the native validator) is the schema processor
    *         of the run, <code>false</code> for the JDK validator.
@@ -154,6 +156,8 @@ public final class QT3SchemaCache
   }
 
   /**
+   * Get the schema set to validate source documents against.
+   *
    * @param aFiles
    *        Absolute, normalised paths of the schema documents. Not empty.
    * @return The schema set to validate source documents against (the
@@ -170,6 +174,8 @@ public final class QT3SchemaCache
   }
 
   /**
+   * Get the in-scope schema definitions of schema documents.
+   *
    * @param aFiles
    *        Absolute, normalised paths of the schema documents. Not empty.
    * @return The in-scope schema definitions of the documents, or

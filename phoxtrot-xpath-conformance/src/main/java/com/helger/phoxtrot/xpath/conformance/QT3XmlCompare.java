@@ -222,6 +222,8 @@ public final class QT3XmlCompare
   }
 
   /**
+   * Compare an expected and an actual XML text structurally.
+   *
    * @param sExpected
    *        The expected XML from the catalog.
    * @param sActual

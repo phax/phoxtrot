@@ -34,6 +34,18 @@ public final class XslText extends AbstractXslNode
   private final int m_nLine;
   private final int m_nColumn;
 
+  /**
+   * Constructor.
+   *
+   * @param aModule
+   *        The module this text belongs to. May not be <code>null</code>.
+   * @param sValue
+   *        The text value. May not be <code>null</code>.
+   * @param nLine
+   *        The 1-based source line, 0 if unknown.
+   * @param nColumn
+   *        The 1-based source column, 0 if unknown.
+   */
   public XslText (@NonNull final XslModule aModule, @NonNull final String sValue, final int nLine, final int nColumn)
   {
     super (aModule);
@@ -42,6 +54,11 @@ public final class XslText extends AbstractXslNode
     m_nColumn = nColumn;
   }
 
+  /**
+   * Get the text of this node.
+   *
+   * @return The text value. Never <code>null</code>.
+   */
   @NonNull
   public String getValue ()
   {
@@ -60,7 +77,11 @@ public final class XslText extends AbstractXslNode
     return m_nColumn;
   }
 
-  /** @return <code>true</code> if the text consists of XML whitespace only. */
+  /**
+   * Check whether this text is whitespace only.
+   *
+   * @return <code>true</code> if the text consists of XML whitespace only.
+   */
   public boolean isWhitespaceOnly ()
   {
     for (int i = 0; i < m_sValue.length (); ++i)

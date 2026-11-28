@@ -73,6 +73,8 @@ public final class XSLT30ResourceResolver implements IResourceResolver
   private final ICommonsMap <String, ICommonsList <String>> m_aCollectionFragments = new CommonsHashMap <> ();
 
   /**
+   * Create a resolver for one environment of a test set.
+   *
    * @param aEnv
    *        The resolved environment (not a reference), may be
    *        <code>null</code>.
@@ -208,6 +210,8 @@ public final class XSLT30ResourceResolver implements IResourceResolver
   }
 
   /**
+   * Resolve a relative file name of the catalog against a base directory.
+   *
    * @param aBaseDir
    *        Base directory.
    * @param sRelative
@@ -221,6 +225,8 @@ public final class XSLT30ResourceResolver implements IResourceResolver
   }
 
   /**
+   * Get the <code>file:</code> URI of a path.
+   *
    * @param aPath
    *        An absolute path.
    * @return Its <code>file:</code> URI, the same form the XDM parser reports as
@@ -233,6 +239,8 @@ public final class XSLT30ResourceResolver implements IResourceResolver
   }
 
   /**
+   * Check whether the environment declares collections.
+   *
    * @return <code>true</code> if the environment declares at least one
    *         collection.
    */

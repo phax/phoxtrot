@@ -50,7 +50,12 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
     return true;
   }
 
-  /** @return The type's xs:documentation (needs documentation kept at compile time). */
+  /**
+   * Get the documentation of the type.
+   *
+   * @return The type's xs:documentation (needs documentation kept at compile
+   *         time).
+   */
   @NonNull
   public ICommonsList <XsdDocumentation> getDocumentation ()
   {
@@ -58,6 +63,8 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
   }
 
   /**
+   * Get the constraining facets in force.
+   *
    * @return The constraining facets in force: each as declared by the nearest
    *         restriction step that sets it. Intrinsic bounds of built-ins are not
    *         reported; facets of a list type constrain the list.
@@ -149,6 +156,8 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
   }
 
   /**
+   * Check whether a value is valid against this type.
+   *
    * @param sValue
    *        The raw value. May not be <code>null</code>.
    * @return <code>true</code> if the value is valid against this type, see
@@ -282,28 +291,45 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
     }
   }
 
-  /** @return The variety. */
+  /**
+   * Get the variety of the type.
+   *
+   * @return The variety.
+   */
   @NonNull
   public EXsdVariety getVariety ()
   {
     return m_aType.m_eVariety;
   }
 
-  /** @return The type this one restricts; <code>null</code> when it is or derives directly from a built-in. */
+  /**
+   * Get the type this one restricts.
+   *
+   * @return The type this one restricts; <code>null</code> when it is or
+   *         derives directly from a built-in.
+   */
   @Nullable
   public XsdSimpleTypeView getBase ()
   {
     return m_aView.simple (m_aType.m_aBase);
   }
 
-  /** @return A list's item type; <code>null</code> otherwise. */
+  /**
+   * Get the item type of a list type.
+   *
+   * @return A list's item type; <code>null</code> otherwise.
+   */
   @Nullable
   public XsdSimpleTypeView getItemType ()
   {
     return m_aView.simple (m_aType.m_aItem);
   }
 
-  /** @return A union's member types; empty otherwise. */
+  /**
+   * Get the member types of a union type.
+   *
+   * @return A union's member types; empty otherwise.
+   */
   @NonNull
   public ICommonsList <XsdSimpleTypeView> getMemberTypes ()
   {
@@ -314,6 +340,8 @@ public final class XsdSimpleTypeView implements IXsdTypeDefinitionView
   }
 
   /**
+   * Get the enumeration values in force.
+   *
    * @return The enumeration values of the nearest restriction step that
    *         declares any, in document order; empty if none.
    */

@@ -132,6 +132,9 @@ public final class XsltFunctions
   }
 
   /**
+   * Get the value of a system property in the XSLT namespace
+   * (fn:system-property).
+   *
    * @param sLocalName
    *        Local name of a property in the XSLT namespace.
    * @return The value of the system property, empty if unknown.

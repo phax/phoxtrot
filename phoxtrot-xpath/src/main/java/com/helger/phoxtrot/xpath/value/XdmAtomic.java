@@ -50,7 +50,9 @@ import com.helger.phoxtrot.xdm.schema.IXdmTypeDefinition;
 @Immutable
 public final class XdmAtomic implements IXdmItem
 {
+  /** The shared xs:boolean value <code>true</code>. */
   public static final XdmAtomic TRUE = new XdmAtomic (EAtomicType.BOOLEAN, Boolean.TRUE);
+  /** The shared xs:boolean value <code>false</code>. */
   public static final XdmAtomic FALSE = new XdmAtomic (EAtomicType.BOOLEAN, Boolean.FALSE);
   // The xs:integer values from -128 to 127 are shared (go-xslt 6772c77): counts,
   // positions and lengths are mostly small, and a value is immutable
@@ -108,30 +110,65 @@ public final class XdmAtomic implements IXdmItem
     return new XdmAtomic (eType, aValue);
   }
 
+  /**
+   * Create an xs:string value.
+   *
+   * @param sValue
+   *        The string. May not be <code>null</code>.
+   * @return The new value.
+   */
   @NonNull
   public static XdmAtomic string (@NonNull final String sValue)
   {
     return of (EAtomicType.STRING, sValue);
   }
 
+  /**
+   * Create an xs:untypedAtomic value.
+   *
+   * @param sValue
+   *        The string. May not be <code>null</code>.
+   * @return The new value.
+   */
   @NonNull
   public static XdmAtomic untyped (@NonNull final String sValue)
   {
     return of (EAtomicType.UNTYPED_ATOMIC, sValue);
   }
 
+  /**
+   * Create an xs:anyURI value.
+   *
+   * @param sValue
+   *        The URI string. May not be <code>null</code>.
+   * @return The new value.
+   */
   @NonNull
   public static XdmAtomic anyUri (@NonNull final String sValue)
   {
     return of (EAtomicType.ANY_URI, sValue);
   }
 
+  /**
+   * Get the xs:boolean value for a Java boolean.
+   *
+   * @param bValue
+   *        The boolean.
+   * @return {@link #TRUE} or {@link #FALSE}.
+   */
   @NonNull
   public static XdmAtomic bool (final boolean bValue)
   {
     return bValue ? TRUE : FALSE;
   }
 
+  /**
+   * Create an xs:integer value. Values from -128 to 127 are shared instances.
+   *
+   * @param nValue
+   *        The integer.
+   * @return The value.
+   */
   @NonNull
   public static XdmAtomic integer (final long nValue)
   {
@@ -141,30 +178,65 @@ public final class XdmAtomic implements IXdmItem
     return new XdmAtomic (EAtomicType.INTEGER, BigInteger.valueOf (nValue));
   }
 
+  /**
+   * Create an xs:integer value. Values from -128 to 127 are shared instances.
+   *
+   * @param aValue
+   *        The integer. May not be <code>null</code>.
+   * @return The value.
+   */
   @NonNull
   public static XdmAtomic integer (@NonNull final BigInteger aValue)
   {
     return of (EAtomicType.INTEGER, aValue);
   }
 
+  /**
+   * Create an xs:decimal value.
+   *
+   * @param aValue
+   *        The decimal. May not be <code>null</code>.
+   * @return The new value.
+   */
   @NonNull
   public static XdmAtomic decimal (@NonNull final BigDecimal aValue)
   {
     return of (EAtomicType.DECIMAL, aValue);
   }
 
+  /**
+   * Create an xs:double value.
+   *
+   * @param dValue
+   *        The double.
+   * @return The new value.
+   */
   @NonNull
   public static XdmAtomic dbl (final double dValue)
   {
     return of (EAtomicType.DOUBLE, Double.valueOf (dValue));
   }
 
+  /**
+   * Create an xs:float value.
+   *
+   * @param fValue
+   *        The float.
+   * @return The new value.
+   */
   @NonNull
   public static XdmAtomic flt (final float fValue)
   {
     return of (EAtomicType.FLOAT, Float.valueOf (fValue));
   }
 
+  /**
+   * Create an xs:QName value.
+   *
+   * @param aValue
+   *        The qualified name. May not be <code>null</code>.
+   * @return The new value.
+   */
   @NonNull
   public static XdmAtomic qname (@NonNull final XdmQName aValue)
   {
@@ -172,10 +244,11 @@ public final class XdmAtomic implements IXdmItem
   }
 
   /**
-   * @return The user-defined schema type this value was validated against (by
-   *         atomising a validated node, by a cast to or a constructor function
-   *         of a user-defined type), or <code>null</code>. {@link #getType()}
-   *         is its built-in base type then.
+   * Get the user-defined schema type of this value.
+   *
+   * @return The user-defined schema type this value was validated against (by atomising a validated node, by a cast to
+   *         or a constructor function of a user-defined type), or <code>null</code>. {@link #getType()} is its built-in base
+   *         type then.
    */
   @Nullable
   public IXdmTypeDefinition getSchemaType ()
@@ -184,9 +257,11 @@ public final class XdmAtomic implements IXdmItem
   }
 
   /**
+   * Get this value with another user-defined schema type annotation.
+   *
    * @param aSchemaType
    *        The user-defined schema type, or <code>null</code> for none.
-   * @return The same value annotated with a user-defined schema type.
+   * @return The same value annotated with a user-defined schema type. This object if the schema type is unchanged.
    */
   @NonNull
   public XdmAtomic withSchemaType (@Nullable final IXdmTypeDefinition aSchemaType)
@@ -196,12 +271,19 @@ public final class XdmAtomic implements IXdmItem
     return new XdmAtomic (m_eType, m_aValue, aSchemaType);
   }
 
+  /**
+   * Get the built-in type of this value.
+   *
+   * @return The most specific built-in type of this value.
+   */
   public EAtomicType getType ()
   {
     return m_eType;
   }
 
   /**
+   * Get the payload of this value.
+   *
    * @return The payload, see the class comment for its Java class.
    */
   @NonNull
@@ -210,39 +292,64 @@ public final class XdmAtomic implements IXdmItem
     return m_aValue;
   }
 
+  /**
+   * Check if this value is of a numeric type.
+   *
+   * @return <code>true</code> if the type is numeric, see {@link EAtomicType#isNumeric()}.
+   */
   public boolean isNumeric ()
   {
     return m_eType.isNumeric ();
   }
 
   /**
-   * @return <code>true</code> for xs:string and its derived types, xs:anyURI
-   *         and xs:untypedAtomic, i.e. the types whose payload is a
-   *         {@link String} and which string functions and comparisons accept.
+   * Check if this value is string-like.
+   *
+   * @return <code>true</code> for xs:string and its derived types, xs:anyURI and xs:untypedAtomic, i.e. the types whose
+   *         payload is a {@link String} and which string functions and comparisons accept.
    */
   public boolean isStringLike ()
   {
     return m_eType.isStringFamily () || m_eType == EAtomicType.ANY_URI || m_eType == EAtomicType.UNTYPED_ATOMIC;
   }
 
-  /** @return The payload of a string-like value. */
+  /**
+   * Get the payload of a string-like value.
+   *
+   * @return The payload of a string-like value.
+   */
   @NonNull
   public String getString ()
   {
     return (String) m_aValue;
   }
 
+  /**
+   * Get the payload of an xs:boolean value.
+   *
+   * @return The boolean payload.
+   */
   public boolean getBoolean ()
   {
     return ((Boolean) m_aValue).booleanValue ();
   }
 
+  /**
+   * Get the payload of an xs:integer value or one derived from it.
+   *
+   * @return The integer payload.
+   */
   @NonNull
   public BigInteger getBigInteger ()
   {
     return (BigInteger) m_aValue;
   }
 
+  /**
+   * Get the payload of an xs:decimal value.
+   *
+   * @return The decimal payload.
+   */
   @NonNull
   public BigDecimal getBigDecimal ()
   {
@@ -250,8 +357,10 @@ public final class XdmAtomic implements IXdmItem
   }
 
   /**
-   * @return The numeric value as double. For integer, decimal and float values
-   *         this is the nearest double. Only valid for numeric types.
+   * Get the numeric value as double.
+   *
+   * @return The numeric value as double. For integer, decimal and float values this is the nearest double. Only valid
+   *         for numeric types.
    */
   public double getAsDouble ()
   {
@@ -267,8 +376,9 @@ public final class XdmAtomic implements IXdmItem
   }
 
   /**
-   * @return The canonical lexical representation, as xs:string cast would
-   *         produce it.
+   * Get the canonical lexical representation of this value.
+   *
+   * @return The canonical lexical representation, as xs:string cast would produce it.
    */
   @NonNull
   public String getLexical ()

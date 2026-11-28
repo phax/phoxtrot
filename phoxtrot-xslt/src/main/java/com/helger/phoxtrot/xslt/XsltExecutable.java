@@ -40,6 +40,8 @@ import com.helger.phoxtrot.xpath.context.StaticContext;
 public interface XsltExecutable
 {
   /**
+   * Run the transformation described by the request and return its results.
+   *
    * @param aRequest
    *        How to invoke the stylesheet.
    * @return The results.
@@ -205,6 +207,8 @@ public interface XsltExecutable
   }
 
   /**
+   * Get the in-scope schema definitions of the stylesheet.
+   *
    * @return The in-scope schema definitions of a schema-aware stylesheet (to
    *         validate source documents against the same components the
    *         stylesheet refers to), <code>null</code> for a basic processor.
@@ -216,6 +220,8 @@ public interface XsltExecutable
   }
 
   /**
+   * Check whether type annotations of source documents are to be stripped.
+   *
    * @return <code>true</code> if the stylesheet says
    *         <code>input-type-annotations="strip"</code>: type annotations of
    *         source documents are to be removed.

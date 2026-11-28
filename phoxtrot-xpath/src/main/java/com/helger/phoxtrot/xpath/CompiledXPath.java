@@ -62,18 +62,33 @@ public final class CompiledXPath
     m_aExpr = aExpr;
   }
 
+  /**
+   * Get the source text of the expression.
+   *
+   * @return The expression text. Never <code>null</code>.
+   */
   @NonNull
   public String getSource ()
   {
     return m_sSource;
   }
 
+  /**
+   * Get the static context the expression was compiled with.
+   *
+   * @return The static context. Never <code>null</code>.
+   */
   @NonNull
   public StaticContext getStaticContext ()
   {
     return m_aStaticCtx;
   }
 
+  /**
+   * Get the parsed expression.
+   *
+   * @return The expression tree. Never <code>null</code>.
+   */
   @NonNull
   public IExpr getExpression ()
   {
@@ -106,7 +121,11 @@ public final class CompiledXPath
     return ret.getClone ();
   }
 
-  /** @return A fresh root dynamic context for this expression. */
+  /**
+   * Create a new root dynamic context for this expression.
+   *
+   * @return A fresh root dynamic context for this expression.
+   */
   @NonNull
   public DynamicContext createDynamicContext ()
   {

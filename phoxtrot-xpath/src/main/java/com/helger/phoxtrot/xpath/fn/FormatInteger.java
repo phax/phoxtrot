@@ -55,13 +55,21 @@ public final class FormatInteger
     DigitPattern ()
     {}
 
-    /** @return The number of mandatory digit positions. */
+    /**
+     * Get the number of mandatory digit positions.
+     *
+     * @return The number of mandatory digit positions.
+     */
     public int getMandatory ()
     {
       return m_nMandatory;
     }
 
-    /** @return The zero code point of the digit family. */
+    /**
+     * Get the zero code point of the digit family.
+     *
+     * @return The zero code point of the digit family.
+     */
     public int getZero ()
     {
       return m_nZero;
@@ -106,6 +114,8 @@ public final class FormatInteger
   {}
 
   /**
+   * Check if a code point is a Unicode decimal digit.
+   *
    * @param c
    *        A code point.
    * @return <code>true</code> for a Unicode decimal digit (category Nd).
@@ -116,6 +126,8 @@ public final class FormatInteger
   }
 
   /**
+   * Check if a code point is a Unicode number.
+   *
    * @param c
    *        A code point.
    * @return <code>true</code> for any Unicode number (categories Nd, Nl, No).
@@ -129,6 +141,8 @@ public final class FormatInteger
   }
 
   /**
+   * Get the value of a Unicode decimal digit.
+   *
    * @param c
    *        A Unicode decimal digit.
    * @return Its value 0..9.
@@ -140,6 +154,8 @@ public final class FormatInteger
   }
 
   /**
+   * Rewrite ASCII digits into another digit family.
+   *
    * @param sAscii
    *        String with ASCII digits.
    * @param nZero
@@ -161,6 +177,8 @@ public final class FormatInteger
   }
 
   /**
+   * Check if a picture is a decimal-digit-pattern.
+   *
    * @param s
    *        A picture.
    * @return <code>true</code> if it contains a Unicode decimal digit, i.e. it
@@ -280,6 +298,8 @@ public final class FormatInteger
   }
 
   /**
+   * Format a number as Roman numeral.
+   *
    * @param n
    *        1..4999
    * @param bUpper
@@ -331,6 +351,8 @@ public final class FormatInteger
   }
 
   /**
+   * Get the code points of the Latin alphabet.
+   *
    * @param bUpper
    *        Upper or lower case.
    * @return The Latin alphabet a..z.

@@ -49,6 +49,8 @@ public final class XSLT30RunResult
   private final ICommonsList <QT3SetResult> m_aSets;
 
   /**
+   * Create a run result.
+   *
    * @param nCatalogTestSets
    *        Number of test sets in the catalog.
    * @param aSets
@@ -95,6 +97,11 @@ public final class XSLT30RunResult
     return aSB.toString ();
   }
 
+  /**
+   * Get the results of all test sets.
+   *
+   * @return A copy of the per test-set results in catalog order.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <QT3SetResult> getAllSets ()
@@ -102,22 +109,41 @@ public final class XSLT30RunResult
     return m_aSets.getClone ();
   }
 
+  /**
+   * Get the number of passing cases.
+   *
+   * @return The sum of the passes of all test sets.
+   */
   public int getPass ()
   {
     return m_aSets.stream ().mapToInt (QT3SetResult::getPass).sum ();
   }
 
+  /**
+   * Get the number of failing cases.
+   *
+   * @return The sum of the fails of all test sets.
+   */
   public int getFail ()
   {
     return m_aSets.stream ().mapToInt (QT3SetResult::getFail).sum ();
   }
 
+  /**
+   * Get the number of skipped cases.
+   *
+   * @return The sum of the skips of all test sets.
+   */
   public int getSkip ()
   {
     return m_aSets.stream ().mapToInt (QT3SetResult::getSkip).sum ();
   }
 
-  /** @return All skip reasons with their counts. */
+  /**
+   * Get the skip reasons of all test sets.
+   *
+   * @return All skip reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getSkipReasons ()
@@ -128,7 +154,11 @@ public final class XSLT30RunResult
     return ret;
   }
 
-  /** @return All fail reasons with their counts. */
+  /**
+   * Get the fail reasons of all test sets.
+   *
+   * @return All fail reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getFailReasons ()
@@ -139,7 +169,11 @@ public final class XSLT30RunResult
     return ret;
   }
 
-  /** @return All failing case names, sorted. */
+  /**
+   * Get the names of all failing cases.
+   *
+   * @return All failing case names, sorted.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getFailNames ()
@@ -151,7 +185,11 @@ public final class XSLT30RunResult
     return ret;
   }
 
-  /** @return The human readable summary. */
+  /**
+   * Build the human readable summary of the run.
+   *
+   * @return The human readable summary.
+   */
   @NonNull
   public String getSummary ()
   {
@@ -188,7 +226,11 @@ public final class XSLT30RunResult
     return aSB.toString ();
   }
 
-  /** @return The per test-set counts as CSV. */
+  /**
+   * Build the per test-set counts as CSV.
+   *
+   * @return The per test-set counts as CSV.
+   */
   @NonNull
   public String getBySetCsv ()
   {

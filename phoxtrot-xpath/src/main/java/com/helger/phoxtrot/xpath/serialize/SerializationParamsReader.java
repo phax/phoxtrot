@@ -666,6 +666,8 @@ public final class SerializationParamsReader
   }
 
   /**
+   * Check if an item is a serialisation parameters element.
+   *
    * @param aItem
    *        An item.
    * @return <code>true</code> if it is an element named

@@ -130,7 +130,13 @@ public record NodeTest (@NonNull ENodeTestKind kind,
                                                         false,
                                                         null);
 
-  /** @return A plain test for a node kind without arguments. */
+  /**
+   * Create a plain test for a node kind without arguments.
+   *
+   * @param eKind
+   *        The node test kind.
+   * @return A plain test for a node kind without arguments.
+   */
   @NonNull
   public static NodeTest ofKind (@NonNull final ENodeTestKind eKind)
   {

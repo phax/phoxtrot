@@ -27,9 +27,19 @@ import com.helger.phoxtrot.xdm.XdmQName;
  */
 public interface IXdmAttributeDeclaration
 {
+  /**
+   * Get the name of the declared attribute.
+   *
+   * @return The attribute name. Never <code>null</code>.
+   */
   @NonNull
   XdmQName getName ();
 
+  /**
+   * Get the type definition of the declared attribute.
+   *
+   * @return The type definition. Never <code>null</code>.
+   */
   @NonNull
   IXdmTypeDefinition getTypeDefinition ();
 }

@@ -45,15 +45,24 @@ public final class SerializationParams
   /** The namespace of the serialization parameter elements. */
   public static final String NS_OUTPUT = "http://www.w3.org/2010/xslt-xquery-serialization";
 
+  /** The <code>xml</code> output method. */
   public static final String METHOD_XML = "xml";
+  /** The <code>xhtml</code> output method. */
   public static final String METHOD_XHTML = "xhtml";
+  /** The <code>html</code> output method. */
   public static final String METHOD_HTML = "html";
+  /** The <code>text</code> output method. */
   public static final String METHOD_TEXT = "text";
+  /** The <code>json</code> output method. */
   public static final String METHOD_JSON = "json";
+  /** The <code>adaptive</code> output method. */
   public static final String METHOD_ADAPTIVE = "adaptive";
 
+  /** The <code>standalone</code> value <code>yes</code>. */
   public static final String STANDALONE_YES = "yes";
+  /** The <code>standalone</code> value <code>no</code>. */
   public static final String STANDALONE_NO = "no";
+  /** The <code>standalone</code> value <code>omit</code> (no standalone declaration is written). */
   public static final String STANDALONE_OMIT = "omit";
 
   private String m_sMethod = METHOD_XML;
@@ -78,6 +87,7 @@ public final class SerializationParams
   private final ICommonsMap <Integer, String> m_aCharacterMap = new CommonsHashMap <> ();
   private String m_sVersion;
 
+  /** Create serialisation parameters with the defaults of <code>fn:serialize</code>. */
   public SerializationParams ()
   {}
 
@@ -113,13 +123,25 @@ public final class SerializationParams
     m_sVersion = aOther.m_sVersion;
   }
 
-  /** @return The output method: xml, xhtml, html, text, json or adaptive. */
+  /**
+   * Get the output method.
+   *
+   * @return The output method: xml, xhtml, html, text, json or adaptive.
+   */
   @NonNull
   public String getMethod ()
   {
     return m_sMethod;
   }
 
+  /**
+   * Set the output method.
+   *
+   * @param sMethod
+   *        The output method, e.g. one of the <code>METHOD_*</code> constants. May neither be <code>null</code> nor
+   *        empty.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setMethod (@NonNull final String sMethod)
   {
@@ -128,11 +150,23 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the allow-duplicate-names parameter.
+   *
+   * @return <code>true</code> if duplicate names are allowed, <code>false</code> by default.
+   */
   public boolean isAllowDuplicateNames ()
   {
     return m_bAllowDuplicateNames;
   }
 
+  /**
+   * Set the allow-duplicate-names parameter.
+   *
+   * @param b
+   *        <code>true</code> to allow duplicate names.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setAllowDuplicateNames (final boolean b)
   {
@@ -140,11 +174,23 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the byte-order-mark parameter.
+   *
+   * @return <code>true</code> if a byte order mark is written, <code>false</code> by default.
+   */
   public boolean isByteOrderMark ()
   {
     return m_bByteOrderMark;
   }
 
+  /**
+   * Set the byte-order-mark parameter.
+   *
+   * @param b
+   *        <code>true</code> to write a byte order mark.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setByteOrderMark (final boolean b)
   {
@@ -152,6 +198,12 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the cdata-section-elements parameter.
+   *
+   * @return A copy of the element names whose text content is written as CDATA sections, in insertion order. Never
+   *         <code>null</code>.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsOrderedSet <XdmQName> getAllCdataSectionElements ()
@@ -159,11 +211,25 @@ public final class SerializationParams
     return m_aCdataSectionElements.getClone ();
   }
 
+  /**
+   * Check if an element name is one of the cdata-section-elements.
+   *
+   * @param aName
+   *        The element name to check. May not be <code>null</code>.
+   * @return <code>true</code> if the text content of such elements is written as CDATA sections.
+   */
   public boolean isCdataSectionElement (@NonNull final XdmQName aName)
   {
     return m_aCdataSectionElements.contains (aName);
   }
 
+  /**
+   * Add an element name to the cdata-section-elements.
+   *
+   * @param aName
+   *        The element name to add. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams addCdataSectionElement (@NonNull final XdmQName aName)
   {
@@ -172,12 +238,24 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the doctype-public parameter.
+   *
+   * @return The public identifier of the document type declaration, <code>null</code> if absent.
+   */
   @Nullable
   public String getDoctypePublic ()
   {
     return m_sDoctypePublic;
   }
 
+  /**
+   * Set the doctype-public parameter.
+   *
+   * @param s
+   *        The public identifier of the document type declaration. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setDoctypePublic (@Nullable final String s)
   {
@@ -185,12 +263,24 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the doctype-system parameter.
+   *
+   * @return The system identifier of the document type declaration, <code>null</code> if absent.
+   */
   @Nullable
   public String getDoctypeSystem ()
   {
     return m_sDoctypeSystem;
   }
 
+  /**
+   * Set the doctype-system parameter.
+   *
+   * @param s
+   *        The system identifier of the document type declaration. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setDoctypeSystem (@Nullable final String s)
   {
@@ -198,12 +288,24 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the encoding parameter.
+   *
+   * @return The output encoding, <code>UTF-8</code> by default. Never <code>null</code>.
+   */
   @NonNull
   public String getEncoding ()
   {
     return m_sEncoding;
   }
 
+  /**
+   * Set the encoding parameter.
+   *
+   * @param s
+   *        The output encoding. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setEncoding (@NonNull final String s)
   {
@@ -212,11 +314,23 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the escape-uri-attributes parameter.
+   *
+   * @return <code>true</code> if URI attributes are escaped, <code>true</code> by default.
+   */
   public boolean isEscapeUriAttributes ()
   {
     return m_bEscapeUriAttributes;
   }
 
+  /**
+   * Set the escape-uri-attributes parameter.
+   *
+   * @param b
+   *        <code>true</code> to escape URI attributes.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setEscapeUriAttributes (final boolean b)
   {
@@ -224,13 +338,24 @@ public final class SerializationParams
     return this;
   }
 
-  /** @return The html-version parameter, <code>null</code> if absent. */
+  /**
+   * Get the html-version parameter.
+   *
+   * @return The html-version parameter, <code>null</code> if absent.
+   */
   @Nullable
   public BigDecimal getHtmlVersion ()
   {
     return m_aHtmlVersion;
   }
 
+  /**
+   * Set the html-version parameter.
+   *
+   * @param a
+   *        The HTML version. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setHtmlVersion (@Nullable final BigDecimal a)
   {
@@ -238,11 +363,23 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the include-content-type parameter.
+   *
+   * @return <code>true</code> if a content type <code>meta</code> element is included, <code>true</code> by default.
+   */
   public boolean isIncludeContentType ()
   {
     return m_bIncludeContentType;
   }
 
+  /**
+   * Set the include-content-type parameter.
+   *
+   * @param b
+   *        <code>true</code> to include a content type <code>meta</code> element.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setIncludeContentType (final boolean b)
   {
@@ -250,11 +387,23 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the indent parameter.
+   *
+   * @return <code>true</code> if the output is indented, <code>false</code> by default.
+   */
   public boolean isIndent ()
   {
     return m_bIndent;
   }
 
+  /**
+   * Set the indent parameter.
+   *
+   * @param b
+   *        <code>true</code> to indent the output.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setIndent (final boolean b)
   {
@@ -262,13 +411,24 @@ public final class SerializationParams
     return this;
   }
 
-  /** @return The item-separator, <code>null</code> if absent. */
+  /**
+   * Get the item-separator parameter.
+   *
+   * @return The item-separator, <code>null</code> if absent.
+   */
   @Nullable
   public String getItemSeparator ()
   {
     return m_sItemSeparator;
   }
 
+  /**
+   * Set the item-separator parameter.
+   *
+   * @param s
+   *        The item separator. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setItemSeparator (@Nullable final String s)
   {
@@ -276,12 +436,24 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the json-node-output-method parameter.
+   *
+   * @return The output method used for nodes in JSON output, <code>xml</code> by default. Never <code>null</code>.
+   */
   @NonNull
   public String getJsonNodeOutputMethod ()
   {
     return m_sJsonNodeOutputMethod;
   }
 
+  /**
+   * Set the json-node-output-method parameter.
+   *
+   * @param s
+   *        The output method used for nodes in JSON output. May neither be <code>null</code> nor empty.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setJsonNodeOutputMethod (@NonNull final String s)
   {
@@ -290,12 +462,24 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the media-type parameter.
+   *
+   * @return The media type, <code>null</code> if absent.
+   */
   @Nullable
   public String getMediaType ()
   {
     return m_sMediaType;
   }
 
+  /**
+   * Set the media-type parameter.
+   *
+   * @param s
+   *        The media type. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setMediaType (@Nullable final String s)
   {
@@ -303,13 +487,24 @@ public final class SerializationParams
     return this;
   }
 
-  /** @return NFC, NFD, NFKC, NFKD, fully-normalized or none. */
+  /**
+   * Get the normalization-form parameter.
+   *
+   * @return NFC, NFD, NFKC, NFKD, fully-normalized or none.
+   */
   @NonNull
   public String getNormalizationForm ()
   {
     return m_sNormalizationForm;
   }
 
+  /**
+   * Set the normalization-form parameter.
+   *
+   * @param s
+   *        The normalisation form, e.g. NFC or none. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setNormalizationForm (@NonNull final String s)
   {
@@ -318,11 +513,23 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the omit-xml-declaration parameter.
+   *
+   * @return <code>true</code> if the XML declaration is omitted, <code>true</code> by default.
+   */
   public boolean isOmitXmlDeclaration ()
   {
     return m_bOmitXmlDeclaration;
   }
 
+  /**
+   * Set the omit-xml-declaration parameter.
+   *
+   * @param b
+   *        <code>true</code> to omit the XML declaration.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setOmitXmlDeclaration (final boolean b)
   {
@@ -330,13 +537,24 @@ public final class SerializationParams
     return this;
   }
 
-  /** @return yes, no or omit. */
+  /**
+   * Get the standalone parameter.
+   *
+   * @return yes, no or omit.
+   */
   @NonNull
   public String getStandalone ()
   {
     return m_sStandalone;
   }
 
+  /**
+   * Set the standalone parameter.
+   *
+   * @param s
+   *        One of the <code>STANDALONE_*</code> constants. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setStandalone (@NonNull final String s)
   {
@@ -345,6 +563,11 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the suppress-indentation parameter.
+   *
+   * @return A copy of the element names whose content is not indented, in insertion order. Never <code>null</code>.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsOrderedSet <XdmQName> getAllSuppressIndentation ()
@@ -352,11 +575,25 @@ public final class SerializationParams
     return m_aSuppressIndentation.getClone ();
   }
 
+  /**
+   * Check if an element name is one of the suppress-indentation elements.
+   *
+   * @param aName
+   *        The element name to check. May not be <code>null</code>.
+   * @return <code>true</code> if the content of such elements is not indented.
+   */
   public boolean isSuppressIndentation (@NonNull final XdmQName aName)
   {
     return m_aSuppressIndentation.contains (aName);
   }
 
+  /**
+   * Add an element name to the suppress-indentation elements.
+   *
+   * @param aName
+   *        The element name to add. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams addSuppressIndentation (@NonNull final XdmQName aName)
   {
@@ -365,11 +602,23 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Get the undeclare-prefixes parameter.
+   *
+   * @return <code>true</code> if namespace prefixes are undeclared, <code>false</code> by default.
+   */
   public boolean isUndeclarePrefixes ()
   {
     return m_bUndeclarePrefixes;
   }
 
+  /**
+   * Set the undeclare-prefixes parameter.
+   *
+   * @param b
+   *        <code>true</code> to undeclare namespace prefixes.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setUndeclarePrefixes (final boolean b)
   {
@@ -378,8 +627,9 @@ public final class SerializationParams
   }
 
   /**
-   * @return The character map (use-character-maps), code point to
-   *         replacement.
+   * Get a copy of the character map.
+   *
+   * @return The character map (use-character-maps), code point to replacement.
    */
   @NonNull
   @ReturnsMutableCopy
@@ -388,16 +638,22 @@ public final class SerializationParams
     return m_aCharacterMap.getClone ();
   }
 
+  /**
+   * Check if a character map is present.
+   *
+   * @return <code>true</code> if at least one character mapping is defined.
+   */
   public boolean hasCharacterMap ()
   {
     return !m_aCharacterMap.isEmpty ();
   }
 
   /**
+   * Get the replacement of a code point from the character map.
+   *
    * @param nCodePoint
    *        A code point.
-   * @return The replacement or <code>null</code> if the character is not
-   *         mapped.
+   * @return The replacement or <code>null</code> if the character is not mapped.
    */
   @Nullable
   public String getCharacterMapping (final int nCodePoint)
@@ -405,6 +661,13 @@ public final class SerializationParams
     return m_aCharacterMap.get (Integer.valueOf (nCodePoint));
   }
 
+  /**
+   * Replace the whole character map.
+   *
+   * @param aMap
+   *        The new mappings from code point to replacement. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setCharacterMap (@NonNull final Map <Integer, String> aMap)
   {
@@ -413,6 +676,15 @@ public final class SerializationParams
     return this;
   }
 
+  /**
+   * Add or replace one character mapping.
+   *
+   * @param nCodePoint
+   *        The code point to map.
+   * @param sReplacement
+   *        The replacement string. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams addCharacterMapping (final int nCodePoint, @NonNull final String sReplacement)
   {
@@ -421,13 +693,24 @@ public final class SerializationParams
     return this;
   }
 
-  /** @return The version parameter, <code>null</code> if absent. */
+  /**
+   * Get the version parameter.
+   *
+   * @return The version parameter, <code>null</code> if absent.
+   */
   @Nullable
   public String getVersion ()
   {
     return m_sVersion;
   }
 
+  /**
+   * Set the version parameter.
+   *
+   * @param s
+   *        The version. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public SerializationParams setVersion (@Nullable final String s)
   {
@@ -435,7 +718,11 @@ public final class SerializationParams
     return this;
   }
 
-  /** @return <code>true</code> if the XML version to write is 1.1. */
+  /**
+   * Check if the XML version to write is 1.1.
+   *
+   * @return <code>true</code> if the XML version to write is 1.1.
+   */
   public boolean isXml11 ()
   {
     return "1.1".equals (m_sVersion);

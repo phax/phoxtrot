@@ -118,6 +118,8 @@ public record StreamFunctionSignature (@NonNull EStreamFunctionCategory category
   }
 
   /**
+   * Get the usage of an argument.
+   *
    * @param nIndex
    *        0-based argument index.
    * @return The type-determined usage of that argument. The resolver matched on

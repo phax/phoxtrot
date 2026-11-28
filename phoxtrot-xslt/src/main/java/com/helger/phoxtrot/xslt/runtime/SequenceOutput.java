@@ -35,6 +35,12 @@ public final class SequenceOutput implements IXsltOutput
 {
   private final XdmSequence.Builder m_aItems = new XdmSequence.Builder ();
 
+  /**
+   * Create a new empty sequence output.
+   */
+  public SequenceOutput ()
+  {}
+
   public void append (@NonNull final IXdmItem aItem)
   {
     m_aItems.add (aItem);
@@ -51,13 +57,21 @@ public final class SequenceOutput implements IXsltOutput
     m_aItems.add (aNode);
   }
 
-  /** @return The number of items so far. */
+  /**
+   * Get the number of items collected so far.
+   *
+   * @return The number of items so far.
+   */
   public int size ()
   {
     return m_aItems.size ();
   }
 
-  /** @return The collected items. */
+  /**
+   * Build the sequence of the collected items.
+   *
+   * @return The collected items.
+   */
   @NonNull
   public XdmSequence getSequence ()
   {

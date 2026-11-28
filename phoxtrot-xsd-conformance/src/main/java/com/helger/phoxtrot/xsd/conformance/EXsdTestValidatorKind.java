@@ -59,7 +59,11 @@ public enum EXsdTestValidatorKind
     m_aFactory = aFactory;
   }
 
-  /** @return The value of <code>xsd.validator</code>. */
+  /**
+   * Get the ID of the validator kind.
+   *
+   * @return The value of <code>xsd.validator</code>.
+   */
   @NonNull
   @Nonempty
   public String getID ()
@@ -68,6 +72,8 @@ public enum EXsdTestValidatorKind
   }
 
   /**
+   * Get the prefix of the output files.
+   *
    * @return The prefix of the output files: <code>xsd</code> for Xerces-J
    *         (<code>xsd-fails.txt</code>), <code>xsd-native</code> for the
    *         native validator (<code>xsd-native-fails.txt</code>).
@@ -79,7 +85,11 @@ public enum EXsdTestValidatorKind
     return m_sFilePrefix;
   }
 
-  /** @return The default accepted-failures file of this validator. */
+  /**
+   * Get the default accepted-failures file.
+   *
+   * @return The default accepted-failures file of this validator.
+   */
   @NonNull
   @Nonempty
   public String getAcceptedFile ()
@@ -87,13 +97,21 @@ public enum EXsdTestValidatorKind
     return m_sAcceptedFile;
   }
 
-  /** @return Whether the accepted-failures check is on unless configured. */
+  /**
+   * Check whether the accepted-failures check is on by default.
+   *
+   * @return Whether the accepted-failures check is on unless configured.
+   */
   public boolean isCheckAcceptedByDefault ()
   {
     return m_bCheckAcceptedByDefault;
   }
 
-  /** @return The factory of validator instances (one per test set). */
+  /**
+   * Get the validator factory.
+   *
+   * @return The factory of validator instances (one per test set).
+   */
   @NonNull
   public Supplier <? extends IXsdTestValidator> getFactory ()
   {
@@ -101,6 +119,8 @@ public enum EXsdTestValidatorKind
   }
 
   /**
+   * Find a validator kind by its ID.
+   *
    * @param sID
    *        The ID, case-insensitive. May be <code>null</code>.
    * @return The matching kind or <code>null</code>.

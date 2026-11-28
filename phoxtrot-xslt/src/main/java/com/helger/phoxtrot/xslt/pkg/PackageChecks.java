@@ -57,6 +57,13 @@ public final class PackageChecks
    * The result of xsl:expose for one package: the effective visibility per
    * declaring element, and per name for the modes that exist only through
    * the mode attribute of template rules (they have no declaration).
+   *
+   * @param byElement
+   *        The effective visibility per declaring element. Never
+   *        <code>null</code>.
+   * @param implicitModes
+   *        The effective visibility per name of the modes without
+   *        declaration. Never <code>null</code>.
    */
   @Immutable
   public record Exposure (@NonNull ICommonsMap <XslElement, String> byElement,
@@ -95,6 +102,8 @@ public final class PackageChecks
   }
 
   /**
+   * Get the visibility a declaration states in its visibility attribute.
+   *
    * @param aEl
    *        A declaration.
    * @return Its declared visibility, "private" if none.
@@ -152,6 +161,9 @@ public final class PackageChecks
   }
 
   /**
+   * Check whether a visibility makes a component visible to using packages
+   * (public, final or abstract).
+   *
    * @param sVisibility
    *        A visibility.
    * @return <code>true</code> if a component with it is part of the package
@@ -256,6 +268,8 @@ public final class PackageChecks
   }
 
   /**
+   * Check whether an xsl:accept element selects a component.
+   *
    * @param aAccept
    *        An xsl:accept element.
    * @param aComp
@@ -330,6 +344,9 @@ public final class PackageChecks
   }
 
   /**
+   * Check whether an xsl:use-package states the visibility of a component in
+   * one of its xsl:accept children.
+   *
    * @param aUse
    *        The xsl:use-package element.
    * @param aComp
@@ -1215,6 +1232,8 @@ public final class PackageChecks
   }
 
   /**
+   * Get the outermost element of the module a stylesheet node belongs to.
+   *
    * @param aNode
    *        A stylesheet node.
    * @return The outermost element of its module.

@@ -53,6 +53,13 @@ public final class StreamVerdicts
   private final Set <XslElement> m_aStreamedMerges = Collections.newSetFromMap (new IdentityHashMap <> ());
   private boolean m_bDeclarationsFailed;
 
+  /**
+   * Create empty verdicts: until something is added, every query answers
+   * <code>false</code>.
+   */
+  public StreamVerdicts ()
+  {}
+
   void addStreamableMode (@NonNull final XdmQName aMode)
   {
     m_aStreamableModes.add (aMode);
@@ -89,6 +96,8 @@ public final class StreamVerdicts
   }
 
   /**
+   * Check whether a mode is streamable.
+   *
    * @param aMode
    *        Mode name.
    * @return <code>true</code> if the mode is declared streamable and every
@@ -100,6 +109,8 @@ public final class StreamVerdicts
   }
 
   /**
+   * Check whether an accumulator is streamable.
+   *
    * @param aName
    *        Accumulator name.
    * @return <code>true</code> if the accumulator is declared streamable and
@@ -111,6 +122,8 @@ public final class StreamVerdicts
   }
 
   /**
+   * Check whether an <code>xsl:source-document</code> element is streamable.
+   *
    * @param aEl
    *        An <code>xsl:source-document</code> element.
    * @return <code>true</code> if it is declared streamable and its body is
@@ -122,6 +135,9 @@ public final class StreamVerdicts
   }
 
   /**
+   * Check whether a literal result element is a motionless wrapper around the
+   * consumer of a streamed body.
+   *
    * @param aEl
    *        A literal result element.
    * @return <code>true</code> if it is a wrapper around the consumer of a
@@ -136,6 +152,9 @@ public final class StreamVerdicts
   }
 
   /**
+   * Check whether an <code>xsl:merge</code> element may read its streamable
+   * merge sources as streams.
+   *
    * @param aEl
    *        An <code>xsl:merge</code> element.
    * @return <code>true</code> if its streamable merge sources (proven

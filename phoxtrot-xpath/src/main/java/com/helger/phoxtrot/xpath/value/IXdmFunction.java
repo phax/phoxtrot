@@ -34,14 +34,24 @@ import com.helger.phoxtrot.xpath.context.DynamicContext;
  */
 public interface IXdmFunction extends IXdmItem
 {
-  /** @return The function name, or <code>null</code> for an anonymous function. */
+  /**
+   * Get the name of the function.
+   *
+   * @return The function name, or <code>null</code> for an anonymous function.
+   */
   @Nullable
   XdmQName getName ();
 
-  /** @return The number of parameters, i.e. of arguments a call takes. */
+  /**
+   * Get the arity of the function.
+   *
+   * @return The number of parameters, i.e. of arguments a call takes.
+   */
   int getArity ();
 
   /**
+   * Get the declared parameter types.
+   *
    * @return The declared parameter types, always {@link #getArity()} entries;
    *         an entry is <code>item()*</code> where nothing was declared.
    */
@@ -49,6 +59,8 @@ public interface IXdmFunction extends IXdmItem
   List <SeqType> getParamTypes ();
 
   /**
+   * Get the declared result type.
+   *
    * @return The declared result type; <code>item()*</code> where nothing was
    *         declared, e.g. for a map or array used as a function.
    */

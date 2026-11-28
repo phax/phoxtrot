@@ -25,11 +25,25 @@ import org.jspecify.annotations.NonNull;
  */
 public class XdmParseException extends Exception
 {
+  /**
+   * Create an exception with a message.
+   *
+   * @param sMessage
+   *        The message. May not be <code>null</code>.
+   */
   public XdmParseException (@NonNull final String sMessage)
   {
     super (sMessage);
   }
 
+  /**
+   * Create an exception with a message and a cause.
+   *
+   * @param sMessage
+   *        The message. May not be <code>null</code>.
+   * @param aCause
+   *        The cause. May not be <code>null</code>.
+   */
   public XdmParseException (@NonNull final String sMessage, @NonNull final Throwable aCause)
   {
     super (sMessage, aCause);

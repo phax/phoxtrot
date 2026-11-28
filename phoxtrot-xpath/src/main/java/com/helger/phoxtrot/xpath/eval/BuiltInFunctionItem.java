@@ -45,6 +45,8 @@ public final class BuiltInFunctionItem extends AbstractFunctionItem
   private final DynamicContext m_aCapturedCtx;
 
   /**
+   * Create a function item for a built-in function definition.
+   *
    * @param aDef
    *        The function definition.
    * @param aCapturedCtx
@@ -58,6 +60,11 @@ public final class BuiltInFunctionItem extends AbstractFunctionItem
     m_aCapturedCtx = aCapturedCtx;
   }
 
+  /**
+   * Get the definition of the built-in function.
+   *
+   * @return The function definition. Never <code>null</code>.
+   */
   @NonNull
   public FunctionDef getFunctionDef ()
   {

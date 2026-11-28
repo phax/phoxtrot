@@ -84,7 +84,18 @@ public record XsltTransformResult (@NonNull XdmSequence principalRaw,
     this (principalRaw, principalTree, principalSerialized, secondaryResults, messages, null, false);
   }
 
-  /** One xsl:result-document result. */
+  /**
+   * One xsl:result-document result.
+   *
+   * @param href
+   *        The URI of the result as written by xsl:result-document.
+   * @param raw
+   *        The raw result sequence.
+   * @param tree
+   *        The result tree, may be <code>null</code>.
+   * @param serialized
+   *        The serialised result.
+   */
   @Immutable
   public record SecondaryResult (@NonNull String href,
                                  @NonNull XdmSequence raw,

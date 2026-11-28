@@ -26,8 +26,11 @@ import org.jspecify.annotations.NonNull;
  */
 public enum EXsdVariety
 {
+  /** An atomic type. */
   ATOMIC ("atomic"),
+  /** A list of an item type. */
   LIST ("list"),
+  /** A union of member types. */
   UNION ("union");
 
   private final String m_sID;
@@ -37,7 +40,11 @@ public enum EXsdVariety
     m_sID = sID;
   }
 
-  /** @return <code>atomic</code>, <code>list</code> or <code>union</code>. */
+  /**
+   * Get the ID of this variety.
+   *
+   * @return <code>atomic</code>, <code>list</code> or <code>union</code>.
+   */
   @NonNull
   public String getID ()
   {

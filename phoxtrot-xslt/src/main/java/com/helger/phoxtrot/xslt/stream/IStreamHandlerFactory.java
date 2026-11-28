@@ -33,6 +33,8 @@ import com.helger.phoxtrot.xslt.runtime.XsltContext;
 public interface IStreamHandlerFactory
 {
   /**
+   * Create the record handler of the instruction for one streamed execution.
+   *
    * @param aCtx
    *        The run-time context of the instruction.
    * @param aOut

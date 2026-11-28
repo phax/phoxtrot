@@ -62,7 +62,16 @@ public final class XsltTransformRequest
    */
   public static final int UNLIMITED_DEPTH = Integer.MAX_VALUE;
 
-  /** A template parameter of the initial template or initial mode. */
+  /**
+   * A template parameter of the initial template or initial mode.
+   *
+   * @param name
+   *        The parameter name.
+   * @param value
+   *        The parameter value.
+   * @param tunnel
+   *        <code>true</code> for a tunnel parameter.
+   */
   @Immutable
   public record TemplateParam (@NonNull XdmQName name, @NonNull XdmSequence value, boolean tunnel)
   {}
@@ -92,13 +101,30 @@ public final class XsltTransformRequest
   private String m_sStreamedSourceUri;
   private EThreading m_eThreading = EThreading.DEFAULT;
 
-  /** @return The global context item (normally the source document node). */
+  /**
+   * Create a new instance with the default settings.
+   */
+  public XsltTransformRequest ()
+  {}
+
+  /**
+   * Get the global context item.
+   *
+   * @return The global context item (normally the source document node).
+   */
   @Nullable
   public IXdmItem getGlobalContextItem ()
   {
     return m_aGlobalContextItem;
   }
 
+  /**
+   * Set the global context item.
+   *
+   * @param aItem
+   *        The global context item (normally the source document node). May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setGlobalContextItem (@Nullable final IXdmItem aItem)
   {
@@ -106,13 +132,24 @@ public final class XsltTransformRequest
     return this;
   }
 
-  /** @return The initial match selection; defaults to the global context item. */
+  /**
+   * Get the initial match selection.
+   *
+   * @return The initial match selection; defaults to the global context item.
+   */
   @Nullable
   public XdmSequence getInitialMatchSelection ()
   {
     return m_aInitialMatchSelection;
   }
 
+  /**
+   * Set the initial match selection.
+   *
+   * @param aSeq
+   *        The initial match selection, or <code>null</code> for the global context item.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setInitialMatchSelection (@Nullable final XdmSequence aSeq)
   {
@@ -121,6 +158,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the initial mode.
+   *
    * @return The initial mode, <code>null</code> for the default mode. The
    *         names <code>#unnamed</code> and <code>#default</code> (in no
    *         namespace) stand for the unnamed and the default mode.
@@ -131,6 +170,15 @@ public final class XsltTransformRequest
     return m_aInitialMode;
   }
 
+  /**
+   * Set the initial mode.
+   *
+   * @param aMode
+   *        The initial mode, or <code>null</code> for the default mode. The names
+   *        <code>#unnamed</code> and <code>#default</code> (in no namespace) stand for the unnamed
+   *        and the default mode.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setInitialMode (@Nullable final XdmQName aMode)
   {
@@ -139,6 +187,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the initial named template.
+   *
    * @return The initial named template (XSLT 3.0 section 2.3.4) or
    *         <code>null</code>. Used unless an initial function is set; the
    *         template must exist and be callable from outside the stylesheet
@@ -151,6 +201,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Set the initial named template.
+   *
    * @param aName
    *        The initial named template; <code>xsl:initial-template</code> in the
    *        XSLT namespace is the conventional default.
@@ -164,6 +216,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the initial function.
+   *
    * @return The initial function (XSLT 3.0 section 2.3.5) or
    *         <code>null</code>. It takes precedence over an initial template
    *         and mode: the public or final function of that name with the
@@ -177,6 +231,13 @@ public final class XsltTransformRequest
     return m_aInitialFunction;
   }
 
+  /**
+   * Set the initial function (XSLT 3.0 section 2.3.5), see {@link #getInitialFunction()}.
+   *
+   * @param aName
+   *        The name of the initial function, or <code>null</code> for none.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setInitialFunction (@Nullable final XdmQName aName)
   {
@@ -184,21 +245,33 @@ public final class XsltTransformRequest
     return this;
   }
 
-  /** @return The arguments of the initial function (modifiable). */
+  /**
+   * Get the arguments of the initial function.
+   *
+   * @return The arguments of the initial function (modifiable).
+   */
   @NonNull
   public ICommonsList <XdmSequence> functionArgs ()
   {
     return m_aFunctionArgs;
   }
 
-  /** @return Stylesheet parameter values by name (modifiable). */
+  /**
+   * Get the stylesheet parameter values.
+   *
+   * @return Stylesheet parameter values by name (modifiable).
+   */
   @NonNull
   public ICommonsOrderedMap <XdmQName, XdmSequence> params ()
   {
     return m_aParams;
   }
 
-  /** @return Parameters for the initial template or mode (modifiable). */
+  /**
+   * Get the parameters of the initial template or mode.
+   *
+   * @return Parameters for the initial template or mode (modifiable).
+   */
   @NonNull
   public ICommonsList <TemplateParam> templateParams ()
   {
@@ -226,6 +299,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the base output URI.
+   *
    * @return The base output URI (XSLT 3.0 sections 25.1 and 25.3): the href
    *         of xsl:result-document is resolved against it, and it is the
    *         current output URI of the principal result. <code>null</code> if
@@ -237,6 +312,13 @@ public final class XsltTransformRequest
     return m_sBaseOutputUri;
   }
 
+  /**
+   * Set the base output URI (XSLT 3.0 sections 25.1 and 25.3).
+   *
+   * @param sUri
+   *        The base output URI, or <code>null</code> for none.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setBaseOutputUri (@Nullable final String sUri)
   {
@@ -244,13 +326,24 @@ public final class XsltTransformRequest
     return this;
   }
 
-  /** @return The resolver for fn:doc, document(), unparsed-text etc. */
+  /**
+   * Get the resolver of the transformation.
+   *
+   * @return The resolver for fn:doc, document(), unparsed-text etc.
+   */
   @Nullable
   public IResourceResolver getResolver ()
   {
     return m_aResolver;
   }
 
+  /**
+   * Set the resolver for fn:doc, document(), unparsed-text etc.
+   *
+   * @param aResolver
+   *        The resolver. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setResolver (@Nullable final IResourceResolver aResolver)
   {
@@ -259,6 +352,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the entity resolver of <code>fn:parse-xml</code>.
+   *
    * @return The entity resolver of <code>fn:parse-xml</code>, <code>null</code>
    *         if it reads no external DTD subset and no external entities (the
    *         default).
@@ -287,6 +382,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the value of fn:current-dateTime() for the transformation.
+   *
    * @return The value of fn:current-dateTime() for the transformation, its
    *         offset also being the implicit timezone; <code>null</code> to use
    *         the time at which the transformation starts.
@@ -297,6 +394,14 @@ public final class XsltTransformRequest
     return m_aCurrentDateTime;
   }
 
+  /**
+   * Set the value of fn:current-dateTime() for the transformation; its offset is also the implicit
+   * timezone.
+   *
+   * @param aValue
+   *        The value, or <code>null</code> to use the time at which the transformation starts.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setCurrentDateTime (@Nullable final OffsetDateTime aValue)
   {
@@ -305,6 +410,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the interrupt hook.
+   *
    * @return A hook polled during evaluation (in loops and calls); when it
    *         returns <code>true</code>, the transformation ends with FOER0000.
    *         <code>null</code> for none.
@@ -315,6 +422,14 @@ public final class XsltTransformRequest
     return m_aInterrupt;
   }
 
+  /**
+   * Set a hook polled during evaluation (in loops and calls); when it returns <code>true</code>,
+   * the transformation ends with FOER0000.
+   *
+   * @param aInterrupt
+   *        The hook, or <code>null</code> for none.
+   * @return this for chaining
+   */
   @NonNull
   public XsltTransformRequest setInterrupt (@Nullable final BooleanSupplier aInterrupt)
   {
@@ -323,6 +438,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the message listener.
+   *
    * @return The listener that receives the messages and warnings of the
    *         transformation while it runs, <code>null</code> for none.
    */
@@ -357,6 +474,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the trace listener.
+   *
    * @return The listener that follows the execution of templates, functions
    *         and optionally instructions, <code>null</code> for none.
    */
@@ -389,6 +508,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the step limit.
+   *
    * @return The maximum number of instructions to execute as set by
    *         {@link #setMaxSteps(long)}: 0 (the initial value) or a negative
    *         value for the default of {@link Engine#DEFAULT_MAX_STEPS}
@@ -433,6 +554,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the nesting depth limit.
+   *
    * @return The maximum nesting depth of templates and functions as set by
    *         {@link #setMaxDepth(int)}: 0 (the initial value) or a negative
    *         value for the default of {@link Engine#DEFAULT_MAX_DEPTH}
@@ -471,6 +594,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the shared execution budget.
+   *
    * @return The execution budget this transformation spends from instead of
    *         its own, or <code>null</code> for an own budget.
    */
@@ -481,6 +606,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Set the execution budget to spend from.
+   *
    * @param aBudget
    *        The execution budget of a calling transformation (fn:transform):
    *        steps and nesting depth are then counted against it, and
@@ -496,6 +623,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Check whether the principal result is delivered raw only.
+   *
    * @return <code>true</code> if the principal result is only wanted raw: no
    *         result tree is built and nothing is serialized. Default
    *         <code>false</code>.
@@ -506,6 +635,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Set whether the principal result is delivered raw only.
+   *
    * @param bRawDelivery
    *        <code>true</code> to deliver the principal result only raw, as the
    *        sequence the initial template, mode or function returned (e.g.
@@ -522,6 +653,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Check whether the principal result is wanted as tree only.
+   *
    * @return <code>true</code> if the principal result is wanted as tree only:
    *         it is built but not serialized. Default <code>false</code>.
    */
@@ -531,6 +664,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Set whether the principal result is wanted as tree only.
+   *
    * @param bPrincipalTreeOnly
    *        <code>true</code> if the caller only uses the principal result tree
    *        and the raw sequence (e.g. to write a DOM or SAX events): the tree
@@ -547,6 +682,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Check whether the principal source is declared a streamed document.
+   *
    * @return <code>true</code> if the host declared the principal source a
    *         streamed document. Default <code>false</code>.
    */
@@ -578,6 +715,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the URI of the principal source to read as a stream.
+   *
    * @return The URI of the principal source to read as a stream, or
    *         <code>null</code>.
    */
@@ -617,6 +756,8 @@ public final class XsltTransformRequest
   }
 
   /**
+   * Get the threading mode of the transformation.
+   *
    * @return The thread the transformation runs on. Default
    *         {@link EThreading#DEFAULT}.
    */

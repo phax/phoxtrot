@@ -51,6 +51,8 @@ import com.helger.phoxtrot.xdm.XdmStreamReader;
 public interface IResourceResolver
 {
   /**
+   * Resolve and parse an XML document.
+   *
    * @param aUri
    *        The URI of the document, without fragment identifier.
    * @return The parsed document or <code>null</code> if it is unavailable.
@@ -124,6 +126,8 @@ public interface IResourceResolver
   }
 
   /**
+   * Resolve a text resource and decode it.
+   *
    * @param aUri
    *        The URI of the text resource.
    * @param sEncoding

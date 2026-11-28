@@ -85,6 +85,13 @@ public final class FormatDecimalFormat
       m_sNaN = aSrc.m_sNaN;
     }
 
+    /**
+     * Set the decimal separator code point (property <code>decimal-separator</code>, default <code>.</code>).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder decimalSeparator (final int n)
     {
@@ -92,6 +99,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the grouping separator code point (property <code>grouping-separator</code>, default <code>,</code>).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder groupingSeparator (final int n)
     {
@@ -99,6 +113,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the exponent separator code point (property <code>exponent-separator</code>, default <code>e</code>).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder exponentSeparator (final int n)
     {
@@ -106,6 +127,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the percent sign code point (property <code>percent</code>, default <code>%</code>).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder percent (final int n)
     {
@@ -113,6 +141,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the per-mille sign code point (property <code>per-mille</code>, default U+2030).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder perMille (final int n)
     {
@@ -121,6 +156,8 @@ public final class FormatDecimalFormat
     }
 
     /**
+     * Set the zero digit code point (property <code>zero-digit</code>, default <code>0</code>).
+     *
      * @param n
      *        A Unicode digit with numeric value zero.
      * @return this for chaining
@@ -132,6 +169,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the digit placeholder code point (property <code>digit</code>, default <code>#</code>).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder digit (final int n)
     {
@@ -139,6 +183,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the pattern separator code point (property <code>pattern-separator</code>, default <code>;</code>).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder patternSeparator (final int n)
     {
@@ -146,6 +197,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the minus sign code point (property <code>minus-sign</code>, default <code>-</code>).
+     *
+     * @param n
+     *        The code point to use.
+     * @return this for chaining
+     */
     @NonNull
     public Builder minusSign (final int n)
     {
@@ -153,6 +211,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the string used for infinity (property <code>infinity</code>, default <code>Infinity</code>).
+     *
+     * @param s
+     *        The string to use. May not be <code>null</code>.
+     * @return this for chaining
+     */
     @NonNull
     public Builder infinity (@NonNull final String s)
     {
@@ -160,6 +225,13 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Set the string used for NaN (property <code>NaN</code>, default <code>NaN</code>).
+     *
+     * @param s
+     *        The string to use. May not be <code>null</code>.
+     * @return this for chaining
+     */
     @NonNull
     public Builder nan (@NonNull final String s)
     {
@@ -167,6 +239,11 @@ public final class FormatDecimalFormat
       return this;
     }
 
+    /**
+     * Create an immutable decimal format from the current values of this builder.
+     *
+     * @return The new decimal format. Never <code>null</code>.
+     */
     @NonNull
     public FormatDecimalFormat build ()
     {
@@ -189,71 +266,134 @@ public final class FormatDecimalFormat
     m_sNaN = aBuilder.m_sNaN;
   }
 
-  /** @return A builder with the default values. */
+  /**
+   * Create a new builder.
+   *
+   * @return A builder with the default values.
+   */
   @NonNull
   public static Builder builder ()
   {
     return new Builder ();
   }
 
-  /** @return A builder initialised with the values of this format. */
+  /**
+   * Create a builder that starts with the values of this format.
+   *
+   * @return A builder initialised with the values of this format.
+   */
   @NonNull
   public Builder toBuilder ()
   {
     return new Builder (this);
   }
 
+  /**
+   * Get the decimal separator (property <code>decimal-separator</code>).
+   *
+   * @return The code point of the decimal separator.
+   */
   public int getDecimalSeparator ()
   {
     return m_nDecimalSeparator;
   }
 
+  /**
+   * Get the grouping separator (property <code>grouping-separator</code>).
+   *
+   * @return The code point of the grouping separator.
+   */
   public int getGroupingSeparator ()
   {
     return m_nGroupingSeparator;
   }
 
+  /**
+   * Get the exponent separator (property <code>exponent-separator</code>).
+   *
+   * @return The code point of the exponent separator.
+   */
   public int getExponentSeparator ()
   {
     return m_nExponentSeparator;
   }
 
+  /**
+   * Get the percent sign (property <code>percent</code>).
+   *
+   * @return The code point of the percent sign.
+   */
   public int getPercent ()
   {
     return m_nPercent;
   }
 
+  /**
+   * Get the per-mille sign (property <code>per-mille</code>).
+   *
+   * @return The code point of the per-mille sign.
+   */
   public int getPerMille ()
   {
     return m_nPerMille;
   }
 
+  /**
+   * Get the zero digit (property <code>zero-digit</code>).
+   *
+   * @return The code point of the zero digit.
+   */
   public int getZeroDigit ()
   {
     return m_nZeroDigit;
   }
 
+  /**
+   * Get the digit placeholder (property <code>digit</code>).
+   *
+   * @return The code point of the digit placeholder.
+   */
   public int getDigit ()
   {
     return m_nDigit;
   }
 
+  /**
+   * Get the pattern separator (property <code>pattern-separator</code>).
+   *
+   * @return The code point of the pattern separator.
+   */
   public int getPatternSeparator ()
   {
     return m_nPatternSeparator;
   }
 
+  /**
+   * Get the minus sign (property <code>minus-sign</code>).
+   *
+   * @return The code point of the minus sign.
+   */
   public int getMinusSign ()
   {
     return m_nMinusSign;
   }
 
+  /**
+   * Get the string used for infinity (property <code>infinity</code>).
+   *
+   * @return The infinity string. Never <code>null</code>.
+   */
   @NonNull
   public String getInfinity ()
   {
     return m_sInfinity;
   }
 
+  /**
+   * Get the string used for NaN (property <code>NaN</code>).
+   *
+   * @return The NaN string. Never <code>null</code>.
+   */
   @NonNull
   public String getNaN ()
   {
@@ -261,10 +401,11 @@ public final class FormatDecimalFormat
   }
 
   /**
+   * Check if a code point is one of the decimal digits of this format.
+   *
    * @param c
    *        A code point.
-   * @return <code>true</code> if it is one of the ten digits of the zero-digit
-   *         family.
+   * @return <code>true</code> if it is one of the ten digits of the zero-digit family.
    */
   public boolean isDecimalDigit (final int c)
   {

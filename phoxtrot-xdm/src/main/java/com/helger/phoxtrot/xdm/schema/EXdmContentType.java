@@ -23,8 +23,12 @@ package com.helger.phoxtrot.xdm.schema;
  */
 public enum EXdmContentType
 {
+  /** Empty content. */
   EMPTY,
+  /** Simple content. */
   SIMPLE,
+  /** Element-only content. */
   ELEMENT_ONLY,
+  /** Mixed content. */
   MIXED
 }

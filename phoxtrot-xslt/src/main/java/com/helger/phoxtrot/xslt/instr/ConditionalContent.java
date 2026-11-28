@@ -54,6 +54,9 @@ public final class ConditionalContent implements IInstruction
   private final IInstruction [] m_aParts;
 
   /**
+   * Create the conditional content of a sequence constructor that contains
+   * xsl:on-empty or xsl:on-non-empty instructions.
+   *
    * @param aLocation
    *        The element whose sequence constructor this is, for error
    *        locations. May be <code>null</code>.
@@ -68,6 +71,8 @@ public final class ConditionalContent implements IInstruction
   }
 
   /**
+   * Check whether an item is vacuous.
+   *
    * @param aItem
    *        An item.
    * @return <code>true</code> if the item is vacuous (XSLT 3.0 section

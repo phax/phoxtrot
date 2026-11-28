@@ -54,6 +54,12 @@ public final class GroupingExtension implements IXsltExtension
                                                                                             XsltStateKey.EScope.CLEARED_IN_FUNCTIONS);
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public GroupingExtension ()
+  {}
+
+  /**
    * <code>fn:current-group()</code> (XSLT 3.0 section 14.2.1): the items of
    * the group currently processed by xsl:for-each-group. The value is kept in
    * templates called from the body, but not in stylesheet functions.

@@ -45,6 +45,7 @@ import com.helger.base.enforce.ValueEnforcer;
 @Immutable
 public record ResourceUri (@NonNull String absoluteUri, @NonNull String href, @Nullable String baseUri)
 {
+  /** Checks that the absolute URI and the reference are not <code>null</code>. */
   public ResourceUri
   {
     ValueEnforcer.notNull (absoluteUri, "AbsoluteUri");
@@ -52,6 +53,9 @@ public record ResourceUri (@NonNull String absoluteUri, @NonNull String href, @N
   }
 
   /**
+   * Create a resource URI for an absolute URI that was not resolved from a
+   * reference.
+   *
    * @param sAbsoluteUri
    *        A URI that was not resolved from a reference (it is also the
    *        reference). May not be <code>null</code>.
@@ -64,6 +68,8 @@ public record ResourceUri (@NonNull String absoluteUri, @NonNull String href, @N
   }
 
   /**
+   * Create a resource URI for a reference resolved against a base URI.
+   *
    * @param sAbsoluteUri
    *        The resolved URI. May not be <code>null</code>.
    * @param sHref

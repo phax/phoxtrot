@@ -34,11 +34,17 @@ import com.helger.phoxtrot.xpath.context.DynamicContext;
  */
 public interface XsltPattern
 {
-  /** @return The pattern text as written. */
+  /**
+   * Get the source text of this pattern.
+   *
+   * @return The pattern text as written.
+   */
   @NonNull
   String getSource ();
 
   /**
+   * Check if an item matches this pattern.
+   *
    * @param aItem
    *        The candidate item.
    * @param aCtx
@@ -63,6 +69,8 @@ public interface XsltPattern
   }
 
   /**
+   * Check if {@link #matches(IXdmItem, DynamicContext)} includes the test of {@link #canMatch(IXdmItem)}.
+   *
    * @return <code>true</code> if {@link #matches(IXdmItem, DynamicContext)} rejects every item that
    *         {@link #canMatch(IXdmItem)} rejects itself, before it evaluates anything, so that a
    *         host need not call {@link #canMatch(IXdmItem)} first.
@@ -89,6 +97,8 @@ public interface XsltPattern
   }
 
   /**
+   * Get the default priority of this pattern.
+   *
    * @return The default priority (XSLT 3.0 section 6.5). For a pattern with
    *         top-level union alternatives this is only meaningful per
    *         alternative, see {@link #getAlternatives()}.
@@ -96,6 +106,8 @@ public interface XsltPattern
   double getDefaultPriority ();
 
   /**
+   * Get the top-level union alternatives of this pattern.
+   *
    * @return The top-level union alternatives (a template rule with a union
    *         pattern is treated as one rule per alternative, each with its own
    *         default priority); a single-element list containing this pattern

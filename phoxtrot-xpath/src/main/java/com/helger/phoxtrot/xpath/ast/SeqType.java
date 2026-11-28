@@ -47,6 +47,8 @@ public record SeqType (boolean empty, @Nullable ItemType itemType, @NonNull EOcc
   public static final SeqType EMPTY_SEQUENCE = new SeqType (true, null, EOccurrence.ZERO_OR_ONE, false);
 
   /**
+   * Create a sequence type from an item type and an occurrence indicator.
+   *
    * @param aItemType
    *        The item type.
    * @param eOccurrence

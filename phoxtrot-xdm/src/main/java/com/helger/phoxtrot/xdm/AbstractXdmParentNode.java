@@ -43,6 +43,7 @@ public abstract sealed class AbstractXdmParentNode extends AbstractXdmNode permi
   // Order of the last node of the subtree, see getEndOrder
   private int m_nEndOrder;
 
+  /** Constructor for the node kinds that extend this class. */
   protected AbstractXdmParentNode ()
   {}
 

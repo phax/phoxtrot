@@ -47,6 +47,8 @@ public record PackageComponent (@NonNull String kind,
                                 @Nullable XslElement element)
 {
   /**
+   * Build the symbolic name of a component from its kind, name and arity.
+   *
    * @param sKind
    *        Component kind.
    * @param aName
@@ -65,7 +67,12 @@ public record PackageComponent (@NonNull String kind,
     return "function".equals (sKind) ? s + "#" + nArity : s;
   }
 
-  /** @return The symbolic name of this component. */
+  /**
+   * Get the symbolic name of this component.
+   *
+   * @return The symbolic name of this component, as
+   *         {@link #getSymbolicName(String, XdmQName, int)} builds it.
+   */
   @NonNull
   public String getSymbolicName ()
   {
@@ -73,6 +80,8 @@ public record PackageComponent (@NonNull String kind,
   }
 
   /**
+   * Create a copy of this component with another visibility.
+   *
    * @param sVisibility
    *        The new visibility.
    * @return A copy with that visibility.
@@ -83,7 +92,12 @@ public record PackageComponent (@NonNull String kind,
     return new PackageComponent (kind, name, arity, sVisibility, element);
   }
 
-  /** @return A readable label, e.g. for messages. */
+  /**
+   * Get a readable label of this component: kind, EQName (or "#unnamed") and
+   * for a function "#" and the arity.
+   *
+   * @return A readable label, e.g. for messages.
+   */
   @NonNull
   public String getLabel ()
   {

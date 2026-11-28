@@ -84,6 +84,8 @@ public final class OutputDefinition
   private final ICommonsMap <Integer, String> m_aInlineCharacterMap = new CommonsHashMap <> ();
 
   /**
+   * Create an output definition without any values.
+   *
    * @param aName
    *        Name, <code>null</code> for the unnamed output definition.
    */
@@ -93,6 +95,8 @@ public final class OutputDefinition
   }
 
   /**
+   * Create a copy of this output definition.
+   *
    * @return A copy of this definition (xsl:result-document starts from an
    *         output definition and merges its own attributes).
    */
@@ -110,6 +114,11 @@ public final class OutputDefinition
     return ret;
   }
 
+  /**
+   * Get the name of the output definition.
+   *
+   * @return The name, <code>null</code> for the unnamed output definition.
+   */
   @Nullable
   public XdmQName getName ()
   {
@@ -253,6 +262,8 @@ public final class OutputDefinition
   }
 
   /**
+   * Get the merged value of one attribute.
+   *
    * @param sAttr
    *        Attribute name.
    * @return The merged value or <code>null</code> if no declaration specifies
@@ -264,7 +275,11 @@ public final class OutputDefinition
     return m_aValues.get (sAttr);
   }
 
-  /** @return The method, or <code>null</code> if not specified. */
+  /**
+   * Get the merged value of the method attribute.
+   *
+   * @return The method, or <code>null</code> if not specified.
+   */
   @Nullable
   public String getMethod ()
   {
@@ -376,6 +391,8 @@ public final class OutputDefinition
   }
 
   /**
+   * Get a copy of all merged attribute values.
+   *
    * @return The attribute values of the merged declarations (without the
    *         name lists cdata-section-elements, suppress-indentation and
    *         use-character-maps), attribute name to value, in the order they
@@ -388,7 +405,11 @@ public final class OutputDefinition
     return m_aValues.getClone ();
   }
 
-  /** @return The element names of cdata-section-elements. */
+  /**
+   * Get a copy of the cdata-section-elements names.
+   *
+   * @return The element names of cdata-section-elements.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XdmQName> getCdataSectionElements ()
@@ -396,7 +417,11 @@ public final class OutputDefinition
     return m_aCdataSectionElements.getClone ();
   }
 
-  /** @return The element names of suppress-indentation. */
+  /**
+   * Get a copy of the suppress-indentation names.
+   *
+   * @return The element names of suppress-indentation.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XdmQName> getSuppressIndentation ()
@@ -404,7 +429,11 @@ public final class OutputDefinition
     return m_aSuppressIndentation.getClone ();
   }
 
-  /** @return The QNames of use-character-maps. */
+  /**
+   * Get a copy of the use-character-maps names.
+   *
+   * @return The QNames of use-character-maps.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XdmQName> getUseCharacterMaps ()
@@ -413,6 +442,8 @@ public final class OutputDefinition
   }
 
   /**
+   * Check whether a result tree is built for the given method.
+   *
    * @param sMethod
    *        The effective method (when the definition gives none, the caller
    *        decides from the result tree).

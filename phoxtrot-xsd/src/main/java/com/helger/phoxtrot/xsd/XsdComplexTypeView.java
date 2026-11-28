@@ -67,46 +67,76 @@ public final class XsdComplexTypeView implements IXsdTypeDefinitionView
     return XsdComplexType.ANY_TYPE_NAME;
   }
 
+  /**
+   * Check whether the complex type is abstract.
+   *
+   * @return <code>true</code> if the type is abstract.
+   */
   public boolean isAbstract ()
   {
     return m_aType.m_bAbstract;
   }
 
-  /** @return The type's xs:documentation (needs documentation kept at compile time). */
+  /**
+   * Get the documentation of the type.
+   *
+   * @return The type's xs:documentation (needs documentation kept at compile
+   *         time).
+   */
   @NonNull
   public ICommonsList <XsdDocumentation> getDocumentation ()
   {
     return m_aType.m_aDocs.getClone ();
   }
 
-  /** @return The type this one derives from; <code>null</code> for xs:anyType and types without explicit base. */
+  /**
+   * Get the base type.
+   *
+   * @return The type this one derives from; <code>null</code> for xs:anyType
+   *         and types without explicit base.
+   */
   @Nullable
   public IXsdTypeDefinitionView getBase ()
   {
     return m_aView.typeDef (m_aType.m_aBaseType);
   }
 
-  /** @return <code>extension</code>, <code>restriction</code> or empty (no derivation). */
+  /**
+   * Get the derivation method.
+   *
+   * @return <code>extension</code>, <code>restriction</code> or empty (no
+   *         derivation).
+   */
   @NonNull
   public String getDerivation ()
   {
     return m_aType.m_sDerivation;
   }
 
-  /** @return The content kind. */
+  /**
+   * Get the content kind.
+   *
+   * @return The content kind.
+   */
   @NonNull
   public EXsdContentKind getContentKind ()
   {
     return m_aType.m_eKind;
   }
 
-  /** @return <code>true</code> for mixed content. */
+  /**
+   * Check whether the content is mixed.
+   *
+   * @return <code>true</code> for mixed content.
+   */
   public boolean isMixed ()
   {
     return m_aType.m_eKind == EXsdContentKind.MIXED;
   }
 
   /**
+   * Get the simple type of the character content.
+   *
    * @return The simple type of the character content, <code>null</code> unless
    *         the type has simple content (including what it inherits).
    */
@@ -125,7 +155,12 @@ public final class XsdComplexTypeView implements IXsdTypeDefinitionView
     return null;
   }
 
-  /** @return The effective (after extension) content model, <code>null</code> without element content. */
+  /**
+   * Get the effective content model.
+   *
+   * @return The effective (after extension) content model, <code>null</code>
+   *         without element content.
+   */
   @Nullable
   public XsdParticleView getContentModel ()
   {
@@ -134,6 +169,8 @@ public final class XsdComplexTypeView implements IXsdTypeDefinitionView
   }
 
   /**
+   * Get the particles of the content model.
+   *
    * @return The particles of the content model's outermost group - or, if the
    *         model is a single element or wildcard, that one particle.
    */
@@ -182,7 +219,12 @@ public final class XsdComplexTypeView implements IXsdTypeDefinitionView
     return ret;
   }
 
-  /** @return The effective xs:anyAttribute, <code>null</code> when there is none. */
+  /**
+   * Get the effective attribute wildcard.
+   *
+   * @return The effective xs:anyAttribute, <code>null</code> when there is
+   *         none.
+   */
   @Nullable
   public XsdWildcardView getAttributeWildcard ()
   {

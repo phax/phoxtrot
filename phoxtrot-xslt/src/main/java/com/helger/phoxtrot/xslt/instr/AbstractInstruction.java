@@ -32,12 +32,23 @@ public abstract class AbstractInstruction implements IInstruction
 {
   private final XslElement m_aElement;
 
+  /**
+   * Create an instruction compiled from a stylesheet element.
+   *
+   * @param aElement
+   *        The stylesheet element this instruction was compiled from. May not
+   *        be <code>null</code>.
+   */
   protected AbstractInstruction (@NonNull final XslElement aElement)
   {
     m_aElement = aElement;
   }
 
-  /** @return The stylesheet element this instruction was compiled from. */
+  /**
+   * Get the stylesheet element of this instruction.
+   *
+   * @return The stylesheet element this instruction was compiled from.
+   */
   @NonNull
   public final XslElement getElement ()
   {

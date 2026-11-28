@@ -35,19 +35,33 @@ public abstract sealed class AbstractXslNode permits XslElement, XslText
   private final XslModule m_aModule;
   private XslElement m_aParent;
 
+  /**
+   * Constructor.
+   *
+   * @param aModule
+   *        The module this node belongs to. May not be <code>null</code>.
+   */
   protected AbstractXslNode (@NonNull final XslModule aModule)
   {
     m_aModule = aModule;
   }
 
-  /** @return The module this node belongs to. */
+  /**
+   * Get the stylesheet module of this node.
+   *
+   * @return The module this node belongs to.
+   */
   @NonNull
   public final XslModule getModule ()
   {
     return m_aModule;
   }
 
-  /** @return The parent element or <code>null</code> for a module root. */
+  /**
+   * Get the parent element of this node.
+   *
+   * @return The parent element or <code>null</code> for a module root.
+   */
   @Nullable
   public final XslElement getParent ()
   {
@@ -59,9 +73,17 @@ public abstract sealed class AbstractXslNode permits XslElement, XslText
     m_aParent = aParent;
   }
 
-  /** @return The 1-based source line, 0 if unknown. */
+  /**
+   * Get the source line of this node.
+   *
+   * @return The 1-based source line, 0 if unknown.
+   */
   public abstract int getLine ();
 
-  /** @return The 1-based source column, 0 if unknown. */
+  /**
+   * Get the source column of this node.
+   *
+   * @return The 1-based source column, 0 if unknown.
+   */
   public abstract int getColumn ();
 }

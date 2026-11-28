@@ -42,6 +42,14 @@ public final class XsdValidationOptions
   private boolean m_bFollowSchemaLocationHints = DEFAULT_FOLLOW_SCHEMA_LOCATION_HINTS;
 
   /**
+   * Create options with the default settings.
+   */
+  public XsdValidationOptions ()
+  {}
+
+  /**
+   * Get the preferred language of messages.
+   *
    * @return The preferred <code>xml:lang</code> of <code>msg:message</code>
    *         entries; empty if there is no preference. Default empty.
    */
@@ -72,6 +80,8 @@ public final class XsdValidationOptions
   }
 
   /**
+   * Get the maximum number of errors reported.
+   *
    * @return The maximum number of errors reported; 0 for no limit. Default 0.
    */
   public int getMaxErrors ()
@@ -95,6 +105,8 @@ public final class XsdValidationOptions
   }
 
   /**
+   * Check whether schema location hints are followed.
+   *
    * @return <code>true</code> if the <code>xsi:schemaLocation</code> and
    *         <code>xsi:noNamespaceSchemaLocation</code> hints of the instance
    *         are followed. Default {@link #DEFAULT_FOLLOW_SCHEMA_LOCATION_HINTS}.

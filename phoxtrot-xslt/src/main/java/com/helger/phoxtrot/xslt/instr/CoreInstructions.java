@@ -215,6 +215,8 @@ public final class CoreInstructions
   }
 
   /**
+   * Get the extension namespaces in scope for an element.
+   *
    * @param aEl
    *        An element.
    * @return The namespace URIs designated as extension namespaces on the
@@ -239,6 +241,8 @@ public final class CoreInstructions
   }
 
   /**
+   * Get the namespaces excluded from the copy of a literal result element.
+   *
    * @param aEl
    *        A literal result element.
    * @return The namespace URIs excluded from it (XSLT namespace, extension
@@ -267,6 +271,9 @@ public final class CoreInstructions
   }
 
   /**
+   * Read the attribute set names of the use-attribute-sets attribute of an
+   * element.
+   *
    * @param aCtx
    *        Compile context.
    * @param aEl

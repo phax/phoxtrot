@@ -46,6 +46,18 @@ public final class XPathExpr
   private final StaticContext m_aStaticContext;
   private final XslElement m_aElement;
 
+  /**
+   * Create an expression and compile it for evaluation with its static context.
+   *
+   * @param sSource
+   *        The expression as written in the stylesheet. May not be <code>null</code>.
+   * @param aExpr
+   *        The parsed expression. May not be <code>null</code>.
+   * @param aStaticContext
+   *        The static context it was parsed with. May not be <code>null</code>.
+   * @param aElement
+   *        The stylesheet element the expression belongs to. May not be <code>null</code>.
+   */
   public XPathExpr (@NonNull final String sSource,
                     @NonNull final IExpr aExpr,
                     @NonNull final StaticContext aStaticContext,
@@ -58,24 +70,44 @@ public final class XPathExpr
     m_aElement = aElement;
   }
 
+  /**
+   * Get the source text of the expression.
+   *
+   * @return The expression as written in the stylesheet. Never <code>null</code>.
+   */
   @NonNull
   public String getSource ()
   {
     return m_sSource;
   }
 
+  /**
+   * Get the parsed expression.
+   *
+   * @return The expression tree. Never <code>null</code>.
+   */
   @NonNull
   public IExpr getExpression ()
   {
     return m_aExpr;
   }
 
+  /**
+   * Get the static context of the expression.
+   *
+   * @return The static context it was parsed with. Never <code>null</code>.
+   */
   @NonNull
   public StaticContext getStaticContext ()
   {
     return m_aStaticContext;
   }
 
+  /**
+   * Get the stylesheet element of the expression.
+   *
+   * @return The element the expression belongs to. Never <code>null</code>.
+   */
   @NonNull
   public XslElement getElement ()
   {
@@ -83,6 +115,8 @@ public final class XPathExpr
   }
 
   /**
+   * Get the XPath dynamic context for evaluating this expression.
+   *
    * @param aCtx
    *        Run-time context.
    * @return The XPath dynamic context for this expression.
@@ -108,6 +142,8 @@ public final class XPathExpr
   }
 
   /**
+   * Evaluate the expression to its effective boolean value.
+   *
    * @param aCtx
    *        Run-time context.
    * @return The effective boolean value, evaluated with early exit

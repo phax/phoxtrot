@@ -150,13 +150,30 @@ public final class XsltCompileOptions
   private final ICommonsList <Consumer <FunctionLibrary>> m_aFunctionContributors = new CommonsArrayList <> ();
   private EThreading m_eThreading = EThreading.DEFAULT;
 
-  /** @return The stylesheet's own URI, against which import/include hrefs resolve. */
+  /**
+   * Create a new instance with the default settings.
+   */
+  public XsltCompileOptions ()
+  {}
+
+  /**
+   * Get the base URI of the stylesheet.
+   *
+   * @return The stylesheet's own URI, against which import/include hrefs resolve.
+   */
   @Nullable
   public String getBaseUri ()
   {
     return m_sBaseUri;
   }
 
+  /**
+   * Set the base URI of the stylesheet, against which import and include hrefs resolve.
+   *
+   * @param sBaseUri
+   *        The stylesheet's own URI. May be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public XsltCompileOptions setBaseUri (@Nullable final String sBaseUri)
   {
@@ -165,6 +182,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Get the resolver used at compile time.
+   *
    * @return The resolver for stylesheet modules (xsl:import, xsl:include) and
    *         documents read at compile time, or <code>null</code> to read
    *         <code>file:</code> URIs directly.
@@ -175,6 +194,14 @@ public final class XsltCompileOptions
     return m_aResolver;
   }
 
+  /**
+   * Set the resolver for stylesheet modules (xsl:import, xsl:include) and documents read at compile
+   * time.
+   *
+   * @param aResolver
+   *        The resolver, or <code>null</code> to read <code>file:</code> URIs directly.
+   * @return this for chaining
+   */
   @NonNull
   public XsltCompileOptions setResolver (@Nullable final IResourceResolver aResolver)
   {
@@ -182,13 +209,26 @@ public final class XsltCompileOptions
     return this;
   }
 
-  /** @return The values of static stylesheet parameters, by name. */
+  /**
+   * Get the values of the static stylesheet parameters.
+   *
+   * @return The values of static stylesheet parameters, by name.
+   */
   @NonNull
   public ICommonsOrderedMap <XdmQName, XdmSequence> staticParams ()
   {
     return m_aStaticParams;
   }
 
+  /**
+   * Set the value of a static stylesheet parameter. A previous value of the same name is replaced.
+   *
+   * @param aName
+   *        The parameter name. May not be <code>null</code>.
+   * @param aValue
+   *        The parameter value. May not be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public XsltCompileOptions setStaticParam (@NonNull final XdmQName aName, @NonNull final XdmSequence aValue)
   {
@@ -198,7 +238,11 @@ public final class XsltCompileOptions
     return this;
   }
 
-  /** @return The library packages available to xsl:use-package (modifiable). */
+  /**
+   * Get the library packages available to xsl:use-package.
+   *
+   * @return The library packages available to xsl:use-package (modifiable).
+   */
   @NonNull
   public ICommonsList <PackageSource> packages ()
   {
@@ -206,6 +250,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Add a library package.
+   *
    * @param aPackage
    *        A library package to make available to xsl:use-package.
    * @return this for chaining
@@ -219,6 +265,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Get the function contributors of this compilation.
+   *
    * @return The function contributors of this compilation (modifiable), see
    *         {@link #addFunctionContributor(Consumer)}.
    */
@@ -256,6 +304,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Check whether external DTDs and entities of stylesheet modules are loaded.
+   *
    * @return <code>true</code> if external DTDs and entities of stylesheet
    *         modules are loaded. Default <code>false</code> (for untrusted
    *         stylesheets).
@@ -265,6 +315,13 @@ public final class XsltCompileOptions
     return m_bLoadExternalEntities;
   }
 
+  /**
+   * Set whether external DTDs and entities of stylesheet modules are loaded.
+   *
+   * @param bLoadExternalEntities
+   *        <code>true</code> to load them, <code>false</code> for untrusted stylesheets.
+   * @return this for chaining
+   */
   @NonNull
   public XsltCompileOptions setLoadExternalEntities (final boolean bLoadExternalEntities)
   {
@@ -273,6 +330,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Check whether schema documents may be read from local files.
+   *
    * @return <code>true</code> if the schema documents of
    *         <code>xsl:import-schema</code> may be read from local files
    *         directly. Default <code>true</code>.
@@ -306,6 +365,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Check whether the stylesheet is compiled schema-aware.
+   *
    * @return <code>true</code> if the stylesheet is compiled by a schema-aware
    *         processor. Default {@link #DEFAULT_SCHEMA_AWARE}.
    */
@@ -335,6 +396,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Get the schema documents the host offers to xsl:import-schema.
+   *
    * @return The schema documents the host offers to xsl:import-schema
    *         (mutable). Only used when schema-aware.
    */
@@ -345,6 +408,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Check whether streamability declarations are binding.
+   *
    * @return <code>true</code> if a <code>streamable="yes"</code> declaration is
    *         binding. Default {@link #DEFAULT_ENFORCE_STREAMABILITY}.
    */
@@ -376,6 +441,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Check whether the streaming feature is claimed.
+   *
    * @return <code>true</code> if the stylesheet is compiled by a processor
    *         that claims the streaming feature. Default
    *         {@link #DEFAULT_STREAMING_CLAIM}.
@@ -404,6 +471,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Get the threading mode of the compilation.
+   *
    * @return The thread the compilation runs on. Default
    *         {@link EThreading#DEFAULT}.
    */
@@ -432,6 +501,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Check whether the XSLT 1.0 compatibility feature is claimed.
+   *
    * @return <code>true</code> if the stylesheet is compiled by a processor
    *         that claims the XSLT 1.0 compatibility feature. Default
    *         {@link #DEFAULT_BACKWARDS_COMPATIBLE_CLAIM}.
@@ -468,6 +539,8 @@ public final class XsltCompileOptions
   }
 
   /**
+   * Check whether secondary results with <code>href</code> are allowed.
+   *
    * @return <code>true</code> if <code>xsl:result-document</code> may have an
    *         <code>href</code> attribute. Default
    *         {@link #DEFAULT_SECONDARY_RESULTS_ALLOWED}.

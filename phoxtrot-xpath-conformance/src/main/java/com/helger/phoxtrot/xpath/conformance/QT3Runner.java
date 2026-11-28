@@ -47,6 +47,8 @@ public final class QT3Runner
   private final OffsetDateTime m_aNow = OffsetDateTime.now ();
 
   /**
+   * Create a runner.
+   *
    * @param aSettings
    *        The run settings. The current date/time of the run is fixed when
    *        the runner is created and shared by every case, so

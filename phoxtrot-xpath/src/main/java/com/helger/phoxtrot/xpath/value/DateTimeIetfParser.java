@@ -463,6 +463,8 @@ public final class DateTimeIetfParser
   }
 
   /**
+   * Parse an IETF date string, as <code>fn:parse-ietf-date</code> does.
+   *
    * @param sInput
    *        The IETF date string.
    * @return The xs:dateTime payload (always with timezone).

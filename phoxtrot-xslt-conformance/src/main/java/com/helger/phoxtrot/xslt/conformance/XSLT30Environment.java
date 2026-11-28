@@ -113,6 +113,11 @@ public record XSLT30Environment (@NonNull String name,
    */
   public record Module (@NonNull String file, @NonNull String role, @NonNull String uri, @NonNull String packageVersion)
   {
+    /**
+     * Check whether the module is a secondary one.
+     *
+     * @return <code>true</code> if the role is <code>secondary</code>.
+     */
     public boolean isSecondary ()
     {
       return "secondary".equals (role);
@@ -161,7 +166,11 @@ public record XSLT30Environment (@NonNull String name,
   public record Collection (@NonNull String uri, @NonNull ICommonsList <Source> sources)
   {}
 
-  /** @return <code>true</code> if this is only a reference to a named environment. */
+  /**
+   * Check whether this is only a reference to a named environment.
+   *
+   * @return <code>true</code> if this is only a reference to a named environment.
+   */
   public boolean isReference ()
   {
     return !ref.isEmpty ();

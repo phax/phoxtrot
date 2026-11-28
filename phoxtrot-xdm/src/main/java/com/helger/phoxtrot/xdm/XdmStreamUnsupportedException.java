@@ -27,6 +27,12 @@ import org.jspecify.annotations.NonNull;
  */
 public class XdmStreamUnsupportedException extends XdmParseException
 {
+  /**
+   * Create an exception with a message.
+   *
+   * @param sMessage
+   *        The message. May not be <code>null</code>.
+   */
   public XdmStreamUnsupportedException (@NonNull final String sMessage)
   {
     super (sMessage);

@@ -45,7 +45,11 @@ public interface IInstruction
    */
   void execute (@NonNull XsltContext aCtx, @NonNull IXsltOutput aOut);
 
-  /** @return The stylesheet node for error locations, or <code>null</code>. */
+  /**
+   * Get the stylesheet node of this instruction.
+   *
+   * @return The stylesheet node for error locations, or <code>null</code>.
+   */
   @Nullable
   AbstractXslNode getLocation ();
 }

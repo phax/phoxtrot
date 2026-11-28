@@ -27,7 +27,9 @@ import org.jspecify.annotations.Nullable;
  */
 public enum EXmlVersion
 {
+  /** XML 1.0. */
   V10 ("1.0"),
+  /** XML 1.1. */
   V11 ("1.1");
 
   private final String m_sID;
@@ -37,7 +39,11 @@ public enum EXmlVersion
     m_sID = sID;
   }
 
-  /** @return The version number, "1.0" or "1.1". */
+  /**
+   * Get the version number.
+   *
+   * @return The version number, "1.0" or "1.1".
+   */
   @NonNull
   public String getID ()
   {
@@ -45,6 +51,8 @@ public enum EXmlVersion
   }
 
   /**
+   * Find the XML version with the passed version number.
+   *
    * @param sID
    *        A version number such as "1.1".
    * @return The matching version or <code>null</code>.

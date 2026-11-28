@@ -25,8 +25,12 @@ package com.helger.phoxtrot.xdm;
  */
 public enum EIDKind
 {
+  /** Neither an ID nor a reference to one. */
   NONE,
+  /** An ID. */
   ID,
+  /** A reference to an ID (IDREF). */
   IDREF,
+  /** A list of references to IDs (IDREFS). */
   IDREFS
 }

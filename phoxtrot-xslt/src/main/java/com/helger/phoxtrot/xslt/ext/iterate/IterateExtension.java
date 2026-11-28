@@ -31,6 +31,12 @@ import com.helger.phoxtrot.xslt.compile.XsltExtensionRegistry;
 @Immutable
 public final class IterateExtension implements IXsltExtension
 {
+  /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public IterateExtension ()
+  {}
+
   public void register (@NonNull final XsltExtensionRegistry aRegistry)
   {
     aRegistry.registerInstruction ("iterate", IterateInstruction::compileIterate);

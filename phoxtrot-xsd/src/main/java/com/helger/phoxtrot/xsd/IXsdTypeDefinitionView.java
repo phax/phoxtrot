@@ -26,14 +26,24 @@ import org.jspecify.annotations.NonNull;
  */
 public sealed interface IXsdTypeDefinitionView permits XsdSimpleTypeView, XsdComplexTypeView
 {
-  /** @return The expanded name; {@link XsdName#NONE} for an anonymous type. */
+  /**
+   * Get the name of the type.
+   *
+   * @return The expanded name; {@link XsdName#NONE} for an anonymous type.
+   */
   @NonNull
   XsdName getName ();
 
-  /** @return <code>true</code> for a simple type (atomic, list or union). */
+  /**
+   * Check whether the type is a simple type.
+   *
+   * @return <code>true</code> for a simple type (atomic, list or union).
+   */
   boolean isSimple ();
 
   /**
+   * Get the built-in type this type is or derives from.
+   *
    * @return The built-in type this type is, or derives from through
    *         restriction steps: <code>{xs}decimal</code> for a restriction of a
    *         restriction of xs:decimal. For a list it is the item type's, for a

@@ -31,6 +31,12 @@ import com.helger.phoxtrot.xslt.compile.XsltExtensionRegistry;
 public final class NumberExtension implements IXsltExtension
 {
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public NumberExtension ()
+  {}
+
+  /**
    * Register the compiler of the xsl:number instruction.
    *
    * @param aRegistry

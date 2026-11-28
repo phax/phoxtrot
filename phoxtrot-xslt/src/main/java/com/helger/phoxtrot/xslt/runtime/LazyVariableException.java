@@ -42,6 +42,9 @@ public final class LazyVariableException extends XsltException
   }
 
   /**
+   * Create the error of a lazily evaluated variable, located at the variable
+   * if the error has no location of its own.
+   *
    * @param aEx
    *        The error of the evaluation.
    * @param aVariable

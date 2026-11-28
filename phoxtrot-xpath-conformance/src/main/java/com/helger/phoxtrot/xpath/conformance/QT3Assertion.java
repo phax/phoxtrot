@@ -41,6 +41,8 @@ public record QT3Assertion (@NonNull String kind,
                             @NonNull ICommonsList <QT3Assertion> children)
 {
   /**
+   * Get the value of an attribute of the assertion.
+   *
    * @param sName
    *        Attribute local name.
    * @return The value or the empty string if absent.

@@ -27,8 +27,11 @@ import org.jspecify.annotations.NonNull;
  */
 public enum EXsdCompositor
 {
+  /** A sequence: the members match in order. */
   SEQUENCE ("sequence"),
+  /** A choice: exactly one member matches. */
   CHOICE ("choice"),
+  /** An all group: the members match in any order. */
   ALL ("all");
 
   private final String m_sID;
@@ -38,7 +41,11 @@ public enum EXsdCompositor
     m_sID = sID;
   }
 
-  /** @return <code>sequence</code>, <code>choice</code> or <code>all</code>. */
+  /**
+   * Get the ID of this compositor.
+   *
+   * @return <code>sequence</code>, <code>choice</code> or <code>all</code>.
+   */
   @NonNull
   public String getID ()
   {

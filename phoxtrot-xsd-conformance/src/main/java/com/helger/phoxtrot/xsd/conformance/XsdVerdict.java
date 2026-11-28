@@ -33,19 +33,31 @@ public record XsdVerdict (@NonNull EXsdVerdict verdict, @Nullable String message
 {
   private static final XsdVerdict VALID = new XsdVerdict (EXsdVerdict.VALID, null);
 
-  /** @return <code>true</code> for {@link EXsdVerdict#VALID}. */
+  /**
+   * Check whether the verdict is valid.
+   *
+   * @return <code>true</code> for {@link EXsdVerdict#VALID}.
+   */
   public boolean isValid ()
   {
     return verdict == EXsdVerdict.VALID;
   }
 
-  /** @return <code>true</code> for {@link EXsdVerdict#UNSUPPORTED}. */
+  /**
+   * Check whether the verdict is unsupported.
+   *
+   * @return <code>true</code> for {@link EXsdVerdict#UNSUPPORTED}.
+   */
   public boolean isUnsupported ()
   {
     return verdict == EXsdVerdict.UNSUPPORTED;
   }
 
-  /** @return The valid verdict. */
+  /**
+   * Get the valid verdict.
+   *
+   * @return The valid verdict.
+   */
   @NonNull
   public static XsdVerdict valid ()
   {
@@ -53,6 +65,8 @@ public record XsdVerdict (@NonNull EXsdVerdict verdict, @Nullable String message
   }
 
   /**
+   * Create an invalid verdict.
+   *
    * @param sMessage
    *        The first error. May be <code>null</code>.
    * @return An invalid verdict.
@@ -64,6 +78,8 @@ public record XsdVerdict (@NonNull EXsdVerdict verdict, @Nullable String message
   }
 
   /**
+   * Create an unsupported verdict.
+   *
    * @param sMessage
    *        Why the case cannot be decided. May be <code>null</code>.
    * @return An unsupported verdict.

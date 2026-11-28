@@ -43,6 +43,8 @@ public final class XsdLexical
   {}
 
   /**
+   * Check if a character is XML whitespace.
+   *
    * @param c
    *        Character to check.
    * @return <code>true</code> for the four XML whitespace characters (space,
@@ -101,6 +103,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is a valid xs:integer lexical form.
+   *
    * @param s
    *        Collapsed lexical form.
    * @return <code>true</code> if it matches <code>[\-+]?[0-9]+</code>.
@@ -120,6 +124,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is a valid xs:decimal lexical form.
+   *
    * @param s
    *        Collapsed lexical form.
    * @return <code>true</code> if it matches
@@ -158,6 +164,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is a valid xs:double or xs:float lexical form.
+   *
    * @param s
    *        Collapsed lexical form.
    * @return <code>true</code> if it is a valid xs:double/xs:float lexical form
@@ -181,6 +189,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is an XML name.
+   *
    * @param s
    *        String to check.
    * @return <code>true</code> if it matches the XML <code>Name</code>
@@ -192,6 +202,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is an NCName.
+   *
    * @param s
    *        String to check.
    * @return <code>true</code> if it matches the <code>NCName</code>
@@ -203,6 +215,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is an XML name token.
+   *
    * @param s
    *        String to check.
    * @return <code>true</code> if it matches the <code>Nmtoken</code>
@@ -224,6 +238,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is a lexical QName.
+   *
    * @param s
    *        String to check.
    * @return <code>true</code> if it is a lexical QName
@@ -240,6 +256,8 @@ public final class XsdLexical
   }
 
   /**
+   * Check if a string is a valid xs:language value.
+   *
    * @param s
    *        String to check.
    * @return <code>true</code> if it matches the xs:language pattern
@@ -315,6 +333,8 @@ public final class XsdLexical
   }
 
   /**
+   * Decode a hexBinary lexical form.
+   *
    * @param s
    *        Collapsed hexBinary lexical form.
    * @return The bytes or <code>null</code> if the form is invalid.
@@ -337,6 +357,8 @@ public final class XsdLexical
   }
 
   /**
+   * Encode bytes in the canonical hexBinary form.
+   *
    * @param aBytes
    *        Bytes to encode.
    * @return The canonical (upper case) hexBinary form.

@@ -116,6 +116,12 @@ public final class TryCatchExtension implements IXsltExtension
   }
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public TryCatchExtension ()
+  {}
+
+  /**
    * Parse one token of xsl:catch/@errors as a NameTest (XSLT 3.0 section
    * 8.3): <code>*</code>, <code>*:local</code>, <code>Q{uri}local</code>,
    * <code>Q{uri}*</code>, <code>prefix:*</code> or a lexical QName. Prefixes

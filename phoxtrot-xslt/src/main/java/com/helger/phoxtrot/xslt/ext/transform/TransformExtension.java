@@ -40,6 +40,12 @@ public final class TransformExtension implements IXsltExtension
   private static final Object KEY_OPTIONS = new Object ();
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public TransformExtension ()
+  {}
+
+  /**
    * @param aSheet
    *        A compiled stylesheet.
    * @return The options it was compiled with, or <code>null</code> if unknown.

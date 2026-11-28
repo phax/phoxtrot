@@ -100,6 +100,8 @@ public final class CompileContext
   }
 
   /**
+   * Create a context in which a global variable is hidden.
+   *
    * @param aName
    *        A global variable.
    * @return A context in which that global variable is not in scope (a global
@@ -111,20 +113,33 @@ public final class CompileContext
     return new CompileContext (m_aCompiler, m_aScope, aName);
   }
 
-  /** @return The compiler (global stylesheet information). */
+  /**
+   * Get the compiler of this context.
+   *
+   * @return The compiler (global stylesheet information).
+   */
   @NonNull
   public StylesheetCompiler getCompiler ()
   {
     return m_aCompiler;
   }
 
-  /** @return The stylesheet being built. */
+  /**
+   * Get the stylesheet being compiled.
+   *
+   * @return The stylesheet being built.
+   */
   @NonNull
   public CompiledStylesheet getStylesheet ()
   {
     return m_aCompiler.getStylesheet ();
   }
 
+  /**
+   * Get the function library of the stylesheet being compiled.
+   *
+   * @return The function library. Never <code>null</code>.
+   */
   @NonNull
   public FunctionLibrary getFunctionLibrary ()
   {
@@ -149,6 +164,8 @@ public final class CompileContext
   }
 
   /**
+   * Look up the slot of a local variable in scope.
+   *
    * @param aName
    *        Variable name.
    * @return The slot of the innermost local variable of that name in scope,
@@ -164,6 +181,8 @@ public final class CompileContext
   }
 
   /**
+   * Look up the slot of a local variable that must be in scope.
+   *
    * @param aName
    *        Variable name.
    * @return The slot of the innermost local variable of that name in scope.
@@ -179,7 +198,11 @@ public final class CompileContext
     return ret;
   }
 
-  /** @return A context with only the global variables in scope. */
+  /**
+   * Create a context without local variables.
+   *
+   * @return A context with only the global variables in scope.
+   */
   @NonNull
   public CompileContext withGlobalScopeOnly ()
   {
@@ -208,6 +231,8 @@ public final class CompileContext
   }
 
   /**
+   * Check whether an element is processed with XSLT 1.0 behaviour.
+   *
    * @param aEl
    *        A stylesheet element.
    * @return <code>true</code> if the element is processed with XSLT 1.0
@@ -342,6 +367,8 @@ public final class CompileContext
   }
 
   /**
+   * Compile the expression of a required attribute.
+   *
    * @param aEl
    *        Element.
    * @param sAttr
@@ -360,6 +387,8 @@ public final class CompileContext
   }
 
   /**
+   * Compile the expression of an optional attribute.
+   *
    * @param aEl
    *        Element.
    * @param sAttr
@@ -444,6 +473,8 @@ public final class CompileContext
   }
 
   /**
+   * Compile the attribute value template of an optional attribute.
+   *
    * @param aEl
    *        Element.
    * @param sAttr
@@ -492,6 +523,8 @@ public final class CompileContext
   }
 
   /**
+   * Parse a sequence type written on an element.
+   *
    * @param aEl
    *        Element.
    * @param sType
@@ -669,6 +702,8 @@ public final class CompileContext
   }
 
   /**
+   * Compile the xsl:with-param children of an instruction.
+   *
    * @param aEl
    *        The instruction (xsl:apply-templates, xsl:call-template, ...).
    * @return Its xsl:with-param children, compiled.
@@ -683,6 +718,8 @@ public final class CompileContext
   }
 
   /**
+   * Compile the xsl:sort children of an instruction.
+   *
    * @param aEl
    *        The instruction (xsl:for-each, xsl:apply-templates,
    *        xsl:perform-sort, xsl:for-each-group, ...).

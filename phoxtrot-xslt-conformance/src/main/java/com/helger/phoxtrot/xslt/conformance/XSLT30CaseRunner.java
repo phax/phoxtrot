@@ -165,6 +165,8 @@ public final class XSLT30CaseRunner
   private final boolean m_bBackwardsCompatible;
 
   /**
+   * Create a case runner that claims neither schema-awareness, nor streaming, nor backwards compatibility.
+   *
    * @param aCatalog
    *        The catalog (for catalog level environments).
    * @param aCompiler
@@ -190,6 +192,8 @@ public final class XSLT30CaseRunner
   }
 
   /**
+   * Create a case runner that claims neither streaming nor backwards compatibility.
+   *
    * @param aCatalog
    *        The catalog (for catalog level environments).
    * @param aCompiler
@@ -220,6 +224,8 @@ public final class XSLT30CaseRunner
   }
 
   /**
+   * Create a case runner that does not claim backwards compatibility.
+   *
    * @param aCatalog
    *        The catalog (for catalog level environments).
    * @param aCompiler
@@ -256,6 +262,8 @@ public final class XSLT30CaseRunner
   }
 
   /**
+   * Create a case runner with every claim given explicitly.
+   *
    * @param aCatalog
    *        The catalog (for catalog level environments).
    * @param aCompiler

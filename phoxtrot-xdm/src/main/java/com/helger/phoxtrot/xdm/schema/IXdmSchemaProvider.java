@@ -31,6 +31,8 @@ import org.jspecify.annotations.NonNull;
 public interface IXdmSchemaProvider
 {
   /**
+   * Compile schema documents into a schema set.
+   *
    * @param aSources
    *        The schema documents. May be empty for the built-in types only.
    * @return The compiled schema set.

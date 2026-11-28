@@ -49,6 +49,8 @@ public final class FnError
   public interface ITraceListener
   {
     /**
+     * Called for every value traced with <code>fn:trace</code>.
+     *
      * @param aValue
      *        The traced value.
      * @param sLabel
@@ -96,6 +98,8 @@ public final class FnError
   }
 
   /**
+   * Get a readable form of a traced value.
+   *
    * @param aValue
    *        A traced value.
    * @return A readable form: the string values of the items, separated by
@@ -114,7 +118,11 @@ public final class FnError
     return aSB.toString ();
   }
 
-  /** @return The current trace listener. */
+  /**
+   * Get the trace listener that is currently used.
+   *
+   * @return The current trace listener.
+   */
   @NonNull
   public static ITraceListener getTraceListener ()
   {
@@ -122,6 +130,8 @@ public final class FnError
   }
 
   /**
+   * Set the trace listener used from now on.
+   *
    * @param aListener
    *        The new trace listener; {@link #DEFAULT_TRACE_LISTENER} restores
    *        the default.

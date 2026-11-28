@@ -53,6 +53,8 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Get the posture and sweep of the analysed expression.
+   *
    * @return The posture and sweep. Never <code>null</code>.
    */
   @NonNull
@@ -62,6 +64,8 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Get the posture of the analysed expression.
+   *
    * @return The posture. Never <code>null</code>.
    */
   @NonNull
@@ -71,6 +75,8 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Get the sweep of the analysed expression.
+   *
    * @return The sweep. Never <code>null</code>.
    */
   @NonNull
@@ -80,6 +86,8 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Get the simplified verdict of the analysis.
+   *
    * @return The simplified verdict. Never <code>null</code>.
    */
   @NonNull
@@ -89,6 +97,8 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Check whether the expression is streamable without buffering.
+   *
    * @return <code>true</code> if the verdict is motionless or consuming (one pass without buffering).
    */
   public boolean isStreamable ()
@@ -97,6 +107,9 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Check whether the expression is streamable, possibly with the subtree of
+   * the context node buffered.
+   *
    * @return <code>true</code> if the verdict is not free-ranging: motionless, consuming or burst (one pass with the
    *         subtree of the context node buffered).
    */
@@ -106,6 +119,8 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Check whether the expression is motionless.
+   *
    * @return <code>true</code> if the verdict is motionless.
    */
   public boolean isMotionless ()
@@ -114,6 +129,8 @@ public final class XPathStreamabilityResult
   }
 
   /**
+   * Get the reason for the verdict.
+   *
    * @return The reason for a verdict other than motionless, <code>null</code> for a motionless one. It may also be
    *         <code>null</code> if no construct could be singled out.
    */

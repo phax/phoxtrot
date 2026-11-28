@@ -194,6 +194,8 @@ public final class ResultDrain
   }
 
   /**
+   * Get the number of drained runs.
+   *
    * @return The number of transformations so far whose principal result was
    *         written while it was built (in this JVM). For tests that need to
    *         know which path ran: the output is the same either way.

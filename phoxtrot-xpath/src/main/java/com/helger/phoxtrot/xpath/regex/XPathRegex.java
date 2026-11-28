@@ -283,6 +283,8 @@ public final class XPathRegex
   }
 
   /**
+   * Get the Java pattern with the corrected Unicode categories.
+   *
    * @return The Java pattern this expression was translated into, with the
    *         Unicode 15.0 categories. It is correct for every input;
    *         {@link #getPattern(String)} may be faster.
@@ -312,13 +314,19 @@ public final class XPathRegex
     return m_aPattern;
   }
 
-  /** @return The number of capturing groups (0 with the 'q' flag). */
+  /**
+   * Get the number of capturing groups.
+   *
+   * @return The number of capturing groups (0 with the 'q' flag).
+   */
   public int getGroupCount ()
   {
     return m_nGroupCount;
   }
 
   /**
+   * Get the capturing group a group is directly nested in.
+   *
    * @param nGroup
    *        A capturing group number (1-based).
    * @return The number of the capturing group it is directly nested in, 0 for
@@ -343,13 +351,19 @@ public final class XPathRegex
     return nGroup > 0 && nGroup < m_aJavaGroups.length ? m_aJavaGroups[nGroup] : 0;
   }
 
-  /** @return <code>true</code> if the 'q' flag was given. */
+  /**
+   * Check if the expression was compiled with the 'q' flag.
+   *
+   * @return <code>true</code> if the 'q' flag was given.
+   */
   public boolean isLiteral ()
   {
     return m_bLiteral;
   }
 
   /**
+   * Create a matcher for an input that checks for interruption.
+   *
    * @param aCtx
    *        Dynamic context, for interruption.
    * @param sInput
@@ -363,6 +377,8 @@ public final class XPathRegex
   }
 
   /**
+   * Check if the expression matches some substring of an input.
+   *
    * @param aCtx
    *        Dynamic context, for interruption.
    * @param sInput
@@ -374,7 +390,12 @@ public final class XPathRegex
     return withStackFallback ( () -> Boolean.valueOf (matcher (aCtx, sInput).find ())).booleanValue ();
   }
 
-  /** @return <code>true</code> if the expression matches the empty string. */
+  /**
+   * Check if the expression matches the empty string.
+   *
+   *
+   * @return <code>true</code> if the expression matches the empty string.
+   */
   public boolean matchesEmptyString ()
   {
     return m_bMatchesEmptyString;

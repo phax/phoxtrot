@@ -31,11 +31,17 @@ import org.jspecify.annotations.Nullable;
  */
 public interface ICollation
 {
-  /** @return The collation URI. */
+  /**
+   * Get the URI of this collation.
+   *
+   * @return The collation URI.
+   */
   @NonNull
   String getUri ();
 
   /**
+   * Compare two strings under this collation.
+   *
    * @param sLeft
    *        First string.
    * @param sRight
@@ -45,6 +51,8 @@ public interface ICollation
   int compare (@NonNull String sLeft, @NonNull String sRight);
 
   /**
+   * Get the collation key of a string.
+   *
    * @param sValue
    *        The string.
    * @return A key whose equals/hashCode agree with
@@ -54,6 +62,8 @@ public interface ICollation
   Object getCollationKey (@NonNull String sValue);
 
   /**
+   * Get the collation key of a string as bytes.
+   *
    * @param sValue
    *        The string.
    * @return The bytes of the collation key for fn:collation-key: two keys are
@@ -85,6 +95,8 @@ public interface ICollation
   }
 
   /**
+   * Check whether a string starts with a prefix under this collation.
+   *
    * @param sValue
    *        The string to check.
    * @param sPrefix
@@ -98,6 +110,8 @@ public interface ICollation
   }
 
   /**
+   * Check whether a string ends with a suffix under this collation.
+   *
    * @param sValue
    *        The string to check.
    * @param sSuffix

@@ -97,7 +97,16 @@ import com.helger.phoxtrot.xslt.tree.XsltNames;
 @NotThreadSafe
 public final class StylesheetCompiler
 {
-  /** An xsl:namespace-alias. */
+  /**
+   * An xsl:namespace-alias.
+   *
+   * @param resultPrefix
+   *        The prefix of the result namespace, the empty string for #default.
+   * @param resultUri
+   *        The result namespace URI.
+   * @param precedence
+   *        The import precedence of the declaration.
+   */
   @Immutable
   public record NamespaceAlias (@NonNull String resultPrefix, @NonNull String resultUri, int precedence)
   {}
@@ -262,19 +271,33 @@ public final class StylesheetCompiler
                                                                                                  : null;
   }
 
+  /**
+   * Get the stylesheet being compiled.
+   *
+   * @return The stylesheet. Never <code>null</code>.
+   */
   @NonNull
   public CompiledStylesheet getStylesheet ()
   {
     return m_aStylesheet;
   }
 
-  /** @return The packages taking part, <code>null</code> before loading. */
+  /**
+   * Get the packages of the compilation.
+   *
+   * @return The packages taking part, <code>null</code> before loading.
+   */
   @Nullable
   public PackageModel getPackages ()
   {
     return m_aPackages;
   }
 
+  /**
+   * Get the options of the compilation.
+   *
+   * @return The compile options. Never <code>null</code>.
+   */
   @NonNull
   public XsltCompileOptions getOptions ()
   {
@@ -282,6 +305,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Check whether an element is processed with XSLT 1.0 behaviour.
+   *
    * @param aEl
    *        A stylesheet element.
    * @return <code>true</code> if the element is processed with XSLT 1.0
@@ -296,6 +321,11 @@ public final class StylesheetCompiler
     return m_aOptions.isBackwardsCompatibleClaim () && aEl.isXslt10Version ();
   }
 
+  /**
+   * Get the extension registry the compiler uses.
+   *
+   * @return The registry ({@link XsltExtensionRegistry#getInstance()}). Never <code>null</code>.
+   */
   @NonNull
   public XsltExtensionRegistry getRegistry ()
   {
@@ -303,15 +333,11 @@ public final class StylesheetCompiler
   }
 
   /**
-   * @return The index the expressions, patterns and sequence types compiled
-   *         are recorded in for the streamability analysis, or
-   *         <code>null</code> if the analysis does not run (neither
-   *         {@link XsltCompileOptions#isEnforceStreamability()} nor
-   *         {@link XsltCompileOptions#isStreamingClaim()}).
-   */
-  /**
+   * Get the map of the run-time identities of the static contexts.
+   *
    * @return The map the static contexts of this compilation are interned into
-   *         ({@link StaticContext#internRunTimeIdentity(java.util.Map)}), so that
+   *         ({@link com.helger.phoxtrot.xpath.context.StaticContext#internRunTimeIdentity(Map)}),
+   *         so that
    *         evaluation can keep the dynamic context between expressions with
    *         equivalent static contexts.
    */
@@ -321,13 +347,26 @@ public final class StylesheetCompiler
     return m_aRunTimeIdentities;
   }
 
+  /**
+   * Get the index for the streamability analysis.
+   *
+   * @return The index the expressions, patterns and sequence types compiled
+   *         are recorded in for the streamability analysis, or
+   *         <code>null</code> if the analysis does not run (neither
+   *         {@link XsltCompileOptions#isEnforceStreamability()} nor
+   *         {@link XsltCompileOptions#isStreamingClaim()}).
+   */
   @Nullable
   public StreamabilityIndex getStreamabilityIndex ()
   {
     return m_aStreamabilityIndex;
   }
 
-  /** @return The names of all global variables and parameters. */
+  /**
+   * Get the names of the global variables and parameters.
+   *
+   * @return The names of all global variables and parameters.
+   */
   @NonNull
   public ICommonsOrderedSet <XdmQName> getGlobalVariableNames ()
   {
@@ -355,12 +394,26 @@ public final class StylesheetCompiler
     return ret;
   }
 
+  /**
+   * Get the unnamed decimal format of the stylesheet. In a multi-package compilation this is the
+   * one of the principal package; for expressions on a given element use {@link
+   * #getDefaultDecimalFormat(XslElement)}.
+   *
+   * @return The unnamed decimal format, or <code>null</code> if no unnamed xsl:decimal-format is
+   *         declared.
+   */
   @Nullable
   public FormatDecimalFormat getDefaultDecimalFormat ()
   {
     return m_aDefaultDecimalFormat;
   }
 
+  /**
+   * Get the named decimal formats of the stylesheet. For expressions on a given element use {@link
+   * #getDecimalFormats(XslElement)}, which also covers a multi-package compilation.
+   *
+   * @return The map of the named decimal formats by name, not a copy. Never <code>null</code>.
+   */
   @NonNull
   public ICommonsMap <XdmQName, FormatDecimalFormat> getDecimalFormats ()
   {
@@ -384,6 +437,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Look up the xsl:namespace-alias of the package of an element for a literal namespace URI.
+   *
    * @param aEl
    *        The literal result element (namespace aliases are local to a
    *        package).
@@ -399,6 +454,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Check whether a namespace URI is the result namespace of an xsl:namespace-alias.
+   *
    * @param aEl
    *        A literal result element.
    * @param sUri
@@ -417,6 +474,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Get the unnamed decimal format for expressions on an element.
+   *
    * @param aEl
    *        An element.
    * @return The unnamed decimal format for expressions on it (decimal formats
@@ -432,6 +491,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Get the named decimal formats for expressions on an element.
+   *
    * @param aEl
    *        An element.
    * @return The named decimal formats for expressions on it.
@@ -464,6 +525,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Get the function library for expressions on an element.
+   *
    * @param aEl
    *        An element.
    * @return The functions visible to expressions on that element: in a
@@ -491,6 +554,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Check whether a global variable is hidden from the code at an element.
+   *
    * @param aEl
    *        An element.
    * @param aName
@@ -695,7 +760,11 @@ public final class StylesheetCompiler
       aLib.freeze ();
   }
 
-  /** @return A compile context with only global variables in scope. */
+  /**
+   * Create a compile context for the global scope.
+   *
+   * @return A compile context with only global variables in scope.
+   */
   @NonNull
   public CompileContext createGlobalContext ()
   {
@@ -734,6 +803,8 @@ public final class StylesheetCompiler
   }
 
   /**
+   * Get the default mode in scope for an element.
+   *
    * @param aEl
    *        An element.
    * @return The default mode in scope for it ([xsl:]default-mode, XSLT 3.0

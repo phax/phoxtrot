@@ -51,6 +51,12 @@ public final class XSLT30DocumentCache
   private final ICommonsMap <Path, XdmParseException> m_aFailed = new CommonsHashMap <> ();
 
   /**
+   * Create an empty cache.
+   */
+  public XSLT30DocumentCache ()
+  {}
+
+  /**
    * Parse a file once per cache map; a file that cannot be parsed is
    * remembered with its error for both maps.
    *
@@ -97,6 +103,8 @@ public final class XSLT30DocumentCache
   }
 
   /**
+   * Get a document, parsing it on first access, or throw the parse error.
+   *
    * @param aFile
    *        Absolute, normalised path.
    * @return The parsed document, without node locations.
@@ -110,6 +118,8 @@ public final class XSLT30DocumentCache
   }
 
   /**
+   * Get a file parsed as a stylesheet module, parsing it on first access.
+   *
    * @param aFile
    *        Absolute, normalised path.
    * @return The file parsed as a stylesheet module, with node locations; a
@@ -131,6 +141,8 @@ public final class XSLT30DocumentCache
   }
 
   /**
+   * Get a document, parsing it on first access.
+   *
    * @param aFile
    *        Absolute, normalised path.
    * @return The parsed document or <code>null</code> if the file does not

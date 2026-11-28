@@ -704,6 +704,8 @@ public final class FnString
   }
 
   /**
+   * Normalise the whitespace of a string, as <code>fn:normalize-space</code> does.
+   *
    * @param s
    *        Input string.
    * @return The string with leading and trailing XML whitespace removed and

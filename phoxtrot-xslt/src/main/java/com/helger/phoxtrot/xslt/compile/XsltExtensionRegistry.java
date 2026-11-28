@@ -147,7 +147,11 @@ public final class XsltExtensionRegistry
     return ret;
   }
 
-  /** @return The registry, created on first use. */
+  /**
+   * Get the shared registry.
+   *
+   * @return The registry, created on first use.
+   */
   @NonNull
   public static XsltExtensionRegistry getInstance ()
   {
@@ -305,6 +309,8 @@ public final class XsltExtensionRegistry
   }
 
   /**
+   * Get the compiler of an instruction.
+   *
    * @param sLocalName
    *        Local name of an XSLT instruction.
    * @return Its registered compiler, or <code>null</code> if none is registered.
@@ -316,6 +322,8 @@ public final class XsltExtensionRegistry
   }
 
   /**
+   * Get the compiler of a declaration.
+   *
    * @param sLocalName
    *        Local name of an XSLT declaration.
    * @return Its registered compiler, or <code>null</code> if none is registered (also for the
@@ -328,6 +336,8 @@ public final class XsltExtensionRegistry
   }
 
   /**
+   * Check whether the processor implements an XSLT element.
+   *
    * @param sLocalName
    *        Local name of an XSLT element.
    * @return <code>true</code> if the processor implements it (a registered instruction or
@@ -345,6 +355,8 @@ public final class XsltExtensionRegistry
   }
 
   /**
+   * Check whether a system property is reported as "yes".
+   *
    * @param sLocalName
    *        Local name of a system property in the XSLT namespace.
    * @return <code>true</code> if an extension registered it with
@@ -389,6 +401,12 @@ public final class XsltExtensionRegistry
       aContributor.accept (aLibrary);
   }
 
+  /**
+   * Get the output customizers registered with {@link
+   * #registerOutputCustomizer(IOutputCustomizer)}.
+   *
+   * @return A copy of the list in registration order. Never <code>null</code>.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <IOutputCustomizer> getAllOutputCustomizers ()
@@ -396,6 +414,11 @@ public final class XsltExtensionRegistry
     return m_aRWLock.readLockedGet (m_aOutputCustomizers::getClone);
   }
 
+  /**
+   * Get the compile finishers registered with {@link #registerCompileFinisher(ICompileFinisher)}.
+   *
+   * @return A copy of the list in registration order. Never <code>null</code>.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <ICompileFinisher> getAllCompileFinishers ()

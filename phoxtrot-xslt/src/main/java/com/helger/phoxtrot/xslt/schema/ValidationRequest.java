@@ -61,9 +61,13 @@ public final class ValidationRequest
   /** The effective validation mode. */
   public enum EMode
   {
+    /** validation="strip": type annotations are removed. */
     STRIP,
+    /** validation="preserve": type annotations are kept. */
     PRESERVE,
+    /** validation="strict": the result is validated strictly. */
     STRICT,
+    /** validation="lax": the result is validated laxly. */
     LAX
   }
 
@@ -232,6 +236,8 @@ public final class ValidationRequest
   }
 
   /**
+   * Check whether this is a plain preserve request.
+   *
    * @return <code>true</code> if nodes copied by the instruction keep their
    *         type annotations before the request is applied (preserve).
    */
@@ -241,6 +247,8 @@ public final class ValidationRequest
   }
 
   /**
+   * Check whether this is a plain strip request.
+   *
    * @return <code>true</code> for plain strip (no type): copies are made
    *         without annotations, and there is nothing to apply to them.
    */
@@ -250,6 +258,8 @@ public final class ValidationRequest
   }
 
   /**
+   * Check whether this request validates.
+   *
    * @return <code>true</code> if the request performs a validation episode
    *         (strict, lax or a type).
    */
@@ -292,6 +302,8 @@ public final class ValidationRequest
   }
 
   /**
+   * Check whether the typed value of a node is namespace-sensitive.
+   *
    * @param aNode
    *        An element or attribute.
    * @return <code>true</code> if its typed value is namespace-sensitive (of
@@ -313,6 +325,8 @@ public final class ValidationRequest
   }
 
   /**
+   * Check whether a subtree has namespace-sensitive content.
+   *
    * @param aNode
    *        A node.
    * @return <code>true</code> if the node or a node of its subtree (attributes

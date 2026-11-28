@@ -60,6 +60,12 @@ public final class VariableFrame
     private RuntimeException m_aFailure;
 
     /**
+     * Default constructor for subclasses.
+     */
+    public AbstractLazyValue ()
+    {}
+
+    /**
      * Compute the value. Called at most once.
      *
      * @param aHolder
@@ -165,6 +171,9 @@ public final class VariableFrame
   }
 
   /**
+   * Check whether this frame holds the variables of an expression or of the
+   * host.
+   *
    * @return <code>true</code> for a frame of the variables an expression binds itself,
    *         <code>false</code> for a frame of host variables.
    */
@@ -180,6 +189,11 @@ public final class VariableFrame
     return m_aHostFrame;
   }
 
+  /**
+   * Get the layout of this frame.
+   *
+   * @return The layout. Never <code>null</code>.
+   */
   @NonNull
   public VariableFrameLayout getLayout ()
   {
@@ -213,6 +227,8 @@ public final class VariableFrame
   }
 
   /**
+   * Get the value of a slot.
+   *
    * @param nIndex
    *        The slot index.
    * @return The value of the slot, computed first if it is bound lazily.
@@ -231,6 +247,8 @@ public final class VariableFrame
   }
 
   /**
+   * Get the identity token of the binding of a slot.
+   *
    * @param nIndex
    *        The slot index.
    * @return An identity token of the binding of the slot (see
@@ -244,6 +262,8 @@ public final class VariableFrame
   }
 
   /**
+   * Create a snapshot of this frame.
+   *
    * @return A copy of this frame with the bindings as they are now, for a context that is kept
    *         beyond the scope of the variables. Lazy values are shared, so they are computed once.
    */

@@ -84,6 +84,8 @@ public final class StreamedRun
   private final Map <IXdmNode, Boolean> m_aExitedHeld = new IdentityHashMap <> ();
 
   /**
+   * Constructor.
+   *
    * @param aReader
    *        The open reader. Its document is the context item of the host.
    * @param aConsumer
@@ -98,6 +100,8 @@ public final class StreamedRun
   }
 
   /**
+   * Set the accumulators of this run.
+   *
    * @param aAccumulators
    *        The accumulators computed while the document is read, or
    *        <code>null</code> for none. Set before the run is driven.
@@ -121,6 +125,8 @@ public final class StreamedRun
   }
 
   /**
+   * Get the innermost live run of an engine.
+   *
    * @param aEngine
    *        The engine.
    * @return The innermost live run, or <code>null</code>.
@@ -159,6 +165,8 @@ public final class StreamedRun
   }
 
   /**
+   * Get the number of streamed runs in this JVM.
+   *
    * @return The number of record sequences consumed streamed in this JVM,
    *         for tests that must tell the streamed from the buffered execution.
    */
@@ -168,6 +176,9 @@ public final class StreamedRun
   }
 
   /**
+   * Get the number of streamed runs of one kind of consuming instruction in
+   * this JVM.
+   *
    * @param sKind
    *        The local name of the consuming instruction, e.g.
    *        <code>iterate</code>, <code>for-each-group</code>,
@@ -197,6 +208,8 @@ public final class StreamedRun
   }
 
   /**
+   * Check whether a node belongs to a streamed document.
+   *
    * @param aNode
    *        A node.
    * @return <code>true</code> if it belongs to a document that is read by a
@@ -208,19 +221,34 @@ public final class StreamedRun
     return aNode != null && aNode.getRoot () instanceof final XdmDocumentNode aDoc && aDoc.isStreamed ();
   }
 
+  /**
+   * Get the stream reader of this run.
+   *
+   * @return The open reader given in the constructor. Never <code>null</code>.
+   */
   @NonNull
   public XdmStreamReader getReader ()
   {
     return m_aReader;
   }
 
+  /**
+   * Get the instruction that consumes the records.
+   *
+   * @return The consuming instruction given in the constructor, or
+   *         <code>null</code> for a run read with {@link #nextRecord()}.
+   */
   @Nullable
   public XslElement getConsumer ()
   {
     return m_aConsumer;
   }
 
-  /** @return <code>true</code> if the consumer has read the document. */
+  /**
+   * Check whether the consumer has read the document.
+   *
+   * @return <code>true</code> if the consumer has read the document.
+   */
   public boolean isDriven ()
   {
     return m_bDriven;
@@ -555,6 +583,9 @@ public final class StreamedRun
   }
 
   /**
+   * Read the next record of a run started with
+   * {@link #startPull(StreamRecordPath, XsltContext)}.
+   *
    * @return The next complete record, or <code>null</code> at the end of the
    *         document. Pass it to {@link #release(IXdmNode)} before the next
    *         call.

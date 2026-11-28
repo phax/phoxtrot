@@ -85,6 +85,8 @@ public final class XdmDurationValue
   }
 
   /**
+   * Parse the lexical form of a duration.
+   *
    * @param eType
    *        xs:duration, xs:yearMonthDuration or xs:dayTimeDuration.
    * @param sLexical
@@ -212,6 +214,8 @@ public final class XdmDurationValue
   }
 
   /**
+   * Create a duration from months and seconds.
+   *
    * @param nMonths
    *        Signed months.
    * @param aSeconds
@@ -229,12 +233,21 @@ public final class XdmDurationValue
     return new XdmDurationValue (nMonths, _normalise (aSeconds));
   }
 
+  /**
+   * Get the months part.
+   *
+   * @return The signed number of months.
+   */
   public long getMonths ()
   {
     return m_nMonths;
   }
 
-  /** @return The seconds part, normalised (no trailing zeros). */
+  /**
+   * Get the seconds part.
+   *
+   * @return The seconds part, normalised (no trailing zeros).
+   */
   @NonNull
   public BigDecimal getSeconds ()
   {
@@ -242,6 +255,8 @@ public final class XdmDurationValue
   }
 
   /**
+   * Check if this duration is negative.
+   *
    * @return <code>true</code> if the months or the seconds are negative (both
    *         have the same sign, so this is the sign of the duration).
    */
@@ -250,12 +265,19 @@ public final class XdmDurationValue
     return m_nMonths < 0 || m_aSeconds.signum () < 0;
   }
 
+  /**
+   * Check if this duration is zero.
+   *
+   * @return <code>true</code> if both the months and the seconds are zero.
+   */
   public boolean isZero ()
   {
     return m_nMonths == 0 && m_aSeconds.signum () == 0;
   }
 
   /**
+   * Negate this duration.
+   *
    * @return The negated duration.
    * @throws XPathException
    *         FODT0002 if the months cannot be negated.
@@ -315,6 +337,8 @@ public final class XdmDurationValue
   }
 
   /**
+   * Get the canonical lexical form of this duration.
+   *
    * @param eType
    *        The duration type of the value.
    * @return The canonical lexical form for that type.

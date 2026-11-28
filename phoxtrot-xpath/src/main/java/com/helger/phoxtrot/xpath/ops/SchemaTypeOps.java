@@ -51,6 +51,8 @@ public final class SchemaTypeOps
   {}
 
   /**
+   * Check if a type definition is a built-in type.
+   *
    * @param aType
    *        A type definition.
    * @return <code>true</code> if it is a built-in type (named, in the xs

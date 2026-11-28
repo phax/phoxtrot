@@ -33,6 +33,8 @@ import com.helger.phoxtrot.xdm.XdmQName;
 public interface IStreamFunctionResolver
 {
   /**
+   * Get the call-site signature of a stylesheet function.
+   *
    * @param aName
    *        The expanded function name. Never in the <code>fn</code> namespace.
    * @param nArity

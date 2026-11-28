@@ -51,6 +51,7 @@ public final class JdkSchemaProvider implements IXdmSchemaProvider
 {
   private static final String EMPTY_SCHEMA = "<xs:schema xmlns:xs='http://www.w3.org/2001/XMLSchema'/>";
 
+  /** Create a provider that compiles schemas with the JDK schema validator. */
   public JdkSchemaProvider ()
   {}
 

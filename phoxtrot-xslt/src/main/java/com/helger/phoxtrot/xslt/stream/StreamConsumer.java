@@ -144,6 +144,8 @@ public final class StreamConsumer
   }
 
   /**
+   * Create the streamed branch of a consuming instruction.
+   *
    * @param aCtx
    *        Compile context.
    * @param aEl
@@ -258,6 +260,8 @@ public final class StreamConsumer
   }
 
   /**
+   * Check whether an instruction was compiled with a streamed branch.
+   *
    * @param aSheet
    *        The stylesheet.
    * @param aEl

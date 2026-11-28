@@ -160,6 +160,8 @@ public final class QT3Environment
   private String m_sContextItemSelect;
 
   /**
+   * Create an environment.
+   *
    * @param sName
    *        Environment name, may be empty for inline environments.
    * @param sRef
@@ -174,30 +176,54 @@ public final class QT3Environment
     m_aBaseDir = aBaseDir;
   }
 
+  /**
+   * Get the environment name.
+   *
+   * @return The environment name, may be empty for inline environments.
+   */
   @NonNull
   public String getName ()
   {
     return m_sName;
   }
 
-  /** @return The referenced environment name; empty for a declaration. */
+  /**
+   * Get the referenced environment name.
+   *
+   * @return The referenced environment name; empty for a declaration.
+   */
   @NonNull
   public String getRef ()
   {
     return m_sRef;
   }
 
+  /**
+   * Check whether this is only a reference to a named environment.
+   *
+   * @return <code>true</code> if a referenced environment name is set.
+   */
   public boolean isReference ()
   {
     return !m_sRef.isEmpty ();
   }
 
+  /**
+   * Get the base directory.
+   *
+   * @return The directory relative file names are resolved against.
+   */
   @NonNull
   public Path getBaseDir ()
   {
     return m_aBaseDir;
   }
 
+  /**
+   * Get the sources.
+   *
+   * @return A copy of the <code>&lt;source&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <Source> getAllSources ()
@@ -205,6 +231,11 @@ public final class QT3Environment
     return m_aSources.getClone ();
   }
 
+  /**
+   * Get the resources.
+   *
+   * @return A copy of the <code>&lt;resource&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <Resource> getAllResources ()
@@ -212,6 +243,11 @@ public final class QT3Environment
     return m_aResources.getClone ();
   }
 
+  /**
+   * Get the namespaces.
+   *
+   * @return A copy of the <code>&lt;namespace&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <Namespace> getAllNamespaces ()
@@ -219,6 +255,11 @@ public final class QT3Environment
     return m_aNamespaces.getClone ();
   }
 
+  /**
+   * Get the parameters.
+   *
+   * @return A copy of the <code>&lt;param&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <Param> getAllParams ()
@@ -226,6 +267,11 @@ public final class QT3Environment
     return m_aParams.getClone ();
   }
 
+  /**
+   * Get the schemas.
+   *
+   * @return A copy of the <code>&lt;schema&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <Schema> getAllSchemas ()
@@ -233,6 +279,11 @@ public final class QT3Environment
     return m_aSchemas.getClone ();
   }
 
+  /**
+   * Get the collections.
+   *
+   * @return A copy of the <code>&lt;collection&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <Collection> getAllCollections ()
@@ -240,6 +291,11 @@ public final class QT3Environment
     return m_aCollections.getClone ();
   }
 
+  /**
+   * Get the collations.
+   *
+   * @return A copy of the <code>&lt;collation&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <Collation> getAllCollations ()
@@ -247,6 +303,11 @@ public final class QT3Environment
     return m_aCollations.getClone ();
   }
 
+  /**
+   * Get the decimal formats.
+   *
+   * @return A copy of the <code>&lt;decimal-format&gt;</code> declarations.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <DecimalFormat> getAllDecimalFormats ()
@@ -254,14 +315,22 @@ public final class QT3Environment
     return m_aDecimalFormats.getClone ();
   }
 
-  /** @return The explicit static base URI or <code>null</code>. */
+  /**
+   * Get the explicit static base URI.
+   *
+   * @return The explicit static base URI or <code>null</code>.
+   */
   @Nullable
   public String getStaticBaseUri ()
   {
     return m_sStaticBaseUri;
   }
 
-  /** @return The <code>&lt;context-item select="..."/&gt;</code> expression or <code>null</code>. */
+  /**
+   * Get the context item expression.
+   *
+   * @return The <code>&lt;context-item select="..."/&gt;</code> expression or <code>null</code>.
+   */
   @Nullable
   public String getContextItemSelect ()
   {

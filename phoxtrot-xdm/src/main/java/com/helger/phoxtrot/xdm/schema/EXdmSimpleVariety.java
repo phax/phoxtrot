@@ -23,7 +23,10 @@ package com.helger.phoxtrot.xdm.schema;
  */
 public enum EXdmSimpleVariety
 {
+  /** An atomic type. */
   ATOMIC,
+  /** A list type. */
   LIST,
+  /** A union type. */
   UNION
 }

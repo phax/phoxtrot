@@ -70,6 +70,12 @@ public final class CharacterMapExtension implements IXsltExtension
   {}
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public CharacterMapExtension ()
+  {}
+
+  /**
    * Get the character maps of a stylesheet from its extension data, creating and storing an empty
    * map on first access.
    *

@@ -206,6 +206,8 @@ public final class ControlInstructions
   }
 
   /**
+   * Get the current mode of the context.
+   *
    * @param aCtx
    *        Context.
    * @return The current mode, or the default mode if none is set.

@@ -106,6 +106,8 @@ public final class FnAccessor
   }
 
   /**
+   * Get the string value of an item.
+   *
    * @param aItem
    *        An item.
    * @return Its string value (<code>fn:string</code>).
@@ -190,6 +192,8 @@ public final class FnAccessor
   }
 
   /**
+   * Get the name of a node.
+   *
    * @param aNode
    *        A node.
    * @return The node name as an XDM QName or <code>null</code> for nodes
@@ -207,6 +211,8 @@ public final class FnAccessor
   }
 
   /**
+   * Get the lexical name of a node for <code>fn:name</code>.
+   *
    * @param aNode
    *        A node, <code>null</code> for an empty argument.
    * @return The lexical name (with prefix) for <code>fn:name</code> (F&amp;O
@@ -223,6 +229,8 @@ public final class FnAccessor
   }
 
   /**
+   * Get the local name of a node for <code>fn:local-name</code>.
+   *
    * @param aNode
    *        A node, <code>null</code> for an empty argument.
    * @return The local part of the name for <code>fn:local-name</code> (F&amp;O
@@ -239,6 +247,8 @@ public final class FnAccessor
   }
 
   /**
+   * Get the namespace URI of a node for <code>fn:namespace-uri</code>.
+   *
    * @param aNode
    *        A node, <code>null</code> for an empty argument.
    * @return The namespace URI of an element or attribute name for
@@ -492,6 +502,8 @@ public final class FnAccessor
   }
 
   /**
+   * Get the path of a node for <code>fn:path</code>.
+   *
    * @param aNode
    *        A node.
    * @return The result of <code>fn:path</code> for that node.

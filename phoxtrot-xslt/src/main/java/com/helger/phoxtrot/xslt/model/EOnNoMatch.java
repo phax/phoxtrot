@@ -26,11 +26,17 @@ import org.jspecify.annotations.Nullable;
  */
 public enum EOnNoMatch
 {
+  /** on-no-match="deep-copy" */
   DEEP_COPY ("deep-copy"),
+  /** on-no-match="shallow-copy" */
   SHALLOW_COPY ("shallow-copy"),
+  /** on-no-match="deep-skip" */
   DEEP_SKIP ("deep-skip"),
+  /** on-no-match="shallow-skip" */
   SHALLOW_SKIP ("shallow-skip"),
+  /** on-no-match="text-only-copy" */
   TEXT_ONLY_COPY ("text-only-copy"),
+  /** on-no-match="fail" */
   FAIL ("fail");
 
   private final String m_sID;
@@ -40,6 +46,12 @@ public enum EOnNoMatch
     m_sID = sID;
   }
 
+  /**
+   * Get the value of the on-no-match attribute this constant stands for.
+   *
+   * @return The attribute value, e.g. <code>"shallow-copy"</code>. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public String getID ()
   {
@@ -47,6 +59,8 @@ public enum EOnNoMatch
   }
 
   /**
+   * Find the constant for an on-no-match attribute value.
+   *
    * @param sID
    *        The value of the on-no-match attribute, e.g.
    *        <code>"shallow-copy"</code>. Compared exactly, so the caller trims.

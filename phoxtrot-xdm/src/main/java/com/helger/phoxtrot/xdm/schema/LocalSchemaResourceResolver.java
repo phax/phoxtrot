@@ -136,6 +136,8 @@ public final class LocalSchemaResourceResolver implements LSResourceResolver
   private final boolean m_bReadLocalFiles;
 
   /**
+   * Create a resolver that reads local files or refuses every resource.
+   *
    * @param bReadLocalFiles
    *        <code>true</code> to let the processor read local
    *        <code>file:</code> resources itself, <code>false</code> to refuse

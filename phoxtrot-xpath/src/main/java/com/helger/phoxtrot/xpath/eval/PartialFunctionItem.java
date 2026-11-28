@@ -46,6 +46,8 @@ public final class PartialFunctionItem extends AbstractFunctionItem
   private final ICommonsList <SeqType> m_aParamTypes = new CommonsArrayList <> ();
 
   /**
+   * Create the result of a partial function application.
+   *
    * @param aBase
    *        The function being applied.
    * @param aBound

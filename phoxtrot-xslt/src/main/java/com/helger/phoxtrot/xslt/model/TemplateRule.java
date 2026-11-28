@@ -37,6 +37,19 @@ public final class TemplateRule
   private final double m_dPriority;
   private final int m_nOrder;
 
+  /**
+   * Create a template rule.
+   *
+   * @param aTemplate
+   *        The owning template. May not be <code>null</code>.
+   * @param aPattern
+   *        The pattern alternative of this rule. May not be
+   *        <code>null</code>.
+   * @param dPriority
+   *        The priority of the rule.
+   * @param nOrder
+   *        The position in the declaration order.
+   */
   public TemplateRule (@NonNull final Template aTemplate,
                        @NonNull final CompiledPattern aPattern,
                        final double dPriority,
@@ -48,30 +61,53 @@ public final class TemplateRule
     m_nOrder = nOrder;
   }
 
+  /**
+   * Get the owning template.
+   *
+   * @return The template, never <code>null</code>.
+   */
   @NonNull
   public Template getTemplate ()
   {
     return m_aTemplate;
   }
 
+  /**
+   * Get the pattern alternative of this rule.
+   *
+   * @return The pattern, never <code>null</code>.
+   */
   @NonNull
   public CompiledPattern getPattern ()
   {
     return m_aPattern;
   }
 
+  /**
+   * Get the priority of this rule.
+   *
+   * @return The priority (explicit or default).
+   */
   public double getPriority ()
   {
     return m_dPriority;
   }
 
-  /** @return The import precedence of the owning template. */
+  /**
+   * Get the import precedence of the owning template.
+   *
+   * @return The import precedence of the owning template.
+   */
   public int getPrecedence ()
   {
     return m_aTemplate.getPrecedence ();
   }
 
-  /** @return Position in the declaration order (later is higher). */
+  /**
+   * Get the position of this rule in the declaration order.
+   *
+   * @return Position in the declaration order (later is higher).
+   */
   public int getOrder ()
   {
     return m_nOrder;

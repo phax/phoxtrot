@@ -71,6 +71,8 @@ public final class FnOptionMap
   }
 
   /**
+   * Get an option of an option map, converted to the required type.
+   *
    * @param aOptions
    *        The option map.
    * @param sName
@@ -97,6 +99,8 @@ public final class FnOptionMap
   }
 
   /**
+   * Get a boolean option of an option map.
+   *
    * @param aOptions
    *        The option map.
    * @param sName
@@ -117,6 +121,8 @@ public final class FnOptionMap
   }
 
   /**
+   * Get a string option of an option map.
+   *
    * @param aOptions
    *        The option map.
    * @param sName

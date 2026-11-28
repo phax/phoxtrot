@@ -32,6 +32,8 @@ import com.helger.phoxtrot.xdm.IXdmNode;
 public interface IStreamRecordHandler
 {
   /**
+   * Process one record of this handler's population.
+   *
    * @param aRecord
    *        The record, complete with its subtree and linked to its ancestors.
    *        It is dropped after this call, unless the handler
@@ -42,6 +44,9 @@ public interface IStreamRecordHandler
   void handle (@NonNull IXdmNode aRecord, @Nonnegative int nPosition);
 
   /**
+   * Check whether the handler is finished. The default implementation returns
+   * <code>false</code>.
+   *
    * @return <code>true</code> if the handler wants no more records (after
    *         <code>xsl:break</code>). Asked after every record.
    */
@@ -51,6 +56,9 @@ public interface IStreamRecordHandler
   }
 
   /**
+   * Check whether the handler retains the records it is given. The default
+   * implementation returns <code>false</code>.
+   *
    * @return <code>true</code> if the handler keeps the records it is given
    *         beyond {@link #handle(IXdmNode, int)} (a group that is still open)
    *         and releases each of them itself with

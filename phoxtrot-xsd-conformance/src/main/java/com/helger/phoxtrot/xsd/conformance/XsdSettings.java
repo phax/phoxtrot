@@ -94,20 +94,30 @@ public record XsdSettings (@NonNull EXsdTestValidatorKind validator,
   public static final String DEFAULT_VERSION = "1.0";
   public static final String DEFAULT_VALIDATOR = "xerces";
 
-  /** @return The <code>suite.xml</code> file. */
+  /**
+   * Get the suite file.
+   *
+   * @return The <code>suite.xml</code> file.
+   */
   @NonNull
   public Path getSuiteFile ()
   {
     return suiteDir.resolve ("suite.xml");
   }
 
-  /** @return Whether fail lines are collected (fail dump or a filtered run). */
+  /**
+   * Check whether fail lines are collected.
+   *
+   * @return Whether fail lines are collected (fail dump or a filtered run).
+   */
   public boolean isCollectFailLines ()
   {
     return failDump || !only.isEmpty ();
   }
 
   /**
+   * Parse a list of version tokens.
+   *
    * @param sValue
    *        Comma separated version tokens.
    * @return The versions.
@@ -135,6 +145,8 @@ public record XsdSettings (@NonNull EXsdTestValidatorKind validator,
   }
 
   /**
+   * Parse a validator kind.
+   *
    * @param sValue
    *        The value of <code>xsd.validator</code>.
    * @return The validator kind.
@@ -150,7 +162,11 @@ public record XsdSettings (@NonNull EXsdTestValidatorKind validator,
     return ret;
   }
 
-  /** @return The settings from the system properties. */
+  /**
+   * Read the settings from the system properties.
+   *
+   * @return The settings from the system properties.
+   */
   @NonNull
   public static XsdSettings fromSystemProperties ()
   {

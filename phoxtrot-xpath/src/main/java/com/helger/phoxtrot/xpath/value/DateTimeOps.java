@@ -408,6 +408,8 @@ public final class DateTimeOps
   }
 
   /**
+   * Apply an arithmetic operator to date/time and duration operands.
+   *
    * @param eOp
    *        The operator.
    * @param aLeft

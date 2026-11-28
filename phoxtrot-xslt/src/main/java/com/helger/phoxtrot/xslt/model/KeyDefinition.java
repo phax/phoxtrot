@@ -47,6 +47,27 @@ public final class KeyDefinition
   private final String m_sCollation;
   private final boolean m_bXslt10;
 
+  /**
+   * Create a key declaration.
+   *
+   * @param aElement
+   *        The xsl:key element. May not be <code>null</code>.
+   * @param aName
+   *        The key name. May not be <code>null</code>.
+   * @param aMatch
+   *        The match pattern. May not be <code>null</code>.
+   * @param aUse
+   *        The use expression, <code>null</code> if the body gives the value.
+   * @param aBody
+   *        The sequence constructor, <code>null</code> if use is given.
+   * @param bComposite
+   *        <code>true</code> for composite="yes".
+   * @param sCollation
+   *        The absolute collation URI. May not be <code>null</code>.
+   * @param bXslt10
+   *        <code>true</code> if the declaration is processed with XSLT 1.0
+   *        behaviour.
+   */
   public KeyDefinition (@NonNull final XslElement aElement,
                         @NonNull final XdmQName aName,
                         @NonNull final CompiledPattern aMatch,
@@ -66,32 +87,56 @@ public final class KeyDefinition
     m_bXslt10 = bXslt10;
   }
 
+  /**
+   * Get the declaring element.
+   *
+   * @return The xsl:key element, never <code>null</code>.
+   */
   @NonNull
   public XslElement getElement ()
   {
     return m_aElement;
   }
 
+  /**
+   * Get the key name.
+   *
+   * @return The key name, never <code>null</code>.
+   */
   @NonNull
   public XdmQName getName ()
   {
     return m_aName;
   }
 
+  /**
+   * Get the match pattern.
+   *
+   * @return The match pattern, never <code>null</code>.
+   */
   @NonNull
   public CompiledPattern getMatch ()
   {
     return m_aMatch;
   }
 
-  /** @return The use expression, <code>null</code> if the body gives the value. */
+  /**
+   * Get the use expression.
+   *
+   * @return The use expression, <code>null</code> if the body gives the
+   *         value.
+   */
   @Nullable
   public XPathExpr getUse ()
   {
     return m_aUse;
   }
 
-  /** @return The sequence constructor, <code>null</code> if use is given. */
+  /**
+   * Get the sequence constructor giving the key value.
+   *
+   * @return The sequence constructor, <code>null</code> if use is given.
+   */
   @Nullable
   public SequenceConstructor getBody ()
   {
@@ -99,6 +144,8 @@ public final class KeyDefinition
   }
 
   /**
+   * Check whether the key is composite.
+   *
    * @return <code>true</code> for composite="yes": the key value is the whole
    *         sequence of atomic values, not each value on its own.
    */
@@ -108,6 +155,8 @@ public final class KeyDefinition
   }
 
   /**
+   * Get the collation of the key.
+   *
    * @return The absolute collation URI: the collation attribute resolved
    *         against the static base URI, or else the default collation of
    *         the declaration.
@@ -119,6 +168,8 @@ public final class KeyDefinition
   }
 
   /**
+   * Check whether this declaration uses XSLT 1.0 behaviour.
+   *
    * @return <code>true</code> if this declaration is processed with XSLT 1.0
    *         behaviour (XSLT 3.0 section 20.2.2): with composite="no" one such
    *         declaration puts the whole key into backwards compatible mode.

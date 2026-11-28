@@ -375,7 +375,12 @@ public final class XsdSchemaView
     return new XsdParticleView (aDocs, aParticle.m_nMin, aParticle.m_nMax, aTerm);
   }
 
-  /** @return The global element declarations, ordered by namespace then local name. */
+  /**
+   * Get all global element declarations.
+   *
+   * @return The global element declarations, ordered by namespace then local
+   *         name.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XsdElementView> getAllGlobalElements ()
@@ -387,6 +392,8 @@ public final class XsdSchemaView
   }
 
   /**
+   * Get all named type definitions.
+   *
    * @return The named type definitions (user-defined and built-in ones the
    *         schema declares), ordered by namespace then local name.
    */
@@ -404,7 +411,11 @@ public final class XsdSchemaView
     return ret;
   }
 
-  /** @return The global attribute declarations, ordered by name. */
+  /**
+   * Get all global attribute declarations.
+   *
+   * @return The global attribute declarations, ordered by name.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XsdAttributeDeclView> getAllGlobalAttributes ()
@@ -416,6 +427,8 @@ public final class XsdSchemaView
   }
 
   /**
+   * Find a global element declaration by name.
+   *
    * @param aName
    *        The element name.
    * @return The global element declaration, or <code>null</code>.
@@ -428,6 +441,8 @@ public final class XsdSchemaView
   }
 
   /**
+   * Find a named type definition by name.
+   *
    * @param aName
    *        The type name.
    * @return The named type definition (a schema type or a built-in one), or
@@ -451,6 +466,8 @@ public final class XsdSchemaView
   }
 
   /**
+   * Get the global elements that may substitute for a head element.
+   *
    * @param aHead
    *        The head element name.
    * @return The global elements that may substitute for the head,

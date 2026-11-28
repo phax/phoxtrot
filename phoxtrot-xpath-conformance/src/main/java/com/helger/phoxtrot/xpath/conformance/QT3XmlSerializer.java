@@ -126,6 +126,8 @@ public final class QT3XmlSerializer
   }
 
   /**
+   * Serialise a node as XML.
+   *
    * @param aNode
    *        The node to serialise.
    * @return Its XML form, built with an explicit stack so deep trees cannot
@@ -192,6 +194,8 @@ public final class QT3XmlSerializer
   }
 
   /**
+   * Describe an item for messages.
+   *
    * @param aItem
    *        Any item.
    * @return A short description for messages: nodes serialised, atomic values
@@ -208,6 +212,8 @@ public final class QT3XmlSerializer
   }
 
   /**
+   * Describe a sequence for messages.
+   *
    * @param aSeq
    *        A sequence.
    * @param nMaxLen

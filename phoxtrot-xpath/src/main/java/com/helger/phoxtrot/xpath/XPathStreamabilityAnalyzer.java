@@ -105,6 +105,7 @@ public final class XPathStreamabilityAnalyzer
   private final ICommonsMap <String, StreamFunctionSignature> m_aFunctions = new CommonsHashMap <> ();
   private final ICommonsList <IExpr.Binding> m_aBoundVariables = new CommonsArrayList <> ();
 
+  /** Create a new analyser with the default configuration. */
   public XPathStreamabilityAnalyzer ()
   {}
 
@@ -567,6 +568,8 @@ public final class XPathStreamabilityAnalyzer
   }
 
   /**
+   * Get the context mode of the analysis.
+   *
    * @return What the analysis assumes about the context item. {@link EStreamContextMode#STREAMED} by default.
    */
   @NonNull
@@ -576,6 +579,8 @@ public final class XPathStreamabilityAnalyzer
   }
 
   /**
+   * Set the context mode of the analysis.
+   *
    * @param eContextMode
    *        What the analysis assumes about the context item. May not be <code>null</code>.
    * @return this for chaining
@@ -589,6 +594,8 @@ public final class XPathStreamabilityAnalyzer
   }
 
   /**
+   * Check whether the context item is assumed to be a streamed node.
+   *
    * @return <code>true</code> if the context mode is {@link EStreamContextMode#STREAMED} (the default).
    */
   public boolean isContextStreamed ()

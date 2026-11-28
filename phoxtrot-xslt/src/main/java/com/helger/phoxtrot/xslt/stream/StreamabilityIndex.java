@@ -53,6 +53,14 @@ public final class StreamabilityIndex
   private final ICommonsMap <XslElement, ICommonsMap <String, SeqType>> m_aTypes = new CommonsHashMap <> ();
 
   /**
+   * Create an empty index.
+   */
+  public StreamabilityIndex ()
+  {}
+
+  /**
+   * Record the parsed expression of an expression text written on an element.
+   *
    * @param aElement
    *        The element the expression is written on.
    * @param sText
@@ -68,6 +76,8 @@ public final class StreamabilityIndex
   }
 
   /**
+   * Get the parsed expression recorded for an expression text on an element.
+   *
    * @param aElement
    *        The element the expression is written on.
    * @param sText
@@ -82,6 +92,8 @@ public final class StreamabilityIndex
   }
 
   /**
+   * Get all expressions recorded on an element.
+   *
    * @param aElement
    *        An element.
    * @return All expressions recorded on that element (attributes, attribute
@@ -97,6 +109,8 @@ public final class StreamabilityIndex
   }
 
   /**
+   * Record the parsed pattern of a pattern text written on an element.
+   *
    * @param aElement
    *        The element the pattern is written on.
    * @param sText
@@ -112,6 +126,8 @@ public final class StreamabilityIndex
   }
 
   /**
+   * Get the parsed pattern recorded for a pattern text on an element.
+   *
    * @param aElement
    *        The element the pattern is written on.
    * @param sText
@@ -126,6 +142,9 @@ public final class StreamabilityIndex
   }
 
   /**
+   * Record the parsed sequence type of a sequence type text written on an
+   * element.
+   *
    * @param aElement
    *        The element the sequence type is written on.
    * @param sText
@@ -141,6 +160,9 @@ public final class StreamabilityIndex
   }
 
   /**
+   * Get the parsed sequence type recorded for a sequence type text on an
+   * element.
+   *
    * @param aElement
    *        The element the sequence type is written on.
    * @param sText

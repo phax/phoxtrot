@@ -58,6 +58,8 @@ public record XsdError (int line,
                         @NonNull String particle)
 {
   /**
+   * Create an error without location.
+   *
    * @param sCode
    *        The constraint code, may be empty.
    * @param sMessage
@@ -71,6 +73,8 @@ public record XsdError (int line,
   }
 
   /**
+   * Create a copy of this error with a location.
+   *
    * @param nLine
    *        1-based line.
    * @param nColumn

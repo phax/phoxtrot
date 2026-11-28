@@ -81,6 +81,8 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   private final ICommonsOrderedMap <XdmQName, FormatDecimalFormat> m_aDecimalFormats = new CommonsLinkedHashMap <> ();
 
   /**
+   * Create an evaluator with the given current date/time.
+   *
    * @param aNow
    *        The current date/time of the run.
    */
@@ -90,6 +92,15 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     m_aNow = aNow;
   }
 
+  /**
+   * Declare a namespace prefix for the expressions.
+   *
+   * @param sPrefix
+   *        The prefix.
+   * @param sUri
+   *        The namespace URI.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator declareNamespace (@NonNull final String sPrefix, @NonNull final String sUri)
   {
@@ -98,6 +109,8 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
+   * Get the namespace URI declared for a prefix.
+   *
    * @param sPrefix
    *        A prefix.
    * @return The namespace URI declared here or <code>null</code>.
@@ -108,6 +121,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return m_aNamespaces.get (sPrefix);
   }
 
+  /**
+   * Set the default element namespace.
+   *
+   * @param sUri
+   *        The namespace URI, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setDefaultElementNamespace (@Nullable final String sUri)
   {
@@ -115,6 +135,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Set the static base URI.
+   *
+   * @param sBaseUri
+   *        The base URI, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setBaseUri (@Nullable final String sBaseUri)
   {
@@ -122,6 +149,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Set the default collation.
+   *
+   * @param sDefaultCollation
+   *        The collation URI, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setDefaultCollation (@Nullable final String sDefaultCollation)
   {
@@ -129,6 +163,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Switch XPath 1.0 compatibility mode on or off.
+   *
+   * @param b
+   *        <code>true</code> to compile in XPath 1.0 compatibility mode.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setXPath10Compatibility (final boolean b)
   {
@@ -137,6 +178,8 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
+   * Switch the engine's narrow part of the Static Typing Feature on or off.
+   *
    * @param b
    *        <code>true</code> to compile with the engine's narrow part of the
    *        optional Static Typing Feature (provably empty axis steps are
@@ -150,6 +193,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Set the XML version.
+   *
+   * @param eXmlVersion
+   *        The XML version, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setXmlVersion (@Nullable final EXmlVersion eXmlVersion)
   {
@@ -157,6 +207,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Set the XSD version.
+   *
+   * @param eXsdVersion
+   *        The XSD version, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setXsdVersion (@Nullable final EXsdVersion eXsdVersion)
   {
@@ -164,6 +221,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Set the default language.
+   *
+   * @param sDefaultLanguage
+   *        The default language, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setDefaultLanguage (@Nullable final String sDefaultLanguage)
   {
@@ -171,6 +235,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Set the unnamed decimal format.
+   *
+   * @param aFormat
+   *        The decimal format, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setDefaultDecimalFormat (@Nullable final FormatDecimalFormat aFormat)
   {
@@ -178,6 +249,15 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Add a named decimal format.
+   *
+   * @param aName
+   *        The name of the decimal format.
+   * @param aFormat
+   *        The decimal format.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator addDecimalFormat (@NonNull final XdmQName aName, @NonNull final FormatDecimalFormat aFormat)
   {
@@ -185,6 +265,13 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Set the context item.
+   *
+   * @param aItem
+   *        The context item, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setContextItem (@Nullable final IXdmItem aItem)
   {
@@ -192,12 +279,24 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Get the context item.
+   *
+   * @return The context item or <code>null</code>.
+   */
   @Nullable
   public IXdmItem getContextItem ()
   {
     return m_aContextItem;
   }
 
+  /**
+   * Set the resource resolver.
+   *
+   * @param aResolver
+   *        The resource resolver, may be <code>null</code>.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setResourceResolver (@Nullable final IResourceResolver aResolver)
   {
@@ -206,6 +305,8 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
+   * Set the entity resolver of <code>fn:parse-xml</code>.
+   *
    * @param aEntityResolver
    *        The entity resolver of <code>fn:parse-xml</code>, may be <code>null</code>.
    * @return this for chaining
@@ -218,6 +319,8 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
+   * Set the in-scope schema definitions.
+   *
    * @param aSchemaSet
    *        The in-scope schema definitions, may be <code>null</code>.
    * @return this for chaining
@@ -229,6 +332,15 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
     return this;
   }
 
+  /**
+   * Bind a variable, deriving its static type from the value.
+   *
+   * @param aName
+   *        The variable name.
+   * @param aValue
+   *        The value.
+   * @return this for chaining
+   */
   @NonNull
   public QT3EngineEvaluator setVariable (@NonNull final XdmQName aName, @NonNull final XdmSequence aValue)
   {
@@ -262,6 +374,8 @@ public final class QT3EngineEvaluator implements IQT3Evaluator
   }
 
   /**
+   * Get the variables bound so far.
+   *
    * @return A copy of the variables bound so far.
    */
   @NonNull

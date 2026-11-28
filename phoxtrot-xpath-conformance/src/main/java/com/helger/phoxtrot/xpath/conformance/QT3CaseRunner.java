@@ -62,7 +62,14 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 @Immutable
 public final class QT3CaseRunner
 {
-  /** The outcome of one case plus a short description of what was got. */
+  /**
+   * The outcome of one case plus a short description of what was got.
+   *
+   * @param outcome
+   *        The outcome of the case.
+   * @param got
+   *        A short description of what the case got.
+   */
   public record CaseResult (@NonNull QT3Outcome outcome, @NonNull String got)
   {}
 
@@ -85,6 +92,8 @@ public final class QT3CaseRunner
   }
 
   /**
+   * Create a case runner with the given strictness of error codes.
+   *
    * @param aNow
    *        The fixed current date/time of the run.
    * @param bStrictErrorCodes

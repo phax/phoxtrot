@@ -343,6 +343,9 @@ public final class ExprWalker
   }
 
   /**
+   * Check whether an expression tree contains a function call or reference
+   * whose name passes a filter.
+   *
    * @param aExpr
    *        The expression tree.
    * @param aFilter
@@ -367,6 +370,9 @@ public final class ExprWalker
   }
 
   /**
+   * Check whether a function name is <code>fn:position</code> or
+   * <code>fn:last</code>.
+   *
    * @param aName
    *        A function name.
    * @return <code>true</code> for <code>fn:position</code> and
@@ -615,6 +621,8 @@ public final class ExprWalker
   }
 
   /**
+   * Collect the names of all variables referenced in an expression tree.
+   *
    * @param aExpr
    *        The expression.
    * @return The names of all variables referenced in the tree, also of those

@@ -153,6 +153,8 @@ public final class QT3ResourceResolver implements IResourceResolver
   }
 
   /**
+   * Get the schema set of the environment.
+   *
    * @return The in-scope schema definitions of the environment (not with the JDK validator, see
    *         {@link QT3SchemaCache#getSchemaSet}), or <code>null</code> if it declares no schema
    *         documents or they do not compile.
@@ -313,6 +315,8 @@ public final class QT3ResourceResolver implements IResourceResolver
   }
 
   /**
+   * Resolve a relative file name of the catalog against a base directory.
+   *
    * @param aBaseDir
    *        Base directory.
    * @param sRelative
@@ -336,6 +340,8 @@ public final class QT3ResourceResolver implements IResourceResolver
   };
 
   /**
+   * Get the <code>file:</code> URI of a path.
+   *
    * @param aPath
    *        An absolute path.
    * @return Its <code>file:</code> URI, the same form the XDM parser reports as document URI.
@@ -347,6 +353,8 @@ public final class QT3ResourceResolver implements IResourceResolver
   }
 
   /**
+   * Get the parsed document of a source of the environment.
+   *
    * @param aSource
    *        A source of the environment.
    * @return The parsed source document or <code>null</code> if it cannot be loaded (a deliberately

@@ -60,6 +60,15 @@ public final class XslElement extends AbstractXslNode
   private int m_nPrecedence;
   private int m_nImportLo;
 
+  /**
+   * Constructor.
+   *
+   * @param aModule
+   *        The module this element belongs to. May not be <code>null</code>.
+   * @param aSource
+   *        The parsed source element. Its name becomes the name of this
+   *        element. May not be <code>null</code>.
+   */
   public XslElement (@NonNull final XslModule aModule, @NonNull final IXdmNode aSource)
   {
     super (aModule);
@@ -67,32 +76,53 @@ public final class XslElement extends AbstractXslNode
     m_aName = aSource.getName ();
   }
 
-  /** @return The parsed source element (namespaces, base URI, location). */
+  /**
+   * Get the parsed source element of this element.
+   *
+   * @return The parsed source element (namespaces, base URI, location).
+   */
   @NonNull
   public IXdmNode getSource ()
   {
     return m_aSource;
   }
 
+  /**
+   * Get the name of this element.
+   *
+   * @return The expanded name, taken from the source element. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public XdmQName getName ()
   {
     return m_aName;
   }
 
+  /**
+   * Get the local name of this element.
+   *
+   * @return The local name of the element name. Never <code>null</code>.
+   */
   @NonNull
   public String getLocalName ()
   {
     return m_aName.localName ();
   }
 
-  /** @return <code>true</code> if this element is in the XSLT namespace. */
+  /**
+   * Check whether this element is in the XSLT namespace.
+   *
+   * @return <code>true</code> if this element is in the XSLT namespace.
+   */
   public boolean isXsl ()
   {
     return XsltNames.NS_XSL.equals (m_aName.namespaceUri ());
   }
 
   /**
+   * Check whether this is the XSLT element with the given local name.
+   *
    * @param sLocalName
    *        Local name.
    * @return <code>true</code> if this is the XSLT element with that local name.
@@ -115,6 +145,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the value of an attribute by its namespace URI and local name.
+   *
    * @param sNamespaceUri
    *        Namespace URI, empty for none.
    * @param sLocalName
@@ -128,6 +160,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the value of an attribute in no namespace.
+   *
    * @param sLocalName
    *        Local name of an attribute in no namespace.
    * @return The value or <code>null</code>.
@@ -139,6 +173,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Check whether an attribute in no namespace is present.
+   *
    * @param sLocalName
    *        Local name of an attribute in no namespace.
    * @return <code>true</code> if present.
@@ -149,6 +185,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the value of a standard attribute on this element.
+   *
    * @param sLocalName
    *        Name of a standard attribute (version, use-when, expand-text,
    *        ...).
@@ -162,6 +200,9 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the value of a standard attribute, inherited from the nearest
+   * ancestor-or-self element that carries it.
+   *
    * @param sLocalName
    *        Name of a standard attribute.
    * @return The value on the nearest ancestor-or-self element of the module
@@ -180,6 +221,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Find the element that carries a standard attribute.
+   *
    * @param sLocalName
    *        Name of a standard attribute.
    * @return The nearest ancestor-or-self element carrying it, or
@@ -194,7 +237,11 @@ public final class XslElement extends AbstractXslNode
     return null;
   }
 
-  /** @return All attributes in source order (after shadow expansion). */
+  /**
+   * Get all attributes of this element.
+   *
+   * @return All attributes in source order (after shadow expansion).
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsOrderedMap <XdmQName, String> getAllAttributes ()
@@ -224,6 +271,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Remove an attribute.
+   *
    * @param aName
    *        Name of the attribute to remove.
    */
@@ -254,7 +303,11 @@ public final class XslElement extends AbstractXslNode
     aChild.setParent (null);
   }
 
-  /** @return The children (elements and merged text). */
+  /**
+   * Get the children of this element.
+   *
+   * @return The children (elements and merged text).
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <AbstractXslNode> getChildren ()
@@ -262,12 +315,21 @@ public final class XslElement extends AbstractXslNode
     return m_aChildren.getClone ();
   }
 
+  /**
+   * Get the number of children of this element.
+   *
+   * @return The number of children (elements and merged text). Always &ge; 0.
+   */
   public int getChildCount ()
   {
     return m_aChildren.size ();
   }
 
-  /** @return The element children only. */
+  /**
+   * Get the element children of this element.
+   *
+   * @return The element children only.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XslElement> getElementChildren ()
@@ -280,6 +342,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the XSLT element children with the given local name.
+   *
    * @param sLocalName
    *        Local name of XSLT elements.
    * @return All XSLT element children of that name.
@@ -296,6 +360,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Look up the namespace URI bound to a prefix on this element.
+   *
    * @param sPrefix
    *        The prefix, empty for the default namespace.
    * @return The namespace URI bound to it on this element, or
@@ -308,6 +374,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the in-scope namespaces of this element.
+   *
    * @return The in-scope namespaces of this element (prefix to URI, the
    *         default namespace under the empty prefix, <code>xml</code>
    *         included).
@@ -323,6 +391,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the static base URI of this element.
+   *
    * @return The static base URI of this element (module URI and
    *         <code>xml:base</code>), or <code>null</code>.
    */
@@ -373,6 +443,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Check whether forwards-compatible processing is enabled for this element.
+   *
    * @return <code>true</code> if forwards-compatible processing is enabled for
    *         this element (effective version greater than 3.0).
    */
@@ -425,6 +497,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the import precedence of this top-level declaration.
+   *
    * @return Import precedence of a top-level declaration (higher wins).
    */
   public int getPrecedence ()
@@ -433,6 +507,9 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the lowest import precedence of the modules imported by the module of
+   * this top-level declaration.
+   *
    * @return The lowest import precedence of the modules imported (directly or
    *         indirectly) by the module of this top-level declaration.
    */
@@ -461,6 +538,8 @@ public final class XslElement extends AbstractXslNode
   }
 
   /**
+   * Get the top-level element this element is in.
+   *
    * @return The top-level element (child of the module root) this element is
    *         in, or the module root itself.
    */

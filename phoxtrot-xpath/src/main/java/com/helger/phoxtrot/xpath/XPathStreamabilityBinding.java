@@ -50,6 +50,8 @@ public final class XPathStreamabilityBinding
   }
 
   /**
+   * Get the result of the analysis of the binding expression.
+   *
    * @return The result of the binding expression analysed on its own, with the configuration of the analyser at the
    *         time it was analysed (within the variables bound before). Never <code>null</code>.
    */

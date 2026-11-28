@@ -56,6 +56,8 @@ public final class XsdSchemaSource
   }
 
   /**
+   * Create a source from a schema document text.
+   *
    * @param sXml
    *        The schema document text.
    * @param aBaseDir
@@ -72,6 +74,8 @@ public final class XsdSchemaSource
   }
 
   /**
+   * Create a source from a schema document file.
+   *
    * @param aPath
    *        The schema document file. Its directory is the base directory.
    * @return The source.
@@ -103,14 +107,22 @@ public final class XsdSchemaSource
     return new XsdSchemaSource (null, aBytes, aPath, aBaseDir);
   }
 
-  /** @return The document file, <code>null</code> for a text source. */
+  /**
+   * Get the document file.
+   *
+   * @return The document file, <code>null</code> for a text source.
+   */
   @Nullable
   public Path getPath ()
   {
     return m_aPath;
   }
 
-  /** @return The base directory, may be <code>null</code>. */
+  /**
+   * Get the base directory.
+   *
+   * @return The base directory, may be <code>null</code>.
+   */
   @Nullable
   public Path getBaseDir ()
   {

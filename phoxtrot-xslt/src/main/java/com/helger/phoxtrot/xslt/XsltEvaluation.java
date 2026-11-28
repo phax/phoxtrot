@@ -79,6 +79,8 @@ public final class XsltEvaluation
   }
 
   /**
+   * Get the global context item of the evaluation.
+   *
    * @return The global context item as the stylesheet sees it, or
    *         <code>null</code> if there is none. If the stylesheet strips
    *         whitespace, this is a node of the stripped copy of the tree of
@@ -92,6 +94,9 @@ public final class XsltEvaluation
   }
 
   /**
+   * Create a dynamic context for evaluating XPath expressions of the host
+   * against the stylesheet.
+   *
    * @return A new dynamic context without local variables. If there is a
    *         global context item, it is the context item (position and size
    *         1) and the current item (<code>current()</code>); otherwise the
@@ -109,6 +114,8 @@ public final class XsltEvaluation
   }
 
   /**
+   * Get the texts of the messages produced so far.
+   *
    * @return The texts of the xsl:message instructions executed so far (e.g.
    *         in stylesheet functions).
    */

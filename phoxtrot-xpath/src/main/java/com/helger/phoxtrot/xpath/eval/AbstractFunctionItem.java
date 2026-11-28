@@ -28,6 +28,12 @@ import com.helger.phoxtrot.xpath.value.IXdmFunction;
 public abstract class AbstractFunctionItem implements IXdmFunction
 {
   /**
+   * Default constructor for subclasses.
+   */
+  public AbstractFunctionItem ()
+  {}
+
+  /**
    * @return <code>true</code> if the result of {@link #call} is known to match
    *         the declared return type, so the caller may skip the conversion
    *         (built-in functions are trusted to honour their signature).

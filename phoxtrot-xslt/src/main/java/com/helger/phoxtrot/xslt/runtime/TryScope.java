@@ -47,6 +47,8 @@ public final class TryScope
   }
 
   /**
+   * Enter the body of an xsl:try instruction.
+   *
    * @param aCtx
    *        The context of an xsl:try instruction.
    * @return The context its body is evaluated in, with a new innermost scope.
@@ -72,6 +74,8 @@ public final class TryScope
   }
 
   /**
+   * Check whether an error must not be caught by the innermost xsl:try.
+   *
    * @param aCtx
    *        The context of the xsl:try body, as returned by
    *        {@link #enter(XsltContext)}.

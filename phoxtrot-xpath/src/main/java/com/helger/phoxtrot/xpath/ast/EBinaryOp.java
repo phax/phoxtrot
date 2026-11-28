@@ -26,12 +26,20 @@ package com.helger.phoxtrot.xpath.ast;
  */
 public enum EBinaryOp
 {
+  /** The operator <code>and</code>. */
   AND,
+  /** The operator <code>or</code>. */
   OR,
+  /** The operator <code>+</code>. */
   ADD,
+  /** The operator <code>-</code>. */
   SUBTRACT,
+  /** The operator <code>*</code>. */
   MULTIPLY,
+  /** The operator <code>div</code>. */
   DIVIDE,
+  /** The operator <code>idiv</code>. */
   INTEGER_DIVIDE,
+  /** The operator <code>mod</code>. */
   MODULO
 }

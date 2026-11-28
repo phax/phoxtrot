@@ -53,6 +53,7 @@ public final class XdmSequence implements Iterable <IXdmItem>
 {
   private static final IXdmItem [] NO_ITEMS = new IXdmItem [0];
 
+  /** The shared empty sequence. */
   public static final XdmSequence EMPTY = new XdmSequence (NO_ITEMS);
 
   // The items of a sequence of zero or at least two items; null for one item
@@ -73,6 +74,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
   }
 
   /**
+   * Create a sequence of one item.
+   *
    * @param aItem
    *        The item.
    * @return A new sequence with exactly this item.
@@ -85,6 +88,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
   }
 
   /**
+   * Create a sequence from items.
+   *
    * @param aItems
    *        The items; the array is copied.
    * @return The sequence
@@ -102,6 +107,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
   }
 
   /**
+   * Create a sequence from a list of items.
+   *
    * @param aItems
    *        The items; the list is copied.
    * @return The sequence
@@ -165,18 +172,30 @@ public final class XdmSequence implements Iterable <IXdmItem>
     return nPos + m_aItems.length;
   }
 
+  /**
+   * Get the number of items.
+   *
+   * @return The item count. Always &ge; 0.
+   */
   @Nonnegative
   public int size ()
   {
     return m_aItems == null ? 1 : m_aItems.length;
   }
 
+  /**
+   * Check if this sequence has no items.
+   *
+   * @return <code>true</code> if the sequence is empty.
+   */
   public boolean isEmpty ()
   {
     return m_aItems != null && m_aItems.length == 0;
   }
 
   /**
+   * Get the atomic type of a single atomic item.
+   *
    * @return The type of the only item if this sequence is exactly one atomic
    *         value, otherwise <code>null</code>.
    */
@@ -186,12 +205,19 @@ public final class XdmSequence implements Iterable <IXdmItem>
     return m_aSingle instanceof final XdmAtomic aAtomic ? aAtomic.getType () : null;
   }
 
+  /**
+   * Check if this sequence has exactly one item.
+   *
+   * @return <code>true</code> if the sequence consists of exactly one item.
+   */
   public boolean isSingleton ()
   {
     return m_aItems == null;
   }
 
   /**
+   * Get an item by index.
+   *
    * @param nIndex
    *        0-based item index.
    * @return The item at the index.
@@ -209,6 +235,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
   }
 
   /**
+   * Get the first item.
+   *
    * @return The first item.
    * @throws NoSuchElementException
    *         if the sequence is empty.
@@ -224,6 +252,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
   }
 
   /**
+   * Get a range of items.
+   *
    * @param nFrom
    *        0-based start, inclusive
    * @param nTo
@@ -245,7 +275,11 @@ public final class XdmSequence implements Iterable <IXdmItem>
     return aRange.length == 1 ? new XdmSequence (aRange[0]) : new XdmSequence (aRange);
   }
 
-  /** @return A new list with the items in sequence order. */
+  /**
+   * Get a copy of the items as a list.
+   *
+   * @return A new list with the items in sequence order.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <IXdmItem> getAsList ()
@@ -326,6 +360,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
     }
 
     /**
+     * Create a builder with the given initial capacity.
+     *
      * @param nInitialCapacity
      *        The number of items the buffer has room for when the second item
      *        is added; at least 2 are used.
@@ -433,6 +469,11 @@ public final class XdmSequence implements Iterable <IXdmItem>
       return this;
     }
 
+    /**
+     * Get the number of items added so far.
+     *
+     * @return The item count. Always &ge; 0.
+     */
     @Nonnegative
     public int size ()
     {
@@ -440,6 +481,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
     }
 
     /**
+     * Build the sequence from the items added so far.
+     *
      * @return {@link XdmSequence#EMPTY} if no item was added, the single-item
      *         sequence for one item, otherwise a sequence over the buffer
      *         (taken over if it is exactly full, else a trimmed copy). The
@@ -476,6 +519,10 @@ public final class XdmSequence implements Iterable <IXdmItem>
   public static final class ListBuilder <T extends IXdmItem> extends AbstractList <T> implements RandomAccess
   {
     private final Builder m_aBuilder = new Builder ();
+
+    /** An empty list builder. */
+    public ListBuilder ()
+    {}
 
     @Override
     public boolean add (@NonNull final T aItem)
@@ -527,6 +574,8 @@ public final class XdmSequence implements Iterable <IXdmItem>
     }
 
     /**
+     * Build the sequence of the collected items.
+     *
      * @return The sequence of the collected items, as
      *         {@link Builder#build()} gives it.
      */

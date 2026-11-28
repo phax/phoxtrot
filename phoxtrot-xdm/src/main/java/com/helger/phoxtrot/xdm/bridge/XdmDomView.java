@@ -117,6 +117,8 @@ public final class XdmDomView
   }
 
   /**
+   * Get the root of the viewed tree.
+   *
    * @return The root of the viewed tree. Never <code>null</code>.
    */
   @NonNull
@@ -126,6 +128,8 @@ public final class XdmDomView
   }
 
   /**
+   * Get the DOM document of the viewed tree.
+   *
    * @return The DOM document of the viewed tree, or <code>null</code> if the tree is not rooted in a document node.
    */
   @Nullable

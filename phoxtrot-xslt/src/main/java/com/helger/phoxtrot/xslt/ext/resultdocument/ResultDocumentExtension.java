@@ -548,6 +548,12 @@ public final class ResultDocumentExtension implements IXsltExtension
   }
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public ResultDocumentExtension ()
+  {}
+
+  /**
    * Compile xsl:result-document. Every serialization attribute of
    * {@link OutputDefinition#ATTRIBUTES} except version and use-character-maps
    * is compiled as an AVT; output-version supplies the version parameter. A

@@ -38,6 +38,8 @@ public final class ExecutionBudget
   private int m_nDepth;
 
   /**
+   * Create a new budget with the given limits.
+   *
    * @param nMaxSteps
    *        The maximum number of instructions to execute;
    *        {@link Long#MAX_VALUE}
@@ -97,6 +99,8 @@ public final class ExecutionBudget
   }
 
   /**
+   * Get the step limit.
+   *
    * @return The maximum number of instructions to execute,
    *         {@link Long#MAX_VALUE} for no limit.
    */
@@ -105,13 +109,21 @@ public final class ExecutionBudget
     return m_nMaxSteps;
   }
 
-  /** @return The number of instructions executed so far. */
+  /**
+   * Get the number of steps counted so far.
+   *
+   * @return The number of instructions executed so far.
+   */
   public long getSteps ()
   {
     return m_nSteps;
   }
 
-  /** @return The current nesting depth. */
+  /**
+   * Get the current nesting depth.
+   *
+   * @return The current nesting depth.
+   */
   public int getDepth ()
   {
     return m_nDepth;

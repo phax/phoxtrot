@@ -86,6 +86,8 @@ public final class FunctionCallSite
     private final XdmSequence [] m_aValues;
 
     /**
+     * Create the converted literals of a call for one function definition.
+     *
      * @param aDef
      *        The function definition whose parameter types the values were
      *        converted to.
@@ -107,6 +109,8 @@ public final class FunctionCallSite
     }
 
     /**
+     * Get the converted value of a literal argument.
+     *
      * @param nIndex
      *        0-based argument index.
      * @return The converted value of the literal argument at the index, or
@@ -130,6 +134,10 @@ public final class FunctionCallSite
   private volatile ConvertedLiterals m_aConvertedLiterals;
   // What the evaluator keeps about memoising the call, opaque to the site
   private volatile MemoPlanEntry m_aMemoPlan;
+
+  /** Create a call site with nothing resolved or cached yet. */
+  public FunctionCallSite ()
+  {}
 
   /**
    * What the evaluator keeps about memoising the call of this site (whether

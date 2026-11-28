@@ -67,6 +67,10 @@ import com.helger.phoxtrot.xdm.schema.IXdmSchemaSet;
 @NotThreadSafe
 public class XdmParser
 {
+  /**
+   * The default of {@link #setLoadExternalEntities(boolean)}: external entities and the external
+   * DTD subset are not read.
+   */
   public static final boolean DEFAULT_LOAD_EXTERNAL_ENTITIES = false;
   /**
    * The maximum element nesting depth. JDK 25 enforces 100 under secure processing, JDK 21 enforces
@@ -203,6 +207,18 @@ public class XdmParser
   private EntityResolver m_aEntityResolver;
   private String m_sAccessExternalDtd = DEFAULT_ACCESS_EXTERNAL_DTD;
 
+  /**
+   * Create a parser with the default settings.
+   */
+  public XdmParser ()
+  {}
+
+  /**
+   * Check whether external entities and the external DTD subset are read (see
+   * {@link #setLoadExternalEntities(boolean)}).
+   *
+   * @return <code>true</code> if they are read. Default {@link #DEFAULT_LOAD_EXTERNAL_ENTITIES}.
+   */
   public final boolean isLoadExternalEntities ()
   {
     return m_bLoadExternalEntities;
@@ -224,6 +240,12 @@ public class XdmParser
     return this;
   }
 
+  /**
+   * Get the SAX entity resolver for the external DTD subset and the external entities (see
+   * {@link #setEntityResolver(EntityResolver)}).
+   *
+   * @return The resolver, or <code>null</code> (the default) for none.
+   */
   @Nullable
   public final EntityResolver getEntityResolver ()
   {
@@ -256,6 +278,13 @@ public class XdmParser
     return this;
   }
 
+  /**
+   * Get the schemes the parser may open itself for the external DTD subset and external entities
+   * (see {@link #setAccessExternalDtd(String)}).
+   *
+   * @return The allowed schemes. Never <code>null</code>. Default
+   *         {@link #DEFAULT_ACCESS_EXTERNAL_DTD}.
+   */
   @NonNull
   public final String getAccessExternalDtd ()
   {
@@ -284,6 +313,11 @@ public class XdmParser
     return this;
   }
 
+  /**
+   * Get the maximum element nesting depth.
+   *
+   * @return The maximum depth; 0 means unlimited. Default {@link #DEFAULT_MAX_ELEMENT_DEPTH}.
+   */
   @Nonnegative
   public final int getMaxElementDepth ()
   {
@@ -291,6 +325,8 @@ public class XdmParser
   }
 
   /**
+   * Set the maximum element nesting depth.
+   *
    * @param nMaxElementDepth
    *        The maximum element nesting depth; 0 means unlimited, which is unsafe for untrusted
    *        input.
@@ -305,6 +341,8 @@ public class XdmParser
   }
 
   /**
+   * Get the default location setting of the current thread.
+   *
    * @return The location setting a parser or an {@link XdmTreeBuilder} created now on the current
    *         thread starts with: <code>true</code> while {@link #getWithRecordLocations(Supplier)}
    *         runs on this thread, otherwise {@link #DEFAULT_RECORD_LOCATIONS}.
@@ -347,6 +385,12 @@ public class XdmParser
     }
   }
 
+  /**
+   * Check whether the nodes get the line and column the parser reports (see
+   * {@link #setRecordLocations(boolean)}).
+   *
+   * @return <code>true</code> if locations are recorded.
+   */
   public final boolean isRecordLocations ()
   {
     return m_bRecordLocations;
@@ -376,6 +420,12 @@ public class XdmParser
     return this;
   }
 
+  /**
+   * Get the schema set documents are validated against after they are read (see
+   * {@link #setSchemaSet(IXdmSchemaSet)}).
+   *
+   * @return The schema set, or <code>null</code> if documents are not validated.
+   */
   @Nullable
   public final IXdmSchemaSet getSchemaSet ()
   {
@@ -732,6 +782,8 @@ public class XdmParser
   }
 
   /**
+   * Read a document from a SAX input source.
+   *
    * @param aSource
    *        The source to read. May not be <code>null</code>.
    * @return The document node.
@@ -748,6 +800,8 @@ public class XdmParser
   }
 
   /**
+   * Read a document from an XML text.
+   *
    * @param sXml
    *        The XML text to read. May not be <code>null</code>. The document has no system ID, so
    *        relative references cannot be resolved.
@@ -764,6 +818,8 @@ public class XdmParser
   }
 
   /**
+   * Read a document from an XML text with a system ID.
+   *
    * @param sXml
    *        The XML text to read. May not be <code>null</code>.
    * @param sSystemId
@@ -787,6 +843,8 @@ public class XdmParser
   }
 
   /**
+   * Read a document from a file.
+   *
    * @param aPath
    *        The file to read. May not be <code>null</code>. Its URI becomes the system ID of the
    *        source.

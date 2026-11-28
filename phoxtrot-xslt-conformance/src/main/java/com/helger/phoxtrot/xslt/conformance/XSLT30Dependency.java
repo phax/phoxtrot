@@ -35,7 +35,11 @@ import org.jspecify.annotations.NonNull;
  */
 public record XSLT30Dependency (@NonNull String type, @NonNull String value, @NonNull String satisfied)
 {
-  /** @return <code>true</code> if the dependency is declared satisfied="false". */
+  /**
+   * Check whether the dependency is declared as not satisfied.
+   *
+   * @return <code>true</code> if the dependency is declared satisfied="false".
+   */
   public boolean isNotSatisfied ()
   {
     return "false".equals (satisfied);

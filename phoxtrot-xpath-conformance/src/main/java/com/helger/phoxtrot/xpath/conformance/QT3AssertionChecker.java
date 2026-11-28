@@ -85,6 +85,8 @@ public final class QT3AssertionChecker
   }
 
   /**
+   * Create an assertion checker for one test set.
+   *
    * @param aEvaluator
    *        Evaluates assertion expressions.
    * @param aDir
@@ -135,6 +137,8 @@ public final class QT3AssertionChecker
   }
 
   /**
+   * Check whether an error is a serialisation error.
+   *
    * @param aError
    *        A raised error.
    * @return <code>true</code> if it is a serialization error: a code in the

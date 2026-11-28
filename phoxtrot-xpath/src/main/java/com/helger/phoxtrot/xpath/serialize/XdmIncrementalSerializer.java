@@ -57,6 +57,8 @@ public final class XdmIncrementalSerializer
   private int m_nOpen;
 
   /**
+   * Create an incremental serialiser that writes to a writer.
+   *
    * @param aParams
    *        The serialization parameters. Must be supported.
    * @param aWriter

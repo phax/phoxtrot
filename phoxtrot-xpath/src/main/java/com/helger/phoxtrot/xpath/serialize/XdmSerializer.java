@@ -394,6 +394,8 @@ public final class XdmSerializer
   }
 
   /**
+   * Get the Java charset for the encoding parameter.
+   *
    * @param aParams
    *        The serialization parameters.
    * @return The Java charset to encode the serialized characters with, for

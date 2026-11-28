@@ -59,6 +59,9 @@ public final class ContentOutput implements IXsltOutput
   private final ResultDrain m_aDrain;
 
   /**
+   * Start filling a node without a result drain. Existing children count as
+   * content.
+   *
    * @param aParent
    *        The element or document node to fill. It may already have content.
    */
@@ -91,6 +94,8 @@ public final class ContentOutput implements IXsltOutput
   }
 
   /**
+   * Get the node being filled.
+   *
    * @return The node being filled. Use this (not the node passed to the
    *         constructor) when the content is complete: namespace fixup may
    *         have replaced an element with one that has another prefix.

@@ -48,6 +48,8 @@ public interface IXSLT30Compiler
   };
 
   /**
+   * Compile a stylesheet from its text.
+   *
    * @param sStylesheet
    *        The stylesheet text.
    * @param aOptions
@@ -58,6 +60,8 @@ public interface IXSLT30Compiler
   XsltExecutable compile (@NonNull String sStylesheet, @NonNull XsltCompileOptions aOptions);
 
   /**
+   * Compile an embedded stylesheet from its element.
+   *
    * @param aStylesheet
    *        The stylesheet element (embedded in a source document).
    * @param aOptions

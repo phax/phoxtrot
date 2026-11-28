@@ -45,6 +45,12 @@ public final class NativeXsdTestValidator implements IXsdTestValidator
 {
   private static final String DISPLAY_NAME = "phoxtrot native XSD";
 
+  /**
+   * Create a native validator.
+   */
+  public NativeXsdTestValidator ()
+  {}
+
   /** A schema compiled by the native validator. */
   private static final class NativeSchema implements IXsdTestSchema
   {

@@ -67,6 +67,8 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 public interface IXPathFunction
 {
   /**
+   * Call the function.
+   *
    * @param aCtx
    *        Dynamic context of the call (focus = the caller's focus).
    * @param aArgs

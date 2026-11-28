@@ -39,6 +39,8 @@ public record PostureSweep (@NonNull EPosture posture, @NonNull ESweep sweep)
   public static final PostureSweep ROAMING_FREE_RANGING = new PostureSweep (EPosture.ROAMING, ESweep.FREE_RANGING);
 
   /**
+   * Check whether a combination of posture and sweep is streamable.
+   *
    * @param ePosture
    *        A posture.
    * @param eSweep
@@ -52,6 +54,8 @@ public record PostureSweep (@NonNull EPosture posture, @NonNull ESweep sweep)
   }
 
   /**
+   * Check whether this posture and sweep is streamable.
+   *
    * @return <code>false</code> if the posture is roaming or the sweep is
    *         free-ranging (XSLT 3.0 section 19.7).
    */

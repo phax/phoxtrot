@@ -116,6 +116,8 @@ public final class XdmTreeBuilder extends DefaultHandler2
   }
 
   /**
+   * A builder that records node locations as given.
+   *
    * @param bRecordLocations
    *        <code>true</code> to give every element, comment and processing instruction the location
    *        the parser reports (8 bytes more per such node; attributes and text nodes report the
@@ -414,6 +416,8 @@ public final class XdmTreeBuilder extends DefaultHandler2
   }
 
   /**
+   * Get the node that content is currently added to.
+   *
    * @return The node that content is currently added to: the innermost open element, or the
    *         document node. For handlers that wrap the builder.
    */
@@ -424,6 +428,8 @@ public final class XdmTreeBuilder extends DefaultHandler2
   }
 
   /**
+   * Get the finished document.
+   *
    * @return The finished document. Only valid after the parse run completed.
    */
   @NonNull

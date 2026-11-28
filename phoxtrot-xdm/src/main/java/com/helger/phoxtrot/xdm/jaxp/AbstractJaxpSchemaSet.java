@@ -84,6 +84,8 @@ public abstract class AbstractJaxpSchemaSet implements IXdmSchemaSet
   private final Schema m_aSchema;
 
   /**
+   * Create a schema set over a compiled JAXP schema.
+   *
    * @param aSchema
    *        The compiled JAXP schema the validators are created from. May not be <code>null</code>.
    */
@@ -94,6 +96,8 @@ public abstract class AbstractJaxpSchemaSet implements IXdmSchemaSet
   }
 
   /**
+   * Get the type definition of a type reported by a validator.
+   *
    * @param aTypeInfo
    *        A type reported by a validator of this schema set.
    * @return The type definition of it. Never <code>null</code>.
@@ -102,6 +106,8 @@ public abstract class AbstractJaxpSchemaSet implements IXdmSchemaSet
   protected abstract IXdmTypeDefinition getDefinition (@NonNull TypeInfo aTypeInfo);
 
   /**
+   * Get the declared types of the attributes of the current start tag.
+   *
    * @param aValidator
    *        A validator of this schema set.
    * @return A function from the attribute index of the current start tag to the declared type of

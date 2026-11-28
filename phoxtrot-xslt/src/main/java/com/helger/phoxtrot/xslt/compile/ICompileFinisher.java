@@ -28,6 +28,8 @@ import org.jspecify.annotations.NonNull;
 public interface ICompileFinisher
 {
   /**
+   * Run the checks across declarations once all declarations are compiled.
+   *
    * @param aCtx
    *        Compile context (global scope).
    * @throws com.helger.phoxtrot.xslt.XsltException

@@ -201,26 +201,44 @@ public final class DynamicContext
     this (ValueEnforcer.notNull (aStatic, "Static"), new RunState (), null, null, 0, 0, null, null, null);
   }
 
+  /**
+   * Get the static context of this dynamic context.
+   *
+   * @return The static context. Never <code>null</code>.
+   */
   @NonNull
   public StaticContext getStaticContext ()
   {
     return m_aStatic;
   }
 
-  /** @return The context item or <code>null</code> if the focus is absent. */
+  /**
+   * Get the context item.
+   *
+   * @return The context item or <code>null</code> if the focus is absent.
+   */
   @Nullable
   public IXdmItem getContextItem ()
   {
     return m_aItem;
   }
 
-  /** @return The 1-based context position; 0 if the focus is absent. */
+  /**
+   * Get the context position.
+   *
+   * @return The 1-based context position; 0 if the focus is absent.
+   */
   @Nonnegative
   public int getPosition ()
   {
     return m_nPosition;
   }
 
+  /**
+   * Get the context size.
+   *
+   * @return The context size; 0 if the focus is absent.
+   */
   @Nonnegative
   public int getSize ()
   {
@@ -228,6 +246,8 @@ public final class DynamicContext
   }
 
   /**
+   * Create a derived context with another focus.
+   *
    * @param aItem
    *        The new context item, <code>null</code> for an absent focus.
    * @param nPosition
@@ -244,6 +264,8 @@ public final class DynamicContext
   }
 
   /**
+   * Create a derived context with one more variable binding.
+   *
    * @param aName
    *        Variable name.
    * @param aValue
@@ -298,6 +320,8 @@ public final class DynamicContext
   }
 
   /**
+   * Create a context without focus, current item and variables.
+   *
    * @return A context with the same run state, static context and host state
    *         but no focus, no current item and no variables.
    */
@@ -308,6 +332,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the frame of the variables the host binds by slot.
+   *
    * @return The frame of the variables the host binds by slot (see {@link VariableFrame}), or
    *         <code>null</code> if there is none. Every derived context keeps it, except
    *         {@link #withoutFocusAndVariables()}.
@@ -320,6 +346,8 @@ public final class DynamicContext
   }
 
   /**
+   * Create a derived context with another frame of host variables.
+   *
    * @param aFrame
    *        The frame of the variables bound by slot, <code>null</code> for none. Must be no frame
    *        of an expression's own variables.
@@ -334,6 +362,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the frame of the variables the expression binds itself.
+   *
    * @return The frame of the variables the expression being evaluated binds itself
    *         (<code>for</code>, <code>let</code>, quantifiers, inline function parameters), see
    *         {@link com.helger.phoxtrot.xpath.eval.XPathEvaluator#compile(com.helger.phoxtrot.xpath.ast.IExpr)},
@@ -348,6 +378,9 @@ public final class DynamicContext
   }
 
   /**
+   * Create a derived context with a new frame for the variables the expression
+   * binds itself.
+   *
    * @param aLayout
    *        The layout of the variables an expression (or inline function body) binds itself.
    * @return A derived context with a new frame of that layout as {@link #getLocalFrame()}
@@ -390,6 +423,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the XSLT current item.
+   *
    * @return The XSLT current item (<code>fn:current()</code>, XSLT 3.0 section
    *         20.4.1), or <code>null</code> if none is set. It survives focus
    *         changes inside the expression.
@@ -401,6 +436,8 @@ public final class DynamicContext
   }
 
   /**
+   * Create a derived context with another XSLT current item.
+   *
    * @param aCurrentItem
    *        The new XSLT current item, may be <code>null</code>.
    * @return A derived context with that current item and everything else
@@ -413,6 +450,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the per-context state of the host.
+   *
    * @return The per-context state of the host (the XSLT engine: current
    *         template rule, current group, captured regex groups, ...), or
    *         <code>null</code>. Unlike {@link #getHost()} it belongs to this
@@ -426,6 +465,8 @@ public final class DynamicContext
   }
 
   /**
+   * Create a derived context with another host state.
+   *
    * @param aHostState
    *        The new per-context host state. May be <code>null</code>.
    * @return A derived context with that host state.
@@ -469,6 +510,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the run-wide host object.
+   *
    * @return The run-wide host object (the XSLT engine of the current
    *         transformation), or <code>null</code> for plain XPath. Host
    *         functions use it to reach their runtime state.
@@ -492,6 +535,9 @@ public final class DynamicContext
   }
 
   /**
+   * Get the value of a variable: the bindings of this context are searched
+   * first, then the run-wide resolver of global variables is asked.
+   *
    * @param aName
    *        Variable name.
    * @return The value or <code>null</code> if the variable is not bound.
@@ -535,6 +581,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the current date and time of the run.
+   *
    * @return The value of <code>fn:current-dateTime</code>, stable for the
    *         whole run: the time the root context was created unless set
    *         with {@link #setCurrentDateTime(OffsetDateTime)}.
@@ -548,6 +596,10 @@ public final class DynamicContext
   /**
    * Fix the value <code>fn:current-dateTime</code> returns. The implicit
    * timezone is set to the offset of that value as well.
+   *
+   * @param aValue
+   *        The current date and time of the run. May not be
+   *        <code>null</code>.
    */
   public void setCurrentDateTime (@NonNull final OffsetDateTime aValue)
   {
@@ -556,6 +608,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the implicit timezone of the run.
+   *
    * @return The implicit timezone as an offset in minutes from UTC; by
    *         default the offset of the current date/time.
    */
@@ -564,12 +618,22 @@ public final class DynamicContext
     return m_aRun.m_nImplicitTimezoneMinutes;
   }
 
+  /**
+   * Set the implicit timezone of the run.
+   *
+   * @param nMinutes
+   *        The implicit timezone as an offset in minutes from UTC.
+   */
   public void setImplicitTimezoneMinutes (final int nMinutes)
   {
     m_aRun.m_nImplicitTimezoneMinutes = nMinutes;
   }
 
-  /** @return The resolver, never <code>null</code>; a resolver that finds nothing by default. */
+  /**
+   * Get the resource resolver of the run.
+   *
+   * @return The resolver, never <code>null</code>; a resolver that finds nothing by default.
+   */
   @NonNull
   public IResourceResolver getResourceResolver ()
   {
@@ -589,6 +653,8 @@ public final class DynamicContext
   }
 
   /**
+   * Set the resource resolver of the run.
+   *
    * @param aResolver
    *        The run-wide resource resolver, <code>null</code> for one that
    *        resolves nothing.
@@ -599,6 +665,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the entity resolver of <code>fn:parse-xml</code>.
+   *
    * @return The entity resolver of <code>fn:parse-xml</code>, <code>null</code> if it reads no
    *         external DTD subset and no external entities (the default).
    * @see #setParseXmlEntityResolver(EntityResolver)
@@ -627,6 +695,8 @@ public final class DynamicContext
   }
 
   /**
+   * Set the interrupt hook of the run.
+   *
    * @param aInterrupt
    *        Polled regularly by long-running loops; return <code>true</code> to
    *        cancel with an error.
@@ -637,6 +707,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the step limit of the run.
+   *
    * @return The step limit of the run (see {@link #setMaxSteps(long)}),
    *         {@link #UNLIMITED_STEPS} by default.
    */
@@ -665,6 +737,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the number of steps counted in the run so far.
+   *
    * @return The number of steps of the run so far (see
    *         {@link #setMaxSteps(long)}).
    */
@@ -721,6 +795,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the environment variables exposed to the expression.
+   *
    * @return The environment variables <code>fn:environment-variable</code>
    *         and <code>fn:available-environment-variables</code> expose. Empty
    *         by default: the process environment is not exposed unless the
@@ -734,6 +810,8 @@ public final class DynamicContext
   }
 
   /**
+   * Set the environment variables exposed to the expression.
+   *
    * @param aVariables
    *        The environment variables to expose, e.g.
    *        <code>System.getenv ()</code>. <code>null</code> exposes none.
@@ -745,6 +823,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the default language of the run.
+   *
    * @return The default language of the dynamic context (an xs:language
    *         value), returned by <code>fn:default-language</code> and used by
    *         the formatting functions when no language is given. Default is
@@ -757,6 +837,8 @@ public final class DynamicContext
   }
 
   /**
+   * Set the default language of the run.
+   *
    * @param sLanguage
    *        The default language, e.g. <code>fr-CA</code>. May neither be
    *        <code>null</code> nor empty.
@@ -766,7 +848,11 @@ public final class DynamicContext
     m_aRun.m_sDefaultLanguage = ValueEnforcer.notEmpty (sLanguage, "Language");
   }
 
-  /** @return A per-run cache for functions (e.g. documents by URI) that must be stable within a run. */
+  /**
+   * Get the per-run cache of the functions.
+   *
+   * @return A per-run cache for functions (e.g. documents by URI) that must be stable within a run.
+   */
   @NonNull
   public ICommonsMap <String, Object> getRunCache ()
   {
@@ -795,6 +881,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the per-run memo of the evaluator.
+   *
    * @return A per-run memo by identity for the evaluator, e.g. the last value
    *         of a function call by its expression node. Created on first use.
    *         Never <code>null</code>.
@@ -812,6 +900,8 @@ public final class DynamicContext
   }
 
   /**
+   * Get the context item of the innermost loop expression.
+   *
    * @return The context item of the innermost <code>for</code>,
    *         <code>some</code> or <code>every</code> expression being evaluated
    *         in this run, for the evaluator. <code>null</code> if there is none or

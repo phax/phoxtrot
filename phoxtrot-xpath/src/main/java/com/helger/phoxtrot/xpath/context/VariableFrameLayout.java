@@ -39,6 +39,7 @@ public final class VariableFrameLayout
 {
   private int m_nSize;
 
+  /** Create a new layout without slots. */
   public VariableFrameLayout ()
   {}
 
@@ -55,7 +56,11 @@ public final class VariableFrameLayout
     return new VariableSlot (this, m_nSize++, aName);
   }
 
-  /** @return The number of slots allocated so far. */
+  /**
+   * Get the number of slots of this layout.
+   *
+   * @return The number of slots allocated so far.
+   */
   @Nonnegative
   public int getSize ()
   {

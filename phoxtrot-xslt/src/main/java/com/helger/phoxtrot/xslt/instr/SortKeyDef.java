@@ -91,6 +91,12 @@ public final class SortKeyDef
     m_bXslt10 = bXslt10;
   }
 
+  /**
+   * Get the element this sort key was compiled from.
+   *
+   * @return The xsl:sort element (or another element with the same attributes).
+   *         Never <code>null</code>.
+   */
   @NonNull
   public XslElement getElement ()
   {
@@ -111,6 +117,8 @@ public final class SortKeyDef
   }
 
   /**
+   * Compile the sort key of an element.
+   *
    * @param aCtx
    *        Compile context.
    * @param aEl
@@ -425,13 +433,19 @@ public final class SortKeyDef
       m_aCtx = aCtx;
     }
 
-    /** @return The number of keys. */
+    /**
+     * Get the number of evaluated sort keys.
+     *
+     * @return The number of keys.
+     */
     public int getKeyCount ()
     {
       return m_aSettings.length;
     }
 
     /**
+     * Evaluate all sort keys for one item.
+     *
      * @param aItemCtx
      *        The context in which the key values are evaluated (focus on the
      *        item to sort).
@@ -473,6 +487,8 @@ public final class SortKeyDef
     }
 
     /**
+     * Check whether a key has the same settings in two evaluated key lists.
+     *
      * @param nKey
      *        Key index.
      * @param aOther

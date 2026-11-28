@@ -101,19 +101,29 @@ public final class PackageVersion implements Comparable <PackageVersion>
     return new PackageVersion (aParts, sSuffix);
   }
 
-  /** @return The decimal parts. */
+  /**
+   * Get the decimal parts of this version.
+   *
+   * @return A copy of the decimal parts.
+   */
   public long @NonNull [] getParts ()
   {
     return m_aParts.clone ();
   }
 
-  /** @return <code>true</code> if the version has a name-part suffix. */
+  /**
+   * Check whether the version has a name-part suffix.
+   *
+   * @return <code>true</code> if the version has a name-part suffix.
+   */
   public boolean hasSuffix ()
   {
     return !m_sSuffix.isEmpty ();
   }
 
   /**
+   * Check whether this version starts with the given decimal parts.
+   *
    * @param aPrefix
    *        Leading decimal parts.
    * @return <code>true</code> if this version starts with these parts.

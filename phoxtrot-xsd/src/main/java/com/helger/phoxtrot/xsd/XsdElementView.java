@@ -41,7 +41,11 @@ public final class XsdElementView implements IXsdTermView
     m_aDecl = aDecl;
   }
 
-  /** @return The expanded name. */
+  /**
+   * Get the name of the declared element.
+   *
+   * @return The expanded name.
+   */
   @NonNull
   public XsdName getName ()
   {
@@ -49,6 +53,8 @@ public final class XsdElementView implements IXsdTermView
   }
 
   /**
+   * Get the documentation of the declaration.
+   *
    * @return The declaration's own xs:documentation (needs documentation kept
    *         at compile time). For a reference the reference's annotation is on
    *         the {@link XsdParticleView}.
@@ -59,7 +65,11 @@ public final class XsdElementView implements IXsdTermView
     return m_aDecl.m_aDocs.getClone ();
   }
 
-  /** @return The declared type; xs:anyType when the declaration names none. */
+  /**
+   * Get the declared type.
+   *
+   * @return The declared type; xs:anyType when the declaration names none.
+   */
   @NonNull
   public IXsdTypeDefinitionView getType ()
   {
@@ -67,31 +77,53 @@ public final class XsdElementView implements IXsdTermView
     return ret != null ? ret : m_aView.anyTypeView ();
   }
 
+  /**
+   * Check whether the element declaration is nillable.
+   *
+   * @return <code>true</code> if the declaration is nillable.
+   */
   public boolean isNillable ()
   {
     return m_aDecl.m_bNillable;
   }
 
+  /**
+   * Check whether the element declaration is abstract.
+   *
+   * @return <code>true</code> if the declaration is abstract.
+   */
   public boolean isAbstract ()
   {
     return m_aDecl.m_bAbstract;
   }
 
-  /** @return The heads this element is a substitution-group member of. */
+  /**
+   * Get the substitution group heads of this element.
+   *
+   * @return The heads this element is a substitution-group member of.
+   */
   @NonNull
   public ICommonsList <XsdName> getSubstitutionGroups ()
   {
     return new CommonsArrayList <> (m_aDecl.m_aSubstGroups);
   }
 
-  /** @return The default value, <code>null</code> if none. */
+  /**
+   * Get the default value of the declared element.
+   *
+   * @return The default value, <code>null</code> if none.
+   */
   @Nullable
   public String getDefault ()
   {
     return m_aDecl.m_bHasDefault ? m_aDecl.m_sDefault : null;
   }
 
-  /** @return The fixed value, <code>null</code> if none. */
+  /**
+   * Get the fixed value of the declared element.
+   *
+   * @return The fixed value, <code>null</code> if none.
+   */
   @Nullable
   public String getFixed ()
   {

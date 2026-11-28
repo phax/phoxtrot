@@ -315,7 +315,7 @@ basis of this project. See [NOTICE](NOTICE).
 
 # News and noteworthy
 
-v0.5.0 - work in progress
+v0.5.0 - 2026-11-28
 * New benchmark workload `rounding` (`phoxtrot-xslt-benchmark`) with the rounding stylesheets of the property tests
 * XPath expressions are compiled once into a tree of evaluation nodes instead of being interpreted per evaluation
   (`XPathEvaluator.compile (IExpr)`, `compile (IExpr, StaticContext)`, new class `AbstractCompiledExpr`); `CompiledXPath`,
@@ -396,6 +396,8 @@ v0.5.0 - work in progress
   lists; `xsl:number` with a count pattern that needs testing and references no variable tests each node once per run
   (5,000 siblings: from 313 ms to 1.5 ms); `xsl:for-each-group` with `composite="yes"` finds the group of a key
   through buckets instead of comparing it with every group
+* Complete Javadoc for the public and protected API of all modules: `mvn javadoc:javadoc` runs without errors or
+  warnings
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

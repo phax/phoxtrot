@@ -39,6 +39,8 @@ public final class DateTimeCalendar
   {}
 
   /**
+   * Check if a year is a leap year in the proleptic Gregorian calendar.
+   *
    * @param nYear
    *        Astronomical year.
    * @return <code>true</code> if the year is a leap year.
@@ -49,6 +51,8 @@ public final class DateTimeCalendar
   }
 
   /**
+   * Get the number of days of a month.
+   *
    * @param nYear
    *        Astronomical year.
    * @param nMonth
@@ -72,6 +76,8 @@ public final class DateTimeCalendar
   }
 
   /**
+   * Convert a date to the number of days since the epoch.
+   *
    * @param nYear
    *        Astronomical year.
    * @param nMonth
@@ -91,6 +97,8 @@ public final class DateTimeCalendar
   }
 
   /**
+   * Convert a number of days since the epoch to a date.
+   *
    * @param nEpochDay
    *        Days since 1970-01-01.
    * @return <code>[year, month, day]</code>.
@@ -110,6 +118,8 @@ public final class DateTimeCalendar
   }
 
   /**
+   * Get the ISO day of week of a day.
+   *
    * @param nEpochDay
    *        Days since 1970-01-01.
    * @return ISO day of week, 1 = Monday ... 7 = Sunday.
@@ -120,6 +130,8 @@ public final class DateTimeCalendar
   }
 
   /**
+   * Get the day within the year of a date.
+   *
    * @param nYear
    *        Astronomical year.
    * @param nMonth
@@ -134,6 +146,8 @@ public final class DateTimeCalendar
   }
 
   /**
+   * Get the ISO 8601 week number of a date.
+   *
    * @param nYear
    *        Astronomical year.
    * @param nMonth

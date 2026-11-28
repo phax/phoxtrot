@@ -38,6 +38,16 @@ import com.helger.base.enforce.ValueEnforcer;
 @Immutable
 public record XdmQName (@NonNull String namespaceUri, @NonNull String localName, @NonNull String prefix)
 {
+  /**
+   * Create a name, checking its components.
+   *
+   * @param namespaceUri
+   *        The namespace URI. May not be <code>null</code>; the empty string means "no namespace".
+   * @param localName
+   *        The local part. May neither be <code>null</code> nor empty.
+   * @param prefix
+   *        The prefix. May not be <code>null</code>; the empty string means "no prefix".
+   */
   public XdmQName
   {
     ValueEnforcer.notNull (namespaceUri, "NamespaceUri");
@@ -69,17 +79,29 @@ public record XdmQName (@NonNull String namespaceUri, @NonNull String localName,
     this (sNamespaceUri, sLocalName, "");
   }
 
+  /**
+   * Check whether this name is in a namespace.
+   *
+   * @return <code>true</code> if the namespace URI is not empty.
+   */
   public boolean hasNamespace ()
   {
     return !namespaceUri.isEmpty ();
   }
 
+  /**
+   * Check whether this name has a prefix.
+   *
+   * @return <code>true</code> if the prefix is not empty.
+   */
   public boolean hasPrefix ()
   {
     return !prefix.isEmpty ();
   }
 
   /**
+   * Get the lexical form of this name.
+   *
    * @return The name as written in a source document: <code>prefix:local</code> or just
    *         <code>local</code>.
    */
@@ -90,6 +112,8 @@ public record XdmQName (@NonNull String namespaceUri, @NonNull String localName,
   }
 
   /**
+   * Get this name in EQName notation.
+   *
    * @return The name in URIQualifiedName notation <code>Q{uri}local</code> (XPath 3.1 section
    *         3.1.2), without the braces part for names in no namespace.
    */
@@ -100,6 +124,8 @@ public record XdmQName (@NonNull String namespaceUri, @NonNull String localName,
   }
 
   /**
+   * Get this name in Clark notation.
+   *
    * @return The name in Clark notation <code>{uri}local</code>, without the braces part for names
    *         in no namespace.
    * @since 0.3.0

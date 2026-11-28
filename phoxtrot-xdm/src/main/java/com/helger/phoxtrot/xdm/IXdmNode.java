@@ -55,6 +55,8 @@ import com.helger.collection.commons.ICommonsOrderedMap;
 public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
 {
   /**
+   * Create a new document node.
+   *
    * @return A new, empty document node.
    */
   @NonNull
@@ -64,6 +66,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   }
 
   /**
+   * Create a new element node.
+   *
    * @param aName
    *        The element name. May not be <code>null</code>.
    * @return A new parentless element node without attributes, namespace declarations or children.
@@ -101,6 +105,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   }
 
   /**
+   * Create a new attribute node.
+   *
    * @param aName
    *        The attribute name. May not be <code>null</code>.
    * @param sValue
@@ -146,6 +152,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   }
 
   /**
+   * Create a new text node.
+   *
    * @param sValue
    *        The text. May not be <code>null</code>; an empty text is not rejected.
    * @return A new parentless text node.
@@ -184,6 +192,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   }
 
   /**
+   * Create a new comment node.
+   *
    * @param sValue
    *        The comment text. May not be <code>null</code>.
    * @return A new parentless comment node.
@@ -196,6 +206,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   }
 
   /**
+   * Create a new processing instruction node.
+   *
    * @param sTarget
    *        The PI target; becomes the local name of the node name. Never empty.
    * @param sData
@@ -246,30 +258,57 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
     return AbstractXdmNode.compareDocumentOrder ((AbstractXdmNode) aLeft, (AbstractXdmNode) aRight);
   }
 
+  /**
+   * Get the kind of this node.
+   *
+   * @return The node kind. Never <code>null</code>.
+   */
   @NonNull
   ENodeKind getKind ();
 
+  /**
+   * Check whether this is a document node.
+   *
+   * @return <code>true</code> if the kind is {@link ENodeKind#DOCUMENT}.
+   */
   default boolean isDocument ()
   {
     return getKind () == ENodeKind.DOCUMENT;
   }
 
+  /**
+   * Check whether this is an element node.
+   *
+   * @return <code>true</code> if the kind is {@link ENodeKind#ELEMENT}.
+   */
   default boolean isElement ()
   {
     return getKind () == ENodeKind.ELEMENT;
   }
 
+  /**
+   * Check whether this is an attribute node.
+   *
+   * @return <code>true</code> if the kind is {@link ENodeKind#ATTRIBUTE}.
+   */
   default boolean isAttribute ()
   {
     return getKind () == ENodeKind.ATTRIBUTE;
   }
 
+  /**
+   * Check whether this is a text node.
+   *
+   * @return <code>true</code> if the kind is {@link ENodeKind#TEXT}.
+   */
   default boolean isText ()
   {
     return getKind () == ENodeKind.TEXT;
   }
 
   /**
+   * Get the name of this node.
+   *
    * @return The node name. Only elements, attributes and processing instructions have one (for the
    *         latter the local name is the target); <code>null</code> for all other kinds.
    */
@@ -277,6 +316,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   XdmQName getName ();
 
   /**
+   * Get the raw value of this node.
+   *
    * @return The raw value: the content of attributes, text, comments and processing instructions.
    *         <code>null</code> for documents and elements, use {@link #getStringValue()} for those.
    */
@@ -293,10 +334,17 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
    */
   void setValue (@NonNull String sValue);
 
+  /**
+   * Get the parent of this node.
+   *
+   * @return The parent node, or <code>null</code> for a parentless node.
+   */
   @Nullable
   IXdmNode getParent ();
 
   /**
+   * Get the line of this node in its source.
+   *
    * @return The line of the node in its source as the parser reported it, 0 if no location was set.
    *         Attribute and text nodes with a parent report the line of their parent.
    */
@@ -304,6 +352,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   int getLine ();
 
   /**
+   * Get the column of this node in its source.
+   *
    * @return The column of the node in its source as the parser reported it, 0 if no location was
    *         set. Attribute and text nodes with a parent report the column of their parent.
    */
@@ -322,6 +372,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   void setLocation (@Nonnegative int nLine, @Nonnegative int nColumn);
 
   /**
+   * Get the ID kind of this node.
+   *
    * @return The ID kind of an attribute (from its DTD or schema type) or of an element of a
    *         schema-validated tree (from its schema type); {@link EIDKind#NONE} for all other nodes.
    */
@@ -329,6 +381,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   EIDKind getIDKind ();
 
   /**
+   * Set the ID kind of this node.
+   *
    * @param eIDKind
    *        The ID kind. Only elements and attributes accept a value other than
    *        {@link EIDKind#NONE}.
@@ -336,6 +390,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   void setIDKind (@NonNull EIDKind eIDKind);
 
   /**
+   * Get the type annotation of this node.
+   *
    * @return The name of the type annotation of an element or attribute node, or <code>null</code>
    *         for the default of an unvalidated node (<code>xs:untyped</code> for elements,
    *         <code>xs:untypedAtomic</code> for attributes). For a node of a schema-validated tree it
@@ -356,6 +412,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   void setTypeAnnotation (@Nullable XdmQName aTypeAnnotation);
 
   /**
+   * Get the schema type of this node.
+   *
    * @return The schema type an element or attribute node was validated against, or
    *         <code>null</code> if the node was not validated.
    */
@@ -363,6 +421,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   XdmSchemaType getSchemaType ();
 
   /**
+   * Set the schema type of this node.
+   *
    * @param aSchemaType
    *        The schema type. Only elements and attributes accept a value other than
    *        <code>null</code>.
@@ -370,22 +430,40 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   void setSchemaType (@Nullable XdmSchemaType aSchemaType);
 
   /**
+   * Check whether this node is nilled.
+   *
    * @return The XDM <code>nilled</code> property: <code>true</code> for a validated element with
    *         <code>xsi:nil="true"</code>. Always <code>false</code> for other nodes.
    */
   boolean isNilled ();
 
+  /**
+   * Set the XDM <code>nilled</code> property of this node.
+   *
+   * @param bNilled
+   *        <code>true</code> if the node is nilled.
+   */
   void setNilled (boolean bNilled);
 
   /**
+   * Get the URI the document was read from.
+   *
    * @return The URI the document was read from. Only set on document nodes.
    */
   @Nullable
   String getDocumentUri ();
 
+  /**
+   * Set the URI the document was read from.
+   *
+   * @param sDocumentUri
+   *        The document URI. May be <code>null</code>.
+   */
   void setDocumentUri (@Nullable String sDocumentUri);
 
   /**
+   * Get the explicit base URI of this node.
+   *
    * @return The explicit base URI of this node, or <code>null</code>. It is set where the base URI
    *         does not follow from the parent: on nodes read from an external entity (the entity's
    *         URI) and on document nodes whose base URI differs from their document URI. An
@@ -394,14 +472,29 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   @Nullable
   String getBaseUri ();
 
+  /**
+   * Set the explicit base URI of this node (see {@link #getBaseUri()}).
+   *
+   * @param sBaseUri
+   *        The base URI. May be <code>null</code>.
+   */
   void setBaseUri (@Nullable String sBaseUri);
 
   /**
+   * Check whether this text node is written without escaping.
+   *
    * @return <code>true</code> if this text node is written without escaping by the XML and HTML
    *         output methods (XSLT disable-output-escaping).
    */
   boolean isDisableOutputEscaping ();
 
+  /**
+   * Decide whether this text node is written without escaping by the XML and HTML output methods
+   * (XSLT disable-output-escaping).
+   *
+   * @param bDisableOutputEscaping
+   *        <code>true</code> to write it without escaping.
+   */
   void setDisableOutputEscaping (boolean bDisableOutputEscaping);
 
   /**
@@ -417,6 +510,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   void addUnparsedEntity (@NonNull String sName, @NonNull String sSystemId, @Nullable String sPublicId);
 
   /**
+   * Get an unparsed entity of this document node by name.
+   *
    * @param sName
    *        Entity name.
    * @return The system identifier (index 0) and public identifier (index 1, possibly
@@ -434,12 +529,20 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
    */
   void addParsedEntityName (@NonNull String sName);
 
-  /** @return The names of the parsed general entities of this document node. */
+  /**
+   * Get the names of the parsed general entities of this document node.
+   *
+   * @return The names of the parsed general entities of this document node.
+   */
   @NonNull
   @ReturnsMutableCopy
   ICommonsList <String> getAllParsedEntityNames ();
 
-  /** @return The names of the unparsed entities of this document node. */
+  /**
+   * Get the names of the unparsed entities of this document node.
+   *
+   * @return The names of the unparsed entities of this document node.
+   */
   @NonNull
   @ReturnsMutableCopy
   ICommonsList <String> getAllUnparsedEntityNames ();
@@ -505,22 +608,62 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
    */
   void declareSharedNamespaces (@NonNull ICommonsOrderedMap <String, String> aNamespaces);
 
+  /**
+   * Get the number of children of this node.
+   *
+   * @return The number of children. Always &ge; 0; 0 for nodes that cannot have children.
+   */
   @Nonnegative
   int getChildCount ();
 
+  /**
+   * Get the child at the given position.
+   *
+   * @param nIndex
+   *        The 0-based index of the child.
+   * @return The child node. Never <code>null</code>.
+   * @throws IndexOutOfBoundsException
+   *        if the index is not a valid child index
+   */
   @NonNull
   IXdmNode getChildAtIndex (@Nonnegative int nIndex);
 
+  /**
+   * Get the number of attributes of this node.
+   *
+   * @return The number of attributes. Always &ge; 0; 0 for nodes other than elements.
+   */
   @Nonnegative
   int getAttributeCount ();
 
+  /**
+   * Get the attribute at the given position.
+   *
+   * @param nIndex
+   *        The 0-based index of the attribute.
+   * @return The attribute node. Never <code>null</code>.
+   * @throws IndexOutOfBoundsException
+   *        if the index is not a valid attribute index
+   */
   @NonNull
   IXdmNode getAttributeAtIndex (@Nonnegative int nIndex);
 
+  /**
+   * Get all children of this node in order.
+   *
+   * @return A new list with the children; empty for nodes without children. Never
+   *         <code>null</code>.
+   */
   @NonNull
   @ReturnsMutableCopy
   ICommonsList <IXdmNode> getAllChildren ();
 
+  /**
+   * Get all attributes of this node in order.
+   *
+   * @return A new list with the attributes; empty for nodes other than elements. Never
+   *         <code>null</code>.
+   */
   @NonNull
   @ReturnsMutableCopy
   ICommonsList <IXdmNode> getAllAttributes ();
@@ -538,6 +681,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   IXdmNode getAttribute (@Nullable String sNamespaceUri, @NonNull String sLocalName);
 
   /**
+   * Get a copy of the namespace declarations of this element.
+   *
    * @return The namespace declarations of this element only, prefix to URI, in declaration order.
    */
   @NonNull
@@ -545,6 +690,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   ICommonsOrderedMap <String, String> getDeclaredNamespaces ();
 
   /**
+   * Get a view of the namespace declarations of this element.
+   *
    * @return A read-only view of the namespace declarations of this element only, prefix to URI, in
    *         declaration order, without copying (an empty map for an element without declarations).
    *         It reflects later changes of the declarations, so a caller that changes them while
@@ -554,6 +701,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   Map <String, String> declaredNamespaces ();
 
   /**
+   * Check whether this element declares namespaces itself.
+   *
    * @return <code>true</code> if this element declares (or undeclares) at least one namespace
    *         itself. Unlike {@link #getDeclaredNamespaces()} nothing is copied.
    */
@@ -584,6 +733,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   String lookupNamespaceUri (@NonNull String sPrefix);
 
   /**
+   * Get all namespaces in scope for this node.
+   *
    * @return All namespaces in scope for this node (the <code>xml</code> prefix included), prefix to
    *         URI. Closer declarations win and undeclared default namespaces are left out.
    */
@@ -605,6 +756,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   ICommonsList <IXdmNode> getNamespaceNodes ();
 
   /**
+   * Get the document order position of this node.
+   *
    * @return The position of this node in document order, counted from 0 at the root. Only
    *         meaningful while the tree is numbered (see {@link #assignDocumentOrder()}); namespace
    *         nodes are never numbered.
@@ -613,6 +766,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   int getOrder ();
 
   /**
+   * Get the document order position of the last node of the subtree of this node.
+   *
    * @return The {@link #getOrder() order} of the last node of the subtree of this node: its last
    *         descendant or, if it has none, its last attribute or itself. The descendants and
    *         attributes of a node are exactly the nodes with an order above its own and up to this
@@ -624,10 +779,17 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
     return getOrder ();
   }
 
+  /**
+   * Get the root of the tree this node belongs to, following the parents up.
+   *
+   * @return The topmost ancestor, or this node itself if it has no parent. Never <code>null</code>.
+   */
   @NonNull
   IXdmNode getRoot ();
 
   /**
+   * Get the document this node belongs to.
+   *
    * @return The document this node belongs to, or <code>null</code> if the tree is rooted in a
    *         parentless node of another kind.
    */
@@ -635,6 +797,8 @@ public sealed interface IXdmNode extends IXdmItem permits AbstractXdmNode
   IXdmNode getOwnerDocument ();
 
   /**
+   * Get the XDM string value of this node.
+   *
    * @return The XDM string value: for documents and elements the concatenation of all descendant
    *         text nodes in document order, otherwise the raw value.
    */

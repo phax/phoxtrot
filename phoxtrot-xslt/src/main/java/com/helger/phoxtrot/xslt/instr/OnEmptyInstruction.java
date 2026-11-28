@@ -40,6 +40,8 @@ public final class OnEmptyInstruction extends AbstractInstruction
   private final SequenceConstructor m_aBody;
 
   /**
+   * Create an xsl:on-empty or xsl:on-non-empty instruction.
+   *
    * @param aElement
    *        The xsl:on-empty or xsl:on-non-empty element.
    * @param bOnNonEmpty
@@ -61,7 +63,11 @@ public final class OnEmptyInstruction extends AbstractInstruction
     m_aBody = aBody;
   }
 
-  /** @return <code>true</code> for xsl:on-non-empty. */
+  /**
+   * Check which of the two instructions this is.
+   *
+   * @return <code>true</code> for xsl:on-non-empty.
+   */
   public boolean isOnNonEmpty ()
   {
     return m_bOnNonEmpty;

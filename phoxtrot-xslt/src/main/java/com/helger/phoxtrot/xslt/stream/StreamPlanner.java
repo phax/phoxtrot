@@ -67,6 +67,8 @@ public final class StreamPlanner
   {}
 
   /**
+   * Check whether a literal result element has attribute value templates.
+   *
    * @param aEl
    *        A literal result element.
    * @return <code>true</code> if it has attribute value templates (and needs
@@ -170,6 +172,8 @@ public final class StreamPlanner
   }
 
   /**
+   * Get the literal result elements that may wrap the consuming instruction.
+   *
    * @param aHost
    *        The <code>xsl:source-document</code> or <code>xsl:template</code>
    *        whose sequence constructor runs over the streamed document.
@@ -191,6 +195,8 @@ public final class StreamPlanner
   }
 
   /**
+   * Find the instruction that consumes the records of a streamed document.
+   *
    * @param aHost
    *        The <code>xsl:source-document</code> or <code>xsl:template</code>
    *        whose sequence constructor runs over the streamed document.

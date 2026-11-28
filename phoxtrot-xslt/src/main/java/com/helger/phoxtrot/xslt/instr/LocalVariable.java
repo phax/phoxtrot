@@ -87,6 +87,8 @@ public final class LocalVariable implements IBindingInstruction
   private final VariableSlot m_aSlot;
 
   /**
+   * Create a local variable instruction.
+   *
    * @param aDef
    *        The definition.
    * @param aSlot
@@ -98,6 +100,11 @@ public final class LocalVariable implements IBindingInstruction
     m_aSlot = aSlot;
   }
 
+  /**
+   * Get the definition of the variable.
+   *
+   * @return The definition. Never <code>null</code>.
+   */
   @NonNull
   public VariableDef getDefinition ()
   {

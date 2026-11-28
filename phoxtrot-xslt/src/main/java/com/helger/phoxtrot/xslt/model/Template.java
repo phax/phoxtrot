@@ -44,6 +44,11 @@ public final class Template
    * 10.1.1): the required type (<code>null</code> if there is no
    * <code>as</code> attribute) and the trimmed <code>use</code> value
    * (required, optional or absent).
+   *
+   * @param as
+   *        The required type of the context item. May be <code>null</code>.
+   * @param use
+   *        The trimmed <code>use</code> value. Never <code>null</code>.
    */
   @Immutable
   public record ContextItemDecl (@Nullable SeqType as, @NonNull String use)
@@ -102,25 +107,45 @@ public final class Template
     m_aAs = aAs;
   }
 
+  /**
+   * Get the declaring element.
+   *
+   * @return The xsl:template element, never <code>null</code>.
+   */
   @NonNull
   public XslElement getElement ()
   {
     return m_aElement;
   }
 
+  /**
+   * Get the match pattern.
+   *
+   * @return The match pattern, <code>null</code> for a named template only.
+   */
   @Nullable
   public CompiledPattern getPattern ()
   {
     return m_aPattern;
   }
 
+  /**
+   * Get the template name.
+   *
+   * @return The name, <code>null</code> for a template rule only.
+   */
   @Nullable
   public XdmQName getName ()
   {
     return m_aName;
   }
 
-  /** @return The modes of a template rule ({@link Mode#UNNAMED} for the unnamed one). */
+  /**
+   * Get the modes of the template rule.
+   *
+   * @return The modes of a template rule ({@link Mode#UNNAMED} for the
+   *         unnamed one).
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <XdmQName> getModes ()
@@ -128,26 +153,40 @@ public final class Template
     return m_aModes.getClone ();
   }
 
-  /** @return <code>true</code> for mode="#all". */
+  /**
+   * Check whether the template rule applies in all modes.
+   *
+   * @return <code>true</code> for mode="#all".
+   */
   public boolean isAllModes ()
   {
     return m_bAllModes;
   }
 
-  /** @return The explicit priority or <code>null</code>. */
+  /**
+   * Get the explicit priority.
+   *
+   * @return The explicit priority or <code>null</code>.
+   */
   @Nullable
   public Double getPriority ()
   {
     return m_aPriority;
   }
 
-  /** @return The import precedence of the declaration (higher wins). */
+  /**
+   * Get the import precedence of the declaration.
+   *
+   * @return The import precedence of the declaration (higher wins).
+   */
   public int getPrecedence ()
   {
     return m_nPrecedence;
   }
 
   /**
+   * Get the lower end of the import range for xsl:apply-imports.
+   *
    * @return The lowest import precedence of the modules imported by the
    *         module of this template. xsl:apply-imports considers only the rules
    *         with a precedence from this value up to one below the template's
@@ -158,6 +197,11 @@ public final class Template
     return m_nImportLo;
   }
 
+  /**
+   * Get a copy of the template parameters.
+   *
+   * @return The parameters in declaration order, never <code>null</code>.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <VariableDef> getParams ()
@@ -165,41 +209,79 @@ public final class Template
     return m_aParams.getClone ();
   }
 
-  /** @return The parameters without copying (do not modify). */
+  /**
+   * Get the template parameters without copying.
+   *
+   * @return The parameters without copying (do not modify).
+   */
   @NonNull
   public ICommonsList <VariableDef> params ()
   {
     return m_aParams;
   }
 
+  /**
+   * Append a template parameter.
+   *
+   * @param aParam
+   *        The xsl:param declaration. May not be <code>null</code>.
+   */
   public void addParam (@NonNull final VariableDef aParam)
   {
     m_aParams.add (aParam);
   }
 
+  /**
+   * Get the declared result type.
+   *
+   * @return The declared result type, <code>null</code> if none.
+   */
   @Nullable
   public SeqType getAs ()
   {
     return m_aAs;
   }
 
+  /**
+   * Get the xsl:context-item declaration.
+   *
+   * @return The declaration, <code>null</code> if there is none.
+   */
   @Nullable
   public ContextItemDecl getContextItem ()
   {
     return m_aContextItem;
   }
 
+  /**
+   * Set the xsl:context-item declaration.
+   *
+   * @param aContextItem
+   *        The declaration. May be <code>null</code>.
+   */
   public void setContextItem (@Nullable final ContextItemDecl aContextItem)
   {
     m_aContextItem = aContextItem;
   }
 
+  /**
+   * Get the compiled body of the template.
+   *
+   * @return The body, {@link SequenceConstructor#EMPTY} until it is set. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public SequenceConstructor getBody ()
   {
     return m_aBody;
   }
 
+  /**
+   * Set the compiled body of the template.
+   *
+   * @param aBody
+   *        The body. May not be <code>null</code>.
+   */
   public void setBody (@NonNull final SequenceConstructor aBody)
   {
     m_aBody = aBody;

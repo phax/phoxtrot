@@ -121,20 +121,30 @@ public record XSLT30Settings (@NonNull Path suiteDir,
   /** The accepted failures of a run that claims backwards compatibility. */
   public static final String DEFAULT_ACCEPTED_FILE_BACKWARDS = "docs/accepted-failures/xslt30-backwards.md";
 
-  /** @return The catalog file. */
+  /**
+   * Get the catalog file.
+   *
+   * @return The catalog file.
+   */
   @NonNull
   public Path getCatalogFile ()
   {
     return suiteDir.resolve ("catalog.xml");
   }
 
-  /** @return Whether fail lines are collected (fail dump or a filtered run). */
+  /**
+   * Check whether fail lines are collected.
+   *
+   * @return Whether fail lines are collected (fail dump or a filtered run).
+   */
   public boolean isCollectFailLines ()
   {
     return failDump || !only.isEmpty ();
   }
 
   /**
+   * Check whether a test set is selected.
+   *
    * @param sSetName
    *        A test-set name.
    * @return <code>true</code> if the test set is selected by
@@ -150,7 +160,11 @@ public record XSLT30Settings (@NonNull Path suiteDir,
     return true;
   }
 
-  /** @return The settings from the system properties. */
+  /**
+   * Read the settings from the system properties.
+   *
+   * @return The settings from the system properties.
+   */
   @NonNull
   public static XSLT30Settings fromSystemProperties ()
   {

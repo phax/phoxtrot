@@ -430,6 +430,8 @@ public final class AxisNavigator
 
 
   /**
+   * Get the principal node kind of an axis.
+   *
    * @param eAxis
    *        The axis.
    * @return The principal node kind of the axis.
@@ -530,6 +532,8 @@ public final class AxisNavigator
   }
 
   /**
+   * Collect all nodes of an axis from a context node.
+   *
    * @param eAxis
    *        The axis.
    * @param aNode

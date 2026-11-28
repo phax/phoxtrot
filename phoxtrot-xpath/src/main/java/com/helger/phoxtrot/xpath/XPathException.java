@@ -33,15 +33,23 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
  */
 public class XPathException extends RuntimeException
 {
+  /** The namespace URI of the standard error codes. */
   public static final String ERR_NAMESPACE = "http://www.w3.org/2005/xqt-errors";
 
+  /** The local part of the error code. */
   private final String m_sCode;
+  /** The error code as QName, created on first access unless passed. */
   private XdmQName m_aCodeName;
+  /** The description of the error, may be <code>null</code>. */
   private final String m_sDescription;
+  /** The error object of <code>fn:error</code>, may be <code>null</code>. */
   private final XdmSequence m_aErrorObject;
   // The position of a static error in the expression text, -1 if unknown
+  /** The 0-based offset of a static error in the expression text. */
   private int m_nExpressionOffset = -1;
+  /** The 1-based line of the error position. */
   private int m_nExpressionLine = -1;
+  /** The 1-based column of the error position. */
   private int m_nExpressionColumn = -1;
 
   /**
@@ -104,6 +112,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Get the error code.
+   *
    * @return The error code local part, e.g. <code>XPTY0004</code>.
    */
   @NonNull
@@ -113,6 +123,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Get the error code as QName.
+   *
    * @return The error code as QName: the QName passed to the
    *         <code>fn:error</code> constructor, otherwise (created lazily on
    *         first access) the code in the standard error namespace
@@ -127,6 +139,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Get the description of the error.
+   *
    * @return The description of the error (the message without the code), may
    *         be <code>null</code> for an <code>fn:error</code> call without
    *         description.
@@ -138,6 +152,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Get the error object.
+   *
    * @return The error object passed as third argument of
    *         <code>fn:error</code>, or <code>null</code> if there is none.
    */
@@ -148,6 +164,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Get the offset of the error in the expression text.
+   *
    * @return The 0-based character offset of a static error in the expression
    *         text (the token at which the parser raised it), or -1 if unknown,
    *         e.g. for a dynamic error.
@@ -158,6 +176,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Get the line of the error in the expression text.
+   *
    * @return The 1-based line of {@link #getExpressionOffset()} in the
    *         expression text (lines end at LF, CR or CR LF), or -1 if unknown.
    */
@@ -167,6 +187,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Get the column of the error in the expression text.
+   *
    * @return The 1-based column of {@link #getExpressionOffset()} in its line,
    *         counted in UTF-16 characters, or -1 if unknown.
    */
@@ -176,6 +198,8 @@ public class XPathException extends RuntimeException
   }
 
   /**
+   * Check whether the position of the error in the expression text is known.
+   *
    * @return <code>true</code> if the position of the error in the expression
    *         text is known (see {@link #getExpressionOffset()}).
    */
@@ -219,35 +243,71 @@ public class XPathException extends RuntimeException
     return this;
   }
 
-  /** Static syntax error XPST0003. */
+  /**
+   * Create a static syntax error.
+   *
+   * @param sMessage
+   *        The description. May not be <code>null</code>.
+   * @return The new exception with the code <code>XPST0003</code>. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public static XPathException syntax (@NonNull final String sMessage)
   {
     return new XPathException ("XPST0003", sMessage);
   }
 
-  /** Type error XPTY0004. */
+  /**
+   * Create a type error.
+   *
+   * @param sMessage
+   *        The description. May not be <code>null</code>.
+   * @return The new exception with the code <code>XPTY0004</code>. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public static XPathException type (@NonNull final String sMessage)
   {
     return new XPathException ("XPTY0004", sMessage);
   }
 
-  /** Invalid lexical value FORG0001 (casting, constructors). */
+  /**
+   * Create a error for an invalid lexical value (casting, constructors).
+   *
+   * @param sMessage
+   *        The description. May not be <code>null</code>.
+   * @return The new exception with the code <code>FORG0001</code>. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public static XPathException invalidValue (@NonNull final String sMessage)
   {
     return new XPathException ("FORG0001", sMessage);
   }
 
-  /** Context item absent XPDY0002. */
+  /**
+   * Create a error for an absent context item.
+   *
+   * @param sMessage
+   *        The description. May not be <code>null</code>.
+   * @return The new exception with the code <code>XPDY0002</code>. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public static XPathException noContext (@NonNull final String sMessage)
   {
     return new XPathException ("XPDY0002", sMessage);
   }
 
-  /** Any other code. */
+  /**
+   * Create an error with any other code.
+   *
+   * @param sCode
+   *        The local part of the error code. May not be <code>null</code>.
+   * @param sMessage
+   *        The description. May not be <code>null</code>.
+   * @return The new exception. Never <code>null</code>.
+   */
   @NonNull
   public static XPathException of (@NonNull final String sCode, @NonNull final String sMessage)
   {

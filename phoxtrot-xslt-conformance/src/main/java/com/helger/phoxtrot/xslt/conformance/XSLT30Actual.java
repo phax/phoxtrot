@@ -120,6 +120,8 @@ public record XSLT30Actual (@NonNull String output,
   }
 
   /**
+   * Create the actual outcome of a failed transformation.
+   *
    * @param aError
    *        The error the transformation raised.
    * @return The actual outcome of a failed transformation.
@@ -138,6 +140,8 @@ public record XSLT30Actual (@NonNull String output,
   }
 
   /**
+   * Create the actual outcome of a transformation result, for a test that asks for the serialised result.
+   *
    * @param aResult
    *        The transformation result.
    * @param bInitialFunction
@@ -173,6 +177,8 @@ public record XSLT30Actual (@NonNull String output,
   }
 
   /**
+   * Create the actual outcome of a transformation result, without a base output URI.
+   *
    * @param aResult
    *        The transformation result.
    * @param bInitialFunction
@@ -198,6 +204,8 @@ public record XSLT30Actual (@NonNull String output,
   }
 
   /**
+   * Create the actual outcome of a transformation result.
+   *
    * @param aResult
    *        The transformation result.
    * @param bInitialFunction

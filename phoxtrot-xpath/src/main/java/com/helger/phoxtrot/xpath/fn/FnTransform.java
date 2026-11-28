@@ -78,6 +78,8 @@ public final class FnTransform
   }
 
   /**
+   * Get the XSLT processor that implements <code>fn:transform</code>.
+   *
    * @return The XSLT processor behind <code>fn:transform</code>, or
    *         <code>null</code> if none is on the class path. The lookup is done
    *         once.

@@ -55,7 +55,14 @@ import com.helger.phoxtrot.xpath.ops.AtomicComparator;
 @Immutable
 public final class XdmMap implements IXdmItem
 {
-  /** A map entry. */
+  /**
+   * A map entry.
+   *
+   * @param key
+   *        The key as it was stored. May not be <code>null</code>.
+   * @param value
+   *        The value. May not be <code>null</code>.
+   */
   @Immutable
   public record Entry (@NonNull XdmAtomic key, @NonNull XdmSequence value)
   {}
@@ -100,6 +107,7 @@ public final class XdmMap implements IXdmItem
     }
   }
 
+  /** The shared empty map. */
   public static final XdmMap EMPTY = new XdmMap (null, 0, 0, null, null, new Entry [0]);
 
   private final Node m_aRoot;
@@ -358,6 +366,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Create a map with a single entry.
+   *
    * @param aKey
    *        The key.
    * @param aValue
@@ -370,18 +380,30 @@ public final class XdmMap implements IXdmItem
     return new Builder (1).put (aKey, aValue).build ();
   }
 
+  /**
+   * Get the number of entries.
+   *
+   * @return The entry count. Always &ge; 0.
+   */
   @Nonnegative
   public int size ()
   {
     return m_nSize;
   }
 
+  /**
+   * Check if this map has no entries.
+   *
+   * @return <code>true</code> if the map is empty.
+   */
   public boolean isEmpty ()
   {
     return m_nSize == 0;
   }
 
   /**
+   * Get the atomic type shared by all keys.
+   *
    * @return The atomic type of all keys, or <code>null</code> if it is unknown.
    *         A cheap way to test a <code>map(K, V)</code> type without looking
    *         at every entry.
@@ -393,6 +415,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Get the atomic type shared by all values.
+   *
    * @return The atomic type of all values, if each is a single atomic item, or
    *         <code>null</code> if it is unknown.
    * @see #getUniformKeyType()
@@ -403,12 +427,21 @@ public final class XdmMap implements IXdmItem
     return m_eValueType;
   }
 
+  /**
+   * Check if the map contains a key.
+   *
+   * @param aKey
+   *        The key to look up. May not be <code>null</code>.
+   * @return <code>true</code> if an entry with the key exists.
+   */
   public boolean containsKey (@NonNull final XdmAtomic aKey)
   {
     return getEntry (aKey) != null;
   }
 
   /**
+   * Get the value of a key.
+   *
    * @param aKey
    *        The key to look up.
    * @return <code>null</code> if the key is absent.
@@ -421,6 +454,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Get the entry of a key.
+   *
    * @param aKey
    *        The key to look up.
    * @return The entry with the key as it was stored, or <code>null</code> if
@@ -435,6 +470,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Add or replace an entry.
+   *
    * @param aKey
    *        The key.
    * @param aValue
@@ -462,6 +499,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Remove a key.
+   *
    * @param aKey
    *        The key to remove.
    * @return A new map without the key.
@@ -484,6 +523,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Remove several keys.
+   *
    * @param aKeys
    *        The keys to remove.
    * @return A new map without any of the keys.
@@ -498,6 +539,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Get a copy of all entries.
+   *
    * @return A new list with the entries in iteration order; use
    *         {@link #entries()} to iterate without copying.
    */
@@ -509,6 +552,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Get the entries as a view.
+   *
    * @return A read-only view of the entries in iteration order, without
    *         copying.
    */
@@ -519,6 +564,8 @@ public final class XdmMap implements IXdmItem
   }
 
   /**
+   * Get a copy of all keys.
+   *
    * @return A new list with the keys, as they were stored, in iteration order
    *         (<code>map:keys</code>).
    */
@@ -548,17 +595,26 @@ public final class XdmMap implements IXdmItem
   {
     private Map <Object, Entry> m_aMap;
 
+    /** Create an empty builder. */
     public Builder ()
     {
       m_aMap = new LinkedHashMap <> ();
     }
 
+    /**
+     * Create an empty builder for the expected number of entries.
+     *
+     * @param nExpectedSize
+     *        The number of entries expected.
+     */
     public Builder (@Nonnegative final int nExpectedSize)
     {
       m_aMap = LinkedHashMap.newLinkedHashMap (nExpectedSize);
     }
 
     /**
+     * Create a builder that starts with the entries of a map.
+     *
      * @param aBase
      *        A map whose entries the builder starts with.
      */
@@ -570,18 +626,32 @@ public final class XdmMap implements IXdmItem
         m_aMap.put (AtomicComparator.getMapKey (aEntry.key ()), aEntry);
     }
 
+    /**
+     * Get the number of entries added so far.
+     *
+     * @return The entry count. Always &ge; 0.
+     */
     @Nonnegative
     public int size ()
     {
       return m_aMap.size ();
     }
 
+    /**
+     * Check if the builder contains a key.
+     *
+     * @param aKey
+     *        The key to look up. May not be <code>null</code>.
+     * @return <code>true</code> if an entry with the key was added.
+     */
     public boolean containsKey (@NonNull final XdmAtomic aKey)
     {
       return m_aMap.containsKey (AtomicComparator.getMapKey (aKey));
     }
 
     /**
+     * Get the value of a key added so far.
+     *
      * @param aKey
      *        The key to look up.
      * @return <code>null</code> if the key is absent.

@@ -54,6 +54,12 @@ public final class AssertExtension implements IXsltExtension
   private static final XdmQName XTMM9001 = new XdmQName (XPathException.ERR_NAMESPACE, "XTMM9001", "err");
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public AssertExtension ()
+  {}
+
+  /**
    * Build the text of the assertion message from its value: adjacent atomic
    * values are joined with a single space (their lexical forms); attribute
    * and namespace nodes contribute their string value; other nodes are

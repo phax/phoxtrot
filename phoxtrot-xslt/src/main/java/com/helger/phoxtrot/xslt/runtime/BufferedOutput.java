@@ -40,6 +40,12 @@ public final class BufferedOutput implements IXsltOutput
   private final ICommonsList <IXdmItem> m_aItems = new CommonsArrayList <> ();
   private final ICommonsList <Boolean> m_aNew = new CommonsArrayList <> ();
 
+  /**
+   * Create a new empty buffered output.
+   */
+  public BufferedOutput ()
+  {}
+
   public void append (@NonNull final IXdmItem aItem)
   {
     m_aItems.add (aItem);
@@ -52,11 +58,23 @@ public final class BufferedOutput implements IXsltOutput
     m_aNew.add (Boolean.TRUE);
   }
 
+  /**
+   * Get the number of recorded items.
+   *
+   * @return The number of items recorded so far. Always &ge; 0.
+   */
   public int size ()
   {
     return m_aItems.size ();
   }
 
+  /**
+   * Get a recorded item.
+   *
+   * @param nIndex
+   *        The 0-based index of the item.
+   * @return The recorded item at that index, never <code>null</code>.
+   */
   @NonNull
   public IXdmItem get (final int nIndex)
   {
@@ -64,6 +82,8 @@ public final class BufferedOutput implements IXsltOutput
   }
 
   /**
+   * Check whether a recorded item is a new node.
+   *
    * @param nIndex
    *        Index.
    * @return <code>true</code> if the item at that index is a new node.
@@ -102,6 +122,9 @@ public final class BufferedOutput implements IXsltOutput
   }
 
   /**
+   * Get the recorded items as a sequence, finishing the new nodes (namespace
+   * fixup and document order).
+   *
    * @return The recorded items as a sequence; new nodes are finished. Use
    *         either this or the replay methods.
    */

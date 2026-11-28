@@ -55,6 +55,8 @@ public record XsdNodeType (@NonNull ICommonsList <Integer> elementPath,
                            @Nullable XsdElementView declaration)
 {
   /**
+   * Check whether the node is an attribute.
+   *
    * @return <code>true</code> if the node is an attribute.
    */
   public boolean isAttribute ()

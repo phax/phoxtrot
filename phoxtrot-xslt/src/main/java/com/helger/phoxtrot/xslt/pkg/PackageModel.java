@@ -67,6 +67,15 @@ public final class PackageModel
   private final ICommonsMap <Object, PackageUnit> m_aScopes = new CommonsHashMap <> ();
 
   /**
+   * Create an empty package model; the units are added with
+   * {@link #createUnit(String, boolean)}.
+   */
+  public PackageModel ()
+  {}
+
+  /**
+   * Create a new unit and add it to the packages of this model.
+   *
    * @param sKey
    *        Identity of the package source.
    * @param bPrincipal
@@ -115,6 +124,8 @@ public final class PackageModel
   }
 
   /**
+   * Get the package of an expression from the object registered for it.
+   *
    * @param aScope
    *        An object registered with {@link #registerScope(Object, PackageUnit)}.
    * @return The package, the principal one for an unknown object.
@@ -177,30 +188,45 @@ public final class PackageModel
     return aModule == null ? aName : _qualify (aModule.getPackageQualifier (), aName);
   }
 
-  /** @return All packages, the principal one first. */
+  /**
+   * Get all packages of the compilation.
+   *
+   * @return All packages, the principal one first (the internal list).
+   */
   @NonNull
   public ICommonsList <PackageUnit> getUnits ()
   {
     return m_aUnits;
   }
 
-  /** @return The principal package. */
+  /**
+   * Get the principal package, the first unit created.
+   *
+   * @return The principal package.
+   */
   @NonNull
   public PackageUnit getPrincipal ()
   {
     return m_aUnits.getFirstOrNull ();
   }
 
-  /** @return <code>true</code> if more than one package takes part. */
+  /**
+   * Check whether the compilation uses library packages.
+   *
+   * @return <code>true</code> if more than one package takes part.
+   */
   public boolean isMultiPackage ()
   {
     return m_aUnits.size () > 1;
   }
 
   /**
+   * Get the package a stylesheet node is written in.
+   *
    * @param aNode
    *        A stylesheet node.
-   * @return The package it is written in.
+   * @return The package it is written in, the principal one if its module was
+   *         not added to a package.
    */
   @NonNull
   public PackageUnit getUnit (@NonNull final AbstractXslNode aNode)
@@ -210,6 +236,8 @@ public final class PackageModel
   }
 
   /**
+   * Check whether a stylesheet node is written in the principal package.
+   *
    * @param aNode
    *        A stylesheet node.
    * @return <code>true</code> if it is written in the principal package.
@@ -220,6 +248,9 @@ public final class PackageModel
   }
 
   /**
+   * Check whether a component of a used package is hidden from the code at a
+   * node. Always <code>false</code> with only one package.
+   *
    * @param aNode
    *        A stylesheet node.
    * @param sSymbolicName
@@ -233,6 +264,9 @@ public final class PackageModel
   }
 
   /**
+   * Check whether the principal package accepted a component with an explicit
+   * xsl:accept.
+   *
    * @param sSymbolicName
    *        The symbolic name of a component of a used package.
    * @return <code>true</code> if the principal package accepted it with an
@@ -244,6 +278,8 @@ public final class PackageModel
   }
 
   /**
+   * Check whether a declaration is a child of xsl:override.
+   *
    * @param aEl
    *        A declaration.
    * @return <code>true</code> if it is a child of xsl:override.
@@ -271,6 +307,8 @@ public final class PackageModel
   }
 
   /**
+   * Get the exposure of the xsl:expose elements of a package.
+   *
    * @param aRoot
    *        A package root.
    * @return The exposure of the package's xsl:expose elements (computed

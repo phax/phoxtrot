@@ -47,6 +47,8 @@ public record XSLT30Assertion (@NonNull String kind,
                                @NonNull ICommonsList <XSLT30Assertion> children)
 {
   /**
+   * Get the value of an attribute of the assertion.
+   *
    * @param sName
    *        Attribute local name.
    * @return The value or the empty string if absent.

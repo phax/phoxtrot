@@ -33,6 +33,14 @@ public final class XsdCompileOptions
   private XsdFileAccess m_aFileAccess = XsdFileAccess.LOCAL_FILES;
 
   /**
+   * Create options with the default settings.
+   */
+  public XsdCompileOptions ()
+  {}
+
+  /**
+   * Check whether documentation is kept.
+   *
    * @return <code>true</code> if the <code>xs:documentation</code> of
    *         components and the source text of pattern facets are kept for the
    *         component model view (go-xslt <code>CompileWithDocs</code>). The
@@ -44,6 +52,8 @@ public final class XsdCompileOptions
   }
 
   /**
+   * Decide whether documentation is kept (see {@link #isKeepDocumentation()}).
+   *
    * @param bKeepDocumentation
    *        <code>true</code> to keep documentation.
    * @return this for chaining
@@ -55,7 +65,11 @@ public final class XsdCompileOptions
     return this;
   }
 
-  /** @return The file access rule. Default {@link XsdFileAccess#LOCAL_FILES}. */
+  /**
+   * Get the file access rule.
+   *
+   * @return The file access rule. Default {@link XsdFileAccess#LOCAL_FILES}.
+   */
   @NonNull
   public XsdFileAccess getFileAccess ()
   {
@@ -63,6 +77,8 @@ public final class XsdCompileOptions
   }
 
   /**
+   * Set the file access rule.
+   *
    * @param aFileAccess
    *        The file access rule for every document the validator reads on its
    *        own. May not be <code>null</code>.

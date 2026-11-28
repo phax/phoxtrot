@@ -64,6 +64,8 @@ public final class DomNodeMapping
   }
 
   /**
+   * Get the XDM counterpart of the converted DOM node.
+   *
    * @return The XDM counterpart of the converted DOM node, as
    *         {@link DomToXdm#convert(Node, String)} gives it. Never
    *         <code>null</code>.
@@ -75,6 +77,8 @@ public final class DomNodeMapping
   }
 
   /**
+   * Get the DOM node an XDM node was built from.
+   *
    * @param aXdmNode
    *        A node of the built XDM tree.
    * @return The DOM node it was built from, or <code>null</code> for a node
@@ -87,7 +91,11 @@ public final class DomNodeMapping
     return aXdmNode == null ? null : m_aDomNodes.get (aXdmNode);
   }
 
-  /** @return The number of mapped XDM nodes. */
+  /**
+   * Get the number of mapped XDM nodes.
+   *
+   * @return The number of mapped XDM nodes.
+   */
   public int getMappedNodeCount ()
   {
     return m_aDomNodes.size ();

@@ -36,6 +36,8 @@ public class XsdInvalidException extends RuntimeException
   private final transient ICommonsList <XsdMessage> m_aMessages;
 
   /**
+   * Create an exception for an error.
+   *
    * @param aError
    *        The (first) error. May not be <code>null</code>.
    */
@@ -68,7 +70,11 @@ public class XsdInvalidException extends RuntimeException
     return m_aMessages;
   }
 
-  /** @return The error. Never <code>null</code>. */
+  /**
+   * Get the error of this exception.
+   *
+   * @return The error. Never <code>null</code>.
+   */
   @NonNull
   public final XsdError getError ()
   {
@@ -76,6 +82,8 @@ public class XsdInvalidException extends RuntimeException
   }
 
   /**
+   * Create an exception for an error without location.
+   *
    * @param sCode
    *        The constraint code, may be empty.
    * @param sMessage

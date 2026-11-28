@@ -175,6 +175,8 @@ public final class PackageVersionRanges
   }
 
   /**
+   * Check whether a package version lies in one of the ranges.
+   *
    * @param aVersion
    *        A package version.
    * @return <code>true</code> if one of the ranges contains it.

@@ -46,6 +46,9 @@ public final class CoercedFunctionItem extends AbstractFunctionItem
   private final ItemType m_aExpected;
 
   /**
+   * Create a coerced function that wraps a function item with the expected
+   * signature.
+   *
    * @param aWrapped
    *        A function, map or array with the arity of the expected type.
    * @param aExpected
@@ -57,6 +60,11 @@ public final class CoercedFunctionItem extends AbstractFunctionItem
     m_aExpected = aExpected;
   }
 
+  /**
+   * Get the wrapped function item.
+   *
+   * @return The wrapped function, map or array. Never <code>null</code>.
+   */
   @NonNull
   public IXdmItem getWrapped ()
   {

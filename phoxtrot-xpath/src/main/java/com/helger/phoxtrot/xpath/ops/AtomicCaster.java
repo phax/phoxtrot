@@ -607,6 +607,8 @@ public final class AtomicCaster
   }
 
   /**
+   * Check if a value can be cast to a target type.
+   *
    * @param aValue
    *        Source value.
    * @param eTarget
@@ -666,6 +668,17 @@ public final class AtomicCaster
     return _castCollapsedToDouble (sValue, XsdLexical.collapseWhitespace (sValue), aStaticCtx);
   }
 
+  /**
+   * Cast a string to a target type, as a cast of an xs:string value.
+   *
+   * @param sValue
+   *        The string to cast. May not be <code>null</code>.
+   * @param eTarget
+   *        The target type. May not be <code>null</code>.
+   * @param aStaticCtx
+   *        Namespaces, may be <code>null</code>.
+   * @return The cast value.
+   */
   @NonNull
   public static XdmAtomic castFromString (@NonNull final String sValue,
                                           @NonNull final EAtomicType eTarget,

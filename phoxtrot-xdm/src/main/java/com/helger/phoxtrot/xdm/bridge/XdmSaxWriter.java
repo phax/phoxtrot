@@ -71,6 +71,8 @@ public final class XdmSaxWriter
   private final ArrayDeque <OpenElement> m_aOpen = new ArrayDeque <> ();
 
   /**
+   * Create a writer for the given handlers.
+   *
    * @param aHandler
    *        The receiver of the content events. May not be <code>null</code>.
    * @param aLexicalHandler

@@ -327,6 +327,8 @@ public final class XdmDateTimeValue
   }
 
   /**
+   * Remove leading and trailing XML whitespace from a string.
+   *
    * @param s
    *        Source string.
    * @return The string without leading and trailing XML whitespace (space, tab, CR, LF).
@@ -536,6 +538,8 @@ public final class XdmDateTimeValue
   }
 
   /**
+   * Create an xs:dateTime payload from a java.time value.
+   *
    * @param aDateTime
    *        A java.time value, e.g. the current date/time.
    * @return The xs:dateTime payload with the offset of the value (whole minutes).
@@ -554,68 +558,111 @@ public final class XdmDateTimeValue
                Integer.valueOf (aDateTime.getOffset ().getTotalSeconds () / 60));
   }
 
-  /** @return The astronomical year (0 = 1 BCE). */
+  /**
+   * Get the year component.
+   *
+   * @return The astronomical year (0 = 1 BCE).
+   */
   public long getYear ()
   {
     return m_nYear;
   }
 
-  /** @return 1..12 */
+  /**
+   * Get the month component.
+   *
+   * @return 1..12
+   */
   public int getMonth ()
   {
     return m_nMonth;
   }
 
-  /** @return 1..31 */
+  /**
+   * Get the day component.
+   *
+   * @return 1..31
+   */
   public int getDay ()
   {
     return m_nDay;
   }
 
-  /** @return 0..23 */
+  /**
+   * Get the hour component.
+   *
+   * @return 0..23
+   */
   public int getHour ()
   {
     return m_nHour;
   }
 
-  /** @return 0..59 */
+  /**
+   * Get the minute component.
+   *
+   * @return 0..59
+   */
   public int getMinute ()
   {
     return m_nMinute;
   }
 
-  /** @return Seconds including the fraction, 0 &lt;= s &lt; 60, normalised (no trailing zeros). */
+  /**
+   * Get the seconds component.
+   *
+   * @return Seconds including the fraction, 0 &lt;= s &lt; 60, normalised (no trailing zeros).
+   */
   @NonNull
   public BigDecimal getSecond ()
   {
     return m_aSecond;
   }
 
+  /**
+   * Check if this value has a timezone.
+   *
+   * @return <code>true</code> if a timezone is present.
+   */
   public boolean hasTimezone ()
   {
     return m_bHasTimezone;
   }
 
-  /** @return The timezone offset in minutes; 0 if there is no timezone. */
+  /**
+   * Get the timezone offset in minutes.
+   *
+   * @return The timezone offset in minutes; 0 if there is no timezone.
+   */
   public int getTimezoneMinutes ()
   {
     return m_nTimezoneMinutes;
   }
 
-  /** @return The timezone offset in minutes or <code>null</code>. */
+  /**
+   * Get the timezone offset as an optional value.
+   *
+   * @return The timezone offset in minutes or <code>null</code>.
+   */
   @Nullable
   public Integer getTimezone ()
   {
     return m_bHasTimezone ? Integer.valueOf (m_nTimezoneMinutes) : null;
   }
 
-  /** @return Days since 1970-01-01 of the local date. */
+  /**
+   * Get the local date as epoch day.
+   *
+   * @return Days since 1970-01-01 of the local date.
+   */
   public long getEpochDay ()
   {
     return DateTimeCalendar.getEpochDay (m_nYear, m_nMonth, m_nDay);
   }
 
   /**
+   * Get the instant of this value as seconds since the epoch.
+   *
    * @param nImplicitTimezoneMinutes
    *        Applied if the value has no timezone.
    * @return The instant as seconds since 1970-01-01T00:00:00Z.
@@ -629,6 +676,8 @@ public final class XdmDateTimeValue
   }
 
   /**
+   * Get a copy of this value with another timezone.
+   *
    * @param aTimezoneMinutes
    *        The new timezone or <code>null</code>.
    * @return The same local components with a different (or no) timezone.
@@ -656,6 +705,8 @@ public final class XdmDateTimeValue
   }
 
   /**
+   * Format a year for the lexical form.
+   *
    * @param nYear
    *        Astronomical year.
    * @return At least four digits, the sign outside the padding.
@@ -673,6 +724,8 @@ public final class XdmDateTimeValue
   }
 
   /**
+   * Format a timezone offset for the lexical form.
+   *
    * @param nMinutes
    *        Offset in minutes.
    * @return <code>Z</code> or <code>+hh:mm</code>/<code>-hh:mm</code>.
@@ -703,6 +756,8 @@ public final class XdmDateTimeValue
   }
 
   /**
+   * Get the canonical lexical form of this payload.
+   *
    * @param eType
    *        The type of the value this payload belongs to.
    * @return The canonical lexical form for that type.

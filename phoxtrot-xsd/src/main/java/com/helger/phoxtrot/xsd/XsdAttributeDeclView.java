@@ -40,35 +40,56 @@ public final class XsdAttributeDeclView
     m_aDecl = aDecl;
   }
 
-  /** @return The expanded name. */
+  /**
+   * Get the name of the declared attribute.
+   *
+   * @return The expanded name.
+   */
   @NonNull
   public XsdName getName ()
   {
     return m_aDecl.m_aName;
   }
 
-  /** @return The declaration's xs:documentation (needs documentation kept at compile time). */
+  /**
+   * Get the documentation of the declaration.
+   *
+   * @return The declaration's xs:documentation (needs documentation kept at
+   *         compile time).
+   */
   @NonNull
   public ICommonsList <XsdDocumentation> getDocumentation ()
   {
     return m_aDecl.m_aDocs.getClone ();
   }
 
-  /** @return The attribute type. */
+  /**
+   * Get the type of the declared attribute.
+   *
+   * @return The attribute type.
+   */
   @Nullable
   public XsdSimpleTypeView getType ()
   {
     return m_aView.simple (m_aDecl.m_aType);
   }
 
-  /** @return The default value, <code>null</code> if none. */
+  /**
+   * Get the default value of the declared attribute.
+   *
+   * @return The default value, <code>null</code> if none.
+   */
   @Nullable
   public String getDefault ()
   {
     return m_aDecl.m_bHasDefault ? m_aDecl.m_sDefault : null;
   }
 
-  /** @return The fixed value, <code>null</code> if none. */
+  /**
+   * Get the fixed value of the declared attribute.
+   *
+   * @return The fixed value, <code>null</code> if none.
+   */
   @Nullable
   public String getFixed ()
   {

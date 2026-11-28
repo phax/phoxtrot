@@ -34,6 +34,8 @@ import org.jspecify.annotations.Nullable;
 public record XsdCompileResult (@NonNull XsdVerdict verdict, @Nullable IXsdTestSchema schema)
 {
   /**
+   * Create a valid result.
+   *
    * @param aSchema
    *        The compiled schema.
    * @return A valid result.
@@ -45,6 +47,8 @@ public record XsdCompileResult (@NonNull XsdVerdict verdict, @Nullable IXsdTestS
   }
 
   /**
+   * Create a failed result.
+   *
    * @param aVerdict
    *        An invalid or unsupported verdict.
    * @return A result without schema.

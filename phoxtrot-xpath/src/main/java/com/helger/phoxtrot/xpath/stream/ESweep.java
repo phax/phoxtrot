@@ -41,7 +41,11 @@ public enum ESweep
     m_sName = sName;
   }
 
-  /** @return The name the specification uses, e.g. <code>consuming</code>. */
+  /**
+   * Get the name of the sweep.
+   *
+   * @return The name the specification uses, e.g. <code>consuming</code>.
+   */
   @NonNull
   public String getName ()
   {
@@ -49,6 +53,8 @@ public enum ESweep
   }
 
   /**
+   * Get the wider of two sweeps.
+   *
    * @param eOther
    *        The other sweep.
    * @return The wider of this sweep and the other one.

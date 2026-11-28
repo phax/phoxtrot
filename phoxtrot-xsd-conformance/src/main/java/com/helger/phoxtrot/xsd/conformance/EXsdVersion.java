@@ -29,7 +29,9 @@ import com.helger.annotation.Nonempty;
  */
 public enum EXsdVersion
 {
+  /** XSD 1.0. */
   XSD_10 ("1.0", ""),
+  /** XSD 1.1. */
   XSD_11 ("1.1", "11");
 
   private final String m_sID;
@@ -41,7 +43,11 @@ public enum EXsdVersion
     m_sFileSuffix = sFileSuffix;
   }
 
-  /** @return The version token, e.g. <code>1.0</code>. */
+  /**
+   * Get the version token.
+   *
+   * @return The version token, e.g. <code>1.0</code>.
+   */
   @NonNull
   @Nonempty
   public String getID ()
@@ -50,6 +56,8 @@ public enum EXsdVersion
   }
 
   /**
+   * Get the suffix of the output file names.
+   *
    * @return The suffix after <code>xsd</code> in the names of the output
    *         files: empty for XSD 1.0 (<code>xsd-fails.txt</code>),
    *         <code>11</code> for XSD 1.1 (<code>xsd11-fails.txt</code>).
@@ -61,6 +69,8 @@ public enum EXsdVersion
   }
 
   /**
+   * Find a version by its token.
+   *
    * @param sID
    *        The version token. May be <code>null</code>.
    * @return The matching version or <code>null</code>.

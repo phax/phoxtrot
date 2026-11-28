@@ -295,21 +295,34 @@ public final class XsdSchema
     }
   }
 
-  /** @return The XSD version the schema was compiled for. */
+  /**
+   * Get the XSD version of the schema.
+   *
+   * @return The XSD version the schema was compiled for.
+   */
   @NonNull
   public EXsdVersion getVersion ()
   {
     return m_eVersion;
   }
 
-  /** @return The directory of the entry schema document, may be <code>null</code>. */
+  /**
+   * Get the directory of the entry schema document.
+   *
+   * @return The directory of the entry schema document, may be
+   *         <code>null</code>.
+   */
   @Nullable
   public Path getBaseDir ()
   {
     return m_aBaseDir;
   }
 
-  /** @return The file access rule. */
+  /**
+   * Get the file access rule.
+   *
+   * @return The file access rule.
+   */
   @NonNull
   public XsdFileAccess getFileAccess ()
   {
@@ -516,7 +529,11 @@ public final class XsdSchema
     return ret == null ? new CommonsArrayList <> () : ret;
   }
 
-  /** @return The read-only component model of this schema. */
+  /**
+   * Get the component model of this schema.
+   *
+   * @return The read-only component model of this schema.
+   */
   @NonNull
   public XsdSchemaView getView ()
   {

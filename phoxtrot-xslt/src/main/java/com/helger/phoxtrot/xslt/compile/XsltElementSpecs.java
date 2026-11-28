@@ -200,6 +200,8 @@ public final class XsltElementSpecs
   }
 
   /**
+   * Get the shape of an XSLT element.
+   *
    * @param sLocalName
    *        Local name of an XSLT element.
    * @return Its shape or <code>null</code> if XSLT 3.0 has no such element.
@@ -211,6 +213,8 @@ public final class XsltElementSpecs
   }
 
   /**
+   * Check whether XSLT 3.0 defines an element.
+   *
    * @param sLocalName
    *        Local name.
    * @return <code>true</code> if XSLT 3.0 defines an element of that name.

@@ -177,6 +177,8 @@ public final class XsdSuiteRules
   }
 
   /**
+   * Check whether a test is disputed.
+   *
    * @param aCurrentStatuses
    *        The statuses of the <code>&lt;current&gt;</code> elements of a test.
    * @return <code>true</code> if the latest one marks the test as disputed
@@ -189,6 +191,8 @@ public final class XsdSuiteRules
   }
 
   /**
+   * Check whether a validator's verdict matches the expected validity.
+   *
    * @param bValid
    *        The validator's verdict.
    * @param sExpected

@@ -38,11 +38,30 @@ public final class LiteralText implements IInstruction
   private final String m_sText;
   private final boolean m_bDisableOutputEscaping;
 
+  /**
+   * Create a literal text whose output is escaped as usual.
+   *
+   * @param aLocation
+   *        The stylesheet node for error locations. May be <code>null</code>.
+   * @param sText
+   *        The fixed text. May not be <code>null</code>.
+   */
   public LiteralText (@Nullable final AbstractXslNode aLocation, @NonNull final String sText)
   {
     this (aLocation, sText, false);
   }
 
+  /**
+   * Create a literal text.
+   *
+   * @param aLocation
+   *        The stylesheet node for error locations. May be <code>null</code>.
+   * @param sText
+   *        The fixed text. May not be <code>null</code>.
+   * @param bDisableOutputEscaping
+   *        <code>true</code> to mark the text node for disabled output
+   *        escaping.
+   */
   public LiteralText (@Nullable final AbstractXslNode aLocation, @NonNull final String sText, final boolean bDisableOutputEscaping)
   {
     m_aLocation = aLocation;
@@ -50,6 +69,11 @@ public final class LiteralText implements IInstruction
     m_bDisableOutputEscaping = bDisableOutputEscaping;
   }
 
+  /**
+   * Get the fixed text of this instruction.
+   *
+   * @return The text. Never <code>null</code>.
+   */
   @NonNull
   public String getText ()
   {

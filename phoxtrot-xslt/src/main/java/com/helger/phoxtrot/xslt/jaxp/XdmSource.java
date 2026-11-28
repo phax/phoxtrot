@@ -49,6 +49,8 @@ public class XdmSource implements Source
   private String m_sSystemId;
 
   /**
+   * Create a source for an existing XDM node.
+   *
    * @param aNode
    *        The node. May not be <code>null</code>. Its document URI (or base
    *        URI) is the initial system ID.
@@ -61,7 +63,11 @@ public class XdmSource implements Source
     m_sSystemId = aRoot.getDocumentUri () != null ? aRoot.getDocumentUri () : aRoot.getBaseUri ();
   }
 
-  /** @return The node. Never <code>null</code>. */
+  /**
+   * Get the node of this source.
+   *
+   * @return The node. Never <code>null</code>.
+   */
   @NonNull
   public final IXdmNode getNode ()
   {

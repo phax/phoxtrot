@@ -67,6 +67,8 @@ public record XsltTraceTemplate (@Nullable String matchPattern,
                                  int column)
 {
   /**
+   * Check whether the template was invoked as a template rule.
+   *
    * @return <code>true</code> for a template rule (invoked by matching),
    *         <code>false</code> for a named template invoked by name.
    */

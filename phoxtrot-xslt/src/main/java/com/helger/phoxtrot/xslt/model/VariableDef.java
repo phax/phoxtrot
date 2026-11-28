@@ -54,11 +54,17 @@ public final class VariableDef
    */
   public enum EKind
   {
+    /** A global xsl:variable */
     GLOBAL_VARIABLE ("XTTE0570"),
+    /** A global xsl:param */
     GLOBAL_PARAM ("XTTE0590"),
+    /** A local xsl:variable */
     LOCAL_VARIABLE ("XTTE0570"),
+    /** An xsl:param of a template */
     TEMPLATE_PARAM ("XTTE0590"),
+    /** An xsl:param of a stylesheet function */
     FUNCTION_PARAM ("XTTE0790"),
+    /** An xsl:with-param */
     WITH_PARAM ("XTTE0590"),
     /** Parameters of other constructs (xsl:iterate, ...) */
     OTHER_PARAM ("XTTE0590");
@@ -70,7 +76,11 @@ public final class VariableDef
       m_sTypeErrorCode = sTypeErrorCode;
     }
 
-    /** @return The error code for a value that does not match the type. */
+    /**
+     * Get the type error code of this kind.
+     *
+     * @return The error code for a value that does not match the type.
+     */
     @NonNull
     public String getTypeErrorCode ()
     {
@@ -78,6 +88,8 @@ public final class VariableDef
     }
 
     /**
+     * Check whether this kind is a parameter.
+     *
      * @return <code>true</code> for the parameter kinds (global, template,
      *         function and other parameters); xsl:with-param, which supplies a
      *         value, is not a parameter.
@@ -100,6 +112,26 @@ public final class VariableDef
   // a definition that is not bound by slot
   private VariableSlot m_aSlot;
 
+  /**
+   * Create a variable or parameter definition.
+   *
+   * @param aElement
+   *        The declaring element. May not be <code>null</code>.
+   * @param eKind
+   *        The kind of declaration. May not be <code>null</code>.
+   * @param aName
+   *        The variable name. May not be <code>null</code>.
+   * @param aSelect
+   *        The select expression, <code>null</code> if none.
+   * @param aBody
+   *        The sequence constructor, <code>null</code> if none.
+   * @param aAs
+   *        The declared type, <code>null</code> if none.
+   * @param bTunnel
+   *        <code>true</code> for tunnel="yes".
+   * @param bRequired
+   *        <code>true</code> if the parameter must be supplied.
+   */
   public VariableDef (@NonNull final XslElement aElement,
                       @NonNull final EKind eKind,
                       @NonNull final XdmQName aName,
@@ -119,37 +151,66 @@ public final class VariableDef
     m_bRequired = bRequired;
   }
 
+  /**
+   * Get the declaring element.
+   *
+   * @return The declaring element, never <code>null</code>.
+   */
   @NonNull
   public XslElement getElement ()
   {
     return m_aElement;
   }
 
+  /**
+   * Get the kind of declaration.
+   *
+   * @return The kind, never <code>null</code>.
+   */
   @NonNull
   public EKind getKind ()
   {
     return m_eKind;
   }
 
+  /**
+   * Get the variable name.
+   *
+   * @return The variable name, never <code>null</code>.
+   */
   @NonNull
   public XdmQName getName ()
   {
     return m_aName;
   }
 
+  /**
+   * Get the select expression.
+   *
+   * @return The select expression, <code>null</code> if none.
+   */
   @Nullable
   public XPathExpr getSelect ()
   {
     return m_aSelect;
   }
 
+  /**
+   * Get the sequence constructor.
+   *
+   * @return The sequence constructor, <code>null</code> if none.
+   */
   @Nullable
   public SequenceConstructor getBody ()
   {
     return m_aBody;
   }
 
-  /** @return The declared type or <code>null</code> if there is none. */
+  /**
+   * Get the declared type.
+   *
+   * @return The declared type or <code>null</code> if there is none.
+   */
   @Nullable
   public SeqType getAs ()
   {
@@ -157,6 +218,8 @@ public final class VariableDef
   }
 
   /**
+   * Get the slot of a parameter bound by slot.
+   *
    * @return The slot the parameter is bound in (see
    *         {@link com.helger.phoxtrot.xslt.compile.CompileContext#withVariable(XdmQName)}),
    *         or <code>null</code> if it is not bound by slot.
@@ -168,6 +231,8 @@ public final class VariableDef
   }
 
   /**
+   * Get the slot of a parameter that must be bound by slot.
+   *
    * @return The slot the parameter is bound in.
    * @throws IllegalStateException
    *         if it has none
@@ -191,12 +256,19 @@ public final class VariableDef
     m_aSlot = aSlot;
   }
 
+  /**
+   * Check whether this is a tunnel parameter.
+   *
+   * @return <code>true</code> for tunnel="yes".
+   */
   public boolean isTunnel ()
   {
     return m_bTunnel;
   }
 
   /**
+   * Check whether the parameter is required.
+   *
    * @return <code>true</code> if the parameter must be supplied: required="yes",
    *         or an <code>as</code> type that does not allow the empty sequence
    *         with no default value.

@@ -65,25 +65,42 @@ public final class Mode
   private ICommonsMap <XdmQName, int []> m_aAttributeRules;
   private int [] m_aUnnamedRules;
 
+  /**
+   * Create a mode without rules and with the default properties.
+   *
+   * @param aName
+   *        The mode name, {@link #UNNAMED} for the unnamed mode. May not be
+   *        <code>null</code>.
+   */
   public Mode (@NonNull final XdmQName aName)
   {
     m_aName = aName;
   }
 
-  /** @return The mode name, {@link #UNNAMED} for the unnamed mode. */
+  /**
+   * Get the mode name.
+   *
+   * @return The mode name, {@link #UNNAMED} for the unnamed mode.
+   */
   @NonNull
   public XdmQName getName ()
   {
     return m_aName;
   }
 
-  /** @return <code>true</code> if this is the unnamed mode. */
+  /**
+   * Check whether this is the unnamed mode.
+   *
+   * @return <code>true</code> if this is the unnamed mode.
+   */
   public boolean isUnnamed ()
   {
     return UNNAMED.equals (m_aName);
   }
 
   /**
+   * Get the on-no-match behaviour of the mode.
+   *
    * @return The built-in template rules used when no rule matches (XSLT 3.0
    *         section 6.7); text-only-copy unless the xsl:mode declaration says
    *         otherwise.
@@ -94,12 +111,20 @@ public final class Mode
     return m_eOnNoMatch;
   }
 
+  /**
+   * Set the on-no-match behaviour of the mode.
+   *
+   * @param eOnNoMatch
+   *        The built-in template rules to use. May not be <code>null</code>.
+   */
   public void setOnNoMatch (@NonNull final EOnNoMatch eOnNoMatch)
   {
     m_eOnNoMatch = eOnNoMatch;
   }
 
   /**
+   * Check whether the mode fails on multiple matches.
+   *
    * @return <code>true</code> for on-multiple-match="fail": the engine raises
    *         XTDE0540 when several template rules of the same import
    *         precedence and priority match an item.
@@ -109,12 +134,20 @@ public final class Mode
     return m_bFailOnMultipleMatch;
   }
 
+  /**
+   * Set whether the mode fails on multiple matches.
+   *
+   * @param b
+   *        <code>true</code> for on-multiple-match="fail".
+   */
   public void setFailOnMultipleMatch (final boolean b)
   {
     m_bFailOnMultipleMatch = b;
   }
 
   /**
+   * Get the declared warning-on-no-match value.
+   *
    * @return The declared warning-on-no-match value. It is recorded only; the
    *         engine does not read it.
    */
@@ -123,12 +156,20 @@ public final class Mode
     return m_bWarningOnNoMatch;
   }
 
+  /**
+   * Set the declared warning-on-no-match value.
+   *
+   * @param b
+   *        The declared value.
+   */
   public void setWarningOnNoMatch (final boolean b)
   {
     m_bWarningOnNoMatch = b;
   }
 
   /**
+   * Get the declared warning-on-multiple-match value.
+   *
    * @return The declared warning-on-multiple-match value. It is recorded
    *         only; the engine does not read it.
    */
@@ -137,24 +178,42 @@ public final class Mode
     return m_bWarningOnMultipleMatch;
   }
 
+  /**
+   * Set the declared warning-on-multiple-match value.
+   *
+   * @param b
+   *        The declared value.
+   */
   public void setWarningOnMultipleMatch (final boolean b)
   {
     m_bWarningOnMultipleMatch = b;
   }
 
-  /** @return The declared visibility or <code>null</code>. */
+  /**
+   * Get the declared visibility of the mode.
+   *
+   * @return The declared visibility or <code>null</code>.
+   */
   @Nullable
   public String getVisibility ()
   {
     return m_sVisibility;
   }
 
+  /**
+   * Set the declared visibility of the mode.
+   *
+   * @param s
+   *        The declared visibility. May be <code>null</code>.
+   */
   public void setVisibility (@Nullable final String s)
   {
     m_sVisibility = s;
   }
 
   /**
+   * Get the declared value of the typed attribute.
+   *
    * @return The declared value of the typed attribute (yes, no, strict, lax,
    *         unspecified) or <code>null</code>.
    */
@@ -164,12 +223,20 @@ public final class Mode
     return m_sTyped;
   }
 
+  /**
+   * Set the declared value of the typed attribute.
+   *
+   * @param s
+   *        The declared value. May be <code>null</code>.
+   */
   public void setTyped (@Nullable final String s)
   {
     m_sTyped = s;
   }
 
   /**
+   * Check whether the mode is declared streamable.
+   *
    * @return <code>true</code> if the mode is declared
    *         <code>streamable="yes"</code> (XSLT 3.0 section 6.6.1).
    */
@@ -178,18 +245,36 @@ public final class Mode
     return m_bStreamable;
   }
 
+  /**
+   * Set whether the mode is declared streamable.
+   *
+   * @param bStreamable
+   *        <code>true</code> for <code>streamable="yes"</code>.
+   */
   public void setStreamable (final boolean bStreamable)
   {
     m_bStreamable = bStreamable;
   }
 
-  /** @return The (highest precedence) xsl:mode declaration or <code>null</code>. */
+  /**
+   * Get the xsl:mode declaration of the mode.
+   *
+   * @return The (highest precedence) xsl:mode declaration or
+   *         <code>null</code>.
+   */
   @Nullable
   public XslElement getDeclaration ()
   {
     return m_aDeclaration;
   }
 
+  /**
+   * Set the xsl:mode declaration of the mode.
+   *
+   * @param aDeclaration
+   *        The (highest precedence) xsl:mode declaration. May be
+   *        <code>null</code>.
+   */
   public void setDeclaration (@Nullable final XslElement aDeclaration)
   {
     m_aDeclaration = aDeclaration;
@@ -276,7 +361,11 @@ public final class Mode
     _buildRuleIndex ();
   }
 
-  /** @return The rules, best first (do not modify). */
+  /**
+   * Get the template rules of the mode.
+   *
+   * @return The rules, best first (do not modify).
+   */
   @NonNull
   public ICommonsList <TemplateRule> rules ()
   {
@@ -317,6 +406,8 @@ public final class Mode
   }
 
   /**
+   * Get the rules of the index whose pattern names no element or attribute.
+   *
    * @return The positions (in {@link #rules()}) of the rules whose pattern
    *         names no elements or attributes, in ascending order (do not
    *         modify); <code>null</code> if the mode has no rule index (see

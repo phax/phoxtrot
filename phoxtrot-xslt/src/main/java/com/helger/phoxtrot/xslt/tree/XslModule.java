@@ -37,13 +37,25 @@ public final class XslModule
   private boolean m_bSimplified;
   private String m_sPackageQualifier = "";
 
+  /**
+   * Constructor.
+   *
+   * @param sUri
+   *        The URI the module was loaded from. May be <code>null</code>.
+   * @param aSourceDocument
+   *        The parsed source of the module. May not be <code>null</code>.
+   */
   public XslModule (@Nullable final String sUri, @NonNull final IXdmNode aSourceDocument)
   {
     m_sUri = sUri;
     m_aSourceDocument = aSourceDocument;
   }
 
-  /** @return The URI the module was loaded from, or <code>null</code>. */
+  /**
+   * Get the URI of the module.
+   *
+   * @return The URI the module was loaded from, or <code>null</code>.
+   */
   @Nullable
   public String getUri ()
   {
@@ -51,6 +63,8 @@ public final class XslModule
   }
 
   /**
+   * Get the parsed source of the module.
+   *
    * @return The parsed source of the module: its document node, or the root
    *         of the tree an embedded module element belongs to. document('')
    *         returns it.
@@ -61,19 +75,33 @@ public final class XslModule
     return m_aSourceDocument;
   }
 
-  /** @return The module's outermost element after static processing. */
+  /**
+   * Get the root element of the module.
+   *
+   * @return The module's outermost element after static processing, or
+   *         <code>null</code> if none was set yet.
+   */
   @Nullable
   public XslElement getRoot ()
   {
     return m_aRoot;
   }
 
+  /**
+   * Set the root element of the module.
+   *
+   * @param aRoot
+   *        The module's outermost element after static processing. May not
+   *        be <code>null</code>.
+   */
   public void setRoot (@NonNull final XslElement aRoot)
   {
     m_aRoot = aRoot;
   }
 
   /**
+   * Check whether this is a simplified stylesheet module.
+   *
    * @return <code>true</code> for a simplified stylesheet module (a literal
    *         result element as root, equivalent to a template rule for "/").
    */
@@ -82,12 +110,21 @@ public final class XslModule
     return m_bSimplified;
   }
 
+  /**
+   * Set whether this is a simplified stylesheet module.
+   *
+   * @param bSimplified
+   *        <code>true</code> for a simplified stylesheet module (a literal
+   *        result element as root).
+   */
   public void setSimplified (final boolean bSimplified)
   {
     m_bSimplified = bSimplified;
   }
 
   /**
+   * Get the package qualifier of the module.
+   *
    * @return The qualifier of the package the module belongs to: empty for the
    *         principal package, else distinct per used package. Names of
    *         package-local declarations (outputs, character maps) are
@@ -99,6 +136,13 @@ public final class XslModule
     return m_sPackageQualifier;
   }
 
+  /**
+   * Set the package qualifier of the module.
+   *
+   * @param sPackageQualifier
+   *        The qualifier of the package the module belongs to: empty for the
+   *        principal package. May not be <code>null</code>.
+   */
   public void setPackageQualifier (@NonNull final String sPackageQualifier)
   {
     m_sPackageQualifier = sPackageQualifier;

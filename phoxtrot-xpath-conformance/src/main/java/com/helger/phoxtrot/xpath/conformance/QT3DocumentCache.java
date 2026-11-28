@@ -51,6 +51,14 @@ public final class QT3DocumentCache
   private final ICommonsSet <String> m_aValidationFailed = new CommonsHashSet <> ();
 
   /**
+   * Create an empty cache.
+   */
+  public QT3DocumentCache ()
+  {}
+
+  /**
+   * Get a document, parsing it on first access.
+   *
    * @param aFile
    *        Absolute, normalised path.
    * @return The parsed document or <code>null</code> if the file does not exist
@@ -83,6 +91,8 @@ public final class QT3DocumentCache
   }
 
   /**
+   * Get a document validated against a schema set, parsing and validating it on first access.
+   *
    * @param aFile
    *        Absolute, normalised path.
    * @param aSchemaSet

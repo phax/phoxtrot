@@ -3686,6 +3686,8 @@ public final class XPathEvaluator
   }
 
   /**
+   * Evaluate a compiled expression in a dynamic context.
+   *
    * @param aExpr
    *        Compiled expression.
    * @param aCtx
@@ -3771,6 +3773,8 @@ public final class XPathEvaluator
   }
 
   /**
+   * Get the arity of an item when it is used as a function.
+   *
    * @param aItem
    *        Any item.
    * @return The arity if the item is a function item (1 for maps and arrays), -1 otherwise.
@@ -3785,6 +3789,8 @@ public final class XPathEvaluator
   }
 
   /**
+   * Get an item as a function item.
+   *
    * @param aItem
    *        A function, map or array.
    * @return The item as {@link IXdmFunction}; maps and arrays are wrapped.

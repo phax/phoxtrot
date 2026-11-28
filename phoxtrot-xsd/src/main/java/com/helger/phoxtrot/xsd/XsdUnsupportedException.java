@@ -32,6 +32,8 @@ import org.jspecify.annotations.Nullable;
 public class XsdUnsupportedException extends UnsupportedOperationException
 {
   /**
+   * Create an exception with a message.
+   *
    * @param sMessage
    *        What is not supported.
    */
@@ -41,6 +43,8 @@ public class XsdUnsupportedException extends UnsupportedOperationException
   }
 
   /**
+   * Create an exception with a message and a cause.
+   *
    * @param sMessage
    *        What is not supported.
    * @param aCause

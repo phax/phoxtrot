@@ -14,6 +14,7 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
+#
 
 # Settings shared by the example scripts: the CLI JAR (set CLI_JAR to use another one) and the function "phoxtrot"
 # that runs it, printing the command line and the exit code.

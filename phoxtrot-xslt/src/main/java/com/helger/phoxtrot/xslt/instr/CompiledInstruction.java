@@ -35,6 +35,16 @@ public final class CompiledInstruction extends AbstractInstruction
 {
   private final IInstructionBody m_aBody;
 
+  /**
+   * Create an instruction that runs the given body.
+   *
+   * @param aElement
+   *        The stylesheet element this instruction was compiled from. May not
+   *        be <code>null</code>.
+   * @param aBody
+   *        The behaviour of the instruction, called on every execution. May not
+   *        be <code>null</code>.
+   */
   public CompiledInstruction (@NonNull final XslElement aElement, @NonNull final IInstructionBody aBody)
   {
     super (aElement);

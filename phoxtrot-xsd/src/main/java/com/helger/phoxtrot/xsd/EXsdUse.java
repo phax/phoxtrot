@@ -25,8 +25,11 @@ import org.jspecify.annotations.NonNull;
  */
 public enum EXsdUse
 {
+  /** The attribute may be present. */
   OPTIONAL ("optional"),
+  /** The attribute must be present. */
   REQUIRED ("required"),
+  /** The attribute must not be present. */
   PROHIBITED ("prohibited");
 
   private final String m_sID;
@@ -36,7 +39,12 @@ public enum EXsdUse
     m_sID = sID;
   }
 
-  /** @return <code>optional</code>, <code>required</code> or <code>prohibited</code>. */
+  /**
+   * Get the ID of this use.
+   *
+   * @return <code>optional</code>, <code>required</code> or
+   *         <code>prohibited</code>.
+   */
   @NonNull
   public String getID ()
   {

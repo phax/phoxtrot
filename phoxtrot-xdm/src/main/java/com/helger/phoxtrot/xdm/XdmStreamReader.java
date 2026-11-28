@@ -608,6 +608,8 @@ public final class XdmStreamReader implements AutoCloseable
   }
 
   /**
+   * Get the document node being read.
+   *
    * @return The document node. It is live: its subtree grows as {@link #next()} runs and shrinks as
    *         the caller drops nodes.
    */
@@ -618,6 +620,8 @@ public final class XdmStreamReader implements AutoCloseable
   }
 
   /**
+   * Check whether the nodes this reader creates carry their location.
+   *
    * @return <code>true</code> if the nodes this reader creates carry their line and column (see
    *         {@link #open(InputSource, boolean, int, Predicate, boolean)}).
    */
@@ -627,6 +631,8 @@ public final class XdmStreamReader implements AutoCloseable
   }
 
   /**
+   * Get the number of currently open elements.
+   *
    * @return The number of open elements (0 = at document level).
    */
   @Nonnegative
@@ -656,6 +662,8 @@ public final class XdmStreamReader implements AutoCloseable
   }
 
   /**
+   * Get the node of the last event.
+   *
    * @return The node of the last event: the element for {@link EEvent#ENTER} and
    *         {@link EEvent#EXIT}, the leaf, or the document node for {@link EEvent#END}.
    */
@@ -668,6 +676,8 @@ public final class XdmStreamReader implements AutoCloseable
   }
 
   /**
+   * Get the depth of the node of the last event.
+   *
    * @return The depth of the node of the last event: the document element is 1, a leaf child of it
    *         2, the document node 0.
    */
@@ -760,6 +770,8 @@ public final class XdmStreamReader implements AutoCloseable
   }
 
   /**
+   * Check whether children were dropped from a node.
+   *
    * @param aNode
    *        A node of this document.
    * @return <code>true</code> if {@link #drop(IXdmNode)} took children away from it: its string

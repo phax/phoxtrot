@@ -29,6 +29,9 @@ import org.jspecify.annotations.NonNull;
 public interface IXsltExtension
 {
   /**
+   * Register the instructions, declarations, functions and hooks of the
+   * extension.
+   *
    * @param aRegistry
    *        The registry to add to.
    */

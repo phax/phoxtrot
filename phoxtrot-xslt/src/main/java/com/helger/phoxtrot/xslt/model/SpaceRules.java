@@ -41,6 +41,22 @@ public final class SpaceRules
    * (any local name) or <code>*:local</code> (any namespace), whether it comes
    * from xsl:strip-space (<code>strip</code>) or xsl:preserve-space, and the
    * import precedence of the declaration.
+   *
+   * @param namespaceUri
+   *        The namespace URI of the name test (unused if
+   *        <code>anyNamespace</code>). Never <code>null</code>.
+   * @param localName
+   *        The local name of the name test (unused if
+   *        <code>anyLocalName</code>). Never <code>null</code>.
+   * @param anyNamespace
+   *        <code>true</code> if any namespace matches.
+   * @param anyLocalName
+   *        <code>true</code> if any local name matches.
+   * @param strip
+   *        <code>true</code> for xsl:strip-space, <code>false</code> for
+   *        xsl:preserve-space.
+   * @param precedence
+   *        The import precedence of the declaration.
    */
   @Immutable
   public record Rule (@NonNull String namespaceUri,
@@ -51,6 +67,8 @@ public final class SpaceRules
                       int precedence)
   {
     /**
+     * Get the default priority of the name test.
+     *
      * @return The default priority of the name test as for a pattern (XSLT 3.0
      *         section 6.5): -0.5 for <code>*</code>, -0.25 for a test with
      *         one wildcard part, 0 for a QName.
@@ -65,6 +83,8 @@ public final class SpaceRules
     }
 
     /**
+     * Check whether the name test matches an element name.
+     *
      * @param aName
      *        An element name.
      * @return <code>true</code> if the namespace URI matches (or any namespace
@@ -80,12 +100,28 @@ public final class SpaceRules
 
   private final ICommonsList <Rule> m_aRules = new CommonsArrayList <> ();
 
+  /**
+   * Create a new empty set of rules (nothing is stripped).
+   */
+  public SpaceRules ()
+  {}
+
+  /**
+   * Append a rule.
+   *
+   * @param aRule
+   *        The rule to add. May not be <code>null</code>.
+   */
   public void addRule (@NonNull final Rule aRule)
   {
     m_aRules.add (aRule);
   }
 
-  /** @return <code>true</code> if there is no xsl:strip-space at all. */
+  /**
+   * Check whether no rule strips whitespace.
+   *
+   * @return <code>true</code> if there is no xsl:strip-space at all.
+   */
   public boolean isNoStripping ()
   {
     for (final Rule aRule : m_aRules)
@@ -94,7 +130,11 @@ public final class SpaceRules
     return true;
   }
 
-  /** @return All rules (do not modify). */
+  /**
+   * Get all rules in the order they were added.
+   *
+   * @return All rules (do not modify).
+   */
   @NonNull
   public ICommonsList <Rule> rules ()
   {

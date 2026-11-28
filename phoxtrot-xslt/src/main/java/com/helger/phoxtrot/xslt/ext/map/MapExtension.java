@@ -50,6 +50,12 @@ import com.helger.phoxtrot.xslt.tree.XslText;
 public final class MapExtension implements IXsltExtension
 {
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public MapExtension ()
+  {}
+
+  /**
    * Check whether an element has content in the sense of the XTSE3280 rule
    * of xsl:map-entry: any element child other than xsl:fallback or any text
    * child that is not whitespace only counts.

@@ -52,6 +52,12 @@ public final class XsdLocalOnlyResourceResolver implements LSResourceResolver
 
   private final ICommonsList <String> m_aBlocked = new CommonsArrayList <> ();
 
+  /**
+   * Create a resolver that has not refused any reference yet.
+   */
+  public XsdLocalOnlyResourceResolver ()
+  {}
+
   /** An input whose byte stream refuses to be read. */
   private static final class BlockedInput implements LSInput
   {
@@ -212,7 +218,11 @@ public final class XsdLocalOnlyResourceResolver implements LSResourceResolver
     return new BlockedInput (sSystemID, sPublicID, sBaseURI);
   }
 
-  /** @return Every reference that was refused, in order. */
+  /**
+   * Get the refused references.
+   *
+   * @return Every reference that was refused, in order.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getBlocked ()

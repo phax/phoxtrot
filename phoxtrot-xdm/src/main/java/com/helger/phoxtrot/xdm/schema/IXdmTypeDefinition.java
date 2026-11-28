@@ -34,12 +34,16 @@ import com.helger.phoxtrot.xdm.XdmValidationException;
 public interface IXdmTypeDefinition
 {
   /**
+   * Get the name of the type.
+   *
    * @return The type name, <code>null</code> for an anonymous type.
    */
   @Nullable
   XdmQName getName ();
 
   /**
+   * Check whether the type is anonymous.
+   *
    * @return <code>true</code> if the type is anonymous.
    */
   default boolean isAnonymous ()
@@ -48,6 +52,8 @@ public interface IXdmTypeDefinition
   }
 
   /**
+   * Get the type annotation name of a node annotated with this type.
+   *
    * @return The name a node annotated with this type reports as its type annotation: the type name,
    *         or for an anonymous type a name whose local part starts with <code>#</code>.
    */
@@ -59,6 +65,8 @@ public interface IXdmTypeDefinition
   }
 
   /**
+   * Check whether the definition is part of a full schema component model.
+   *
    * @return <code>true</code> if the definition is part of a full schema component model.
    *         <code>false</code> for a provider that only knows type names and derivation (the JDK
    *         validator): then the content type, member types and base type are not known,
@@ -71,17 +79,23 @@ public interface IXdmTypeDefinition
   }
 
   /**
+   * Check whether the type is a complex type.
+   *
    * @return <code>true</code> for a complex type, <code>false</code> for a simple type.
    */
   boolean isComplex ();
 
   /**
+   * Get the content type.
+   *
    * @return The content type. A simple type has {@link EXdmContentType#SIMPLE} content.
    */
   @NonNull
   EXdmContentType getContentType ();
 
   /**
+   * Get the simple type of the content.
+   *
    * @return The simple type of the content: the type itself for a simple type, the content simple
    *         type for a complex type with simple content, otherwise <code>null</code>.
    */
@@ -89,6 +103,8 @@ public interface IXdmTypeDefinition
   IXdmTypeDefinition getSimpleContentType ();
 
   /**
+   * Get the variety of a simple type.
+   *
    * @return The variety of a simple type, <code>null</code> for a complex type and for
    *         <code>xs:anySimpleType</code>.
    */
@@ -96,18 +112,24 @@ public interface IXdmTypeDefinition
   EXdmSimpleVariety getVariety ();
 
   /**
+   * Get the item type of a list type.
+   *
    * @return The item type of a list type, otherwise <code>null</code>.
    */
   @Nullable
   IXdmTypeDefinition getItemType ();
 
   /**
+   * Get the member types of a union type.
+   *
    * @return The member types of a union type (empty for other types).
    */
   @NonNull
   ICommonsList <IXdmTypeDefinition> getMemberTypes ();
 
   /**
+   * Get the built-in atomic type of an atomic type.
+   *
    * @return The most specific built-in atomic type an atomic type is, or is derived from;
    *         <code>null</code> for other types.
    */
@@ -115,6 +137,8 @@ public interface IXdmTypeDefinition
   XdmQName getBuiltinAtomicType ();
 
   /**
+   * Get the base type definition.
+   *
    * @return The base type definition, <code>null</code> for <code>xs:anyType</code>.
    */
   @Nullable
@@ -141,6 +165,8 @@ public interface IXdmTypeDefinition
   boolean isDerivedFrom (@NonNull XdmQName aBase);
 
   /**
+   * Check whether the type is namespace-sensitive.
+   *
    * @return <code>true</code> if the type is <code>xs:QName</code> or <code>xs:NOTATION</code> or
    *         derived from one of them, or a list or union with such an item or member type.
    */

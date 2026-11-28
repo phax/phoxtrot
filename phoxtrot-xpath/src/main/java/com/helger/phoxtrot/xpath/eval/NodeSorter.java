@@ -42,6 +42,8 @@ public final class NodeSorter
   {}
 
   /**
+   * Sort a sequence of nodes into document order and remove duplicates.
+   *
    * @param aSeq
    *        A sequence of nodes only.
    * @return The nodes in document order without duplicates (by identity).

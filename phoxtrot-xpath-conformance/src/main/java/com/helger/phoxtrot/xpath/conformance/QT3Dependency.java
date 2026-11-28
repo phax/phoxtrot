@@ -33,6 +33,8 @@ import org.jspecify.annotations.NonNull;
 public record QT3Dependency (@NonNull String type, @NonNull String value, @NonNull String satisfied)
 {
   /**
+   * Check whether the dependency is declared as satisfied.
+   *
    * @return <code>true</code> unless the attribute <code>satisfied</code> is
    *         literally <code>false</code>.
    */

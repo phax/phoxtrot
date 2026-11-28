@@ -38,13 +38,19 @@ public record XsdName (@NonNull String space, @NonNull String local)
   /** The empty name. */
   public static final XsdName NONE = new XsdName ("", "");
 
-  /** @return <code>true</code> for the empty name. */
+  /**
+   * Check whether this is the empty name.
+   *
+   * @return <code>true</code> for the empty name.
+   */
   public boolean isZero ()
   {
     return space.isEmpty () && local.isEmpty ();
   }
 
   /**
+   * Create an expanded name from an XDM name.
+   *
    * @param aName
    *        The XDM name. May not be <code>null</code>.
    * @return The expanded name without prefix.

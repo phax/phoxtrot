@@ -35,11 +35,17 @@ import org.jspecify.annotations.NonNull;
  */
 public interface IXsdTestValidator
 {
-  /** @return A display name for the summary, e.g. <code>Xerces-J 2.12.2</code>. */
+  /**
+   * Get the display name of the validator.
+   *
+   * @return A display name for the summary, e.g. <code>Xerces-J 2.12.2</code>.
+   */
   @NonNull
   String getDisplayName ();
 
   /**
+   * Check whether the validator implements an XSD version.
+   *
    * @param eVersion
    *        The XSD version.
    * @return <code>true</code> if the validator implements this version.
@@ -48,6 +54,8 @@ public interface IXsdTestValidator
   boolean isVersionSupported (@NonNull EXsdVersion eVersion);
 
   /**
+   * Check whether the validator accepts full XPath in conditional type assignment.
+   *
    * @param eVersion
    *        The XSD version.
    * @return <code>true</code> if the validator accepts any XPath expression

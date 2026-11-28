@@ -23,11 +23,18 @@ package com.helger.phoxtrot.xdm;
  */
 public enum ENodeKind
 {
+  /** A document node. */
   DOCUMENT,
+  /** An element node. */
   ELEMENT,
+  /** An attribute node. */
   ATTRIBUTE,
+  /** A text node. */
   TEXT,
+  /** A comment node. */
   COMMENT,
+  /** A processing instruction node. */
   PROCESSING_INSTRUCTION,
+  /** A namespace node. */
   NAMESPACE
 }

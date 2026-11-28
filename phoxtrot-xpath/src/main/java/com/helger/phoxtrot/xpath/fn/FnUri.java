@@ -272,6 +272,8 @@ public final class FnUri
   }
 
   /**
+   * Check if a string is a valid URI reference.
+   *
    * @param s
    *        A string.
    * @return <code>true</code> if it is a syntactically valid URI reference in
@@ -283,6 +285,8 @@ public final class FnUri
   }
 
   /**
+   * Check if a string is an absolute URI.
+   *
    * @param s
    *        A string.
    * @return <code>true</code> if it is a valid URI reference with a scheme.
@@ -294,6 +298,8 @@ public final class FnUri
   }
 
   /**
+   * Check if a URI reference has a fragment identifier.
+   *
    * @param s
    *        A URI reference.
    * @return <code>true</code> if it contains a fragment identifier.
@@ -404,6 +410,8 @@ public final class FnUri
   }
 
   /**
+   * Implement <code>fn:encode-for-uri</code>.
+   *
    * @param s
    *        Input.
    * @return The result of <code>fn:encode-for-uri</code>: everything but the
@@ -423,6 +431,8 @@ public final class FnUri
   }
 
   /**
+   * Implement <code>fn:iri-to-uri</code>.
+   *
    * @param s
    *        Input.
    * @return The result of <code>fn:iri-to-uri</code>: non-ASCII characters,
@@ -443,6 +453,8 @@ public final class FnUri
   }
 
   /**
+   * Implement <code>fn:escape-html-uri</code>.
+   *
    * @param s
    *        Input.
    * @return The result of <code>fn:escape-html-uri</code>: every character

@@ -368,6 +368,8 @@ public final class Atomizer
   }
 
   /**
+   * Compute the effective boolean value of a sequence.
+   *
    * @param aSeq
    *        Any sequence.
    * @return The effective boolean value (XPath 3.1 section 2.4.3).
@@ -412,6 +414,8 @@ public final class Atomizer
   }
 
   /**
+   * Get the string value of an item.
+   *
    * @param aItem
    *        The item.
    * @return The string value of an item as fn:string defines it.

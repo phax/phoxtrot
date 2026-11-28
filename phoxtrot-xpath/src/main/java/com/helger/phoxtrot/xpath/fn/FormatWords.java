@@ -744,6 +744,8 @@ public final class FormatWords
   }
 
   /**
+   * Get the base language of a language tag if its words are spelled natively.
+   *
    * @param sTag
    *        A language tag such as "de" or "fr-CA"; may be <code>null</code>.
    * @return The base language ("de", "fr", "it") if natively spelled, else
@@ -857,6 +859,8 @@ public final class FormatWords
   }
 
   /**
+   * Get the English ordinal suffix of a number.
+   *
    * @param n
    *        Number.
    * @return The English ordinal suffix: st, nd, rd or th.

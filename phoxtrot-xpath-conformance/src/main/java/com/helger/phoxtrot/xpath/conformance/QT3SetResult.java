@@ -44,6 +44,12 @@ public final class QT3SetResult
   private final ICommonsList <String> m_aCodeMismatches = new CommonsArrayList <> ();
   private String m_sLoadError;
 
+  /**
+   * Create the result of a test set.
+   *
+   * @param sName
+   *        The test-set name.
+   */
   public QT3SetResult (@NonNull final String sName)
   {
     m_sName = sName;
@@ -63,12 +69,20 @@ public final class QT3SetResult
     aMap.put (sKey, Integer.valueOf (aOld == null ? 1 : aOld.intValue () + 1));
   }
 
+  /**
+   * Get the test-set name.
+   *
+   * @return The test-set name.
+   */
   @NonNull
   public String getName ()
   {
     return m_sName;
   }
 
+  /**
+   * Count one passing case.
+   */
   public void addPass ()
   {
     m_nPass++;
@@ -88,6 +102,8 @@ public final class QT3SetResult
   }
 
   /**
+   * Count one failed case and its reason.
+   *
    * @param sCaseName
    *        Failed case.
    * @param sReason
@@ -129,27 +145,51 @@ public final class QT3SetResult
     m_sLoadError = sLoadError;
   }
 
-  /** @return The error that prevented reading the test set, or <code>null</code>. */
+  /**
+   * Get the load error.
+   *
+   * @return The error that prevented reading the test set, or <code>null</code>.
+   */
   public String getLoadError ()
   {
     return m_sLoadError;
   }
 
+  /**
+   * Get the number of passing cases.
+   *
+   * @return The number of passes.
+   */
   public int getPass ()
   {
     return m_nPass;
   }
 
+  /**
+   * Get the number of failing cases.
+   *
+   * @return The number of fails.
+   */
   public int getFail ()
   {
     return m_nFail;
   }
 
+  /**
+   * Get the number of skipped cases.
+   *
+   * @return The number of skips.
+   */
   public int getSkip ()
   {
     return m_nSkip;
   }
 
+  /**
+   * Get the skip reasons.
+   *
+   * @return A copy of the skip reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getSkipReasons ()
@@ -157,6 +197,11 @@ public final class QT3SetResult
     return m_aSkipReasons.getClone ();
   }
 
+  /**
+   * Get the fail reasons.
+   *
+   * @return A copy of the fail reasons with their counts.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsSortedMap <String, Integer> getFailReasons ()
@@ -164,6 +209,11 @@ public final class QT3SetResult
     return m_aFailReasons.getClone ();
   }
 
+  /**
+   * Get the names of the failing cases.
+   *
+   * @return A copy of the failing case names in the order they were added.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getFailNames ()
@@ -171,6 +221,11 @@ public final class QT3SetResult
     return m_aFailNames.getClone ();
   }
 
+  /**
+   * Get the error code mismatches.
+   *
+   * @return A copy of the lines of the cases whose expected error was raised with another error code.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getCodeMismatches ()
@@ -178,6 +233,11 @@ public final class QT3SetResult
     return m_aCodeMismatches.getClone ();
   }
 
+  /**
+   * Get the fail dump lines.
+   *
+   * @return A copy of the collected fail lines.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <String> getFailLines ()

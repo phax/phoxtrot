@@ -41,7 +41,12 @@ public enum EXsdContentKind
     m_sID = sID;
   }
 
-  /** @return <code>empty</code>, <code>simple</code>, <code>elementOnly</code> or <code>mixed</code>. */
+  /**
+   * Get the ID of this content kind.
+   *
+   * @return <code>empty</code>, <code>simple</code>, <code>elementOnly</code>
+   *         or <code>mixed</code>.
+   */
   @NonNull
   public String getID ()
   {

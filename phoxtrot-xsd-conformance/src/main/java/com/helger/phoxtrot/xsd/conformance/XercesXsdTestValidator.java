@@ -190,7 +190,11 @@ public final class XercesXsdTestValidator implements IXsdTestValidator
     }
   }
 
-  /** @return The resource resolver, to see which references were refused. */
+  /**
+   * Get the resource resolver.
+   *
+   * @return The resource resolver, to see which references were refused.
+   */
   @NonNull
   public XsdLocalOnlyResourceResolver getResourceResolver ()
   {

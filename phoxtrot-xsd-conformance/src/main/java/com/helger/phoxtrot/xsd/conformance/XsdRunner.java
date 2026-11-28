@@ -73,6 +73,8 @@ public final class XsdRunner
   private final Supplier <? extends IXsdTestValidator> m_aValidatorFactory;
 
   /**
+   * Create a runner.
+   *
    * @param aSettings
    *        The settings.
    * @param aValidatorFactory

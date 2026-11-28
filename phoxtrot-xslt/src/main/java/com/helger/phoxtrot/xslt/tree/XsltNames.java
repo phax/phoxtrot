@@ -43,6 +43,8 @@ public final class XsltNames
   {}
 
   /**
+   * Check whether a string is a valid NCName.
+   *
    * @param s
    *        String to check. May be <code>null</code>.
    * @return <code>true</code> if the string is a valid NCName.
@@ -54,6 +56,8 @@ public final class XsltNames
 
 
   /**
+   * Check whether a string is a lexical QName.
+   *
    * @param s
    *        String to check, already trimmed.
    * @return <code>true</code> if it is a lexical QName (prefix:local or
@@ -71,6 +75,8 @@ public final class XsltNames
   }
 
   /**
+   * Check whether a string is an EQName (a lexical QName or a URIQualifiedName).
+   *
    * @param s
    *        String to check, already trimmed.
    * @return <code>true</code> if it is a lexical QName or a URIQualifiedName
@@ -90,6 +96,8 @@ public final class XsltNames
   }
 
   /**
+   * Check whether a string is a valid value of an XSLT boolean attribute.
+   *
    * @param s
    *        A value of an XSLT boolean attribute. May be <code>null</code>.
    * @return <code>true</code> if it is one of yes, no, true, false, 1, 0
@@ -107,6 +115,8 @@ public final class XsltNames
   }
 
   /**
+   * Check whether the value of an XSLT boolean attribute means true.
+   *
    * @param s
    *        A value of an XSLT boolean attribute. May be <code>null</code>.
    * @return <code>true</code> for yes, true and 1.
@@ -123,6 +133,8 @@ public final class XsltNames
   }
 
   /**
+   * Check whether a string is a valid xs:decimal lexical form.
+   *
    * @param s
    *        String to check, already trimmed.
    * @return <code>true</code> if it is a valid xs:decimal lexical form
@@ -155,6 +167,8 @@ public final class XsltNames
   }
 
   /**
+   * Check whether a namespace URI is reserved by XSLT.
+   *
    * @param sUri
    *        A namespace URI.
    * @return <code>true</code> if it is one of the namespaces reserved by XSLT
@@ -173,6 +187,8 @@ public final class XsltNames
   }
 
   /**
+   * Check whether a string consists of XML whitespace only.
+   *
    * @param s
    *        A string. May be <code>null</code>.
    * @return <code>true</code> if it consists of XML whitespace only (also for
@@ -185,6 +201,8 @@ public final class XsltNames
   }
 
   /**
+   * Remove XML whitespace at both ends of a string.
+   *
    * @param s
    *        A string.
    * @return The string with XML whitespace (space, tab, CR, LF) removed at
@@ -197,6 +215,8 @@ public final class XsltNames
   }
 
   /**
+   * Split a string into tokens separated by XML whitespace.
+   *
    * @param s
    *        A string.
    * @return The tokens of the string separated by runs of XML whitespace

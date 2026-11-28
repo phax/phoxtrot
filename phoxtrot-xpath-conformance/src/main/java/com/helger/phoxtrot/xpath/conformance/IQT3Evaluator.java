@@ -34,6 +34,8 @@ import com.helger.phoxtrot.xpath.value.XdmSequence;
 public interface IQT3Evaluator
 {
   /**
+   * Evaluate an XPath expression in the configured environment.
+   *
    * @param sExpr
    *        The XPath expression.
    * @param aExtraVars

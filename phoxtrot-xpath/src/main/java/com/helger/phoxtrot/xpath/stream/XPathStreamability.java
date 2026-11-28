@@ -2827,6 +2827,8 @@ public final class XPathStreamability
   }
 
   /**
+   * Check whether an expression yields only items without children.
+   *
    * @param aExpr
    *        The expression. <code>null</code> is an absent operand.
    * @return <code>true</code> if the expression can be proven to yield only
@@ -2861,6 +2863,8 @@ public final class XPathStreamability
   }
 
   /**
+   * Check whether a predicate is non-positional.
+   *
    * @param aPredicate
    *        A predicate. May not be <code>null</code>.
    * @return <code>true</code> if it passes the non-positional test of section
@@ -2876,6 +2880,8 @@ public final class XPathStreamability
   }
 
   /**
+   * Check whether every node a pattern can match is childless.
+   *
    * @param aPatternExpr
    *        The pattern AST, as {@link CompiledXsltPattern#getPatternExpr()}
    *        returns it.
@@ -2920,6 +2926,9 @@ public final class XPathStreamability
   }
 
   /**
+   * Check whether an expression uses a function of the <code>fn</code>
+   * namespace.
+   *
    * @param aExpr
    *        The expression. May be <code>null</code>.
    * @param sLocalName
@@ -2939,6 +2948,9 @@ public final class XPathStreamability
   }
 
   /**
+   * Check whether an expression calls a declared-streamable stylesheet
+   * function.
+   *
    * @param aExpr
    *        The expression. May be <code>null</code>.
    * @param aResolver

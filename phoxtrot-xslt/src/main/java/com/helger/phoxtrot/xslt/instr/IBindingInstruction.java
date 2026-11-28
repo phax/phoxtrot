@@ -31,6 +31,8 @@ import com.helger.phoxtrot.xslt.runtime.XsltContext;
 public interface IBindingInstruction extends IInstruction
 {
   /**
+   * Bind the value of this instruction in a copy of the context.
+   *
    * @param aCtx
    *        The context.
    * @return The context for the following siblings.

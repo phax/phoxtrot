@@ -55,6 +55,12 @@ public final class MergeExtension implements IXsltExtension
                                                                                          XsltStateKey.EScope.CLEARED_IN_CALLS);
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public MergeExtension ()
+  {}
+
+  /**
    * Read the current merge group from the XSLT state of the dynamic context.
    *
    * @param aCtx

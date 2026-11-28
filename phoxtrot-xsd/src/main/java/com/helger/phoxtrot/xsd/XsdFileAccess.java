@@ -67,6 +67,8 @@ public final class XsdFileAccess
   }
 
   /**
+   * Create a file access confined to the given directories.
+   *
    * @param aDirs
    *        The directories whose files (recursively) may be read.
    * @return A confined file access. A directory that does not exist allows
@@ -88,13 +90,19 @@ public final class XsdFileAccess
     return new XsdFileAccess (aReal);
   }
 
-  /** @return <code>true</code> if any local file may be read. */
+  /**
+   * Check whether the file access is unrestricted.
+   *
+   * @return <code>true</code> if any local file may be read.
+   */
   public boolean isUnrestricted ()
   {
     return m_aAllowedDirs == null;
   }
 
   /**
+   * Check whether a file may be read.
+   *
    * @param aPath
    *        The file.
    * @return <code>true</code> if the file may be read. Without confinement
@@ -123,6 +131,8 @@ public final class XsdFileAccess
   }
 
   /**
+   * Read a file if it may be read.
+   *
    * @param aPath
    *        The file to read.
    * @return The bytes, or <code>null</code> if the file is not allowed, not a

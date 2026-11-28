@@ -56,6 +56,8 @@ public final class FileResourceResolver implements IResourceResolver
   private final boolean m_bLoadExternalEntities;
 
   /**
+   * Create a resolver for local files.
+   *
    * @param bLoadExternalEntities
    *        <code>true</code> to load external DTDs and entities.
    */
@@ -65,6 +67,8 @@ public final class FileResourceResolver implements IResourceResolver
   }
 
   /**
+   * Get the local file a URI refers to.
+   *
    * @param sAbsoluteUri
    *        An absolute URI.
    * @return The local file a <code>file:</code> URI names, with any fragment

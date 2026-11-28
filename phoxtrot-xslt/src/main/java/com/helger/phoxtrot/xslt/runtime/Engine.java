@@ -258,12 +258,22 @@ public final class Engine
     }
   }
 
+  /**
+   * Get the compiled stylesheet this engine runs.
+   *
+   * @return The stylesheet, never <code>null</code>.
+   */
   @NonNull
   public CompiledStylesheet getStylesheet ()
   {
     return m_aSheet;
   }
 
+  /**
+   * Get the request of this transformation.
+   *
+   * @return The transform request, never <code>null</code>.
+   */
   @NonNull
   public XsltTransformRequest getRequest ()
   {
@@ -271,6 +281,8 @@ public final class Engine
   }
 
   /**
+   * Get the trace listener of the request.
+   *
    * @return The trace listener of the request, <code>null</code> for none.
    */
   @Nullable
@@ -280,6 +292,8 @@ public final class Engine
   }
 
   /**
+   * Get the trace listener for instructions.
+   *
    * @return The trace listener of the request if it traces instructions
    *         ({@link IXsltTraceListener#isTraceInstructions()} was <code>true</code> when this
    *         engine was created), <code>null</code> otherwise.
@@ -313,12 +327,17 @@ public final class Engine
     m_aBudget.enterDepth ();
   }
 
+  /**
+   * Leave a template or function invocation: the counterpart of {@link #enterDepth()}.
+   */
   public void leaveDepth ()
   {
     m_aBudget.leaveDepth ();
   }
 
   /**
+   * Get the execution budget.
+   *
    * @return The execution budget of this transformation (shared with the transformations it starts
    *         with fn:transform).
    */
@@ -329,6 +348,8 @@ public final class Engine
   }
 
   /**
+   * Get the context patterns are matched in.
+   *
    * @return The context patterns are matched in: no local variables, empty XSLT state, the run-wide
    *         settings of this transformation.
    */
@@ -339,6 +360,8 @@ public final class Engine
   }
 
   /**
+   * Get the pattern context for a static context.
+   *
    * @param aStatic
    *        The static context of a pattern.
    * @return The pattern context ({@link #getPatternContext()}) with that static context. The
@@ -359,6 +382,8 @@ public final class Engine
   }
 
   /**
+   * Create the root context of the transformation.
+   *
    * @return A context without focus and variables, with the initial XSLT state.
    */
   @NonNull
@@ -367,13 +392,23 @@ public final class Engine
     return new XsltContext (this, m_aRootDyn);
   }
 
-  /** @return The global context item or <code>null</code>. */
+  /**
+   * Get the global context item.
+   *
+   * @return The global context item or <code>null</code>.
+   */
   @Nullable
   public IXdmItem getGlobalContextItem ()
   {
     return m_aGlobalContextItem;
   }
 
+  /**
+   * Set the global context item.
+   *
+   * @param aItem
+   *        The global context item. May be <code>null</code>.
+   */
   public void setGlobalContextItem (@Nullable final IXdmItem aItem)
   {
     m_aGlobalContextItem = aItem;
@@ -543,6 +578,8 @@ public final class Engine
   }
 
   /**
+   * Get the value of a global variable or parameter.
+   *
    * @param aDef
    *        A global variable or parameter.
    * @return Its value, evaluated on first use.
@@ -747,6 +784,8 @@ public final class Engine
   }
 
   /**
+   * Find the template rule of a mode that best matches an item.
+   *
    * @param aMode
    *        Mode.
    * @param aItem
@@ -1635,6 +1674,8 @@ public final class Engine
   }
 
   /**
+   * Get the number of key indexes built from the name index.
+   *
    * @return The number of key indexes built so far (in this JVM) from the name index of the
    *         document instead of a walk of the whole tree. For tests that need to know which path
    *         ran: the index is the same either way.
@@ -2003,6 +2044,8 @@ public final class Engine
   }
 
   /**
+   * Check whether the request has a message listener.
+   *
    * @return <code>true</code> if the request has a message listener, so that warnings are worth
    *         computing.
    */
@@ -2035,6 +2078,8 @@ public final class Engine
   }
 
   /**
+   * Get the recorded messages.
+   *
    * @return A copy of the messages recorded so far, in the order they were produced.
    */
   @NonNull
@@ -2045,6 +2090,8 @@ public final class Engine
   }
 
   /**
+   * Get the texts of the recorded messages.
+   *
    * @return The texts of the messages recorded so far, in the order they were produced.
    */
   @NonNull
@@ -2055,6 +2102,8 @@ public final class Engine
   }
 
   /**
+   * Record a secondary result.
+   *
    * @param aResult
    *        A secondary result (xsl:result-document).
    */
@@ -2063,6 +2112,11 @@ public final class Engine
     m_aSecondaryResults.add (aResult);
   }
 
+  /**
+   * Get the secondary results (xsl:result-document) recorded so far.
+   *
+   * @return The list of secondary results itself, not a copy. Never <code>null</code>.
+   */
   @NonNull
   public ICommonsList <XsltTransformResult.SecondaryResult> getSecondaryResults ()
   {
@@ -2070,6 +2124,8 @@ public final class Engine
   }
 
   /**
+   * Get a context in temporary output state.
+   *
    * @param aCtx
    *        A context.
    * @return The context in temporary output state (XSLT 3.0 section 25.2): there is no current
@@ -2082,6 +2138,8 @@ public final class Engine
   }
 
   /**
+   * Check whether a context is in temporary output state.
+   *
    * @param aCtx
    *        A context.
    * @return <code>true</code> if the context is in temporary output state (in a variable, function,
@@ -2093,6 +2151,8 @@ public final class Engine
   }
 
   /**
+   * Set the output the principal result is written to.
+   *
    * @param aOut
    *        The output the principal result is written to.
    */
@@ -2101,7 +2161,11 @@ public final class Engine
     m_aPrincipalOutput = aOut;
   }
 
-  /** @return The output of the principal result, or <code>null</code>. */
+  /**
+   * Get the output of the principal result.
+   *
+   * @return The output of the principal result, or <code>null</code>.
+   */
   @Nullable
   public IXsltOutput getPrincipalOutput ()
   {
@@ -2109,6 +2173,8 @@ public final class Engine
   }
 
   /**
+   * Set the output definition of the principal result.
+   *
    * @param aDef
    *        The output definition that replaces the unnamed one for the principal result (an
    *        xsl:result-document without href).
@@ -2118,7 +2184,12 @@ public final class Engine
     m_aPrincipalOutputDefinition = aDef;
   }
 
-  /** @return The replacement output definition of the principal result, or <code>null</code>. */
+  /**
+   * Get the replacement output definition of the principal result.
+   *
+   * @return The replacement output definition of the principal result, or
+   *         <code>null</code>.
+   */
   @Nullable
   public OutputDefinition getPrincipalOutputDefinition ()
   {
@@ -2137,13 +2208,22 @@ public final class Engine
     m_nPrincipalSealedSize = nSize;
   }
 
-  /** @return The size at which the principal output was sealed, or -1. */
+  /**
+   * Get the size at which the principal output was sealed.
+   *
+   * @return The size at which the principal output was sealed, or -1.
+   */
   public int getPrincipalSealedSize ()
   {
     return m_nPrincipalSealedSize;
   }
 
-  /** @return The stylesheet element of the principal module, or <code>null</code>. */
+  /**
+   * Get the stylesheet element of the principal module.
+   *
+   * @return The stylesheet element of the principal module, or
+   *         <code>null</code>.
+   */
   @Nullable
   public XslElement getPrincipalRoot ()
   {

@@ -49,6 +49,15 @@ public final class SequenceConstructor implements IInstruction
   private final AbstractXslNode m_aLocation;
   private final IInstruction [] m_aInstructions;
 
+  /**
+   * Create a sequence constructor from its instructions.
+   *
+   * @param aLocation
+   *        The stylesheet node for error locations. May be <code>null</code>.
+   * @param aInstructions
+   *        The instructions in execution order. The list is copied. May not be
+   *        <code>null</code>.
+   */
   public SequenceConstructor (@Nullable final AbstractXslNode aLocation, @NonNull final List <IInstruction> aInstructions)
   {
     this (aLocation, aInstructions.toArray (new IInstruction [0]));
@@ -66,19 +75,29 @@ public final class SequenceConstructor implements IInstruction
     return m_aLocation;
   }
 
-  /** @return <code>true</code> if there are no instructions. */
+  /**
+   * Check whether the sequence constructor is empty.
+   *
+   * @return <code>true</code> if there are no instructions.
+   */
   public boolean isEmpty ()
   {
     return m_aInstructions.length == 0;
   }
 
-  /** @return The number of instructions. */
+  /**
+   * Get the number of instructions.
+   *
+   * @return The number of instructions.
+   */
   public int size ()
   {
     return m_aInstructions.length;
   }
 
   /**
+   * Get the instruction at an index.
+   *
    * @param nIndex
    *        Index.
    * @return The instruction.

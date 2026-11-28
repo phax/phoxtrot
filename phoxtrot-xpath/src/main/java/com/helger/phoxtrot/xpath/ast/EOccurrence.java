@@ -33,6 +33,8 @@ public enum EOccurrence
   ONE_OR_MORE;
 
   /**
+   * Check whether the indicator accepts the empty sequence.
+   *
    * @return <code>true</code> for <code>?</code> and <code>*</code>, the
    *         indicators that accept the empty sequence.
    */
@@ -42,6 +44,8 @@ public enum EOccurrence
   }
 
   /**
+   * Check whether the indicator accepts more than one item.
+   *
    * @return <code>true</code> for <code>*</code> and <code>+</code>, the
    *         indicators that accept more than one item.
    */

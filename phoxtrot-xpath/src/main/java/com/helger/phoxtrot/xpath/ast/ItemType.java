@@ -68,10 +68,15 @@ public record ItemType (@NonNull Kind kind,
     /** <code>item()</code> */
     @SuppressWarnings ("hiding")
     ITEM,
+    /** An atomic type. */
     ATOMIC,
+    /** A node kind test. */
     NODE,
+    /** A function test. */
     FUNCTION,
+    /** A map test. */
     MAP,
+    /** An array test. */
     ARRAY
   }
 
@@ -111,6 +116,8 @@ public record ItemType (@NonNull Kind kind,
   public static final ItemType ITEM = new ItemType (Kind.ITEM, null, null, false, null, null, null, null);
 
   /**
+   * Create an atomic item type of a built-in type.
+   *
    * @param eType
    *        The built-in atomic type.
    * @return An atomic item type without a user-defined schema type.
@@ -122,6 +129,8 @@ public record ItemType (@NonNull Kind kind,
   }
 
   /**
+   * Create an atomic item type of a user-defined simple type.
+   *
    * @param eBuiltin
    *        The built-in base type, or <code>xs:anyAtomicType</code> for a union or list type.
    * @param aSchemaType
@@ -136,6 +145,8 @@ public record ItemType (@NonNull Kind kind,
   }
 
   /**
+   * Create a node item type.
+   *
    * @param aTest
    *        The kind test.
    * @return A node item type.

@@ -30,6 +30,8 @@ import com.helger.phoxtrot.xslt.runtime.XsltContext;
 public interface IInstructionBody
 {
   /**
+   * Execute the instruction.
+   *
    * @param aCtx
    *        Context.
    * @param aOut

@@ -74,6 +74,8 @@ public final class QT3AcceptedFailures
   }
 
   /**
+   * Extract the case names an accepted-failures markdown text documents.
+   *
    * @param sMarkdown
    *        The markdown text.
    * @return Every name in backticks in a list position (a heading or a
@@ -95,6 +97,8 @@ public final class QT3AcceptedFailures
   }
 
   /**
+   * Determine the failing cases that are not documented.
+   *
    * @param aDocumented
    *        The documented names.
    * @param aFails
@@ -114,6 +118,8 @@ public final class QT3AcceptedFailures
   }
 
   /**
+   * Read an accepted-failures file and determine the failing cases it does not document.
+   *
    * @param aFile
    *        The accepted-failures markdown file.
    * @param aFails

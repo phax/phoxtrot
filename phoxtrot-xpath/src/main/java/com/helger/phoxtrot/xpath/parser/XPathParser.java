@@ -49,7 +49,14 @@ import com.helger.phoxtrot.xpath.context.StaticContext;
 @Immutable
 public final class XPathParser
 {
-  /** Result of {@link #parseFunctionSignature(String, StaticContext)}. */
+  /**
+   * Result of {@link #parseFunctionSignature(String, StaticContext)}.
+   *
+   * @param paramTypes
+   *        The parameter types in order.
+   * @param returnType
+   *        The return type.
+   */
   @Immutable
   public record FunctionSignature (@NonNull List <SeqType> paramTypes, @NonNull SeqType returnType)
   {}
@@ -74,6 +81,8 @@ public final class XPathParser
   {}
 
   /**
+   * Parse an XPath expression into its AST.
+   *
    * @param sExpr
    *        The expression text.
    * @param aStaticCtx
@@ -130,8 +139,13 @@ public final class XPathParser
   }
 
   /**
-   * Parse a SequenceType on its own, e.g. <code>xs:string?</code> or
-   * <code>element(a)*</code>.
+   * Parse a SequenceType on its own, e.g. <code>xs:string?</code> or <code>element(a)*</code>.
+   *
+   * @param sType
+   *        The SequenceType text. May not be <code>null</code>.
+   * @param aStaticCtx
+   *        The static context for name resolution. May not be <code>null</code>.
+   * @return The parsed sequence type. Never <code>null</code>.
    */
   @NonNull
   public static SeqType parseSequenceType (@NonNull final String sType, @NonNull final StaticContext aStaticCtx)
@@ -143,8 +157,14 @@ public final class XPathParser
   }
 
   /**
-   * Parse a function signature in F&amp;O notation without parameter names:
-   * <code>(xs:string?, item()*) as xs:boolean</code>.
+   * Parse a function signature in F&amp;O notation without parameter names: <code>(xs:string?, item()*) as
+   * xs:boolean</code>.
+   *
+   * @param sSignature
+   *        The signature text. May not be <code>null</code>.
+   * @param aStaticCtx
+   *        The static context for name resolution. May not be <code>null</code>.
+   * @return The parsed parameter and return types. Never <code>null</code>.
    */
   @NonNull
   public static FunctionSignature parseFunctionSignature (@NonNull final String sSignature,

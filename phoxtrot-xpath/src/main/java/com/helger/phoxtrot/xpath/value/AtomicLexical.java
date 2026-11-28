@@ -116,6 +116,8 @@ public final class AtomicLexical
   }
 
   /**
+   * Format a double in its canonical lexical form.
+   *
    * @param d
    *        The value.
    * @return The canonical xs:double lexical form (F&amp;O 3.1 section
@@ -137,6 +139,8 @@ public final class AtomicLexical
   }
 
   /**
+   * Format a float in its canonical lexical form.
+   *
    * @param f
    *        The value.
    * @return The canonical xs:float lexical form, with the shortest digits that
@@ -159,6 +163,8 @@ public final class AtomicLexical
   }
 
   /**
+   * Format a decimal in its canonical lexical form.
+   *
    * @param aValue
    *        The value.
    * @return The canonical xs:decimal lexical form: no exponent, no trailing

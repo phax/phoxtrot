@@ -1047,6 +1047,8 @@ public final class NumberInstruction extends AbstractInstruction
   }
 
   /**
+   * Get the number of counts made from the name index of the document.
+   *
    * @return The number of sibling counts and level="any" counts made so far
    *         (in this JVM) from the name index of the document instead of
    *         testing every preceding node. For tests that need to know which

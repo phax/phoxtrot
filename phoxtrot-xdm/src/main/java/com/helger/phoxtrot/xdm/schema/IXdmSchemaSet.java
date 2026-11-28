@@ -33,6 +33,8 @@ import com.helger.phoxtrot.xdm.XdmValidationException;
 public interface IXdmSchemaSet
 {
   /**
+   * Find a type definition by name.
+   *
    * @param aName
    *        Type name.
    * @return The named type definition (built-in or user-defined), or <code>null</code>.
@@ -41,6 +43,8 @@ public interface IXdmSchemaSet
   IXdmTypeDefinition getTypeDefinition (@NonNull XdmQName aName);
 
   /**
+   * Find a top-level element declaration by name.
+   *
    * @param aName
    *        Element name.
    * @return The top-level element declaration, or <code>null</code>.
@@ -49,6 +53,8 @@ public interface IXdmSchemaSet
   IXdmElementDeclaration getElementDeclaration (@NonNull XdmQName aName);
 
   /**
+   * Find a top-level attribute declaration by name.
+   *
    * @param aName
    *        Attribute name.
    * @return The top-level attribute declaration, or <code>null</code>.

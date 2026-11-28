@@ -36,7 +36,11 @@ import com.helger.collection.commons.ICommonsList;
 @Immutable
 public record XsdValidationResult (boolean valid, @NonNull ICommonsList <XsdError> errors)
 {
-  /** @return A valid result. */
+  /**
+   * Create a valid result.
+   *
+   * @return A valid result.
+   */
   @NonNull
   public static XsdValidationResult createValid ()
   {
@@ -44,6 +48,8 @@ public record XsdValidationResult (boolean valid, @NonNull ICommonsList <XsdErro
   }
 
   /**
+   * Create an invalid result.
+   *
    * @param aError
    *        The (first) error.
    * @return An invalid result.

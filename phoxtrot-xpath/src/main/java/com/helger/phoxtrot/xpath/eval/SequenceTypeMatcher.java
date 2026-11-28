@@ -173,6 +173,8 @@ public final class SequenceTypeMatcher
   }
 
   /**
+   * Get the notation of an item type for messages.
+   *
    * @param aType
    *        An item type.
    * @return A readable notation of the item type for messages.
@@ -223,6 +225,8 @@ public final class SequenceTypeMatcher
   }
 
   /**
+   * Get the notation of a sequence type for messages.
+   *
    * @param aType
    *        A sequence type.
    * @return A readable notation of the type for messages, e.g.
@@ -340,6 +344,8 @@ public final class SequenceTypeMatcher
   }
 
   /**
+   * Check whether a value matches a sequence type.
+   *
    * @param aSeq
    *        The value.
    * @param aType
@@ -423,6 +429,8 @@ public final class SequenceTypeMatcher
   }
 
   /**
+   * Check whether an item matches an item type.
+   *
    * @param aItem
    *        The item.
    * @param aType

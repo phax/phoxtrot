@@ -79,7 +79,7 @@ public final class XsltCommandTest
     final CliResult aResult = CliRunner.run ("xslt", "check", BASIC + "broken.xsl");
     assertEquals (_output (aResult), PhoxtrotCli.EXIT_FAILURE, aResult.exitCode ());
     // Module, line and column of the instruction, then the code
-    assertTrue (aResult.err (), aResult.err ().contains ("broken.xsl:9:"));
+    assertTrue (aResult.err (), aResult.err ().contains ("broken.xsl:27:"));
     assertTrue (aResult.err (), aResult.err ().contains ("XPST0008"));
   }
 

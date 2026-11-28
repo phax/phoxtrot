@@ -68,6 +68,8 @@ public final class PhoxtrotTemplates implements Templates
   }
 
   /**
+   * Get the compiled stylesheet these templates wrap.
+   *
    * @return The compiled stylesheet, to call phoxtrot directly (e.g. for an
    *         initial template or function, which JAXP cannot express). Never
    *         <code>null</code>.

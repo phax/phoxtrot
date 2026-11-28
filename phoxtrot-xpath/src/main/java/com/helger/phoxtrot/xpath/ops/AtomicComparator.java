@@ -768,6 +768,8 @@ public final class AtomicComparator
   }
 
   /**
+   * Get the comparison key of a map key.
+   *
    * @param aKey
    *        A map key.
    * @return An object whose equals/hashCode implement op:same-key (XPath 3.1

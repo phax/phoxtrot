@@ -127,6 +127,8 @@ public final class XsltState
   }
 
   /**
+   * Get the current template rule.
+   *
    * @return The current template rule (for xsl:apply-imports and
    *         xsl:next-match), or <code>null</code> if there is none.
    */
@@ -137,6 +139,8 @@ public final class XsltState
   }
 
   /**
+   * Get the current mode.
+   *
    * @return The current mode, or <code>null</code> before any template rule
    *         was invoked (the default mode then applies).
    */
@@ -147,6 +151,8 @@ public final class XsltState
   }
 
   /**
+   * Derive a state with another current template rule and mode.
+   *
    * @param aRule
    *        The new current template rule. May be <code>null</code>.
    * @param aMode
@@ -160,6 +166,8 @@ public final class XsltState
   }
 
   /**
+   * Get the value of a tunnel parameter.
+   *
    * @param aName
    *        Parameter name.
    * @return The value of the tunnel parameter or <code>null</code> if it is
@@ -174,7 +182,11 @@ public final class XsltState
     return null;
   }
 
-  /** @return All tunnel parameters, innermost binding of each name. */
+  /**
+   * Get all tunnel parameters in scope.
+   *
+   * @return All tunnel parameters, innermost binding of each name.
+   */
   @NonNull
   public ICommonsOrderedMap <XdmQName, XdmSequence> getAllTunnelParams ()
   {
@@ -186,6 +198,8 @@ public final class XsltState
   }
 
   /**
+   * Derive a state with an additional tunnel parameter.
+   *
    * @param aName
    *        Parameter name.
    * @param aValue
@@ -199,6 +213,8 @@ public final class XsltState
   }
 
   /**
+   * Get the captured groups of the innermost xsl:analyze-string match.
+   *
    * @return The captured substrings of the innermost xsl:analyze-string match
    *         (index 0 is the whole match), or <code>null</code> if there are
    *         none.
@@ -210,6 +226,8 @@ public final class XsltState
   }
 
   /**
+   * Derive a state with other captured regex groups.
+   *
    * @param aGroups
    *        The captured groups of the current xsl:analyze-string match (index
    *        0 the whole match), or <code>null</code> outside a matching
@@ -223,6 +241,8 @@ public final class XsltState
   }
 
   /**
+   * Get the value of an extension slot.
+   *
    * @param aKey
    *        Slot key.
    * @param <T>
@@ -242,6 +262,8 @@ public final class XsltState
   }
 
   /**
+   * Check whether an extension slot is bound.
+   *
    * @param aKey
    *        Slot key.
    * @return <code>true</code> if the slot is set (possibly to
@@ -256,6 +278,8 @@ public final class XsltState
   }
 
   /**
+   * Derive a state with an extension slot bound to a value.
+   *
    * @param aKey
    *        Slot key.
    * @param aValue
@@ -276,6 +300,8 @@ public final class XsltState
   }
 
   /**
+   * Derive a state in which an extension slot is unbound.
+   *
    * @param aKey
    *        Slot key.
    * @return This state if the key has no binding, otherwise a derived state
@@ -293,6 +319,8 @@ public final class XsltState
   }
 
   /**
+   * Get the state for the start of a template invocation.
+   *
    * @return The state at the start of a template invocation: tunnel
    *         parameters and regex groups kept, the slots that do not survive
    *         template calls cleared (see the scopes of
@@ -310,6 +338,8 @@ public final class XsltState
   }
 
   /**
+   * Get the state for the body of a stylesheet function.
+   *
    * @return The state in the body of a stylesheet function: no current rule
    *         or mode, no tunnel parameters, no regex groups, only the slots
    *         marked {@link XsltStateKey.EScope#KEPT}. {@link #EMPTY} if
@@ -325,6 +355,8 @@ public final class XsltState
   }
 
   /**
+   * Derive a state without tunnel parameters.
+   *
    * @return A state without the tunnel parameters (e.g. for templates called
    *         from a stylesheet function).
    */

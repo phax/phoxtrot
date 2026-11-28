@@ -42,6 +42,12 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
 public final class ForkExtension implements IXsltExtension
 {
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public ForkExtension ()
+  {}
+
+  /**
    * Compile xsl:fork. The content is compiled as an ordinary sequence
    * constructor, so outside streaming the prongs run one after the other and
    * their results are concatenated in order. If the streaming analysis made

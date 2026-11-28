@@ -179,6 +179,8 @@ public final class XSLT30UnicodeExclusions
   }
 
   /**
+   * Determine why a test case is excluded.
+   *
    * @param sSetName
    *        The test-set name.
    * @param aCase

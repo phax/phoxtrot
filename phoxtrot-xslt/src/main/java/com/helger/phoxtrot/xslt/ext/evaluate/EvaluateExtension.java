@@ -97,6 +97,12 @@ public final class EvaluateExtension implements IXsltExtension
                                                                                         "unparsed-entity-public-id");
 
   /**
+   * Create the extension. Instantiated by reflection when the {@link XsltExtensionRegistry} is built.
+   */
+  public EvaluateExtension ()
+  {}
+
+  /**
    * Check whether a stylesheet function may be called from a dynamic
    * expression (XSLT 3.0 section 10.4.1): only functions with visibility
    * public or final are in its static context.

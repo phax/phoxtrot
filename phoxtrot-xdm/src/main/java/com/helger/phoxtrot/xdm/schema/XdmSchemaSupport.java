@@ -73,6 +73,8 @@ public final class XdmSchemaSupport
   }
 
   /**
+   * Check whether schema processing is available.
+   *
    * @return <code>true</code> if schema processing is available, i.e. the native validator
    *         (<code>phoxtrot-xsd</code>) is on the class path.
    */
@@ -95,6 +97,8 @@ public final class XdmSchemaSupport
   }
 
   /**
+   * Get the name of the schema provider in use.
+   *
    * @return The simple class name of the provider in use, <code>XsdSchemaProvider</code>;
    *         <code>null</code> if schema processing is not
    *         available.
@@ -147,6 +151,8 @@ public final class XdmSchemaSupport
   }
 
   /**
+   * Get the schema set with only the built-in types.
+   *
    * @return The schema set with only the built-in types.
    * @throws IllegalStateException
    *         if schema processing is not available

@@ -44,6 +44,8 @@ public final class SimpleContent
   {}
 
   /**
+   * Join the string values of a sequence by the rules for simple content.
+   *
    * @param aSeq
    *        The result of the select expression or sequence constructor.
    * @param sSeparator

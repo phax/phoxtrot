@@ -132,6 +132,9 @@ public final class NamespaceFixup
   }
 
   /**
+   * Get the name under which an attribute can be added to an element without a
+   * namespace conflict.
+   *
    * @param aElement
    *        The element the attribute is added to.
    * @param aName

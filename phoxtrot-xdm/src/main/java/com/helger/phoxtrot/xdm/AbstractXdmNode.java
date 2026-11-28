@@ -105,6 +105,7 @@ public abstract sealed class AbstractXdmNode implements IXdmNode permits Abstrac
   // Optimisation (memory): the rare properties live in a holder created on demand
   private Details m_aDetails;
 
+  /** Constructor for the node kinds that extend this class. */
   protected AbstractXdmNode ()
   {}
 

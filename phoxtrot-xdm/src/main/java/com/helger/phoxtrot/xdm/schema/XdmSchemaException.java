@@ -27,6 +27,14 @@ import com.helger.phoxtrot.xdm.XdmParseException;
  */
 public class XdmSchemaException extends XdmParseException
 {
+  /**
+   * Create an exception with a message and a cause.
+   *
+   * @param sMessage
+   *        The message. May not be <code>null</code>.
+   * @param aCause
+   *        The cause. May not be <code>null</code>.
+   */
   public XdmSchemaException (@NonNull final String sMessage, @NonNull final Throwable aCause)
   {
     super (sMessage, aCause);

@@ -67,7 +67,16 @@ import com.helger.phoxtrot.xslt.tree.XslModule;
 @NotThreadSafe
 public final class CompiledStylesheet implements XsltExecutable
 {
-  /** The global context item declaration. */
+  /**
+   * The global context item declaration (xsl:global-context-item).
+   *
+   * @param as
+   *        The declared type of the global context item. May be
+   *        <code>null</code>.
+   * @param use
+   *        The value of the <code>use</code> attribute. Never
+   *        <code>null</code>.
+   */
   @Immutable
   public record GlobalContextItem (@Nullable SeqType as, @NonNull String use)
   {}
@@ -77,6 +86,18 @@ public final class CompiledStylesheet implements XsltExecutable
    * the element (namespaces, base URI, xpath-default-namespace, default
    * collation), the function library, the visible global variables and the
    * decimal formats.
+   *
+   * @param element
+   *        The principal stylesheet element. Never <code>null</code>.
+   * @param functions
+   *        The function library. Never <code>null</code>.
+   * @param variables
+   *        The names of the visible global variables. Never
+   *        <code>null</code>.
+   * @param defaultDecimalFormat
+   *        The default decimal format. May be <code>null</code>.
+   * @param decimalFormats
+   *        The named decimal formats. Never <code>null</code>.
    */
   @Immutable
   public record HostScope (@NonNull XslElement element,
@@ -118,19 +139,38 @@ public final class CompiledStylesheet implements XsltExecutable
   private StreamVerdicts m_aStreamVerdicts;
   private boolean m_bHasResultDocument;
 
+  /**
+   * Create a new, empty compiled stylesheet. The compiler fills it.
+   *
+   * @param aFunctions
+   *        The function library of the stylesheet. May not be
+   *        <code>null</code>.
+   * @param aPrincipalModule
+   *        The principal stylesheet module. May not be <code>null</code>.
+   */
   public CompiledStylesheet (@NonNull final FunctionLibrary aFunctions, @NonNull final XslModule aPrincipalModule)
   {
     m_aFunctions = aFunctions;
     m_aPrincipalModule = aPrincipalModule;
   }
 
-  /** @return The function library of the stylesheet (built-in, XSLT and stylesheet functions). */
+  /**
+   * Get the function library of the stylesheet.
+   *
+   * @return The function library of the stylesheet (built-in, XSLT and
+   *         stylesheet functions).
+   */
   @NonNull
   public FunctionLibrary getFunctionLibrary ()
   {
     return m_aFunctions;
   }
 
+  /**
+   * Get the principal stylesheet module.
+   *
+   * @return The principal module, never <code>null</code>.
+   */
   @NonNull
   public XslModule getPrincipalModule ()
   {
@@ -138,6 +178,9 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Check whether the stylesheet is schema-aware, i.e. whether a schema set
+   * is present.
+   *
    * @return <code>true</code> if the stylesheet was compiled schema-aware.
    */
   public boolean isSchemaAware ()
@@ -157,12 +200,20 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_aSchemaSet;
   }
 
+  /**
+   * Set the in-scope schema definitions.
+   *
+   * @param aSchemaSet
+   *        The schema set, <code>null</code> for a basic processor.
+   */
   public void setSchemaSet (@Nullable final IXdmSchemaSet aSchemaSet)
   {
     m_aSchemaSet = aSchemaSet;
   }
 
   /**
+   * Get the results of the streamability analysis.
+   *
    * @return What the streamability analysis proved guaranteed streamable, or
    *         <code>null</code> if nothing is executed streamed (streaming is not
    *         claimed, {@link com.helger.phoxtrot.xslt.XsltCompileOptions#isStreamingClaim()}).
@@ -173,12 +224,21 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_aStreamVerdicts;
   }
 
+  /**
+   * Set the results of the streamability analysis.
+   *
+   * @param aStreamVerdicts
+   *        The verdicts. May be <code>null</code> if nothing is executed
+   *        streamed.
+   */
   public void setStreamVerdicts (@Nullable final StreamVerdicts aStreamVerdicts)
   {
     m_aStreamVerdicts = aStreamVerdicts;
   }
 
   /**
+   * Check whether any module contains an xsl:result-document.
+   *
    * @return <code>true</code> if any module has an xsl:result-document, which
    *         may write the principal result with another output definition.
    *         Determined once at the end of the compilation.
@@ -188,6 +248,12 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_bHasResultDocument;
   }
 
+  /**
+   * Set whether any module contains an xsl:result-document.
+   *
+   * @param bHasResultDocument
+   *        <code>true</code> if any module has an xsl:result-document.
+   */
   public void setHasResultDocument (final boolean bHasResultDocument)
   {
     m_bHasResultDocument = bHasResultDocument;
@@ -203,12 +269,21 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_bStripInputTypeAnnotations;
   }
 
+  /**
+   * Set whether input type annotations are stripped.
+   *
+   * @param bStrip
+   *        <code>true</code> if a module says
+   *        <code>input-type-annotations="strip"</code>.
+   */
   public void setStripInputTypeAnnotations (final boolean bStrip)
   {
     m_bStripInputTypeAnnotations = bStrip;
   }
 
   /**
+   * Check whether the principal module is an xsl:package.
+   *
    * @return <code>true</code> if the principal module is an xsl:package (named
    *         templates and modes are then private unless declared otherwise).
    */
@@ -217,24 +292,44 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_bPackage;
   }
 
+  /**
+   * Set whether the principal module is an xsl:package.
+   *
+   * @param bPackage
+   *        <code>true</code> if the principal module is an xsl:package.
+   */
   public void setPackage (final boolean bPackage)
   {
     m_bPackage = bPackage;
   }
 
-  /** @return The packages of the stylesheet, <code>null</code> before compilation finished. */
+  /**
+   * Get the packages of the stylesheet.
+   *
+   * @return The packages of the stylesheet, <code>null</code> before
+   *         compilation finished.
+   */
   @Nullable
   public PackageModel getPackages ()
   {
     return m_aPackages;
   }
 
+  /**
+   * Set the packages of the stylesheet.
+   *
+   * @param aPackages
+   *        The package model. May be <code>null</code>.
+   */
   public void setPackages (@Nullable final PackageModel aPackages)
   {
     m_aPackages = aPackages;
   }
 
   /**
+   * Get the overriding global variables and parameters (mutable, filled
+   * during compilation).
+   *
    * @return The global variables and parameters declared in xsl:override,
    *         mapped to the declaration they override ($xsl:original).
    */
@@ -245,6 +340,8 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Get the slots of $xsl:original (mutable, filled during compilation).
+   *
    * @return The slot $xsl:original is bound in, for every key of
    *         {@link #originalVariables()}.
    */
@@ -255,6 +352,9 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Get the package specific global variables (mutable, filled during
+   * compilation).
+   *
    * @return Per package, the global variables for which the package sees
    *         another declaration than the one with the highest import
    *         precedence.
@@ -265,13 +365,20 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_aPackageGlobals;
   }
 
-  /** @return <code>true</code> if more than one package takes part. */
+  /**
+   * Check whether more than one package takes part in the stylesheet.
+   *
+   * @return <code>true</code> if more than one package takes part.
+   */
   public boolean isMultiPackage ()
   {
     return m_aPackages != null && m_aPackages.isMultiPackage ();
   }
 
   /**
+   * Get the named templates made public by xsl:expose (mutable, filled during
+   * compilation).
+   *
    * @return The names of the named templates an xsl:expose makes public (a
    *         <code>null</code> element stands for all).
    */
@@ -282,6 +389,9 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Get the named templates made private by xsl:expose (mutable, filled
+   * during compilation).
+   *
    * @return The named templates an xsl:expose naming them explicitly makes
    *         private, which takes precedence over their declared visibility
    *         (not eligible as initial template).
@@ -292,40 +402,69 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_aPrivateTemplates;
   }
 
-  /** @return The modes an xsl:expose makes public or final. */
+  /**
+   * Get the modes made public or final by xsl:expose (mutable, filled during
+   * compilation).
+   *
+   * @return The modes an xsl:expose makes public or final.
+   */
   @NonNull
   public ICommonsSet <XdmQName> exposedModes ()
   {
     return m_aExposedModes;
   }
 
-  /** @return The modes an xsl:expose makes private (not eligible as initial mode). */
+  /**
+   * Get the modes made private by xsl:expose (mutable, filled during
+   * compilation).
+   *
+   * @return The modes an xsl:expose makes private (not eligible as initial
+   *         mode).
+   */
   @NonNull
   public ICommonsSet <XdmQName> privateModes ()
   {
     return m_aPrivateModes;
   }
 
-  /** @return All stylesheet modules (for document('')). */
+  /**
+   * Get all stylesheet modules (mutable, filled during compilation).
+   *
+   * @return All stylesheet modules (for document('')).
+   */
   @NonNull
   public ICommonsList <XslModule> modules ()
   {
     return m_aModules;
   }
 
+  /**
+   * Add a template to the list of all templates.
+   *
+   * @param aTemplate
+   *        The template to add. May not be <code>null</code>.
+   */
   public void addTemplate (@NonNull final Template aTemplate)
   {
     m_aTemplates.add (aTemplate);
   }
 
-  /** @return All templates in the order they were added (do not modify). */
+  /**
+   * Get all templates of the stylesheet.
+   *
+   * @return All templates in the order they were added (do not modify).
+   */
   @NonNull
   public ICommonsList <Template> templates ()
   {
     return m_aTemplates;
   }
 
-  /** @return The named templates (the winning one of each name). */
+  /**
+   * Get the named templates by name (mutable, filled during compilation).
+   *
+   * @return The named templates (the winning one of each name).
+   */
   @NonNull
   public ICommonsMap <XdmQName, Template> namedTemplates ()
   {
@@ -333,6 +472,8 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Look up a named template.
+   *
    * @param aName
    *        Template name.
    * @return The winning named template of that name, or <code>null</code>.
@@ -344,6 +485,8 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Get a mode, creating it if it does not exist yet.
+   *
    * @param aName
    *        Mode name ({@link Mode#UNNAMED} for the unnamed mode).
    * @return The mode, created if needed (during compilation only).
@@ -355,6 +498,8 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Look up an existing mode.
+   *
    * @param aName
    *        Mode name ({@link Mode#UNNAMED} for the unnamed mode).
    * @return The mode, or <code>null</code> if no template rule or xsl:mode
@@ -366,38 +511,72 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_aModes.get (aName);
   }
 
+  /**
+   * Get all modes by name, in the order they were created (mutable, filled
+   * during compilation).
+   *
+   * @return The modes by name, never <code>null</code>.
+   */
   @NonNull
   public ICommonsOrderedMap <XdmQName, Mode> modes ()
   {
     return m_aModes;
   }
 
-  /** @return The default mode of the principal module ([xsl:]default-mode). */
+  /**
+   * Get the name of the default mode.
+   *
+   * @return The default mode of the principal module ([xsl:]default-mode).
+   */
   @NonNull
   public XdmQName getDefaultModeName ()
   {
     return m_aDefaultMode;
   }
 
+  /**
+   * Set the name of the default mode.
+   *
+   * @param aName
+   *        The default mode name. May not be <code>null</code>.
+   */
   public void setDefaultModeName (@NonNull final XdmQName aName)
   {
     m_aDefaultMode = aName;
   }
 
-  /** @return The global variables and parameters by name (the winning declaration of each name). */
+  /**
+   * Get the global variables and parameters (mutable, filled during
+   * compilation).
+   *
+   * @return The global variables and parameters by name (the winning
+   *         declaration of each name).
+   */
   @NonNull
   public ICommonsOrderedMap <XdmQName, VariableDef> globals ()
   {
     return m_aGlobals;
   }
 
-  /** @return The values of static variables and parameters, settled at compile time. */
+  /**
+   * Get the values of the static variables and parameters (mutable, filled
+   * during compilation).
+   *
+   * @return The values of static variables and parameters, settled at compile
+   *         time.
+   */
   @NonNull
   public ICommonsMap <XdmQName, XdmSequence> staticValues ()
   {
     return m_aStaticValues;
   }
 
+  /**
+   * Get all user functions of the stylesheet (mutable, filled during
+   * compilation).
+   *
+   * @return The user functions, never <code>null</code>.
+   */
   @NonNull
   public ICommonsList <UserFunction> functions ()
   {
@@ -405,6 +584,8 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Look up the declarations of a key.
+   *
    * @param aName
    *        Key name.
    * @return The declarations of that key, or <code>null</code>.
@@ -426,13 +607,22 @@ public final class CompiledStylesheet implements XsltExecutable
     m_aKeys.computeIfAbsent (aKey.getName (), k -> new CommonsArrayList <> ()).add (aKey);
   }
 
+  /**
+   * Get all key declarations by key name.
+   *
+   * @return The key declarations by name, never <code>null</code>.
+   */
   @NonNull
   public ICommonsMap <XdmQName, ICommonsList <KeyDefinition>> keys ()
   {
     return m_aKeys;
   }
 
-  /** @return The unnamed output definition. */
+  /**
+   * Get the unnamed output definition.
+   *
+   * @return The unnamed output definition.
+   */
   @NonNull
   public OutputDefinition getOutput ()
   {
@@ -440,6 +630,8 @@ public final class CompiledStylesheet implements XsltExecutable
   }
 
   /**
+   * Get a named output definition, creating it if it does not exist yet.
+   *
    * @param aName
    *        Name.
    * @return The named output definition, created if needed (during
@@ -451,36 +643,74 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_aNamedOutputs.computeIfAbsent (aName, OutputDefinition::new);
   }
 
+  /**
+   * Look up a named output definition.
+   *
+   * @param aName
+   *        The output definition name. May not be <code>null</code>.
+   * @return The named output definition, or <code>null</code> if there is
+   *         none of that name.
+   */
   @Nullable
   public OutputDefinition getNamedOutput (@NonNull final XdmQName aName)
   {
     return m_aNamedOutputs.get (aName);
   }
 
+  /**
+   * Get all attribute sets by name (mutable, filled during compilation).
+   *
+   * @return The attribute sets by name, never <code>null</code>.
+   */
   @NonNull
   public ICommonsMap <XdmQName, AttributeSet> attributeSets ()
   {
     return m_aAttributeSets;
   }
 
+  /**
+   * Look up an attribute set.
+   *
+   * @param aName
+   *        The attribute set name. May not be <code>null</code>.
+   * @return The attribute set, or <code>null</code> if there is none of that
+   *         name.
+   */
   @Nullable
   public AttributeSet getAttributeSet (@NonNull final XdmQName aName)
   {
     return m_aAttributeSets.get (aName);
   }
 
+  /**
+   * Get the whitespace stripping rules (xsl:strip-space and
+   * xsl:preserve-space).
+   *
+   * @return The space rules, never <code>null</code>.
+   */
   @NonNull
   public SpaceRules getSpaceRules ()
   {
     return m_aSpaceRules;
   }
 
+  /**
+   * Get the global context item declaration.
+   *
+   * @return The declaration, or <code>null</code> if there is none.
+   */
   @Nullable
   public GlobalContextItem getGlobalContextItem ()
   {
     return m_aGlobalContextItem;
   }
 
+  /**
+   * Set the global context item declaration.
+   *
+   * @param aDecl
+   *        The declaration. May be <code>null</code>.
+   */
   public void setGlobalContextItem (@Nullable final GlobalContextItem aDecl)
   {
     m_aGlobalContextItem = aDecl;
@@ -500,12 +730,27 @@ public final class CompiledStylesheet implements XsltExecutable
     return m_aExtensionData.get (aKey);
   }
 
+  /**
+   * Store compile-time data of an instruction family. Call it only during
+   * compilation.
+   *
+   * @param aKey
+   *        Key, compared with equals. May not be <code>null</code>.
+   * @param aValue
+   *        The value. May be <code>null</code>.
+   */
   public void putExtensionData (@NonNull final Object aKey, @Nullable final Object aValue)
   {
     m_aExtensionData.put (aKey, aValue);
   }
 
-  /** @return All user functions with the given name. */
+  /**
+   * Get all user functions with a given name (all arities).
+   *
+   * @param aName
+   *        The function name. May not be <code>null</code>.
+   * @return All user functions with the given name.
+   */
   @NonNull
   @ReturnsMutableCopy
   public ICommonsList <UserFunction> getFunctionsByName (@NonNull final XdmQName aName)

@@ -62,11 +62,15 @@ public class XsltException extends XPathException
   public record FunctionFrame (@NonNull XdmQName name, int arity, @Nullable String moduleUri, int line, int column)
   {}
 
+  /** The URI of the stylesheet module of the error, or <code>null</code>. */
   private final String m_sModuleUri;
+  /** The 1-based line of the error, 0 if unknown. */
   private final int m_nLine;
+  /** The 1-based column of the error, 0 if unknown. */
   private final int m_nColumn;
+  /** The messages the transformation produced before it failed with this error. */
   private final ICommonsList <XsltMessage> m_aCollectedMessages = new CommonsArrayList <> ();
-  // The innermost xsl:function the error was raised in, set once
+  /** The innermost xsl:function the error was raised in, set once. */
   private FunctionFrame m_aFunctionFrame;
 
   /**
@@ -168,32 +172,50 @@ public class XsltException extends XPathException
     return new XsltException (aEx, aNode.getModule ().getUri (), aNode.getLine (), aNode.getColumn ());
   }
 
-  /** @return <code>true</code> if a stylesheet location is known. */
+  /**
+   * Check whether the error has a stylesheet location.
+   *
+   * @return <code>true</code> if a stylesheet location is known.
+   */
   public final boolean isLocated ()
   {
     return m_nLine > 0 || m_sModuleUri != null;
   }
 
-  /** @return The stylesheet module URI or <code>null</code>. */
+  /**
+   * Get the URI of the stylesheet module of the error.
+   *
+   * @return The stylesheet module URI or <code>null</code>.
+   */
   @Nullable
   public final String getModuleUri ()
   {
     return m_sModuleUri;
   }
 
-  /** @return The 1-based line, 0 if unknown. */
+  /**
+   * Get the line of the error.
+   *
+   * @return The 1-based line, 0 if unknown.
+   */
   public final int getLine ()
   {
     return m_nLine;
   }
 
-  /** @return The 1-based column, 0 if unknown. */
+  /**
+   * Get the column of the error.
+   *
+   * @return The 1-based column, 0 if unknown.
+   */
   public final int getColumn ()
   {
     return m_nColumn;
   }
 
   /**
+   * Get the messages produced before the error.
+   *
    * @return A copy of the messages (<code>xsl:message</code> and failed
    *         <code>xsl:assert</code>, see {@link XsltMessage}) the
    *         transformation produced before it failed with this error, in the
@@ -212,6 +234,8 @@ public class XsltException extends XPathException
   }
 
   /**
+   * Get the stylesheet function the error was raised in.
+   *
    * @return The innermost <code>xsl:function</code> whose body raised this
    *         error (also when the error is reported at the location of the
    *         calling instruction), or <code>null</code> if it was not raised

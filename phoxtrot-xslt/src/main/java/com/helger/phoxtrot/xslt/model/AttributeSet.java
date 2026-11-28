@@ -36,7 +36,16 @@ import com.helger.phoxtrot.xslt.tree.XslElement;
 @NotThreadSafe
 public final class AttributeSet
 {
-  /** One xsl:attribute-set declaration. */
+  /**
+   * One xsl:attribute-set declaration.
+   *
+   * @param element
+   *        The xsl:attribute-set element. Never <code>null</code>.
+   * @param uses
+   *        The names of its use-attribute-sets. Never <code>null</code>.
+   * @param body
+   *        The compiled content of the declaration. Never <code>null</code>.
+   */
   @Immutable
   public record Decl (@NonNull XslElement element,
                       @NonNull ICommonsList <XdmQName> uses,
@@ -46,11 +55,22 @@ public final class AttributeSet
   private final XdmQName m_aName;
   private final ICommonsList <Decl> m_aDecls = new CommonsArrayList <> ();
 
+  /**
+   * Create a new attribute set without declarations.
+   *
+   * @param aName
+   *        The name of the attribute set. May not be <code>null</code>.
+   */
   public AttributeSet (@NonNull final XdmQName aName)
   {
     m_aName = aName;
   }
 
+  /**
+   * Get the name of the attribute set.
+   *
+   * @return The name, never <code>null</code>.
+   */
   @NonNull
   public XdmQName getName ()
   {
@@ -71,7 +91,11 @@ public final class AttributeSet
     m_aDecls.add (aDecl);
   }
 
-  /** @return The declarations in expansion order (do not modify). */
+  /**
+   * Get all declarations of this attribute set.
+   *
+   * @return The declarations in expansion order (do not modify).
+   */
   @NonNull
   public ICommonsList <Decl> decls ()
   {

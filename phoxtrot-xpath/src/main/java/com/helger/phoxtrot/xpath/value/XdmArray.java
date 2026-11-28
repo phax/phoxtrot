@@ -48,6 +48,7 @@ import com.helger.phoxtrot.xdm.IXdmItem;
 @Immutable
 public final class XdmArray implements IXdmItem
 {
+  /** The shared empty array. */
   public static final XdmArray EMPTY = new XdmArray (new XdmSequence [0]);
 
   // May be longer than the array, see m_nSize
@@ -113,6 +114,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Create an array from a list of members.
+   *
    * @param aMembers
    *        The members; the list is copied.
    * @return The array
@@ -125,6 +128,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Create an array from members.
+   *
    * @param aMembers
    *        The members; the array is copied.
    * @return The array
@@ -137,6 +142,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Create an array with each item of a sequence as a single-item member.
+   *
    * @param aItems
    *        The items.
    * @return An array with one member per item (a curly array constructor).
@@ -151,18 +158,30 @@ public final class XdmArray implements IXdmItem
     return aMembers.length == 0 ? EMPTY : new XdmArray (aMembers);
   }
 
+  /**
+   * Get the number of members.
+   *
+   * @return The member count. Always &ge; 0.
+   */
   @Nonnegative
   public int size ()
   {
     return m_nSize;
   }
 
+  /**
+   * Check if this array has no members.
+   *
+   * @return <code>true</code> if the array is empty.
+   */
   public boolean isEmpty ()
   {
     return m_nSize == 0;
   }
 
   /**
+   * Get a member by index.
+   *
    * @param nIndex
    *        0-based member index.
    * @return The member at the index.
@@ -179,6 +198,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Get the atomic type shared by all members.
+   *
    * @return The atomic type of all members, if each is a single atomic value,
    *         or <code>null</code> if it is unknown. A cheap way to test an
    *         <code>array(T)</code> type without looking at every member.
@@ -190,6 +211,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Get a copy of all members.
+   *
    * @return A new list with the members; use {@link #members()} to iterate
    *         without copying.
    */
@@ -200,7 +223,11 @@ public final class XdmArray implements IXdmItem
     return new CommonsArrayList <> (members ());
   }
 
-  /** @return A read-only view of the members, without copying. */
+  /**
+   * Get the members as a view.
+   *
+   * @return A read-only view of the members, without copying.
+   */
   @NonNull
   public List <XdmSequence> members ()
   {
@@ -208,6 +235,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Replace one member.
+   *
    * @param nIndex
    *        0-based index of the member to replace.
    * @param aValue
@@ -223,6 +252,9 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Append one member. The new array shares the backing array of this one if it has room and no other array has
+   * appended to it yet.
+   *
    * @param aValue
    *        The new member.
    * @return A new array with the member appended.
@@ -246,6 +278,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Insert one member.
+   *
    * @param nIndex
    *        0-based position, 0 to {@link #size()} inclusive.
    * @param aValue
@@ -263,6 +297,8 @@ public final class XdmArray implements IXdmItem
   }
 
   /**
+   * Get a range of members.
+   *
    * @param nFrom
    *        0-based start, inclusive.
    * @param nTo
@@ -279,7 +315,11 @@ public final class XdmArray implements IXdmItem
     return new XdmArray (Arrays.copyOfRange (m_aMembers, nFrom, nTo));
   }
 
-  /** @return A new array with the members in reverse order. */
+  /**
+   * Get the members in reverse order.
+   *
+   * @return A new array with the members in reverse order.
+   */
   @NonNull
   public XdmArray reverse ()
   {
@@ -308,12 +348,15 @@ public final class XdmArray implements IXdmItem
     private XdmSequence [] m_aBuf;
     private int m_nSize = 0;
 
+    /** Create a builder with an initial capacity of 8. */
     public Builder ()
     {
       this (8);
     }
 
     /**
+     * Create a builder with the given initial capacity.
+     *
      * @param nExpectedSize
      *        The initial capacity; values below 1 are treated as 1.
      */
@@ -354,6 +397,11 @@ public final class XdmArray implements IXdmItem
       return this;
     }
 
+    /**
+     * Get the number of members added so far.
+     *
+     * @return The member count. Always &ge; 0.
+     */
     @Nonnegative
     public int size ()
     {
@@ -361,6 +409,8 @@ public final class XdmArray implements IXdmItem
     }
 
     /**
+     * Build the array from the members added so far.
+     *
      * @return {@link XdmArray#EMPTY} if no member was added, otherwise a new
      *         array over a copy of the buffer trimmed to the member count, with
      *         the uniform member type computed.

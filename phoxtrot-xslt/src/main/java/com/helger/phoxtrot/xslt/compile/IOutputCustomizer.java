@@ -32,6 +32,8 @@ import com.helger.phoxtrot.xslt.model.OutputDefinition;
 public interface IOutputCustomizer
 {
   /**
+   * Modify the serialisation parameters of an output definition.
+   *
    * @param aStylesheet
    *        The stylesheet.
    * @param aDefinition

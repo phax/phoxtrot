@@ -88,6 +88,8 @@ public final class XmlNames
   {}
 
   /**
+   * Check whether a code point may start an NCName.
+   *
    * @param c
    *        Code point.
    * @return <code>true</code> if it is a NameStartChar other than the colon.
@@ -98,6 +100,8 @@ public final class XmlNames
   }
 
   /**
+   * Check whether a code point may appear in an NCName.
+   *
    * @param c
    *        Code point.
    * @return <code>true</code> if it is a NameChar other than the colon.
@@ -108,6 +112,8 @@ public final class XmlNames
   }
 
   /**
+   * Check whether a code point may start an XML name.
+   *
    * @param c
    *        Code point.
    * @return <code>true</code> if it is a NameStartChar.
@@ -118,6 +124,8 @@ public final class XmlNames
   }
 
   /**
+   * Check whether a code point may appear in an XML name.
+   *
    * @param c
    *        Code point.
    * @return <code>true</code> if it is a NameChar.
@@ -128,6 +136,8 @@ public final class XmlNames
   }
 
   /**
+   * Check whether a string is an NCName.
+   *
    * @param s
    *        String to check. May be <code>null</code>.
    * @return <code>true</code> if it matches the <code>NCName</code> production.
@@ -138,6 +148,8 @@ public final class XmlNames
   }
 
   /**
+   * Check whether a string is an XML name.
+   *
    * @param s
    *        String to check. May be <code>null</code>.
    * @return <code>true</code> if it matches the XML <code>Name</code> production.
@@ -148,6 +160,8 @@ public final class XmlNames
   }
 
   /**
+   * Get the code point ranges of NameStartChar without the colon.
+   *
    * @return NameStartChar without the colon as inclusive code point ranges (start, end, start, end,
    *         ...), for building character classes.
    */
@@ -159,6 +173,8 @@ public final class XmlNames
   }
 
   /**
+   * Get the code point ranges a NameChar may have beyond a NameStartChar.
+   *
    * @return The code points a NameChar may have beyond a NameStartChar, as inclusive ranges.
    */
   @NonNull

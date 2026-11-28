@@ -281,6 +281,8 @@ public abstract sealed class AbstractXdmDomNode implements Node permits
   }
 
   /**
+   * Get the view this node belongs to.
+   *
    * @return The view this node belongs to. Never <code>null</code>.
    */
   @NonNull
@@ -290,6 +292,8 @@ public abstract sealed class AbstractXdmDomNode implements Node permits
   }
 
   /**
+   * Get the XDM node this DOM node reads.
+   *
    * @return The XDM node this DOM node reads. For the <code>xmlns</code> attribute of a namespace
    *         declaration it is a parentless namespace node. Never <code>null</code>.
    */

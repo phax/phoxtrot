@@ -41,8 +41,11 @@ import com.helger.phoxtrot.xpath.XPathException;
 @ThreadSafe
 public final class CollationRegistry
 {
+  /** The URI of the Unicode codepoint collation. */
   public static final String CODEPOINT_URI = "http://www.w3.org/2005/xpath-functions/collation/codepoint";
+  /** The URI of the HTML ASCII case-insensitive collation. */
   public static final String HTML_ASCII_CASE_INSENSITIVE_URI = "http://www.w3.org/2005/xpath-functions/collation/html-ascii-case-insensitive";
+  /** The URI of the Unicode Collation Algorithm collation. */
   public static final String UCA_URI = UcaCollation.UCA_URI;
   /** The case-blind collation the QT3 catalogue declares */
   public static final String QT3_CASE_BLIND_URI = "http://www.w3.org/2010/09/qt-fots-catalog/collation/caseblind";
@@ -235,6 +238,8 @@ public final class CollationRegistry
   {}
 
   /**
+   * Look up a collation by its absolute URI.
+   *
    * @param sUri
    *        Absolute collation URI.
    * @return <code>null</code> if the collation is not supported (callers raise

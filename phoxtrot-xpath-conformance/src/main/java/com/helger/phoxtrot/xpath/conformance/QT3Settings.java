@@ -74,20 +74,32 @@ public record QT3Settings (@NonNull Path suiteDir,
   public static final String DEFAULT_SUITE_DIR = "/Users/philip/dev/git-thirdparty/qt3tests";
   public static final String DEFAULT_ACCEPTED_FILE = "docs/accepted-failures/qt3.md";
 
-  /** @return The catalog file. */
+  /**
+   * Get the catalog file.
+   *
+   * @return The catalog file.
+   */
   @NonNull
   public Path getCatalogFile ()
   {
     return suiteDir.resolve ("catalog.xml");
   }
 
-  /** @return Whether fail lines are collected (fail dump or a filtered run). */
+  /**
+   * Check whether fail lines are collected.
+   *
+   * @return Whether fail lines are collected (fail dump or a filtered run).
+   */
   public boolean isCollectFailLines ()
   {
     return failDump || !only.isEmpty ();
   }
 
-  /** @return The settings from the system properties. */
+  /**
+   * Read the settings from the system properties.
+   *
+   * @return The settings from the system properties.
+   */
   @NonNull
   public static QT3Settings fromSystemProperties ()
   {

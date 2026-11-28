@@ -26,18 +26,31 @@ import org.jspecify.annotations.Nullable;
  */
 public enum EAxis
 {
+  /** The <code>child</code> axis. */
   CHILD ("child"),
+  /** The <code>descendant</code> axis. */
   DESCENDANT ("descendant"),
+  /** The <code>attribute</code> axis. */
   ATTRIBUTE ("attribute"),
+  /** The <code>self</code> axis. */
   SELF ("self"),
+  /** The <code>descendant-or-self</code> axis. */
   DESCENDANT_OR_SELF ("descendant-or-self"),
+  /** The <code>following-sibling</code> axis. */
   FOLLOWING_SIBLING ("following-sibling"),
+  /** The <code>following</code> axis. */
   FOLLOWING ("following"),
+  /** The <code>namespace</code> axis. */
   NAMESPACE ("namespace"),
+  /** The <code>parent</code> axis. */
   PARENT ("parent"),
+  /** The <code>ancestor</code> axis. */
   ANCESTOR ("ancestor"),
+  /** The <code>preceding-sibling</code> axis. */
   PRECEDING_SIBLING ("preceding-sibling"),
+  /** The <code>preceding</code> axis. */
   PRECEDING ("preceding"),
+  /** The <code>ancestor-or-self</code> axis. */
   ANCESTOR_OR_SELF ("ancestor-or-self");
 
   private final String m_sName;
@@ -47,13 +60,23 @@ public enum EAxis
     m_sName = sName;
   }
 
+  /**
+   * Get the name of the axis as written in XPath.
+   *
+   * @return The axis name, e.g. <code>descendant-or-self</code>. Never
+   *         <code>null</code>.
+   */
   @NonNull
   public String getName ()
   {
     return m_sName;
   }
 
-  /** @return <code>true</code> for axes that deliver nodes in reverse document order. */
+  /**
+   * Check whether this is a reverse axis.
+   *
+   * @return <code>true</code> for axes that deliver nodes in reverse document order.
+   */
   public boolean isReverse ()
   {
     return this == PARENT ||
@@ -64,6 +87,8 @@ public enum EAxis
   }
 
   /**
+   * Find the axis with the passed name.
+   *
    * @param sName
    *        An axis name as written in XPath, e.g.
    *        <code>descendant-or-self</code>. May be <code>null</code>.
