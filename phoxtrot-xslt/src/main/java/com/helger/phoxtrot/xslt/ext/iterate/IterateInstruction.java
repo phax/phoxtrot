@@ -56,10 +56,11 @@ public final class IterateInstruction
   /** Thrown by xsl:next-iteration; carries the new parameter values. */
   private static final class NextIterationSignal extends RuntimeException
   {
-    private final ICommonsList <XdmQName> m_aNames;
-    private final ICommonsList <XdmSequence> m_aValues;
+    // The names are those of the instruction, shared by all its signals
+    private final XdmQName [] m_aNames;
+    private final XdmSequence [] m_aValues;
 
-    NextIterationSignal (@NonNull final ICommonsList <XdmQName> aNames, @NonNull final ICommonsList <XdmSequence> aValues)
+    NextIterationSignal (@NonNull final XdmQName [] aNames, @NonNull final XdmSequence [] aValues)
     {
       super ("xsl:next-iteration", null, false, false);
       m_aNames = aNames;
@@ -146,12 +147,12 @@ public final class IterateInstruction
     }
     catch (final NextIterationSignal ex)
     {
-      for (int n = 0; n < ex.m_aNames.size (); ++n)
+      for (int n = 0; n < ex.m_aNames.length; ++n)
       {
-        final XdmQName aName = ex.m_aNames.get (n);
+        final XdmQName aName = ex.m_aNames[n];
         for (int p = 0; p < aValues.length; ++p)
           if (m_aParams.get (p).getName ().equals (aName))
-            aValues[p] = m_aParams.get (p).convert (ex.m_aValues.get (n), aIterCtx);
+            aValues[p] = m_aParams.get (p).convert (ex.m_aValues[n], aIterCtx);
       }
     }
     catch (final BreakSignal ex)
@@ -200,7 +201,10 @@ public final class IterateInstruction
     StreamedIteration (@NonNull final XsltContext aCtx, @NonNull final IXsltOutput aOut)
     {
       m_aValues = _initParams (aCtx);
-      m_aBase = aCtx.withState (aCtx.getState ().withCurrentRule (null, aCtx.getState ().getCurrentMode ()));
+      // Optimisation: the frame of the parameters is created once, so every record only writes
+      // their slots (see _execute)
+      m_aBase = _bindParams (aCtx.withState (aCtx.getState ().withCurrentRule (null, aCtx.getState ().getCurrentMode ())),
+                             m_aValues);
       m_aOut = aOut;
     }
 
@@ -260,7 +264,13 @@ public final class IterateInstruction
   {
     final XdmSequence aItems = m_aSelect.evaluate (aCtx);
     final XdmSequence [] aValues = _initParams (aCtx);
-    final XsltContext aBase = aCtx.withState (aCtx.getState ().withCurrentRule (null, aCtx.getState ().getCurrentMode ()));
+    // Optimisation: binding the parameters once creates the frame of their slots (if the context
+    // has none for their layout yet), which every item then keeps: an item only writes the slots
+    // in place instead of creating a new frame and context, as a loop does once its body has a
+    // frame (a slot is written again only when its previous binding is out of scope)
+    final XsltContext aBase = _bindParams (aCtx.withState (aCtx.getState ()
+                                                               .withCurrentRule (null, aCtx.getState ().getCurrentMode ())),
+                                           aValues);
     final int nSize = aItems.size ();
     for (int i = 0; i < nSize; ++i)
     {
@@ -365,14 +375,14 @@ public final class IterateInstruction
   public static IInstruction compileNextIteration (@NonNull final CompileContext aCtx, @NonNull final XslElement aEl)
   {
     final ICommonsList <VariableDef> aParams = aCtx.compileWithParams (aEl);
+    final int nParams = aParams.size ();
+    final XdmQName [] aNames = new XdmQName [nParams];
+    for (int i = 0; i < nParams; ++i)
+      aNames[i] = aParams.get (i).getName ();
     return new CompiledInstruction (aEl, (aRtCtx, aRtOut) -> {
-      final ICommonsList <XdmQName> aNames = new CommonsArrayList <> (aParams.size ());
-      final ICommonsList <XdmSequence> aValues = new CommonsArrayList <> (aParams.size ());
-      for (final VariableDef aParam : aParams)
-      {
-        aNames.add (aParam.getName ());
-        aValues.add (aParam.evaluate (aRtCtx));
-      }
+      final XdmSequence [] aValues = new XdmSequence [nParams];
+      for (int i = 0; i < nParams; ++i)
+        aValues[i] = aParams.get (i).evaluate (aRtCtx);
       throw new NextIterationSignal (aNames, aValues);
     });
   }

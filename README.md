@@ -387,6 +387,15 @@ v0.5.0 - work in progress
   visitor for every element while numbering
 * `fn:sum` and `fn:avg` add values of one numeric kind (all xs:double, all integers, integers and decimals) in one
   loop instead of one `+` with a new atomic value per value; the results are those of the pairwise addition
+* xs:decimal division decides whether the quotient terminates in `long` arithmetic for values of up to 18 digits
+  (about twice as fast); a map or array called as a function takes its argument without an argument list
+* XSD 1.0: the check for late schema location hints is skipped when the parser recorded no xsi attribute below the
+  document element (new `XdmDocumentNode.getHasDescendantAttributeNamespace`); required and defaulted attribute uses
+  are checked by position instead of by name
+* `xsl:iterate` creates the frame of its parameters once instead of once per item, and `xsl:next-iteration` builds no
+  lists; `xsl:number` with a count pattern that needs testing and references no variable tests each node once per run
+  (5,000 siblings: from 313 ms to 1.5 ms); `xsl:for-each-group` with `composite="yes"` finds the group of a key
+  through buckets instead of comparing it with every group
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

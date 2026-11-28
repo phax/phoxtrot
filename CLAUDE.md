@@ -76,7 +76,9 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `internalStamp`), with the numbers `assignDocumentOrder` would give; a change from a wrapping handler while building
   drops that numbering and `XdmTreeBuilder.endDocument` numbers the finished tree. The builder also records the
   maximum element depth with its numbering (`XdmDocumentNode.getMaxElementDepth`, -1 once the numbering is gone), which
-  `XsdInstanceValidator` uses instead of walking the tree. Children are a plain array with a count in
+  `XsdInstanceValidator` uses instead of walking the tree, and the namespaces of the attributes below the document
+  element (`getHasDescendantAttributeNamespace`, `UNDEFINED` once the numbering is gone), with which
+  `XsdInstanceValidator.checkLateHints` skips its walk. Children are a plain array with a count in
   `AbstractXdmParentNode` (trimmed by the builder at `endElement`); indentation text (a line end and spaces or tabs) is
   one shared string per document.
 - `NamespaceFixup.finish` fixes the namespaces of a tree root in the numbering walk
@@ -337,7 +339,10 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   count pattern of an element are counted by binary search on the document order without testing): level="any" over
   the whole document, single/multiple for parents with more than 32 children (`getChildElementsByName`). Unnumbered,
   streamed and parentless trees and other patterns walk the tree. `NumberInstruction.getNameIndexCountCount ()` tells
-  tests which path ran.
+  tests which path ran. A count pattern that needs testing and references no variable keeps its match results for the
+  run (`CountMemo` in the run memo, per parent with more than 32 children and per name list of the index); this relies
+  on a node's match result not changing within a run, so a pattern that can see anything else that changes (a local
+  variable) must not use it.
 - Regular expressions: the general categories are pinned to Unicode 15.0 (`regex/UnicodeCategories`, corrected
   built-in classes on a JDK with a newer Unicode). A corrected class is very slow in `java.util.regex` (every range one
   more nested predicate), so `XPathRegex` also keeps the translation with the uncorrected built-in classes and
@@ -369,7 +374,8 @@ for the architecture). Roadmap: `docs/PLAN.md`.
   `XPathEvaluator.compile (IExpr, StaticContext)` turns a reference to one into a slot read (unless a `for`/`let`/
   quantifier/inline function parameter of the expression binds the name). At run time the binding writes the slot of
   the `VariableFrame` of the dynamic context in place (`XsltContext.withSlotValue`/`withLazySlotValue`; a new frame
-  only for the first binding of a body in an activation, `withoutFocusAndVariables` drops it). A template or function
+  only for the first binding of a body in an activation, `withoutFocusAndVariables` drops it; `xsl:iterate` binds its parameters once before the first item, so all items
+  share that frame). A template or function
   call creates the context of its body in one step (`XsltContext.forCall`, `DynamicContext.forHostCall`), with the
   frame already there if the body has parameters (their layout is that of the body). Rules: every name that
   `CompileContext.withVariable` brings into scope must be bound by slot at run time (the seven sites: sequence

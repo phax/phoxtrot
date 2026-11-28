@@ -30,6 +30,8 @@ import java.util.concurrent.Future;
 
 import org.junit.Test;
 
+import com.helger.base.state.ETriState;
+
 /**
  * Test class for the document order numbering of {@link AbstractXdmNode} and the name index of
  * {@link XdmDocumentNode}.
@@ -131,6 +133,20 @@ public final class XdmDocumentOrderTest
     aUnnumbered.appendChild (IXdmNode.createElement (X));
     for (int i = 0; i < 5; ++i)
       assertNull (((XdmDocumentNode) aUnnumbered).getElementsByNameWhenRepeated (X));
+  }
+
+  @Test
+  public void testDescendantAttributeNamespaces () throws XdmParseException
+  {
+    // The attributes of the document element do not count
+    final XdmDocumentNode aDoc = _parse ("<r xmlns:p='urn:p' xmlns:q='urn:q' p:a='1'><x q:b='2' c='3'><y q:d='4'/></x></r>");
+    assertEquals (ETriState.FALSE, aDoc.getHasDescendantAttributeNamespace ("urn:p"));
+    assertEquals (ETriState.TRUE, aDoc.getHasDescendantAttributeNamespace ("urn:q"));
+    assertEquals (ETriState.FALSE, aDoc.getHasDescendantAttributeNamespace ("urn:none"));
+    // A change drops the record with the numbering
+    aDoc.getChildAtIndex (0).appendChild (IXdmNode.createElement (X));
+    aDoc.assignDocumentOrder ();
+    assertEquals (ETriState.UNDEFINED, aDoc.getHasDescendantAttributeNamespace ("urn:p"));
   }
 
   @Test

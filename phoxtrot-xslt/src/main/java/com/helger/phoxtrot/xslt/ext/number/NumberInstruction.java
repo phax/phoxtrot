@@ -20,7 +20,10 @@ import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.math.RoundingMode;
 import java.util.Arrays;
+import java.util.IdentityHashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.WeakHashMap;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 import java.util.regex.Pattern;
@@ -40,6 +43,7 @@ import com.helger.phoxtrot.xdm.XdmDocumentNode;
 import com.helger.phoxtrot.xdm.XdmQName;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.ast.EAxis;
+import com.helger.phoxtrot.xpath.ast.ExprWalker;
 import com.helger.phoxtrot.xpath.ast.ENodeTestKind;
 import com.helger.phoxtrot.xpath.ast.IExpr;
 import com.helger.phoxtrot.xpath.ast.NodeTest;
@@ -112,6 +116,22 @@ public final class NumberInstruction extends AbstractInstruction
                                 @Nullable List <XdmQName> elementNames,
                                 boolean exactNames)
   {}
+
+  /**
+   * The match results of a count pattern kept for one run (in the run memo,
+   * per instruction), for a pattern whose result for a node cannot change
+   * within the run (see {@link NumberInstruction#m_bCountMemo}): per parent the
+   * number of its children matching count before each child, and per name list
+   * of a document's name index the number of its elements matching count
+   * before each position. Weak by parent and document, so that the temporary
+   * trees of a long run are not kept.
+   */
+  @NotThreadSafe
+  private static final class CountMemo
+  {
+    private final Map <IXdmNode, int []> m_aSiblingPrefix = new WeakHashMap <> ();
+    private final Map <IXdmNode, Map <List <IXdmNode>, int []>> m_aListPrefix = new WeakHashMap <> ();
+  }
 
   /**
    * The state of one evaluation of a counting xsl:number: the run-time
@@ -192,6 +212,9 @@ public final class NumberInstruction extends AbstractInstruction
   private final ICommonsList <BigInteger> m_aConstStartAt;
   // Processed with XSLT 1.0 behaviour (XSLT 3.0 section 12.2)
   private final boolean m_bXslt10;
+  // True if the count pattern needs testing (not exact names) and references no variable, so
+  // that its result for a node does not change within a run and is kept (CountMemo)
+  private final boolean m_bCountMemo;
 
   private NumberInstruction (@NonNull final XslElement aEl,
                              @Nullable final XPathExpr aValue,
@@ -224,6 +247,10 @@ public final class NumberInstruction extends AbstractInstruction
     m_aConstPicture = aConstPicture;
     m_aConstStartAt = aConstStartAt;
     m_bXslt10 = bXslt10;
+    m_bCountMemo = aCount != null &&
+                   !aCount.exactNames () &&
+                   aCount.pattern () instanceof final CompiledXsltPattern aCP &&
+                   ExprWalker.getAllVariableReferences (aCP.getPatternExpr ()).isEmpty ();
   }
 
   /**
@@ -378,6 +405,90 @@ public final class NumberInstruction extends AbstractInstruction
   }
 
   /**
+   * @return The memo of the count pattern in this run.
+   */
+  @NonNull
+  private CountMemo _getCountMemo (@NonNull final Counting aC)
+  {
+    return (CountMemo) aC.m_aCtx.getDynamicContext ().getRunMemo ().computeIfAbsent (this, k -> new CountMemo ());
+  }
+
+  /**
+   * The child index of a node: by binary search on the document order where
+   * the tree is numbered (checked by the result), otherwise by a scan.
+   */
+  private static int _indexInNumberedParent (@NonNull final IXdmNode aParent, @NonNull final IXdmNode aChild)
+  {
+    final int nOrder = aChild.getOrder ();
+    int nLow = 0;
+    int nHigh = aParent.getChildCount () - 1;
+    while (nLow <= nHigh)
+    {
+      final int nMid = (nLow + nHigh) >>> 1;
+      final int nMidOrder = aParent.getChildAtIndex (nMid).getOrder ();
+      if (nMidOrder < nOrder)
+        nLow = nMid + 1;
+      else
+        if (nMidOrder > nOrder)
+          nHigh = nMid - 1;
+        else
+          return aParent.getChildAtIndex (nMid) == aChild ? nMid : _indexInParent (aParent, aChild);
+    }
+    return _indexInParent (aParent, aChild);
+  }
+
+  /**
+   * The kept sibling counts of a parent (see {@link CountMemo}): element
+   * <code>i</code> is the number of children before child <code>i</code> that
+   * match count, the last one that of all children. Each child is tested once
+   * per run; counted again if the parent has another number of children.
+   */
+  @NonNull
+  private int [] _getSiblingPrefix (@NonNull final Counting aC, @NonNull final IXdmNode aParent)
+  {
+    final CountMemo aMemo = _getCountMemo (aC);
+    final int nCount = aParent.getChildCount ();
+    int [] ret = aMemo.m_aSiblingPrefix.get (aParent);
+    if (ret == null || ret.length != nCount + 1)
+    {
+      ret = new int [nCount + 1];
+      for (int i = 0; i < nCount; ++i)
+      {
+        aC.m_aCtx.getDynamicContext ().checkInterrupt ();
+        ret[i + 1] = ret[i] + (_matchesCount (aC, aParent.getChildAtIndex (i)) ? 1 : 0);
+      }
+      aMemo.m_aSiblingPrefix.put (aParent, ret);
+    }
+    return ret;
+  }
+
+  /**
+   * The kept counts over a name list of the document's index (see
+   * {@link CountMemo}): element <code>i</code> is the number of the first
+   * <code>i</code> elements of the list that match count. The list belongs to
+   * the current numbering of the document, so it is kept by identity.
+   */
+  @NonNull
+  private int [] _getListPrefix (@NonNull final Counting aC, @NonNull final List <IXdmNode> aNodes)
+  {
+    final Map <List <IXdmNode>, int []> aLists = _getCountMemo (aC).m_aListPrefix.computeIfAbsent (aC.m_aDoc,
+                                                                                                      k -> new IdentityHashMap <> ());
+    int [] ret = aLists.get (aNodes);
+    if (ret == null)
+    {
+      final int nCount = aNodes.size ();
+      ret = new int [nCount + 1];
+      for (int i = 0; i < nCount; ++i)
+      {
+        aC.m_aCtx.getDynamicContext ().checkInterrupt ();
+        ret[i + 1] = ret[i] + (_matchesCount (aC, aNodes.get (i)) ? 1 : 0);
+      }
+      aLists.put (aNodes, ret);
+    }
+    return ret;
+  }
+
+  /**
    * The number of preceding siblings of an element that match count, from the
    * name index of the document: the children of the parent with one of the
    * count names (kept by the index per parent and name) before the element in
@@ -441,6 +552,14 @@ public final class NumberInstruction extends AbstractInstruction
       return 1;
     final IXdmNode aParent = aNode.getParent ();
     final int nCount = aParent.getChildCount ();
+    if (m_bCountMemo && nCount > SIBLING_SCAN_LIMIT)
+    {
+      // Optimisation: the children of the parent are tested once per run, not again for every
+      // node numbered (quadratic in the number of siblings)
+      final int nIndex = aC.m_aDoc != null ? _indexInNumberedParent (aParent, aNode) : _indexInParent (aParent, aNode);
+      if (nIndex >= 0)
+        return _getSiblingPrefix (aC, aParent)[nIndex] + 1L;
+    }
     if (aC.m_aDoc != null && aNode.getKind () == ENodeKind.ELEMENT && nCount > SIBLING_SCAN_LIMIT)
     {
       final long nPreceding = _countPrecedingSiblingsByName (aC, aNode);
@@ -632,12 +751,20 @@ public final class NumberInstruction extends AbstractInstruction
       if (bExact)
         aC.m_nCount += nHigh - nLow;
       else
-        for (int i = nLow; i < nHigh; ++i)
+        if (m_bCountMemo)
         {
-          aC.m_aCtx.getDynamicContext ().checkInterrupt ();
-          if (_matchesCount (aC, aNodes.get (i)))
-            aC.m_nCount++;
+          // Optimisation: the elements of the list are tested once per run, not again for every
+          // node numbered (quadratic in the number of elements)
+          final int [] aPrefix = _getListPrefix (aC, aNodes);
+          aC.m_nCount += aPrefix[nHigh] - aPrefix[nLow];
         }
+        else
+          for (int i = nLow; i < nHigh; ++i)
+          {
+            aC.m_aCtx.getDynamicContext ().checkInterrupt ();
+            if (_matchesCount (aC, aNodes.get (i)))
+              aC.m_nCount++;
+          }
     }
     return true;
   }

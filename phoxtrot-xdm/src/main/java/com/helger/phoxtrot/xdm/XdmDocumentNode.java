@@ -31,10 +31,12 @@ import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.annotation.concurrent.ThreadSafe;
 import com.helger.annotation.style.ReturnsMutableCopy;
 import com.helger.base.enforce.ValueEnforcer;
+import com.helger.base.state.ETriState;
 import com.helger.collection.commons.CommonsArrayList;
 import com.helger.collection.commons.CommonsLinkedHashMap;
 import com.helger.collection.commons.ICommonsList;
 import com.helger.collection.commons.ICommonsOrderedMap;
+import com.helger.collection.commons.ICommonsSet;
 
 /**
  * A document node.
@@ -104,6 +106,9 @@ public final class XdmDocumentNode extends AbstractXdmParentNode
   // belongs to (0 = none)
   private int m_nMaxElementDepth;
   private TreeStamp m_aMaxElementDepthTree;
+  // The attribute namespaces below the document element recorded by XdmTreeBuilder, for the
+  // numbering of m_aMaxElementDepthTree
+  private ICommonsSet <String> m_aDescendantAttrNamespaces;
 
   XdmDocumentNode ()
   {}
@@ -289,6 +294,41 @@ public final class XdmDocumentNode extends AbstractXdmParentNode
   {
     m_nMaxElementDepth = nMaxElementDepth;
     m_aMaxElementDepthTree = internalGetTree ();
+    m_aDescendantAttrNamespaces = null;
+  }
+
+  /**
+   * Record the namespaces of the attributes of the elements below the document element, for the
+   * numbering of the last {@link #internalSetMaxElementDepth(int)}. Called by
+   * {@link XdmTreeBuilder} right after it; dropped with the numbering like the depth.
+   *
+   * @param aNamespaces
+   *        The namespace URIs, not empty ones. The caller must not change the set afterwards.
+   */
+  void internalSetDescendantAttributeNamespaces (@NonNull final ICommonsSet <String> aNamespaces)
+  {
+    m_aDescendantAttrNamespaces = aNamespaces;
+  }
+
+  /**
+   * Does an element below the document element have an attribute in a namespace? Known only for a
+   * tree built by {@link XdmParser} (or {@link XdmTreeBuilder}) that has not changed structurally
+   * since, like {@link #getMaxElementDepth()}; a caller that would otherwise walk the tree to look
+   * for such attributes can skip the walk for {@link ETriState#FALSE}.
+   *
+   * @param sNamespaceUri
+   *        The namespace URI. May not be empty.
+   * @return {@link ETriState#TRUE} or {@link ETriState#FALSE}, or {@link ETriState#UNDEFINED} if
+   *         it is not known (never recorded, changed since, or {@link #isStreamed() streamed}).
+   */
+  @NonNull
+  public ETriState getHasDescendantAttributeNamespace (@NonNull final String sNamespaceUri)
+  {
+    ValueEnforcer.notEmpty (sNamespaceUri, "NamespaceUri");
+    final TreeStamp aTree = internalGetTree ();
+    if (aTree == null || aTree != m_aMaxElementDepthTree || m_bStreamed || m_aDescendantAttrNamespaces == null)
+      return ETriState.UNDEFINED;
+    return ETriState.valueOf (m_aDescendantAttrNamespaces.contains (sNamespaceUri));
   }
 
   /**

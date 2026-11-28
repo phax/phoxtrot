@@ -210,4 +210,65 @@ public final class ForEachGroupInstructionPropertyTest
       assertEquals (sSource, _expected (aItems), sResult);
     });
   }
+
+  /** Composite keys: the tokens, among them values that are equal across types */
+  private static final IGenerator <List <List <String>>> COMPOSITE_ITEMS = Generators.lists (Generators.lists (Generators.of ("x",
+                                                                                                                              "y",
+                                                                                                                              "1",
+                                                                                                                              "01",
+                                                                                                                              "f",
+                                                                                                                              "i"),
+                                                                                                                0,
+                                                                                                                3),
+                                                                                              0,
+                                                                                              30);
+
+  private static final XsltExecutable COMPOSITE_SHEET = XsltCompiler.compile (XsltTestHelper.SHEET +
+                                                                              "<xsl:output method='text'/>" +
+                                                                              "<xsl:template match='/'>" +
+                                                                              "<xsl:for-each-group select='r/i' composite='yes' group-by=\"tokenize(@m) ! " +
+                                                                              "(if (. = 'f') then xs:float(16777216) else if (. = 'i') then xs:integer(16777217) " +
+                                                                              "else if (. castable as xs:integer) then xs:integer(.) else .)\">" +
+                                                                              "<xsl:value-of select=\"current-group()/@p, ';'\" separator=' '/>" +
+                                                                              "</xsl:for-each-group>" +
+                                                                              "</xsl:template>" +
+                                                                              XsltTestHelper.END,
+                                                                              new XsltCompileOptions ());
+
+  /**
+   * group-by with composite="yes" forms one group per distinct key sequence,
+   * in the order of first appearance, comparing the values as
+   * fn:distinct-values does (1 and 01 as integers are equal, and the xs:integer
+   * 16777217 equals the xs:float 16777216, since eq compares in float space), as grouping by the normalised token lists in Java
+   * gives.
+   */
+  @Test
+  public void testCompositeGroupsMatchJava ()
+  {
+    new PropertyChecker ().setTries (3000).forAll (COMPOSITE_ITEMS, aItems -> {
+      final StringBuilder aSrc = new StringBuilder ("<r>");
+      final Map <List <String>, List <Integer>> aGroups = new LinkedHashMap <> ();
+      for (int i = 0; i < aItems.size (); ++i)
+      {
+        final List <String> aTokens = aItems.get (i);
+        aSrc.append ("<i p='").append (i).append ("' m='").append (String.join (" ", aTokens)).append ("'/>");
+        final List <String> aNormalised = new ArrayList <> ();
+        for (final String sToken : aTokens)
+          aNormalised.add (switch (sToken)
+          {
+            case "01" -> "1";
+            case "f", "i" -> "F";
+            default -> sToken;
+          });
+        aGroups.computeIfAbsent (aNormalised, k -> new ArrayList <> ()).add (Integer.valueOf (i));
+      }
+      final String sSource = aSrc.append ("</r>").toString ();
+      final StringBuilder aExpected = new StringBuilder ();
+      for (final List <Integer> aGroup : aGroups.values ())
+        _appendGroup (aExpected, null, aGroup);
+      final String sResult = COMPOSITE_SHEET.transform (new XsltTransformRequest ().setGlobalContextItem (XsltTestHelper.parse (sSource)))
+                                            .principalSerialized ();
+      assertEquals (sSource, aExpected.toString (), sResult);
+    });
+  }
 }

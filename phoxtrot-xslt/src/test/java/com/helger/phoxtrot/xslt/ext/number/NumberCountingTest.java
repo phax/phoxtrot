@@ -189,7 +189,9 @@ public final class NumberCountingTest
     // The list has more children than are scanned
     _check ("list/*", "", true);
     _check ("list/*", "count='item | p'", true);
-    _check ("list/*", "count='p[@a] | item'", true);
+    // A pattern that needs testing and references no variable: the kept matches of the run answer
+    // it before the name index
+    _check ("list/*", "count='p[@a] | item'", false);
     _check ("list/*", "count='*'", false);
     _check (".//p", "level='multiple' count='sec | sub | list | p | item | note'", true);
     _check (".//p", "level='multiple' count='sec | note | p' from='sub'", true);

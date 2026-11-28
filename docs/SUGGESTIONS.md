@@ -1032,7 +1032,8 @@ or buy). A last descendant step still builds the index, as its evaluation does. 
 | five absent `exists(Item/X/Y)` joined by `or` | 1,949 | 2,500 |
 
 The index costs about 1 ms here, a check without it about 20 ns; the last row is the price of the rule (the index
-comes after 40,000 checks), below twice the cost of building it at once. Item 3 is an observation.
+comes after 40,000 checks), below twice the cost of building it at once. Item 3 closed (2026-11-28) without a change: it names no single cost (no
+method above 7 samples) and S54 has since removed the second test of the last step of a pattern in the rule search.
 
 Item 1 done (2026-11-28) with proposal (c) in a smaller form: `NamespaceFixup.finish` fixes each element in the walk
 that numbers the tree (`IXdmNode.assignDocumentOrder (Consumer)`, the same pre-order as `fixNamespaces`) instead of
@@ -1755,9 +1756,22 @@ against `fold-left`); floats, mixes with doubles and durations still add pairwis
 values, best of 2,000 evaluations, µs, including the path and casts before the sum): `sum(1 to 10000)` 223 to 128,
 `sum(doc/line/xs:integer(qty))` 576 to 537, `sum(doc/line/amount)` (untyped to double) 564 to 540,
 `sum`/`avg` of `xs:decimal(amount)` unchanged within the spread (the `BigDecimal` additions dominate either way).
-Compact decimal division (`div`, `idiv`, `mod`) and a long payload in `XdmAtomic` stay open.
+The other rows were tried on 2026-11-28 and kept only where they gain (measured on JDK 21, one JVM, best of many
+runs unless JMH is named; each kept change has a differential property test that a deliberately broken variant fails):
 
-The rest is proposed. Found 2026-11-26 by reading `v0.4.3..upstream/main` of go-xslt (80 commits, release v0.4.4,
+| Row | Result |
+| --- | ------ |
+| Compact decimals: division | Kept. `AtomicArithmetic.divideDecimal` decides whether the quotient terminates in `long` arithmetic (`isTerminatingLong`) for unscaled values below 2^62, the `BigInteger` form (`isTerminatingWide`) otherwise; property `AtomicArithmeticPropertyTest`. 20,000 divisions (µs, with the loop and the sum around them, 742 for the loop alone): `xs:decimal($i) div 8` 1,768 to 1,226, `($i * 1.25) div 100` 1,980 to 1,282, `xs:decimal($i) div 3` (rounded) 2,670 to 1,638, `$i div 4` 1,681 to 946. `idiv` and `mod` already compute in `long` for integers. |
+| Compact decimals: a long payload in `XdmAtomic` | Not done. Upper bound measured instead: `sum(for $i in 1 to 100000 return $i * 3 + 7)` takes 6.56 ms, the same with `xs:double` operands (a `Double` payload, plus an extra cast per item) 6.31 ms, so the `BigInteger` payload costs at most a few percent; it would need a public API change (`getValue ()` is read at 368 places, also by generated code) or a second field in every atomic value. |
+| XSD 1.0 late-hint walk | Kept. `XdmTreeBuilder` records the namespaces of the attributes of the elements below the document element with its numbering (`XdmDocumentNode.getHasDescendantAttributeNamespace`, `ETriState`); `checkLateHints` returns at once without an xsi attribute there, since a hint on the validation root is never late. 10,000 lines: the walk took 0.51 ms of an 8.0 ms `validateText` (parse included), now 7.1 to 7.5 ms. |
+| XSD attribute use presence by position | Kept. `AttrUseIndex.isPresentAt` reads the bit of the use's position (markPresent sets it for every use of the name) instead of scanning the uses by name, for required and for defaulted uses. 20,000 elements with four required and two optional attributes: 10.46 to 9.72 ms. Both XSD rows together, JMH `XsdBenchmark` 1.0 at 10,000 lines: 28.8 to 27.8 ms. |
+| `xsl:iterate` | Kept. The parameters are bound once before the first item, so the frame of their slots is created once and every item writes the slots in place (as a loop does once its body has a frame); `xsl:next-iteration` carries its names as an array fixed at compile time and its values as an array. JMH `iterate` at 10,000 lines: 3.23 to 2.98 ms, 13.8 to 11.7 MB allocated. Parameters are still matched by name. |
+| `xsl:number` | Kept, differently from Go: a count pattern that needs testing and references no variable has its match results kept for the run (`NumberInstruction.CountMemo`, weak by parent and document): per parent with more than 32 children the number of matching children before each child (single, multiple), per name list of the index the number of matching elements before each position (any). 5,000 siblings: `count='item[@a]'` 313 ms to 1.5 ms, `level='any' count='item[@a = 1]'` 767 ms to 1.9 ms. Still quadratic: patterns with variables, and `level="any"` by walk (patterns without element names). Property `NumberInstructionPropertyTest.testKeptMatchesCountLikeEveryTest` against the same pattern with a `$t` predicate. |
+| group-by: allocation per item | Tried and reverted: a path without the list of joined groups for a single key value gave no gain (20,000 items, 50 groups: 942 µs before, 970 µs with it). |
+| group-by: `composite="yes"` | Kept. Composite keys use the bucket index too, with the list of the bucket keys of their values (a key with a value without bucket key goes to the scanned list, as single values do). 20,000 items, 200 groups: 8.30 to 1.89 ms. Property `ForEachGroupInstructionPropertyTest.testCompositeGroupsMatchJava` (equal across types: 1 and 01, xs:integer 16777217 and xs:float 16777216). |
+| Map call without argument list | Kept. `DynamicCallNode` calls a map or array with the single argument without building a list. 100,000 map lookups: 6.04 to 5.36 ms; arrays unchanged (4.68 / 4.63). |
+
+The table below is the proposal as found on 2026-11-26 by reading `v0.4.3..upstream/main` of go-xslt (80 commits, release v0.4.4,
 performance rounds 13 to 15, no conformance change, output byte-identical according to its release notes); nothing
 measured yet. Most commits are Go-specific (scratch and lent arrays, pools, escape analysis, the Go tokenizer and
 readers, which phoxtrot does not have: it reads through the JDK SAX parser and StAX). Not to be ported: Go's

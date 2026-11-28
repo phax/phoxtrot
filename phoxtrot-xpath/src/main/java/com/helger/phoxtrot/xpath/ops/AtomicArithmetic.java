@@ -25,6 +25,7 @@ import org.jspecify.annotations.Nullable;
 
 import com.helger.annotation.concurrent.Immutable;
 import com.helger.annotation.style.PresentForCodeCoverage;
+import com.helger.annotation.style.VisibleForTesting;
 import com.helger.phoxtrot.xpath.XPathException;
 import com.helger.phoxtrot.xpath.ast.EBinaryOp;
 import com.helger.phoxtrot.xpath.context.DynamicContext;
@@ -348,6 +349,78 @@ public final class AtomicArithmetic
   }
 
   /**
+   * The termination check of {@link #divideDecimal(BigDecimal, BigDecimal)}
+   * for unscaled values that fit into a <code>long</code>: does the divisor,
+   * reduced by the greatest common divisor with the dividend, have no prime
+   * factors other than 2 and 5?
+   *
+   * @param nA
+   *        The absolute unscaled value of the dividend.
+   * @param nB
+   *        The absolute unscaled value of the divisor, not zero.
+   */
+  @VisibleForTesting
+  static boolean isTerminatingLong (final long nA, final long nB)
+  {
+    long nX = nA;
+    long nY = nB;
+    // Euclid; gcd (0, b) = b
+    while (nX != 0)
+    {
+      final long nT = nY % nX;
+      nY = nX;
+      nX = nT;
+    }
+    long nDen = nB / nY;
+    nDen >>>= Long.numberOfTrailingZeros (nDen);
+    while (nDen % 5 == 0)
+      nDen /= 5;
+    return nDen == 1;
+  }
+
+  /**
+   * The termination check of {@link #divideDecimal(BigDecimal, BigDecimal)}
+   * for any unscaled values, as {@link #isTerminatingLong(long, long)}.
+   *
+   * @param aA
+   *        The absolute unscaled value of the dividend.
+   * @param aB
+   *        The absolute unscaled value of the divisor, not zero.
+   */
+  @VisibleForTesting
+  static boolean isTerminatingWide (@NonNull final BigInteger aA, @NonNull final BigInteger aB)
+  {
+    BigInteger aDen = aB;
+    final BigInteger aGcd = aDen.gcd (aA);
+    if (aGcd.signum () != 0)
+      aDen = aDen.divide (aGcd);
+    final int nTwos = aDen.getLowestSetBit ();
+    aDen = aDen.shiftRight (nTwos);
+    final BigInteger aFive = BigInteger.valueOf (5);
+    while (aDen.compareTo (BigInteger.ONE) > 0)
+    {
+      final BigInteger [] aQR = aDen.divideAndRemainder (aFive);
+      if (aQR[1].signum () != 0)
+        break;
+      aDen = aQR[0];
+    }
+    return aDen.equals (BigInteger.ONE);
+  }
+
+  /**
+   * The non-terminating case of
+   * {@link #divideDecimal(BigDecimal, BigDecimal)}: scale so that there are
+   * enough fraction digits and enough significant digits, rounded half up.
+   */
+  @NonNull
+  private static BigDecimal _divideRounded (@NonNull final BigDecimal a, @NonNull final BigDecimal b)
+  {
+    final int nMagnitude = a.precision () - a.scale () - (b.precision () - b.scale ());
+    final int nScale = Math.max (DECIMAL_DIVISION_DIGITS, DECIMAL_DIVISION_DIGITS - nMagnitude);
+    return a.divide (b, nScale, RoundingMode.HALF_UP);
+  }
+
+  /**
    * xs:decimal division: exact if the quotient terminates, otherwise rounded
    * half up to at least {@value #DECIMAL_DIVISION_DIGITS} fraction and
    * significant digits.
@@ -364,27 +437,16 @@ public final class AtomicArithmetic
     // A quotient terminates exactly when the reduced divisor's unscaled value
     // has no prime factors other than 2 and 5. Check that cheaply first, so
     // the exact division never runs into its exception path.
-    BigInteger aDen = b.unscaledValue ().abs ();
-    final BigInteger aGcd = aDen.gcd (a.unscaledValue ().abs ());
-    if (aGcd.signum () != 0)
-      aDen = aDen.divide (aGcd);
-    final int nTwos = aDen.getLowestSetBit ();
-    aDen = aDen.shiftRight (nTwos);
-    final BigInteger aFive = BigInteger.valueOf (5);
-    while (aDen.compareTo (BigInteger.ONE) > 0)
-    {
-      final BigInteger [] aQR = aDen.divideAndRemainder (aFive);
-      if (aQR[1].signum () != 0)
-        break;
-      aDen = aQR[0];
-    }
-    if (aDen.equals (BigInteger.ONE))
-      return a.divide (b);
-    // Non-terminating: scale so that there are enough fraction digits and
-    // enough significant digits
-    final int nMagnitude = a.precision () - a.scale () - (b.precision () - b.scale ());
-    final int nScale = Math.max (DECIMAL_DIVISION_DIGITS, DECIMAL_DIVISION_DIGITS - nMagnitude);
-    return a.divide (b, nScale, RoundingMode.HALF_UP);
+    final BigInteger aUnscaledA = a.unscaledValue ();
+    final BigInteger aUnscaledB = b.unscaledValue ();
+    // Optimisation: unscaled values of less than 63 bits are checked in long
+    // arithmetic, without a BigInteger per step
+    final boolean bTerminating;
+    if (aUnscaledA.bitLength () < 63 && aUnscaledB.bitLength () < 63)
+      bTerminating = isTerminatingLong (Math.abs (aUnscaledA.longValue ()), Math.abs (aUnscaledB.longValue ()));
+    else
+      bTerminating = isTerminatingWide (aUnscaledA.abs (), aUnscaledB.abs ());
+    return bTerminating ? a.divide (b) : _divideRounded (a, b);
   }
 
   /**

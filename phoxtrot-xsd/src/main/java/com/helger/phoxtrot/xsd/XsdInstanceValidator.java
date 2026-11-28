@@ -1689,6 +1689,12 @@ final class XsdInstanceValidator
   {
     if (aSchema.isXsd11 ())
       return null;
+    // Optimisation: a hint on the validation root itself comes before everything and is never an
+    // error, so without any xsi attribute below the document element (recorded by the parser)
+    // there is nothing to check
+    if (aRoot.getRoot () instanceof final XdmDocumentNode aDoc &&
+        aDoc.getHasDescendantAttributeNamespace (XsdConstants.NS_XSI).isFalse ())
+      return null;
     final ICommonsSet <String> aSeen = new CommonsHashSet <> (); // namespaces of the elements and attributes so far
     final ICommonsSet <String> aHinted = new CommonsHashSet <> (); // {namespace, location} pairs hinted so far
     final ICommonsList <IXdmNode> aStack = new CommonsArrayList <> ();

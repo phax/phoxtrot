@@ -18,6 +18,8 @@ package com.helger.phoxtrot.xsd;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertSame;
 import static org.junit.Assert.assertTrue;
 
@@ -537,5 +539,33 @@ public final class XsdInstanceValidationTest
       final EVerdict eVerdict = XsdTestSupport.validate (a11.schema (), sInstance);
       assertTrue (eVerdict != EVerdict.INVALID);
     }
+  }
+
+  /**
+   * A hint on the validation root is never late, also when the parser recorded that no xsi
+   * attribute is below the document element (the walk is skipped then); a tree built without the
+   * parser is still walked.
+   */
+  @Test
+  public void testSchemaLocationHintOnRootOnly () throws XdmParseException
+  {
+    final String sSchema = """
+      <xs:schema xmlns:xs="http://www.w3.org/2001/XMLSchema">
+        <xs:element name="r"><xs:complexType><xs:sequence><xs:any processContents="skip"/></xs:sequence></xs:complexType></xs:element>
+      </xs:schema>""";
+    final Compiled a10 = XsdTestSupport.compile (sSchema, null, EXsdVersion.V10);
+    if (a10.verdict () == EVerdict.UNSUPPORTED)
+      return;
+    final String sRootHint = "<r xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\" xsi:noNamespaceSchemaLocation=\"x.xsd\"><c a=\"1\"/></r>";
+    assertTrue (a10.schema ().validateText (sRootHint).valid ());
+    final IXdmNode aParsed = new XdmParser ().parse (sRootHint);
+    assertNull (XsdInstanceValidator.checkLateHints (a10.schema (), aParsed.getChildAtIndex (0)));
+
+    // The same late hint as above, in a tree that was changed after parsing (nothing recorded)
+    final IXdmNode aChanged = new XdmParser ().parse ("<r xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"><c/></r>");
+    final IXdmNode aC = aChanged.getChildAtIndex (0).getChildAtIndex (0);
+    aC.addAttribute (IXdmNode.createAttribute (new XdmQName (XsdConstants.NS_XSI, "noNamespaceSchemaLocation", "xsi"), "x.xsd"));
+    aChanged.assignDocumentOrder ();
+    assertNotNull (XsdInstanceValidator.checkLateHints (a10.schema (), aChanged.getChildAtIndex (0)));
   }
 }

@@ -16,6 +16,7 @@
  */
 package com.helger.phoxtrot.xslt.ext.grouping;
 
+import java.util.Arrays;
 import java.util.function.Predicate;
 
 import org.jspecify.annotations.NonNull;
@@ -250,9 +251,54 @@ public final class ForEachGroupInstruction
     private final ICommonsList <Group> m_aOther = new CommonsArrayList <> ();
     private boolean m_bNarrow = false;
 
-    private GroupIndex (@Nullable final ICollation aCollation)
+    // True for composite keys: a group is filed under the bucket keys of all its key values
+    private final boolean m_bComposite;
+
+    private GroupIndex (@Nullable final ICollation aCollation, final boolean bComposite)
     {
       m_aCollation = aCollation;
+      m_bComposite = bComposite;
+    }
+
+    /**
+     * @return The bucket key of a composite key: the list of the bucket keys of
+     *         its values (two equal keys have equal values at every position,
+     *         and so the same list), or <code>null</code> if one value has no
+     *         bucket key.
+     */
+    @Nullable
+    private Object _getCompositeBucketKey (@NonNull final XdmAtomic [] aKey)
+    {
+      final Object [] ret = new Object [aKey.length];
+      for (int i = 0; i < aKey.length; ++i)
+      {
+        ret[i] = AtomicComparator.getDistinctBucketKey (aKey[i], m_aCollation, m_bNarrow);
+        if (ret[i] == null)
+          return null;
+      }
+      return Arrays.asList (ret);
+    }
+
+    /**
+     * Find the first group (in creation order) whose composite key equals the
+     * given one, comparing only the groups of its bucket.
+     *
+     * @param aKey
+     *        The composite key of the current item.
+     * @param aDyn
+     *        The dynamic context of the comparison.
+     * @return The matching group, <code>null</code> if there is none yet.
+     */
+    @Nullable
+    private Group _findComposite (@NonNull final XdmAtomic [] aKey, @NonNull final DynamicContext aDyn)
+    {
+      final Object aBucketKey = _getCompositeBucketKey (aKey);
+      final ICommonsList <Group> aCandidates = aBucketKey == null ? m_aOther : m_aBuckets.get (aBucketKey);
+      if (aCandidates != null)
+        for (final Group aGroup : aCandidates)
+          if (_sameKey (aKey, aGroup.m_aKey, m_aCollation, aDyn))
+            return aGroup;
+      return null;
     }
 
     /**
@@ -288,7 +334,10 @@ public final class ForEachGroupInstruction
      */
     private void _add (@NonNull final Group aGroup)
     {
-      final Object aBucketKey = AtomicComparator.getDistinctBucketKey (aGroup.m_aKey[0], m_aCollation, m_bNarrow);
+      final Object aBucketKey = m_bComposite ? _getCompositeBucketKey (aGroup.m_aKey)
+                                             : AtomicComparator.getDistinctBucketKey (aGroup.m_aKey[0],
+                                                                                      m_aCollation,
+                                                                                      m_bNarrow);
       if (aBucketKey == null)
         m_aOther.add (aGroup);
       else
@@ -314,8 +363,8 @@ public final class ForEachGroupInstruction
    * empty key joins no group; groups are looked up through a
    * {@link GroupIndex}, which is rebuilt with coarser buckets when the first
    * xs:float value is seen. With composite, the whole key sequence is the key
-   * and the item joins exactly one group, found by a linear scan over the
-   * groups (an empty key is a key like any other). Groups are returned in the
+   * and the item joins exactly one group, found through the same index with
+   * the bucket keys of all key values (an empty key is a key like any other). Groups are returned in the
    * order of first appearance.
    *
    * @param aPop
@@ -333,7 +382,7 @@ public final class ForEachGroupInstruction
   {
     final DynamicContext aDyn = aCtx.getDynamicContext ();
     final ICommonsList <Group> ret = new CommonsArrayList <> ();
-    final GroupIndex aIndex = new GroupIndex (aCollation);
+    final GroupIndex aIndex = new GroupIndex (aCollation, m_bComposite);
     final int nSize = aPop.size ();
     for (int i = 0; i < nSize; ++i)
     {
@@ -341,20 +390,24 @@ public final class ForEachGroupInstruction
       final XdmAtomic [] aKey = _computeKey (aCtx.withFocus (aItem, i + 1, nSize));
       if (m_bComposite)
       {
-        // One composite key per item: the item joins exactly one group
-        Group aTarget = null;
-        for (final Group aGroup : ret)
-          if (_sameKey (aKey, aGroup.m_aKey, aCollation, aDyn))
-          {
-            aTarget = aGroup;
-            break;
-          }
+        // One composite key per item: the item joins exactly one group, found through the bucket
+        // of its key (before, a scan over all groups made this quadratic in the number of groups)
+        if (!aIndex.m_bNarrow)
+          for (final XdmAtomic aValue : aKey)
+            if (aValue.getType () == EAtomicType.FLOAT)
+            {
+              aIndex._narrow (ret);
+              break;
+            }
+        Group aTarget = aIndex._findComposite (aKey, aDyn);
         if (aTarget == null)
         {
           aTarget = new Group (aKey);
+          aIndex._add (aTarget);
           ret.add (aTarget);
         }
         aTarget.m_aItems.add (aItem);
+        aCtx.getDynamicContext ().checkInterrupt ();
         continue;
       }
       // Each distinct key value: the item joins one group per value

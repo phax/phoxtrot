@@ -1926,6 +1926,9 @@ public final class XPathEvaluator
         throw XPathException.type ("A function of arity " + nArity + " is called with " + m_aArgs.length + " arguments");
       if (_hasPlaceholder (m_aArgs))
         return _partialApply (asFunction (aFuncItem), m_aArgs, aCtx);
+      // Optimisation: a map or array lookup takes its single argument without an argument list
+      if (aFuncItem instanceof XdmMap || aFuncItem instanceof XdmArray)
+        return callFunction (aCtx, aFuncItem, List.of (m_aArgs[0].evaluate (aCtx)));
 
       final ICommonsList <XdmSequence> aArgs = new CommonsArrayList <> (m_aArgs.length);
       for (final AbstractCompiledExpr aArgExpr : m_aArgs)

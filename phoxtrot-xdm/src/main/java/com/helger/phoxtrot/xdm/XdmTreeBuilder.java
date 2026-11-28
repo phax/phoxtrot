@@ -28,7 +28,9 @@ import org.xml.sax.ext.DefaultHandler2;
 
 import com.helger.annotation.concurrent.NotThreadSafe;
 import com.helger.collection.commons.CommonsArrayList;
+import com.helger.collection.commons.CommonsHashSet;
 import com.helger.collection.commons.ICommonsList;
+import com.helger.collection.commons.ICommonsSet;
 
 /**
  * SAX2 handler that builds an {@link IXdmNode} tree. Adjacent character events are merged into one
@@ -86,6 +88,10 @@ public final class XdmTreeBuilder extends DefaultHandler2
   // The number of open elements, and the maximum of it so far
   private int m_nDepth;
   private int m_nMaxDepth;
+  // The namespace URIs (not empty) of the attributes of the elements below the document element,
+  // and the one added last (most attributes have the namespace of the previous one)
+  private ICommonsSet <String> m_aDescendantAttrNamespaces;
+  private String m_sLastDescendantAttrNamespace;
   // The system ID in effect for each open element
   private final ArrayDeque <String> m_aSystemIds = new ArrayDeque <> ();
   // One shared name instance per namespace URI and lexical name, so that the
@@ -450,6 +456,8 @@ public final class XdmTreeBuilder extends DefaultHandler2
     m_nOrder = 0;
     m_nDepth = 0;
     m_nMaxDepth = 0;
+    m_aDescendantAttrNamespaces = new CommonsHashSet <> ();
+    m_sLastDescendantAttrNamespace = null;
     m_aDocument.internalStamp (m_aTree, m_nOrder++);
     m_aDocument.internalSetEndOrder (Integer.MAX_VALUE);
   }
@@ -472,6 +480,7 @@ public final class XdmTreeBuilder extends DefaultHandler2
       m_aDocument.internalSetEndOrder (m_nOrder - 1);
       m_aDocument.internalDropNameIndex ();
       m_aDocument.internalSetMaxElementDepth (m_nMaxDepth);
+      m_aDocument.internalSetDescendantAttributeNamespaces (m_aDescendantAttrNamespaces);
     }
     else
       m_aDocument.assignDocumentOrder ();
@@ -529,6 +538,17 @@ public final class XdmTreeBuilder extends DefaultHandler2
         eIDKind = EIDKind.ID;
       final String sAttrValue = eIDKind == EIDKind.NONE ? sValue : normaliseTokenised (sValue);
       // An attribute reports the location of its element
+      if (m_nDepth > 0)
+      {
+        // Below the document element: record the namespace for
+        // XdmDocumentNode.getHasDescendantAttributeNamespace
+        final String sAttrNS = aAttrName.namespaceUri ();
+        if (!sAttrNS.isEmpty () && !sAttrNS.equals (m_sLastDescendantAttrNamespace))
+        {
+          m_aDescendantAttrNamespaces.add (sAttrNS);
+          m_sLastDescendantAttrNamespace = sAttrNS;
+        }
+      }
       final XdmAttributeNode aAttr = new XdmAttributeNode (aAttrName, sAttrValue);
       aAttr.setIDKind (eIDKind);
       m_aAttrBuffer[nAttrCount++] = aAttr;

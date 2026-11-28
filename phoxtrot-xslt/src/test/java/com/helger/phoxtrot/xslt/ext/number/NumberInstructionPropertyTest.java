@@ -143,4 +143,38 @@ public final class NumberInstructionPropertyTest
                                    });
     assertTrue (NumberInstruction.getNameIndexCountCount () > nBefore);
   }
+
+  @NonNull
+  private static String _memoSheet (@NonNull final String sLevel, @NonNull final String sCount, final boolean bDefeat)
+  {
+    final StringBuilder aSB = new StringBuilder (XsltTestHelper.SHEET);
+    aSB.append ("<xsl:output method='text'/><xsl:template match='/'><xsl:variable name='t' select='true()'/>");
+    aSB.append (_numberAll ("level='" + sLevel + "' count=\"" + (bDefeat ? "(" + sCount + ")[$t]" : sCount) + "\""));
+    aSB.append ("</xsl:template>").append (XsltTestHelper.END);
+    return aSB.toString ();
+  }
+
+  /**
+   * A count pattern without variables has its match results kept for the run
+   * (per parent with many children for single and multiple, per name list of
+   * the index for any); it gives the numbers of the same pattern with a
+   * reference to a local variable, whose results are not kept.
+   */
+  @Test
+  public void testKeptMatchesCountLikeEveryTest ()
+  {
+    new PropertyChecker ().setTries (600)
+                          .forAll (Generators.of ("single", "multiple", "any"),
+                                   PATTERNS,
+                                   Generators.booleans (),
+                                   RandomXmlDocument.simpleDocuments (2, 60),
+                                   (sLevel, aCount, aNamed, sSource) -> {
+                                     final String sCount = aNamed.booleanValue () ? aCount.named () : aCount.unnamed ();
+                                     final XsltExecutable aKept = XsltCompiler.compile (_memoSheet (sLevel, sCount, false),
+                                                                                        new XsltCompileOptions ());
+                                     final XsltExecutable aEvery = XsltCompiler.compile (_memoSheet (sLevel, sCount, true),
+                                                                                         new XsltCompileOptions ());
+                                     assertEquals (_run (aEvery, sSource), _run (aKept, sSource));
+                                   });
+  }
 }

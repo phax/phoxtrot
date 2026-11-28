@@ -130,19 +130,21 @@ final class XsdAttributeValidator
     }
 
     /**
+     * @param nIndex
+     *        The position of a use in the list of uses.
      * @param aName
-     *        The attribute name.
+     *        The name of that use.
      * @return <code>true</code> if {@link #markPresent} was called for that
-     *         name (in the linear mode only names of a use are remembered).
+     *         name. In the linear mode this is the bit of the position, which
+     *         markPresent sets for every use of the name, so no scan of the
+     *         uses by name is needed.
      */
-    boolean isPresent (@NonNull final XsdName aName)
+    boolean isPresentAt (final int nIndex, @NonNull final XsdName aName)
     {
       if (m_aSeenSet != null)
         return m_aSeenSet.contains (aName);
-      for (int i = 0; i < m_aUses.size (); i++)
-        if (m_aUses.get (i).m_aDecl.m_aName.equals (aName) && (m_nSeen & 1L << i) != 0)
-          return true;
-      return false;
+      // markPresent sets the bit of every use with the name
+      return (m_nSeen & 1L << nIndex) != 0;
     }
   }
 
@@ -313,10 +315,12 @@ final class XsdAttributeValidator
                                                        XsdLexHelper.quote (aUse.m_sFixed));
       }
     }
-    for (final XsdAttributeUse aUse : aUses)
+    final int nUses = aUses.size ();
+    for (int nUse = 0; nUse < nUses; nUse++)
     {
+      final XsdAttributeUse aUse = aUses.get (nUse);
       final XsdName aUseName = aUse.m_aDecl.m_aName;
-      if (aUse.m_bRequired && !aIndex.isPresent (aUseName))
+      if (aUse.m_bRequired && !aIndex.isPresentAt (nUse, aUseName))
       {
         // Own wording: the xs:attribute's appinfo (the use's, else the
         // referenced declaration's), msg:message on="missing" or unspecified
@@ -335,7 +339,7 @@ final class XsdAttributeValidator
       // An absent attribute with a value constraint contributes that value to
       // the instance, so an ID default still binds (and an IDREF default
       // still has to resolve)
-      if (!aIndex.isPresent (aUseName) && !aUse.m_bProhibited && aUse.m_aDecl.m_aType != null)
+      if (!aIndex.isPresentAt (nUse, aUseName) && !aUse.m_bProhibited && aUse.m_aDecl.m_aType != null)
         if (aUse.m_bHasDefault)
         {
           aRun.noteIDValues (aUse.m_aDecl.m_aType, aUse.m_sDefault, aElement, aElement);
