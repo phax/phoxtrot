@@ -569,6 +569,85 @@ public final class FnNumeric
   }
 
   /**
+   * The sum of at least two numeric values of one kind in one loop, with the result the additions
+   * of {@link #_sumOf(DynamicContext, XdmAtomic[])} give: all xs:double (added in double
+   * precision from left to right, which is what the pairwise <code>+</code> does), all integers
+   * (in a <code>long</code> while it does not overflow, then as {@link BigInteger}; xs:integer) or
+   * integers and decimals (exact; xs:decimal). Checks for interruption every 1024 values.
+   *
+   * @return The sum, or <code>null</code> for any other input (floats, a mix with doubles,
+   *         durations), which the caller adds pairwise.
+   */
+  @Nullable
+  private static XdmAtomic _sumOfOneKind (@NonNull final DynamicContext aCtx, @NonNull final XdmAtomic [] aValues)
+  {
+    boolean bAllDouble = true;
+    boolean bAllInteger = true;
+    boolean bAllDecimal = true;
+    for (final XdmAtomic aValue : aValues)
+    {
+      final Object aPayload = aValue.getValue ();
+      if (aValue.getType () != EAtomicType.DOUBLE)
+        bAllDouble = false;
+      if (!(aPayload instanceof BigInteger))
+      {
+        bAllInteger = false;
+        if (!(aPayload instanceof BigDecimal))
+          bAllDecimal = false;
+      }
+      if (!bAllDouble && !bAllDecimal)
+        return null;
+    }
+    final int nCount = aValues.length;
+    if (bAllDouble)
+    {
+      double dSum = ((Double) aValues[0].getValue ()).doubleValue ();
+      for (int i = 1; i < nCount; ++i)
+      {
+        if ((i & 0x3ff) == 0)
+          aCtx.checkInterrupt ();
+        dSum += ((Double) aValues[i].getValue ()).doubleValue ();
+      }
+      return XdmAtomic.dbl (dSum);
+    }
+    if (bAllInteger)
+    {
+      long nSum = 0;
+      BigInteger aBigSum = null;
+      for (int i = 0; i < nCount; ++i)
+      {
+        if ((i & 0x3ff) == 0x3ff)
+          aCtx.checkInterrupt ();
+        final BigInteger aInt = (BigInteger) aValues[i].getValue ();
+        if (aBigSum == null && aInt.bitLength () < 64)
+        {
+          final long nValue = aInt.longValue ();
+          final long nNew = nSum + nValue;
+          // Overflow if both operands have the sign opposite to the result
+          if (((nSum ^ nNew) & (nValue ^ nNew)) >= 0)
+          {
+            nSum = nNew;
+            continue;
+          }
+        }
+        if (aBigSum == null)
+          aBigSum = BigInteger.valueOf (nSum);
+        aBigSum = aBigSum.add (aInt);
+      }
+      return aBigSum == null ? XdmAtomic.integer (nSum) : XdmAtomic.integer (aBigSum);
+    }
+    BigDecimal aSum = BigDecimal.ZERO;
+    for (int i = 0; i < nCount; ++i)
+    {
+      if ((i & 0x3ff) == 0x3ff)
+        aCtx.checkInterrupt ();
+      final Object aPayload = aValues[i].getValue ();
+      aSum = aSum.add (aPayload instanceof final BigDecimal aDec ? aDec : new BigDecimal ((BigInteger) aPayload));
+    }
+    return XdmAtomic.decimal (aSum);
+  }
+
+  /**
    * Add the values from left to right with the <code>+</code> operator; checks
    * for interruption every 1024 values.
    *
@@ -584,6 +663,14 @@ public final class FnNumeric
   @NonNull
   private static XdmAtomic _sumOf (@NonNull final DynamicContext aCtx, @NonNull final XdmAtomic [] aValues)
   {
+    // Optimisation: values of one numeric kind are added in one loop, without an atomic value and
+    // the type dispatch of the operator per value
+    if (aValues.length >= 2 && aValues[0].isNumeric ())
+    {
+      final XdmAtomic aSum = _sumOfOneKind (aCtx, aValues);
+      if (aSum != null)
+        return aSum;
+    }
     XdmAtomic ret = aValues[0];
     for (int i = 1; i < aValues.length; ++i)
     {

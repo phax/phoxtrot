@@ -1748,6 +1748,15 @@ Measured at 10,000 lines, both orders, JMH `-prof gc`:
 | `generate-id` comparison, on top of the `key()` change | `muenchian` | 0.72 / 0.74 | 0.70 / 0.67 |
 | `generate-id` comparison, before the `key()` change | `keys`, `dispatch`, `grouping`, XPath `predicate`, `arithmetic`, `rules` | unchanged (within the error) | unchanged |
 
+`sum`/`avg` done (2026-11-28) without a new payload: `FnNumeric._sumOfOneKind` adds all xs:double in a `double`,
+all integers in a `long` (a `BigInteger` after an overflow) and integers with decimals as one `BigDecimal`, each
+with the result of the pairwise `+` (differential property `FnSequencePropertyTest.testSumMatchesPairwiseAddition`
+against `fold-left`); floats, mixes with doubles and durations still add pairwise. Measured on JDK 21 (10,000
+values, best of 2,000 evaluations, µs, including the path and casts before the sum): `sum(1 to 10000)` 223 to 128,
+`sum(doc/line/xs:integer(qty))` 576 to 537, `sum(doc/line/amount)` (untyped to double) 564 to 540,
+`sum`/`avg` of `xs:decimal(amount)` unchanged within the spread (the `BigDecimal` additions dominate either way).
+Compact decimal division (`div`, `idiv`, `mod`) and a long payload in `XdmAtomic` stay open.
+
 The rest is proposed. Found 2026-11-26 by reading `v0.4.3..upstream/main` of go-xslt (80 commits, release v0.4.4,
 performance rounds 13 to 15, no conformance change, output byte-identical according to its release notes); nothing
 measured yet. Most commits are Go-specific (scratch and lent arrays, pools, escape analysis, the Go tokenizer and

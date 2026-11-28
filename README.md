@@ -385,6 +385,8 @@ v0.5.0 - work in progress
 * XSLT: the namespace fixup of a finished result tree runs in the walk that numbers it instead of a walk of its own
   (about 7 % of a run that writes 20,000 SVRL elements). New `IXdmNode.assignDocumentOrder (Consumer)`, which calls a
   visitor for every element while numbering
+* `fn:sum` and `fn:avg` add values of one numeric kind (all xs:double, all integers, integers and decimals) in one
+  loop instead of one `+` with a new atomic value per value; the results are those of the pairwise addition
 
 v0.4.0 - 2026-11-26
 * Added property based tests (ph-commons `ph-unittest-property`) for the tree builders, the stream reader, tree

@@ -19,6 +19,8 @@ package com.helger.phoxtrot.xpath.fn;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
@@ -352,6 +354,72 @@ public final class FnSequencePropertyTest
                                         aV,
                                         XdmSequence.EMPTY)));
     });
+  }
+
+  /**
+   * A numeric value from a code 0 to 69: the tens give the kind (small xs:integer, xs:integer near
+   * the bounds of a long and beyond, xs:decimal, xs:double with NaN, negative zero and infinity,
+   * xs:float, xs:int, xs:untypedAtomic), the units the value.
+   */
+  @NonNull
+  private static XdmAtomic _numeric (final int nCode)
+  {
+    final int nValue = nCode % 10 - 5;
+    return switch (nCode / 10)
+    {
+      case 0 -> XdmAtomic.integer (nValue);
+      case 1 -> nValue < -2 ? XdmAtomic.integer (BigInteger.TWO.pow (70).multiply (BigInteger.valueOf (nValue)))
+                            : XdmAtomic.integer (nValue < 1 ? Long.MIN_VALUE - nValue : Long.MAX_VALUE - nValue);
+      case 2 -> XdmAtomic.decimal (BigDecimal.valueOf (nValue * 25L, 2));
+      case 3 -> XdmAtomic.dbl (switch (nValue)
+      {
+        case -5 -> Double.NaN;
+        case -4 -> -0.0;
+        case 4 -> Double.POSITIVE_INFINITY;
+        default -> nValue * 0.1;
+      });
+      case 4 -> XdmAtomic.of (EAtomicType.FLOAT, Float.valueOf (nValue * 0.5f));
+      case 5 -> XdmAtomic.of (EAtomicType.INT, BigInteger.valueOf (nValue));
+      default -> XdmAtomic.untyped (nValue == -4 ? "-0" : Integer.toString (nValue));
+    };
+  }
+
+  /**
+   * <code>fn:sum</code> and <code>fn:avg</code> of numeric values of every kind and mixes of
+   * them give the value and type of adding them pairwise from left to right with <code>+</code>,
+   * which <code>fold-left</code> does without the one-loop additions of <code>fn:sum</code>; the
+   * same holds for the input of one kind only (doubles, integers including overflows of a long,
+   * integers and decimals).
+   */
+  @Test
+  public void testSumMatchesPairwiseAddition ()
+  {
+    final IGenerator <List <Integer>> aMixed = Generators.lists (Generators.ints (0, 69), 1, 8);
+    final IGenerator <List <Integer>> aOneKind = Generators.ints (0, 6)
+                                                           .flatMap (nKind -> Generators.lists (Generators.ints (nKind.intValue () *
+                                                                                                                10,
+                                                                                                                nKind.intValue () *
+                                                                                                                     10 +
+                                                                                                                      9),
+                                                                                                1,
+                                                                                                8));
+    for (final IGenerator <List <Integer>> aLists : List.of (aMixed, aOneKind))
+      new PropertyChecker ().setTries (1500).forAll (aLists, aCodes -> {
+        final List <IXdmItem> aItems = new ArrayList <> ();
+        for (final Integer aCode : aCodes)
+          aItems.add (_numeric (aCode.intValue ()));
+        final XdmSequence aV = XdmSequence.of (aItems);
+        final String sPairwise = "fold-left(tail($v) ! (if (. instance of xs:untypedAtomic) then xs:double(.) else .), " +
+                                 "head($v) ! (if (. instance of xs:untypedAtomic) then xs:double(.) else .), " +
+                                 "function ($a, $b) { $a + $b })";
+        final String sMsg = aItems.toString ();
+        XPathPropertyTestHelper.assertSameItems (sMsg,
+                                                 m_aHelper.eval (sPairwise, null, aV, XdmSequence.EMPTY),
+                                                 m_aHelper.eval ("sum($v)", null, aV, XdmSequence.EMPTY));
+        XPathPropertyTestHelper.assertSameItems (sMsg,
+                                                 m_aHelper.eval ("(" + sPairwise + ") div count($v)", null, aV, XdmSequence.EMPTY),
+                                                 m_aHelper.eval ("avg($v)", null, aV, XdmSequence.EMPTY));
+      });
   }
 
   /**
